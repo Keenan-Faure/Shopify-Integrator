@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"integrator/internal/database"
 	"log"
 	"net/http"
 	"utils"
@@ -10,6 +11,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
+
+type DbConfig struct {
+	DB    *database.Queries
+	Valid bool
+}
 
 const file_path = "./app"
 
