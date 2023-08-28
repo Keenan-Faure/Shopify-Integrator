@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE users(
-    id VARCHAR(32) PRIMARY KEY,
+    id VARCHAR(32) PRIMARY KEY NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     name TEXT NOT NULL,
