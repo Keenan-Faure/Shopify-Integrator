@@ -31,14 +31,16 @@ func main() {
 }
 
 // starts up the API
-func setupAPI() {
+func setupAPI(dbconfig *DbConfig) {
 	r := chi.NewRouter()
 	r.Use(cors.Handler(MiddleWare()))
 
 	api := chi.NewRouter()
 	api.Mount("/api", api)
 
-	// define routes
+	api.Post("/register", dbconfig.RegisterHandle)
+	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
+	api.Get("/endpoints", dbconfig.EndpointsHandle)
 
 	fs := http.FileServer(http.Dir(file_path))
 	fsHandle := http.StripPrefix("/app", fs)

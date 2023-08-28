@@ -1,4 +1,4 @@
--- name: CreateUser :exec
+-- name: CreateUser :execresult
 INSERT INTO users (
     id,
     name,
@@ -8,4 +8,13 @@ INSERT INTO users (
 ) VALUES (
     ?, ?, ?, ?, ?
 );
---
+
+-- name: GetUserByApiKey :one
+SELECT * FROM users
+WHERE api_key = ?
+LIMIT 1;
+
+-- name: GetUserByName :one
+SELECT * FROM users
+WHERE name = ?
+LIMIT 1;
