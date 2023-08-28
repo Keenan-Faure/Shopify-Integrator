@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type DbConfig struct {
@@ -20,6 +21,10 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
+	dbCon, err := InitConn(utils.LoadEnv("db_url"))
+	if err != nil {
+		log.Fatalf("Error occured %v", err.Error())
+	}
 	flags := flag.Bool("test", false, "Enable server for tests only")
 	flag.Parse()
 
@@ -27,7 +32,7 @@ func main() {
 		fmt.Println("Starting Worker")
 	}
 	fmt.Println("Starting API")
-	setupAPI()
+	setupAPI(&dbCon)
 }
 
 // starts up the API
