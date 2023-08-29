@@ -2,7 +2,7 @@
 
 # Please do not modify this file, modify the .env file within this directory
 # If you are unable to run this file then run
-# chmod +x ./run.sh
+# chmod +x ./scripts/run.sh
 
 OS="$(uname -s)"
 
@@ -16,5 +16,10 @@ else
     echo "running go build -o integrator"
     go build -o integrator
 fi
+
+echo "---Running Database migrations---"
+
+chmod +x ./scripts/migrations.sh
+./scripts/migrations.sh
 
 ./integrator

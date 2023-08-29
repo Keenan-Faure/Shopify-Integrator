@@ -21,7 +21,7 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
-	dbCon, err := InitConn(utils.LoadEnv("db_url"))
+	dbCon, err := InitConn(utils.LoadEnv("dsn"))
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}
@@ -32,20 +32,21 @@ func main() {
 		fmt.Println("Starting Worker")
 	}
 	fmt.Println("Starting API")
-	setupAPI(&dbCon)
+	setupAPI(dbCon)
 }
 
 // starts up the API
-func setupAPI(dbconfig *DbConfig) {
+func setupAPI(dbconfig DbConfig) {
 	r := chi.NewRouter()
 	r.Use(cors.Handler(MiddleWare()))
-
 	api := chi.NewRouter()
-	api.Mount("/api", api)
 
 	api.Post("/register", dbconfig.RegisterHandle)
 	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
 	api.Get("/endpoints", dbconfig.EndpointsHandle)
+	api.Get("/ready", dbconfig.ReadyHandle)
+
+	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))
 	fsHandle := http.StripPrefix("/app", fs)

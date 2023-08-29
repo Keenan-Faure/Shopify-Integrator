@@ -1,0 +1,1 @@
+echo "Removing docker container"

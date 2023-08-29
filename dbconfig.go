@@ -20,8 +20,7 @@ func InitConn(dbURL string) (DbConfig, error) {
 
 // Stores the database connection inside a config struct
 func storeConfig(conn *sql.DB) DbConfig {
-	_, err := database.New(conn).GetUserByName(context.Background(), "abc123")
-	log.Println(err)
+	_, err := database.New(conn).GetUsers(context.Background())
 	if err == nil {
 		config := DbConfig{
 			DB:    database.New(conn),

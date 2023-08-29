@@ -63,7 +63,7 @@ func (dbconfig *DbConfig) EndpointsHandle(w http.ResponseWriter, r *http.Request
 //}
 
 // GET /api/ready
-func (dbconfig *DbConfig) ReadyHandle(w http.ResponseWriter, r *http.Response) {
+func (dbconfig *DbConfig) ReadyHandle(w http.ResponseWriter, r *http.Request) {
 	if dbconfig.Valid {
 		RespondWithJSON(w, 200, objects.ResponseString{
 			Status: "OK",
