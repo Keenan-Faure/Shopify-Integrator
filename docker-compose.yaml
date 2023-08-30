@@ -1,0 +1,15 @@
+version: "2"
+services:
+  app:
+    volumes:
+      - ./app/:/keenan/app
+    build: .
+    ports:
+      - "${PORT}:${PORT}"
+    container_name: ${CONTAINER_NAME}
+    env_file:
+      - .env
+
+volumes:
+    integrator_volume:
+        driver: local

@@ -17,9 +17,12 @@ else
     go build -o integrator
 fi
 
-echo "---Running Database migrations---"
+docker-compose rm -f
 
-chmod +x ./scripts/migrations.sh
-./scripts/migrations.sh
+echo "---Running Docker compose up---"
+docker compose up -d
 
-./integrator
+echo "---Running database migrations---"
+docker exec integrator bash -c ./sql/schema/migrations.sh
+
+docker restart integrator
