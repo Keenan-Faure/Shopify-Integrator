@@ -3,6 +3,7 @@ go 1.20
 use (
 	.
 	./api
+	./internal/fetch
 	./internal/objects
 	./internal/utils
 )
