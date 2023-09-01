@@ -14,7 +14,8 @@ type Product struct {
 	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
-	Category    string         `json:"category"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -33,6 +34,7 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	Name         string    `json:"name"`
+	Email        string    `json:"email"`
 	ApiKey       string    `json:"api_key"`
 }
 
@@ -40,9 +42,9 @@ type Variant struct {
 	ID        string         `json:"id"`
 	ProductID string         `json:"product_id"`
 	Sku       string         `json:"sku"`
-	Option1   string         `json:"option1"`
-	Option2   string         `json:"option2"`
-	Option3   string         `json:"option3"`
+	Option1   sql.NullString `json:"option1"`
+	Option2   sql.NullString `json:"option2"`
+	Option3   sql.NullString `json:"option3"`
 	Barcode   sql.NullString `json:"barcode"`
 }
 

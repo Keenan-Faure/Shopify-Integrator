@@ -18,11 +18,12 @@ INSERT INTO products(
     title,
     body_html,
     category,
+    vendor,
     product_type,
     created_at,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 `
 
@@ -31,7 +32,8 @@ type CreateProductParams struct {
 	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
-	Category    string         `json:"category"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
@@ -44,47 +46,95 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (s
 		arg.Title,
 		arg.BodyHtml,
 		arg.Category,
+		arg.Vendor,
 		arg.ProductType,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
 }
 
-const getProductByActiveStatus = `-- name: GetProductByActiveStatus :many
+const getProductByID = `-- name: GetProductByID :one
 SELECT
     active,
     title,
     body_html,
     category,
+    vendor,
     product_type,
     updated_at
 FROM products
-WHERE active = ?
+WHERE id = ?
 `
 
-type GetProductByActiveStatusRow struct {
+type GetProductByIDRow struct {
 	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
-	Category    string         `json:"category"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetProductByActiveStatus(ctx context.Context, active string) ([]GetProductByActiveStatusRow, error) {
-	rows, err := q.db.QueryContext(ctx, getProductByActiveStatus, active)
+func (q *Queries) GetProductByID(ctx context.Context, id string) (GetProductByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getProductByID, id)
+	var i GetProductByIDRow
+	err := row.Scan(
+		&i.Active,
+		&i.Title,
+		&i.BodyHtml,
+		&i.Category,
+		&i.Vendor,
+		&i.ProductType,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProductsByCategory = `-- name: GetProductsByCategory :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = ?
+AND category IN (?)
+`
+
+type GetProductsByCategoryParams struct {
+	Active   string         `json:"active"`
+	Category sql.NullString `json:"category"`
+}
+
+type GetProductsByCategoryRow struct {
+	Active      string         `json:"active"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProductsByCategory(ctx context.Context, arg GetProductsByCategoryParams) ([]GetProductsByCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByCategory, arg.Active, arg.Category)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetProductByActiveStatusRow
+	var items []GetProductsByCategoryRow
 	for rows.Next() {
-		var i GetProductByActiveStatusRow
+		var i GetProductsByCategoryRow
 		if err := rows.Scan(
 			&i.Active,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
+			&i.Vendor,
 			&i.ProductType,
 			&i.UpdatedAt,
 		); err != nil {
@@ -101,39 +151,193 @@ func (q *Queries) GetProductByActiveStatus(ctx context.Context, active string) (
 	return items, nil
 }
 
-const getProductByID = `-- name: GetProductByID :one
+const getProductsByFilter = `-- name: GetProductsByFilter :many
 SELECT
     active,
     title,
     body_html,
     category,
+    vendor,
     product_type,
     updated_at
 FROM products
-WHERE id = ?
+WHERE active = ?
+AND category IN (?)
+AND product_type IN (?)
+AND vendor IN (?)
 `
 
-type GetProductByIDRow struct {
+type GetProductsByFilterParams struct {
+	Active      string         `json:"active"`
+	Category    sql.NullString `json:"category"`
+	ProductType sql.NullString `json:"product_type"`
+	Vendor      sql.NullString `json:"vendor"`
+}
+
+type GetProductsByFilterRow struct {
 	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
-	Category    string         `json:"category"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetProductByID(ctx context.Context, id string) (GetProductByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getProductByID, id)
-	var i GetProductByIDRow
-	err := row.Scan(
-		&i.Active,
-		&i.Title,
-		&i.BodyHtml,
-		&i.Category,
-		&i.ProductType,
-		&i.UpdatedAt,
+func (q *Queries) GetProductsByFilter(ctx context.Context, arg GetProductsByFilterParams) ([]GetProductsByFilterRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByFilter,
+		arg.Active,
+		arg.Category,
+		arg.ProductType,
+		arg.Vendor,
 	)
-	return i, err
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsByFilterRow
+	for rows.Next() {
+		var i GetProductsByFilterRow
+		if err := rows.Scan(
+			&i.Active,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsByType = `-- name: GetProductsByType :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = ?
+AND product_type in (?)
+`
+
+type GetProductsByTypeParams struct {
+	Active      string         `json:"active"`
+	ProductType sql.NullString `json:"product_type"`
+}
+
+type GetProductsByTypeRow struct {
+	Active      string         `json:"active"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypeParams) ([]GetProductsByTypeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByType, arg.Active, arg.ProductType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsByTypeRow
+	for rows.Next() {
+		var i GetProductsByTypeRow
+		if err := rows.Scan(
+			&i.Active,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsByVendor = `-- name: GetProductsByVendor :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = ?
+AND vendor IN (?)
+`
+
+type GetProductsByVendorParams struct {
+	Active string         `json:"active"`
+	Vendor sql.NullString `json:"vendor"`
+}
+
+type GetProductsByVendorRow struct {
+	Active      string         `json:"active"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVendorParams) ([]GetProductsByVendorRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByVendor, arg.Active, arg.Vendor)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsByVendorRow
+	for rows.Next() {
+		var i GetProductsByVendorRow
+		if err := rows.Scan(
+			&i.Active,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateProduct = `-- name: UpdateProduct :execresult
@@ -143,6 +347,7 @@ SET
     title = ?,
     body_html = ?,
     category = ?,
+    vendor = ?,
     product_type = ?,
     updated_at = ?
 WHERE id = ?
@@ -152,7 +357,8 @@ type UpdateProductParams struct {
 	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
-	Category    string         `json:"category"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	ID          string         `json:"id"`
@@ -164,6 +370,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (s
 		arg.Title,
 		arg.BodyHtml,
 		arg.Category,
+		arg.Vendor,
 		arg.ProductType,
 		arg.UpdatedAt,
 		arg.ID,

@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const fetch_time_shopify = 25 * time.Second // 25 seconds
+const fetch_time_shopify = 120 * time.Second // 120 seconds
 
 // loop function that uses Goroutine to run
 // a function each interval

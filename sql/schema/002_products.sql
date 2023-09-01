@@ -4,8 +4,9 @@ CREATE TABLE products(
     active VARCHAR(1) NOT NULL,
     title VARCHAR(255),
     body_html TEXT,
-    category VARCHAR(255) NOT NULL,
-    product_type VARCHAR(255),
+    category VARCHAR(64),
+    vendor VARCHAR(64),
+    product_type VARCHAR(64),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     UNIQUE (id)

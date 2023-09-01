@@ -26,9 +26,9 @@ type CreateVariantParams struct {
 	ID        string         `json:"id"`
 	ProductID string         `json:"product_id"`
 	Sku       string         `json:"sku"`
-	Option1   string         `json:"option1"`
-	Option2   string         `json:"option2"`
-	Option3   string         `json:"option3"`
+	Option1   sql.NullString `json:"option1"`
+	Option2   sql.NullString `json:"option2"`
+	Option3   sql.NullString `json:"option3"`
 	Barcode   sql.NullString `json:"barcode"`
 }
 
@@ -57,9 +57,9 @@ WHERE product_id = ?
 
 type GetProductVariantsRow struct {
 	Sku     string         `json:"sku"`
-	Option1 string         `json:"option1"`
-	Option2 string         `json:"option2"`
-	Option3 string         `json:"option3"`
+	Option1 sql.NullString `json:"option1"`
+	Option2 sql.NullString `json:"option2"`
+	Option3 sql.NullString `json:"option3"`
 	Barcode sql.NullString `json:"barcode"`
 }
 
@@ -105,9 +105,9 @@ WHERE sku = ?
 
 type GetVariantBySKURow struct {
 	Sku     string         `json:"sku"`
-	Option1 string         `json:"option1"`
-	Option2 string         `json:"option2"`
-	Option3 string         `json:"option3"`
+	Option1 sql.NullString `json:"option1"`
+	Option2 sql.NullString `json:"option2"`
+	Option3 sql.NullString `json:"option3"`
 	Barcode sql.NullString `json:"barcode"`
 }
 
@@ -135,9 +135,9 @@ WHERE sku = ?
 `
 
 type UpdateVariantParams struct {
-	Option1 string         `json:"option1"`
-	Option2 string         `json:"option2"`
-	Option3 string         `json:"option3"`
+	Option1 sql.NullString `json:"option1"`
+	Option2 sql.NullString `json:"option2"`
+	Option3 sql.NullString `json:"option3"`
 	Barcode sql.NullString `json:"barcode"`
 	Sku     string         `json:"sku"`
 }

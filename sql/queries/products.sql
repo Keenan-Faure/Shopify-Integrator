@@ -5,11 +5,12 @@ INSERT INTO products(
     title,
     body_html,
     category,
+    vendor,
     product_type,
     created_at,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?
 );
 
 -- name: UpdateProduct :execresult
@@ -19,6 +20,7 @@ SET
     title = ?,
     body_html = ?,
     category = ?,
+    vendor = ?,
     product_type = ?,
     updated_at = ?
 WHERE id = ?;
@@ -29,20 +31,64 @@ SELECT
     title,
     body_html,
     category,
+    vendor,
     product_type,
     updated_at
 FROM products
 WHERE id = ?;
 
--- name: GetProductByActiveStatus :many
+-- name: GetProductsByCategory :many
 SELECT
     active,
     title,
     body_html,
     category,
+    vendor,
     product_type,
     updated_at
 FROM products
-WHERE active = ?;
+WHERE active = ?
+AND category IN (?);
+
+-- name: GetProductsByFilter :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = ?
+AND category IN (?)
+AND product_type IN (?)
+AND vendor IN (?);
+
+-- name: GetProductsByType :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = ?
+AND product_type in (?);
+
+-- name: GetProductsByVendor :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = ?
+AND vendor IN (?);
  
 

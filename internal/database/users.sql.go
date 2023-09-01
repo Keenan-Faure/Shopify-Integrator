@@ -15,18 +15,20 @@ const createUser = `-- name: CreateUser :execresult
 INSERT INTO users (
     id,
     name,
+    email,
     webhook_token,
     created_at,
     updated_at,
     api_key
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 )
 `
 
 type CreateUserParams struct {
 	ID           string    `json:"id"`
 	Name         string    `json:"name"`
+	Email        string    `json:"email"`
 	WebhookToken string    `json:"webhook_token"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
@@ -37,6 +39,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Res
 	return q.db.ExecContext(ctx, createUser,
 		arg.ID,
 		arg.Name,
+		arg.Email,
 		arg.WebhookToken,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -45,7 +48,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Res
 }
 
 const getUserByApiKey = `-- name: GetUserByApiKey :one
-SELECT id, webhook_token, created_at, updated_at, name, api_key FROM users
+SELECT id, webhook_token, created_at, updated_at, name, email, api_key FROM users
 WHERE api_key = ?
 LIMIT 1
 `
@@ -59,19 +62,19 @@ func (q *Queries) GetUserByApiKey(ctx context.Context, apiKey string) (User, err
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
+		&i.Email,
 		&i.ApiKey,
 	)
 	return i, err
 }
 
-const getUserByName = `-- name: GetUserByName :one
-SELECT id, webhook_token, created_at, updated_at, name, api_key FROM users
-WHERE name = ?
-LIMIT 1
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, webhook_token, created_at, updated_at, name, email, api_key FROM users
+WHERE email = ?
 `
 
-func (q *Queries) GetUserByName(ctx context.Context, name string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByName, name)
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -79,6 +82,26 @@ func (q *Queries) GetUserByName(ctx context.Context, name string) (User, error) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Name,
+		&i.Email,
+		&i.ApiKey,
+	)
+	return i, err
+}
+
+const getUsers = `-- name: GetUsers :one
+SELECT id, webhook_token, created_at, updated_at, name, email, api_key FROM users LIMIT 1
+`
+
+func (q *Queries) GetUsers(ctx context.Context) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUsers)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.WebhookToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Email,
 		&i.ApiKey,
 	)
 	return i, err
@@ -88,18 +111,25 @@ const updateUser = `-- name: UpdateUser :execresult
 UPDATE users 
 SET
     name = ?,
+    email = ?,
     updated_at = ?
 WHERE id = ?
 `
 
 type UpdateUserParams struct {
 	Name      string    `json:"name"`
+	Email     string    `json:"email"`
 	UpdatedAt time.Time `json:"updated_at"`
 	ID        string    `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateUser, arg.Name, arg.UpdatedAt, arg.ID)
+	return q.db.ExecContext(ctx, updateUser,
+		arg.Name,
+		arg.Email,
+		arg.UpdatedAt,
+		arg.ID,
+	)
 }
 
 const validateWebhookByUser = `-- name: ValidateWebhookByUser :one
