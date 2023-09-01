@@ -3,13 +3,23 @@ INSERT INTO variant_pricing(
     id,
     variant_id,
     name,
-    value
+    value,
     created_at,
     updated_at
-) VALUES (?, ?, ?, ?);
+) VALUES (?, ?, ?, ?, ?, ?);
 
--- name: UpdateVariantPricing
-UPDATE variant_pricing SET
-name = ?
-value = ?
-updated_at = ?;
+-- name: UpdateVariantPricing :execresult
+UPDATE variant_pricing
+SET
+    name = ?,
+    value = ?,
+    updated_at = ?
+WHERE variant_id = ?;
+
+-- name: GetVariantPricing :many
+SELECT 
+    name,
+    value,
+    updated_at
+FROM variant_pricing
+WHERE variant_id = ?

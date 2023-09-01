@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE variant_options(
+CREATE TABLE product_options(
     id VARCHAR(32) UNIQUE NOT NULL,
     product_id VARCHAR(32) UNIQUE NOT NULL,
     name VARCHAR(16) NOT NULL,
@@ -7,4 +7,4 @@ CREATE TABLE variant_options(
 );
 
 -- +goose Down
-DROP TABLE variant_options;
+DROP TABLE product_options;

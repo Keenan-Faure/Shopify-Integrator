@@ -3,15 +3,37 @@ INSERT INTO variants(
     id,
     product_id,
     sku,
+    option1,
+    option2,
+    option3,
     barcode
-) VALUES (?, ?, ?, ?);
+) VALUES (?, ?, ?, ?, ?, ?, ?);
 
--- name: UpdateVariant
-UPDATE variants SET
-sku = ?
-price = ?
-compare_at_price = ?
-option1 = ?
-option2 = ?
-option3 = ?
-barcode = ?;
+-- name: UpdateVariant :execresult
+UPDATE variants
+SET
+    option1 = ?,
+    option2 = ?,
+    option3 = ?,
+    barcode = ?
+WHERE sku = ?;
+
+-- name: GetProductVariants :many
+SELECT
+    sku,
+    option1,
+    option2,
+    option3,
+    barcode
+FROM variants
+WHERE product_id = ?;
+
+-- name: GetVariantBySKU :one
+SELECT
+    sku,
+    option1,
+    option2,
+    option3,
+    barcode
+FROM variants
+WHERE sku = ?;
