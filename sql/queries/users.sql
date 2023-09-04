@@ -1,14 +1,11 @@
 -- name: CreateUser :execresult
 INSERT INTO users (
-    id,
     name,
     email,
-    webhook_token,
     created_at,
-    updated_at,
-    api_key
+    updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?
 );
 
 -- name: GetUsers :one

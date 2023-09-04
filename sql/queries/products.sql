@@ -1,6 +1,5 @@
 -- name: CreateProduct :execresult
 INSERT INTO products(
-    id,
     active,
     title,
     body_html,
@@ -10,7 +9,7 @@ INSERT INTO products(
     created_at,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?
 );
 
 -- name: UpdateProduct :execresult
@@ -47,8 +46,8 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE active = ?
-AND category IN (?);
+WHERE category REGEXP ?
+LIMIT ? OFFSET ?;
 
 -- name: GetProductsByFilter :many
 SELECT
@@ -60,10 +59,10 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE active = ?
-AND category IN (?)
+WHERE category IN (?)
 AND product_type IN (?)
-AND vendor IN (?);
+AND vendor IN (?)
+LIMIT ? OFFSET ?;
 
 -- name: GetProductsByType :many
 SELECT
@@ -75,8 +74,8 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE active = ?
-AND product_type in (?);
+WHERE product_type REGEXP ?
+LIMIT ? OFFSET ?;
 
 -- name: GetProductsByVendor :many
 SELECT
@@ -88,7 +87,5 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE active = ?
-AND vendor IN (?);
- 
-
+WHERE vendor REGEXP ?
+LIMIT ? OFFSET ?;

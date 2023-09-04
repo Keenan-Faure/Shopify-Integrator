@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE products(
-    id VARCHAR(32) PRIMARY KEY NOT NULL,
+    id BINARY(16) PRIMARY KEY UNIQUE NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
     active VARCHAR(1) NOT NULL,
     title VARCHAR(255),
     body_html TEXT,

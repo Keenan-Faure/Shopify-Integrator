@@ -1,12 +1,13 @@
 -- name: CreateVariantQty :execresult
 INSERT INTO variant_qty(
-    id,
     variant_id,
     name,
     value,
     created_at,
     updated_at
-) VALUES (?, ?, ?, ?, ?, ?);
+) VALUES (
+    ?, ?, ?, ?, ?
+);
 
 -- name: UpdateVariantQty :execresult
 UPDATE variant_qty
@@ -22,4 +23,4 @@ SELECT
     value,
     updated_at
 FROM variant_qty
-WHERE variant_id = ?
+WHERE variant_id = ?;

@@ -1,13 +1,14 @@
 -- name: CreateVariant :execresult
 INSERT INTO variants(
-    id,
     product_id,
     sku,
     option1,
     option2,
     option3,
     barcode
-) VALUES (?, ?, ?, ?, ?, ?, ?);
+) VALUES (
+    ?, ?, ?, ?, ?, ?
+);
 
 -- name: UpdateVariant :execresult
 UPDATE variants
