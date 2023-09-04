@@ -41,12 +41,13 @@ type ShopifyProducts struct {
 }
 
 type ShopifyProduct struct {
-	Title     string           `json:"title"`
-	Body_Html string           `json:"body_html"`
-	Type      string           `json:"product_type"`
-	Status    string           `json:"status"`
-	Variants  []ShopifyVariant `json:"variants"`
-	Options   []ShopifyOptions `json:"options"`
+	Title    string           `json:"title"`
+	BodyHTML string           `json:"body_html"`
+	Vendor   string           `json:"vendor"`
+	Type     string           `json:"product_type"`
+	Status   string           `json:"status"`
+	Variants []ShopifyVariant `json:"variants"`
+	Options  []ShopifyOptions `json:"options"`
 }
 
 type ShopifyVariant struct {
@@ -56,10 +57,12 @@ type ShopifyVariant struct {
 	Option1        string `json:"option1"`
 	Option2        string `json:"option2"`
 	Option3        string `json:"option3"`
+	Weight         string `json:"weight"`
 	Barcode        string `json:"barcode"`
 }
 
 type ShopifyOptions struct {
-	Name   string `json:"name"`
-	Values string `json:"values"`
+	Name     string `json:"name"`
+	Values   string `json:"values"`
+	Position string `json:"position"`
 }

@@ -52,3 +52,16 @@ SELECT
 FROM orders
 LIMIT ? OFFSET ?;
 
+-- name: GetOrdersSearchWebCode :many
+SELECT
+    notes,
+    web_code,
+    tax_total,
+    order_total,
+    shipping_total,
+    discount_total,
+    updated_at
+FROM orders
+WHERE web_code REGEXP ?
+LIMIT 10;
+

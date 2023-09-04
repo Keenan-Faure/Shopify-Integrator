@@ -40,107 +40,44 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 
 const getCustomerByID = `-- name: GetCustomerByID :one
 SELECT
-    c.first_name,
-    c.last_name,
-    c.updated_at,
-    a.address1,
-    a.address2,
-    a.first_name,
-    a.last_name,
-    a.suburb,
-    a.city,
-    a.province,
-    a.company,
-    a.postal_code,
-    a.updated_at
-FROM customers c
-INNER JOIN address a
-ON c.id = a.customer_id
-WHERE c.id = ?
+    first_name,
+    last_name,
+    updated_at
+FROM customers
+WHERE id = ?
 `
 
 type GetCustomerByIDRow struct {
-	FirstName   string         `json:"first_name"`
-	LastName    string         `json:"last_name"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	Address1    sql.NullString `json:"address1"`
-	Address2    sql.NullString `json:"address2"`
-	FirstName_2 string         `json:"first_name_2"`
-	LastName_2  string         `json:"last_name_2"`
-	Suburb      sql.NullString `json:"suburb"`
-	City        sql.NullString `json:"city"`
-	Province    sql.NullString `json:"province"`
-	Company     sql.NullString `json:"company"`
-	PostalCode  sql.NullString `json:"postal_code"`
-	UpdatedAt_2 time.Time      `json:"updated_at_2"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (q *Queries) GetCustomerByID(ctx context.Context, id []byte) (GetCustomerByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCustomerByID, id)
 	var i GetCustomerByIDRow
-	err := row.Scan(
-		&i.FirstName,
-		&i.LastName,
-		&i.UpdatedAt,
-		&i.Address1,
-		&i.Address2,
-		&i.FirstName_2,
-		&i.LastName_2,
-		&i.Suburb,
-		&i.City,
-		&i.Province,
-		&i.Company,
-		&i.PostalCode,
-		&i.UpdatedAt_2,
-	)
+	err := row.Scan(&i.FirstName, &i.LastName, &i.UpdatedAt)
 	return i, err
 }
 
 const getCustomersByName = `-- name: GetCustomersByName :many
 SELECT
-    c.first_name,
-    c.last_name,
-    c.updated_at,
-    a.address1,
-    a.address2,
-    a.first_name,
-    a.last_name,
-    a.suburb,
-    a.city,
-    a.province,
-    a.company,
-    a.postal_code,
-    a.updated_at
-FROM customers c
-INNER JOIN address a
-ON c.id = a.customer_id
+    first_name,
+    last_name,
+    updated_at
+FROM customers
 WHERE CONCAT(first_name, ' ', last_name) REGEXP ?
-LIMIT ? OFFSET ?
+LIMIT 10
 `
 
-type GetCustomersByNameParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
-}
-
 type GetCustomersByNameRow struct {
-	FirstName   string         `json:"first_name"`
-	LastName    string         `json:"last_name"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	Address1    sql.NullString `json:"address1"`
-	Address2    sql.NullString `json:"address2"`
-	FirstName_2 string         `json:"first_name_2"`
-	LastName_2  string         `json:"last_name_2"`
-	Suburb      sql.NullString `json:"suburb"`
-	City        sql.NullString `json:"city"`
-	Province    sql.NullString `json:"province"`
-	Company     sql.NullString `json:"company"`
-	PostalCode  sql.NullString `json:"postal_code"`
-	UpdatedAt_2 time.Time      `json:"updated_at_2"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (q *Queries) GetCustomersByName(ctx context.Context, arg GetCustomersByNameParams) ([]GetCustomersByNameRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCustomersByName, arg.Limit, arg.Offset)
+func (q *Queries) GetCustomersByName(ctx context.Context) ([]GetCustomersByNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCustomersByName)
 	if err != nil {
 		return nil, err
 	}
@@ -148,21 +85,7 @@ func (q *Queries) GetCustomersByName(ctx context.Context, arg GetCustomersByName
 	var items []GetCustomersByNameRow
 	for rows.Next() {
 		var i GetCustomersByNameRow
-		if err := rows.Scan(
-			&i.FirstName,
-			&i.LastName,
-			&i.UpdatedAt,
-			&i.Address1,
-			&i.Address2,
-			&i.FirstName_2,
-			&i.LastName_2,
-			&i.Suburb,
-			&i.City,
-			&i.Province,
-			&i.Company,
-			&i.PostalCode,
-			&i.UpdatedAt_2,
-		); err != nil {
+		if err := rows.Scan(&i.FirstName, &i.LastName, &i.UpdatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -13,3 +13,10 @@ SET
     name = ?,
     value = ?
 WHERE product_id = ?;
+
+-- name: GetProductOptions :many
+SELECT
+    name,
+    value
+FROM product_options
+WHERE id = ?;

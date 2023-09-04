@@ -172,6 +172,61 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 	return items, nil
 }
 
+const getOrdersSearchWebCode = `-- name: GetOrdersSearchWebCode :many
+SELECT
+    notes,
+    web_code,
+    tax_total,
+    order_total,
+    shipping_total,
+    discount_total,
+    updated_at
+FROM orders
+WHERE web_code REGEXP ?
+LIMIT 10
+`
+
+type GetOrdersSearchWebCodeRow struct {
+	Notes         sql.NullString `json:"notes"`
+	WebCode       sql.NullString `json:"web_code"`
+	TaxTotal      sql.NullString `json:"tax_total"`
+	OrderTotal    sql.NullString `json:"order_total"`
+	ShippingTotal sql.NullString `json:"shipping_total"`
+	DiscountTotal sql.NullString `json:"discount_total"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetOrdersSearchWebCode(ctx context.Context) ([]GetOrdersSearchWebCodeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOrdersSearchWebCode)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetOrdersSearchWebCodeRow
+	for rows.Next() {
+		var i GetOrdersSearchWebCodeRow
+		if err := rows.Scan(
+			&i.Notes,
+			&i.WebCode,
+			&i.TaxTotal,
+			&i.OrderTotal,
+			&i.ShippingTotal,
+			&i.DiscountTotal,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateOrder = `-- name: UpdateOrder :execresult
 UPDATE orders
 SET

@@ -88,6 +88,65 @@ func (q *Queries) GetProductByID(ctx context.Context, id []byte) (GetProductByID
 	return i, err
 }
 
+const getProducts = `-- name: GetProducts :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+LIMIT ? OFFSET ?
+`
+
+type GetProductsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type GetProductsRow struct {
+	Active      string         `json:"active"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]GetProductsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProducts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsRow
+	for rows.Next() {
+		var i GetProductsRow
+		if err := rows.Scan(
+			&i.Active,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductsByCategory = `-- name: GetProductsByCategory :many
 SELECT
     active,
@@ -317,6 +376,116 @@ func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVend
 	var items []GetProductsByVendorRow
 	for rows.Next() {
 		var i GetProductsByVendorRow
+		if err := rows.Scan(
+			&i.Active,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsSearchSKU = `-- name: GetProductsSearchSKU :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE sku REGEXP ?
+LIMIT 5
+`
+
+type GetProductsSearchSKURow struct {
+	Active      string         `json:"active"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProductsSearchSKU(ctx context.Context) ([]GetProductsSearchSKURow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsSearchSKU)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsSearchSKURow
+	for rows.Next() {
+		var i GetProductsSearchSKURow
+		if err := rows.Scan(
+			&i.Active,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsSearchTitle = `-- name: GetProductsSearchTitle :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE title REGEXP ?
+LIMIT 5
+`
+
+type GetProductsSearchTitleRow struct {
+	Active      string         `json:"active"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProductsSearchTitle(ctx context.Context) ([]GetProductsSearchTitleRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsSearchTitle)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsSearchTitleRow
+	for rows.Next() {
+		var i GetProductsSearchTitleRow
 		if err := rows.Scan(
 			&i.Active,
 			&i.Title,

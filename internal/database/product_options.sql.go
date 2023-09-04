@@ -30,6 +30,42 @@ func (q *Queries) CreateProductOption(ctx context.Context, arg CreateProductOpti
 	return q.db.ExecContext(ctx, createProductOption, arg.ProductID, arg.Name, arg.Value)
 }
 
+const getProductOptions = `-- name: GetProductOptions :many
+SELECT
+    name,
+    value
+FROM product_options
+WHERE id = ?
+`
+
+type GetProductOptionsRow struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+func (q *Queries) GetProductOptions(ctx context.Context, id []byte) ([]GetProductOptionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductOptions, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductOptionsRow
+	for rows.Next() {
+		var i GetProductOptionsRow
+		if err := rows.Scan(&i.Name, &i.Value); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateProductOption = `-- name: UpdateProductOption :execresult
 UPDATE product_options
 SET

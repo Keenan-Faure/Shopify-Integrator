@@ -89,3 +89,41 @@ SELECT
 FROM products
 WHERE vendor REGEXP ?
 LIMIT ? OFFSET ?;
+
+-- name: GetProductsSearchSKU :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE sku REGEXP ?
+LIMIT 5;
+
+-- name: GetProductsSearchTitle :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE title REGEXP ?
+LIMIT 5;
+
+-- name: GetProducts :many
+SELECT
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+LIMIT ? OFFSET ?;

@@ -18,42 +18,17 @@ WHERE id = ?;
 
 -- name: GetCustomerByID :one
 SELECT
-    c.first_name,
-    c.last_name,
-    c.updated_at,
-    a.address1,
-    a.address2,
-    a.first_name,
-    a.last_name,
-    a.suburb,
-    a.city,
-    a.province,
-    a.company,
-    a.postal_code,
-    a.updated_at
-FROM customers c
-INNER JOIN address a
-ON c.id = a.customer_id
-WHERE c.id = ?;
+    first_name,
+    last_name,
+    updated_at
+FROM customers
+WHERE id = ?;
 
 -- name: GetCustomersByName :many
 SELECT
-    c.first_name,
-    c.last_name,
-    c.updated_at,
-    a.address1,
-    a.address2,
-    a.first_name,
-    a.last_name,
-    a.suburb,
-    a.city,
-    a.province,
-    a.company,
-    a.postal_code,
-    a.updated_at
-FROM customers c
-INNER JOIN address a
-ON c.id = a.customer_id
+    first_name,
+    last_name,
+    updated_at
+FROM customers
 WHERE CONCAT(first_name, ' ', last_name) REGEXP ?
-LIMIT ? OFFSET ?;
-
+LIMIT 10;

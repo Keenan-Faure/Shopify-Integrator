@@ -4,13 +4,79 @@ import (
 	"api"
 	"encoding/json"
 	"integrator/internal/database"
+	"log"
 	"net/http"
 	"objects"
+	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/google/uuid"
 )
+
+// GET /api/customers/search?q=value
+
+// GET /api/customers/{id}
+
+// GET /api/customers?page=1
+
+// GET /api/orders/search?q=value
+
+// GET /api/orders/{id}
+
+// GET /api/orders?page=1
+
+// GET /api/products/filter?data=value&page=1
+
+// GET /api/products/search?q=value
+
+// GET /api/products/{id}
+// needs to queries other tables
+func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+	// no page param to decode
+	// retrieve param id from url
+	product_id := chi.URLParam(r, "id")
+	err := ProductIDValidation(product_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
+	product, err := dbconfig.DB.GetProductByID(r.Context(), []byte(product_id))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	product_options, err := dbconfig.DB.GetProductOptions(r.Context(), []byte(product_id))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	variants, err := dbconfig.DB.GetProductVariants(r.Context(), []byte(product_id))
+	for _, value := range variants {
+		variant_qty, err := dbconfig.DB.variant
+	}
+
+	// query product data (by id)
+	// query variants (by product_id)
+	// query variant tables (qty, pricing)
+	// combine data (use conversion object)
+	// respond with data to build fe
+
+}
+
+// GET /api/products?page=1
+func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+		log.Println("Error decoding page param:", err)
+	}
+	dbProducts, err := dbconfig.DB.GetProducts(r.Context(), database.GetProductsParams{
+		Limit:  10,
+		Offset: int32((page - 1) * 10),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, dbProducts)
+}
 
 // POST /api/login
 func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
@@ -34,11 +100,9 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
-		ID:        uuid.New().String(),
 		Name:      body.Name,
 		CreatedAt: time.Time{},
 		UpdatedAt: time.Time{},
-		ApiKey:    uuid.New().String(),
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
