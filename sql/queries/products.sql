@@ -38,54 +38,36 @@ WHERE id = ?;
 
 -- name: GetProductsByCategory :many
 SELECT
-    active,
+    id,
     title,
     body_html,
     category,
     vendor,
-    product_type,
-    updated_at
+    product_type
 FROM products
-WHERE category REGEXP ?
-LIMIT ? OFFSET ?;
-
--- name: GetProductsByFilter :many
-SELECT
-    active,
-    title,
-    body_html,
-    category,
-    vendor,
-    product_type,
-    updated_at
-FROM products
-WHERE category IN (?)
-AND product_type IN (?)
-AND vendor IN (?)
+WHERE category LIKE ?
 LIMIT ? OFFSET ?;
 
 -- name: GetProductsByType :many
 SELECT
-    active,
+    id,
     title,
     body_html,
     category,
     vendor,
-    product_type,
-    updated_at
+    product_type
 FROM products
 WHERE product_type LIKE ?
 LIMIT ? OFFSET ?;
 
 -- name: GetProductsByVendor :many
 SELECT
-    active,
+    id,
     title,
     body_html,
     category,
     vendor,
-    product_type,
-    updated_at
+    product_type
 FROM products
 WHERE vendor LIKE ?
 LIMIT ? OFFSET ?;

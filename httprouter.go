@@ -33,22 +33,56 @@ func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request
 
 // GET /api/orders/search?q=value
 func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	
 }
 
 // GET /api/orders/{id}
 func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	order_id := chi.URLParam(r, "id")
+	err := ProductIDValidation(order_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
+	order_id_byte := []byte(order_id)
+	product_data, err := CompileProductData(dbconfig, order_id_byte, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, product_data)
 }
 
 // GET /api/orders?page=1
 func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+		log.Println("Error decoding page param:", err)
+	}
+	dbOrders, err := dbconfig.DB.GetOrders(r.Context(), database.GetOrdersParams{
+		Limit:  10,
+		Offset: int32((page - 1) * 10),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, dbOrders)
 }
 
 // GET /api/products/filter?data=value&page=1
 func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+		log.Println("Error decoding page param:", err)
+	}
+	query_param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
+	query_param_category := utils.ConfirmFilters(r.URL.Query().Get("category"))
+	query_param_vendor := utils.ConfirmFilters(r.URL.Query().Get("vendor"))
+	response, err := CompileFilterSearch(dbconfig, r, page, query_param_type, query_param_category, query_param_vendor)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, response)
 }
 
 // GET /api/products/search?q=value

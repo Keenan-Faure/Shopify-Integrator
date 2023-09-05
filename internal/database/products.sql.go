@@ -149,35 +149,34 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 
 const getProductsByCategory = `-- name: GetProductsByCategory :many
 SELECT
-    active,
+    id,
     title,
     body_html,
     category,
     vendor,
-    product_type,
-    updated_at
+    product_type
 FROM products
-WHERE category REGEXP ?
+WHERE category LIKE ?
 LIMIT ? OFFSET ?
 `
 
 type GetProductsByCategoryParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Category sql.NullString `json:"category"`
+	Limit    int32          `json:"limit"`
+	Offset   int32          `json:"offset"`
 }
 
 type GetProductsByCategoryRow struct {
-	Active      string         `json:"active"`
+	ID          []byte         `json:"id"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
 	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
-	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetProductsByCategory(ctx context.Context, arg GetProductsByCategoryParams) ([]GetProductsByCategoryRow, error) {
-	rows, err := q.db.QueryContext(ctx, getProductsByCategory, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getProductsByCategory, arg.Category, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -186,84 +185,12 @@ func (q *Queries) GetProductsByCategory(ctx context.Context, arg GetProductsByCa
 	for rows.Next() {
 		var i GetProductsByCategoryRow
 		if err := rows.Scan(
-			&i.Active,
+			&i.ID,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
 			&i.Vendor,
 			&i.ProductType,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getProductsByFilter = `-- name: GetProductsByFilter :many
-SELECT
-    active,
-    title,
-    body_html,
-    category,
-    vendor,
-    product_type,
-    updated_at
-FROM products
-WHERE category IN (?)
-AND product_type IN (?)
-AND vendor IN (?)
-LIMIT ? OFFSET ?
-`
-
-type GetProductsByFilterParams struct {
-	Category    sql.NullString `json:"category"`
-	ProductType sql.NullString `json:"product_type"`
-	Vendor      sql.NullString `json:"vendor"`
-	Limit       int32          `json:"limit"`
-	Offset      int32          `json:"offset"`
-}
-
-type GetProductsByFilterRow struct {
-	Active      string         `json:"active"`
-	Title       sql.NullString `json:"title"`
-	BodyHtml    sql.NullString `json:"body_html"`
-	Category    sql.NullString `json:"category"`
-	Vendor      sql.NullString `json:"vendor"`
-	ProductType sql.NullString `json:"product_type"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) GetProductsByFilter(ctx context.Context, arg GetProductsByFilterParams) ([]GetProductsByFilterRow, error) {
-	rows, err := q.db.QueryContext(ctx, getProductsByFilter,
-		arg.Category,
-		arg.ProductType,
-		arg.Vendor,
-		arg.Limit,
-		arg.Offset,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetProductsByFilterRow
-	for rows.Next() {
-		var i GetProductsByFilterRow
-		if err := rows.Scan(
-			&i.Active,
-			&i.Title,
-			&i.BodyHtml,
-			&i.Category,
-			&i.Vendor,
-			&i.ProductType,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -280,13 +207,12 @@ func (q *Queries) GetProductsByFilter(ctx context.Context, arg GetProductsByFilt
 
 const getProductsByType = `-- name: GetProductsByType :many
 SELECT
-    active,
+    id,
     title,
     body_html,
     category,
     vendor,
-    product_type,
-    updated_at
+    product_type
 FROM products
 WHERE product_type LIKE ?
 LIMIT ? OFFSET ?
@@ -299,13 +225,12 @@ type GetProductsByTypeParams struct {
 }
 
 type GetProductsByTypeRow struct {
-	Active      string         `json:"active"`
+	ID          []byte         `json:"id"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
 	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
-	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypeParams) ([]GetProductsByTypeRow, error) {
@@ -318,13 +243,12 @@ func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypePa
 	for rows.Next() {
 		var i GetProductsByTypeRow
 		if err := rows.Scan(
-			&i.Active,
+			&i.ID,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
 			&i.Vendor,
 			&i.ProductType,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -341,13 +265,12 @@ func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypePa
 
 const getProductsByVendor = `-- name: GetProductsByVendor :many
 SELECT
-    active,
+    id,
     title,
     body_html,
     category,
     vendor,
-    product_type,
-    updated_at
+    product_type
 FROM products
 WHERE vendor LIKE ?
 LIMIT ? OFFSET ?
@@ -360,13 +283,12 @@ type GetProductsByVendorParams struct {
 }
 
 type GetProductsByVendorRow struct {
-	Active      string         `json:"active"`
+	ID          []byte         `json:"id"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
 	Vendor      sql.NullString `json:"vendor"`
 	ProductType sql.NullString `json:"product_type"`
-	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVendorParams) ([]GetProductsByVendorRow, error) {
@@ -379,13 +301,12 @@ func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVend
 	for rows.Next() {
 		var i GetProductsByVendorRow
 		if err := rows.Scan(
-			&i.Active,
+			&i.ID,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
 			&i.Vendor,
 			&i.ProductType,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

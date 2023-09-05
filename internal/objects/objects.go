@@ -12,6 +12,46 @@ type RequestBodyUser struct {
 }
 
 // object_converter.go
+type Order struct {
+	Notes         string `json:"notes"`
+	WebCode       string `json:"web_code"`
+	TaxTotal      string `json:"tax_total"`
+	OrderTotal    string `json:"order_total"`
+	ShippingTotal string `json:"shipping_total"`
+	DiscountTotal string `json:"discount_total"`
+	UpdatedAt     string `json:"updated_at"`
+	CreatedAt     string `json:"created_at"`
+}
+
+type OrderCustomer struct {
+	FirstName       string          `json:"first_name"`
+	LastName        string          `json:"last_name"`
+	BillingAddress  CustomerAddress `json:"billing_address"`
+	ShippingAddress CustomerAddress `json:"shipping_address"`
+	CreatedAt       string          `json:"created_at"`
+	UpdatedAt       string          `json:"updated_at"`
+}
+
+type CustomerAddress struct {
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	Address1   string `json:"address_1"`
+	Address2   string `json:"address_2"`
+	Suburb     string `json:"suburb"`
+	City       string `json:"city"`
+	Province   string `json:"province"`
+	PostalCode string `json:"postal_code"`
+	Company    string `json:"company"`
+}
+
+type OrderLines struct {
+	SKU      string `json:"sku"`
+	Price    string `json:"price"`
+	Barcode  string `json:"barcode"`
+	Qty      string `json:"qty"`
+	TaxRate  string `json:"tax_rate"`
+	TaxTotal string `json:"tax_total"`
+}
 type SearchProduct struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`

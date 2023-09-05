@@ -4,7 +4,95 @@ import (
 	"integrator/internal/database"
 	"net/http"
 	"objects"
+	"utils"
 )
+
+// Compiles the order data
+func CompileOrderData(
+	dbconfig *DbConfig,
+	order_id []byte,
+	r *http.Request) (objects.Order, error) {
+	order, err := dbconfig.DB.GetProductByID(r.Context(), order_id)
+	if err != nil {
+		return objects.Order{}, err
+	}
+	order_customer :=
+	order_customer_shipping_address :=
+	order_customer_billing_address :=
+	order_line_items := 
+}
+
+// Compiles the filter results into one object
+func CompileFilterSearch(
+	dbconfig *DbConfig,
+	r *http.Request,
+	page int,
+	product_type,
+	category,
+	vendor string) ([]objects.SearchProduct, error) {
+	response := []objects.SearchProduct{}
+	if product_type != "" {
+		prod_type, err := dbconfig.DB.GetProductsByType(r.Context(), database.GetProductsByTypeParams{
+			ProductType: utils.ConvertStringToSQL(utils.ConvertStringToLike(product_type)),
+			Limit:       10,
+			Offset:      int32((page - 1) * 10),
+		})
+		if err != nil {
+			return response, err
+		}
+		for _, value := range prod_type {
+			search_product := objects.SearchProduct{
+				ID:          string(value.ID),
+				Title:       value.Title.String,
+				Category:    value.Category.String,
+				ProductType: value.ProductType.String,
+				Vendor:      value.Vendor.String,
+			}
+			response = append(response, search_product)
+		}
+	}
+	if category != "" {
+		prod_category, err := dbconfig.DB.GetProductsByCategory(r.Context(), database.GetProductsByCategoryParams{
+			Category: utils.ConvertStringToSQL(utils.ConvertStringToLike(category)),
+			Limit:    10,
+			Offset:   int32((page - 1) * 10),
+		})
+		if err != nil {
+			return response, err
+		}
+		for _, value := range prod_category {
+			search_product := objects.SearchProduct{
+				ID:          string(value.ID),
+				Title:       value.Title.String,
+				Category:    value.Category.String,
+				ProductType: value.ProductType.String,
+				Vendor:      value.Vendor.String,
+			}
+			response = append(response, search_product)
+		}
+	}
+	if vendor != "" {
+		prod_vendor, err := dbconfig.DB.GetProductsByVendor(r.Context(), database.GetProductsByVendorParams{
+			Vendor: utils.ConvertStringToSQL(utils.ConvertStringToLike(vendor)),
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			return response, err
+		}
+		for _, value := range prod_vendor {
+			search_product := objects.SearchProduct{
+				ID:          string(value.ID),
+				Title:       value.Title.String,
+				Category:    value.Category.String,
+				ProductType: value.ProductType.String,
+				Vendor:      value.Vendor.String,
+			}
+			response = append(response, search_product)
+		}
+	}
+	return response, nil
+}
 
 // Comples the search results into one object
 func CompileSearchResult(
