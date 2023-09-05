@@ -26,6 +26,19 @@ SET
     updated_at = ?
 WHERE id = ?;
 
+-- name: GetOrderByID :one
+SELECT
+    customer_id,
+    notes,
+    web_code,
+    tax_total,
+    order_total,
+    shipping_total,
+    discount_total,
+    updated_at
+FROM orders
+WHERE id = ?;
+
 -- name: GetOrderByCustomer :many
 SELECT
     customer_id,

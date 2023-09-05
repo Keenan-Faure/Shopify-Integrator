@@ -110,6 +110,47 @@ func (q *Queries) GetOrderByCustomer(ctx context.Context, customerID []byte) ([]
 	return items, nil
 }
 
+const getOrderByID = `-- name: GetOrderByID :one
+SELECT
+    customer_id,
+    notes,
+    web_code,
+    tax_total,
+    order_total,
+    shipping_total,
+    discount_total,
+    updated_at
+FROM orders
+WHERE id = ?
+`
+
+type GetOrderByIDRow struct {
+	CustomerID    []byte         `json:"customer_id"`
+	Notes         sql.NullString `json:"notes"`
+	WebCode       sql.NullString `json:"web_code"`
+	TaxTotal      sql.NullString `json:"tax_total"`
+	OrderTotal    sql.NullString `json:"order_total"`
+	ShippingTotal sql.NullString `json:"shipping_total"`
+	DiscountTotal sql.NullString `json:"discount_total"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetOrderByID(ctx context.Context, id []byte) (GetOrderByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getOrderByID, id)
+	var i GetOrderByIDRow
+	err := row.Scan(
+		&i.CustomerID,
+		&i.Notes,
+		&i.WebCode,
+		&i.TaxTotal,
+		&i.OrderTotal,
+		&i.ShippingTotal,
+		&i.DiscountTotal,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getOrders = `-- name: GetOrders :many
 SELECT
     customer_id,

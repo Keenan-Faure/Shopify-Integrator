@@ -12,14 +12,22 @@ func CompileOrderData(
 	dbconfig *DbConfig,
 	order_id []byte,
 	r *http.Request) (objects.Order, error) {
-	order, err := dbconfig.DB.GetProductByID(r.Context(), order_id)
+	order, err := dbconfig.DB.GetOrderByID(r.Context(), order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_customer :=
-	order_customer_shipping_address :=
-	order_customer_billing_address :=
-	order_line_items := 
+	order_customer, err := dbconfig.DB.GetCustomerByID(r.Context(), order.CustomerID)
+	if err != nil {
+		return objects.Order{}, err
+	}
+	order_customer_shipping_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), order.CustomerID)
+	if err != nil {
+		return objects.Order{}, err
+	}
+	order_line_items, err := dbconfig.DB.GetOrderLinesByOrder(r.Context(), order_id)
+	if err != nil {
+		return objects.Order{}, err
+	}
 }
 
 // Compiles the filter results into one object
