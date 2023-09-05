@@ -20,7 +20,7 @@ func CompileOrderData(
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_customer_shipping_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), order.CustomerID)
+	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), order.CustomerID)
 	if err != nil {
 		return objects.Order{}, err
 	}
@@ -28,6 +28,66 @@ func CompileOrderData(
 	if err != nil {
 		return objects.Order{}, err
 	}
+	LineItems := []objects.OrderLines{}
+	for _, value := range order_line_items {
+		LineItems = append(LineItems, objects.OrderLines{
+			SKU:      value.Sku,
+			Price:    value.Price.String,
+			Barcode:  int(value.Barcode.Int32),
+			Qty:      int(value.Qty.Int32),
+			TaxRate:  value.TaxRate.String,
+			TaxTotal: value.TaxTotal.String,
+		})
+
+	}
+	order_shipping_lines, err := dbconfig.DB.GetShippingLinesByOrder(r.Context(), order_id)
+	if err != nil {
+		return objects.Order{}, err
+	}
+	ShippingLineItems := []objects.OrderLines{}
+	for _, value := range order_shipping_lines {
+		ShippingLineItems = append(ShippingLineItems, objects.OrderLines{
+			SKU:      value.Sku,
+			Price:    value.Price.String,
+			Barcode:  int(value.Barcode.Int32),
+			Qty:      int(value.Qty.Int32),
+			TaxRate:  value.TaxRate.String,
+			TaxTotal: value.TaxTotal.String,
+		})
+	}
+	OrderCustomerAddress := []objects.CustomerAddress{}
+	for _, value := range order_customer_address {
+		OrderCustomerAddress = append(OrderCustomerAddress, objects.CustomerAddress{
+			FirstName:  value.FirstName,
+			LastName:   value.LastName,
+			Address1:   value.Address1.String,
+			Address2:   value.Address2.String,
+			Suburb:     value.Suburb.String,
+			Province:   value.Province.String,
+			PostalCode: value.PostalCode.String,
+			Company:    value.Company.String,
+		})
+	}
+	OrderCustomer := objects.OrderCustomer{
+		FirstName: order_customer.FirstName,
+		LastName:  order_customer.LastName,
+		UpdatedAt: order_customer.UpdatedAt.String(),
+		Address:   OrderCustomerAddress,
+	}
+	Order := objects.Order{
+		Notes:             order.Notes.String,
+		WebCode:           order.WebCode.String,
+		TaxTotal:          order.TaxTotal.String,
+		OrderTotal:        order.OrderTotal.String,
+		ShippingTotal:     order.ShippingTotal.String,
+		DiscountTotal:     order.DiscountTotal.String,
+		UpdatedAt:         order.UpdatedAt.String(),
+		CreatedAt:         order.CreatedAt.String(),
+		OrderCustomer:     OrderCustomer,
+		LineItems:         LineItems,
+		ShippingLineItems: ShippingLineItems,
+	}
+	return Order, nil
 }
 
 // Compiles the filter results into one object

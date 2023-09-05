@@ -33,7 +33,7 @@ func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request
 
 // GET /api/orders/search?q=value
 func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	
+
 }
 
 // GET /api/orders/{id}
@@ -44,11 +44,11 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 	}
 	order_id_byte := []byte(order_id)
-	product_data, err := CompileProductData(dbconfig, order_id_byte, r)
+	order_data, err := CompileOrderData(dbconfig, order_id_byte, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	RespondWithJSON(w, http.StatusOK, product_data)
+	RespondWithJSON(w, http.StatusOK, order_data)
 }
 
 // GET /api/orders?page=1

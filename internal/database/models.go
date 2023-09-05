@@ -50,6 +50,7 @@ type Order struct {
 type OrderLine struct {
 	ID        []byte         `json:"id"`
 	OrderID   []byte         `json:"order_id"`
+	LineType  sql.NullString `json:"line_type"`
 	Sku       string         `json:"sku"`
 	Price     sql.NullString `json:"price"`
 	Barcode   sql.NullInt32  `json:"barcode"`

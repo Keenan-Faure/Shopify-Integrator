@@ -13,23 +13,24 @@ type RequestBodyUser struct {
 
 // object_converter.go
 type Order struct {
-	Notes         string `json:"notes"`
-	WebCode       string `json:"web_code"`
-	TaxTotal      string `json:"tax_total"`
-	OrderTotal    string `json:"order_total"`
-	ShippingTotal string `json:"shipping_total"`
-	DiscountTotal string `json:"discount_total"`
-	UpdatedAt     string `json:"updated_at"`
-	CreatedAt     string `json:"created_at"`
+	Notes             string        `json:"notes"`
+	WebCode           string        `json:"web_code"`
+	TaxTotal          string        `json:"tax_total"`
+	OrderTotal        string        `json:"order_total"`
+	ShippingTotal     string        `json:"shipping_total"`
+	DiscountTotal     string        `json:"discount_total"`
+	UpdatedAt         string        `json:"updated_at"`
+	CreatedAt         string        `json:"created_at"`
+	OrderCustomer     OrderCustomer `json:"customer"`
+	LineItems         []OrderLines  `json:"line_items"`
+	ShippingLineItems []OrderLines  `json:"shipping_lines"`
 }
 
 type OrderCustomer struct {
-	FirstName       string          `json:"first_name"`
-	LastName        string          `json:"last_name"`
-	BillingAddress  CustomerAddress `json:"billing_address"`
-	ShippingAddress CustomerAddress `json:"shipping_address"`
-	CreatedAt       string          `json:"created_at"`
-	UpdatedAt       string          `json:"updated_at"`
+	FirstName string            `json:"first_name"`
+	LastName  string            `json:"last_name"`
+	Address   []CustomerAddress `json:"shipping_address"`
+	UpdatedAt string            `json:"updated_at"`
 }
 
 type CustomerAddress struct {
@@ -47,8 +48,8 @@ type CustomerAddress struct {
 type OrderLines struct {
 	SKU      string `json:"sku"`
 	Price    string `json:"price"`
-	Barcode  string `json:"barcode"`
-	Qty      string `json:"qty"`
+	Barcode  int    `json:"barcode"`
+	Qty      int    `json:"qty"`
 	TaxRate  string `json:"tax_rate"`
 	TaxTotal string `json:"tax_total"`
 }

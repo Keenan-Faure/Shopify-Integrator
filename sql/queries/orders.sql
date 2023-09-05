@@ -35,7 +35,8 @@ SELECT
     order_total,
     shipping_total,
     discount_total,
-    updated_at
+    updated_at,
+    created_at
 FROM orders
 WHERE id = ?;
 

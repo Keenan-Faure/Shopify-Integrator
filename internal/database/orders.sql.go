@@ -119,7 +119,8 @@ SELECT
     order_total,
     shipping_total,
     discount_total,
-    updated_at
+    updated_at,
+    created_at
 FROM orders
 WHERE id = ?
 `
@@ -133,6 +134,7 @@ type GetOrderByIDRow struct {
 	ShippingTotal sql.NullString `json:"shipping_total"`
 	DiscountTotal sql.NullString `json:"discount_total"`
 	UpdatedAt     time.Time      `json:"updated_at"`
+	CreatedAt     time.Time      `json:"created_at"`
 }
 
 func (q *Queries) GetOrderByID(ctx context.Context, id []byte) (GetOrderByIDRow, error) {
@@ -147,6 +149,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id []byte) (GetOrderByIDRow,
 		&i.ShippingTotal,
 		&i.DiscountTotal,
 		&i.UpdatedAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
