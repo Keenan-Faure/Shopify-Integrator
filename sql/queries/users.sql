@@ -11,6 +11,13 @@ INSERT INTO users (
 -- name: GetUsers :one
 SELECT * FROM users LIMIT 1;
 
+-- name: GetUserByName :one
+SELECT
+    name
+FROM users
+WHERE name = ?
+LIMIT 1;
+
 -- name: UpdateUser :execresult
 UPDATE users 
 SET

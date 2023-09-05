@@ -11,6 +11,50 @@ type RequestBodyUser struct {
 	Name string
 }
 
+// object_converter.go
+type SearchProduct struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Category    string `json:"category"`
+	ProductType string `json:"product_type"`
+	Vendor      string `json:"vendor"`
+}
+type Product struct {
+	Active         string           `json:"active"`
+	Title          string           `json:"title"`
+	BodyHTML       string           `json:"body_html"`
+	Category       string           `json:"category"`
+	Vendor         string           `json:"vendor"`
+	ProductType    string           `json:"product_type"`
+	Variants       []ProductVariant `json:"variants"`
+	ProductOptions []ProductOptions `json:"options"`
+	UpdatedAt      string           `json:"updated_at"`
+}
+type ProductOptions struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+type ProductVariant struct {
+	Sku             string         `json:"sku"`
+	Option1         string         `json:"option1"`
+	Option2         string         `json:"option2"`
+	Option3         string         `json:"option3"`
+	Barcode         string         `json:"barcode"`
+	VariantPricing  []VariantPrice `json:"variant_price_tiers"`
+	VariantQuantity []VariantQty   `json:"variant_quantities"`
+	UpdatedAt       string         `json:"updated_at"`
+}
+
+type VariantPrice struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type VariantQty struct {
+	Name  string `json:"name"`
+	Value int    `json:"value"`
+}
+
 // Api Endpoints
 type Endpoints struct {
 	Status      bool             `json:"status"`
@@ -57,7 +101,6 @@ type ShopifyVariant struct {
 	Option1        string `json:"option1"`
 	Option2        string `json:"option2"`
 	Option3        string `json:"option3"`
-	Weight         string `json:"weight"`
 	Barcode        string `json:"barcode"`
 }
 

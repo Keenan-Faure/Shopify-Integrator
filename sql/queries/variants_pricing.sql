@@ -13,14 +13,12 @@ INSERT INTO variant_pricing(
 UPDATE variant_pricing
 SET
     name = ?,
-    value = ?,
-    updated_at = ?
+    value = ?
 WHERE variant_id = ?;
 
 -- name: GetVariantPricing :many
 SELECT 
     name,
-    value,
-    updated_at
+    value
 FROM variant_pricing
 WHERE variant_id = ?;

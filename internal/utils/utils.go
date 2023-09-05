@@ -31,3 +31,8 @@ func ExtractAPIKey(authString string) (string, error) {
 	}
 	return authString[7:], nil
 }
+
+// Convert string to LIKE (%) sql format
+func ConvertStringToLike(value string) string {
+	return "%" + value + "%"
+}

@@ -13,14 +13,12 @@ INSERT INTO variant_qty(
 UPDATE variant_qty
 SET
     name = ?,
-    value = ?,
-    updated_at = ?
+    value = ?
 WHERE variant_id = ?;
 
 -- name: GetVariantQty :many
 SELECT 
     name,
-    value,
-    updated_at
+    value
 FROM variant_qty
 WHERE variant_id = ?;

@@ -74,7 +74,7 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE product_type REGEXP ?
+WHERE product_type LIKE ?
 LIMIT ? OFFSET ?;
 
 -- name: GetProductsByVendor :many
@@ -87,33 +87,31 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE vendor REGEXP ?
+WHERE vendor LIKE ?
 LIMIT ? OFFSET ?;
 
 -- name: GetProductsSearchSKU :many
 SELECT
-    active,
-    title,
-    body_html,
-    category,
-    vendor,
-    product_type,
-    updated_at
-FROM products
-WHERE sku REGEXP ?
+    p.id,
+    p.title,
+    p.category,
+    p.vendor,
+    p.product_type
+FROM products p
+INNER JOIN variants v
+ON p.id = variants.product_id
+WHERE v.sku LIKE ?
 LIMIT 5;
 
 -- name: GetProductsSearchTitle :many
 SELECT
-    active,
+    id,
     title,
-    body_html,
     category,
     vendor,
-    product_type,
-    updated_at
+    product_type
 FROM products
-WHERE title REGEXP ?
+WHERE title LIKE ?
 LIMIT 5;
 
 -- name: GetProducts :many

@@ -6,7 +6,9 @@ CREATE TABLE variants(
     option1 VARCHAR(16),
     option2 VARCHAR(16),
     option3 VARCHAR(16),
-    barcode VARCHAR(64)
+    barcode VARCHAR(64),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 
 -- +goose Down

@@ -2,6 +2,7 @@ package main
 
 import (
 	"api"
+	"database/sql"
 	"encoding/json"
 	"integrator/internal/database"
 	"log"
@@ -9,56 +10,80 @@ import (
 	"objects"
 	"strconv"
 	"time"
+	"utils"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
 
 // GET /api/customers/search?q=value
+func (dbconfig *DbConfig) CustomerSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+
+}
 
 // GET /api/customers/{id}
+func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+
+}
 
 // GET /api/customers?page=1
+func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+
+}
 
 // GET /api/orders/search?q=value
+func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+
+}
 
 // GET /api/orders/{id}
+func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+
+}
 
 // GET /api/orders?page=1
+func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+
+}
 
 // GET /api/products/filter?data=value&page=1
+func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+
+}
 
 // GET /api/products/search?q=value
+func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
+	search_query := r.URL.Query().Get("q")
+	if search_query != "" || len(search_query) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
+	}
+	sku_search, err := dbconfig.DB.GetProductsSearchSKU(r.Context(), utils.ConvertStringToLike(search_query))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), sql.NullString{
+		String: utils.ConvertStringToLike(search_query),
+		Valid:  true,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, CompileSearchResult(sku_search, title_search))
+}
 
 // GET /api/products/{id}
-// needs to queries other tables
 func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	// no page param to decode
-	// retrieve param id from url
 	product_id := chi.URLParam(r, "id")
 	err := ProductIDValidation(product_id)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 	}
-	product, err := dbconfig.DB.GetProductByID(r.Context(), []byte(product_id))
+	product_id_byte := []byte(product_id)
+	product_data, err := CompileProductData(dbconfig, product_id_byte, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	product_options, err := dbconfig.DB.GetProductOptions(r.Context(), []byte(product_id))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	variants, err := dbconfig.DB.GetProductVariants(r.Context(), []byte(product_id))
-	for _, value := range variants {
-		variant_qty, err := dbconfig.DB.variant
-	}
-
-	// query product data (by id)
-	// query variants (by product_id)
-	// query variant tables (qty, pricing)
-	// combine data (use conversion object)
-	// respond with data to build fe
-
+	RespondWithJSON(w, http.StatusOK, product_data)
 }
 
 // GET /api/products?page=1
