@@ -7,6 +7,14 @@ import (
 	"objects"
 )
 
+// Product: validation
+func IDValidation(id string) error {
+	if id == "" || len(id) <= 0 || len(id) > 16 {
+		return errors.New("Invalid product id")
+	}
+	return nil
+}
+
 // User: validation
 func UserValidation(user objects.RequestBodyUser) error {
 	if user.Name == "" {

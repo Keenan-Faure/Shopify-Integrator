@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"errors"
 	"os"
 	"strings"
@@ -30,4 +31,31 @@ func ExtractAPIKey(authString string) (string, error) {
 		return "", errors.New("malformed second part of authentication")
 	}
 	return authString[7:], nil
+}
+
+// Convert string to LIKE (%) sql format
+func ConvertStringToLike(value string) string {
+	return "%" + value + "%"
+}
+
+// Returns the filter value if valid
+func ConfirmFilters(filter string) string {
+	if filter != "" || len(filter) > 0 {
+		return filter
+	}
+	return ""
+}
+
+// converts a string to a sql.NullString object
+func ConvertStringToSQL(description string) sql.NullString {
+	if description == "" {
+		return sql.NullString{
+			String: "",
+			Valid:  false,
+		}
+	}
+	return sql.NullString{
+		String: description,
+		Valid:  true,
+	}
 }

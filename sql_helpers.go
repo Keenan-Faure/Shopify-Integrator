@@ -13,7 +13,7 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 			return false, err
 		}
 	}
-	if username.Name == name {
+	if username == name {
 		return true, errors.New("name already exists")
 	}
 	return false, nil

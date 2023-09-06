@@ -1,14 +1,10 @@
 package main
 
 import (
-	"context"
 	"fetch"
-	"integrator/internal/database"
 	"log"
 	"objects"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const fetch_time_shopify = 120 * time.Second // 120 seconds
@@ -34,16 +30,9 @@ func LoopJSONShopify(
 func ProcessShopifyProducts(dbconfig *DbConfig, products objects.ShopifyProducts) {
 	for _, value := range products.Products {
 		for _, sub_value := range value.Variants {
-			_, err := dbconfig.DB.CreateShopifyProduct(context.Background(), database.CreateShopifyProductParams{
-				ID:        uuid.New(),
-				Title:     value.Title,
-				Sku:       sub_value.Sku,
-				Price:     sub_value.Price,
-				Qty:       int32(sub_value.InventoryQuantity),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-
+			//create product in database
+			// if error = unique value not allowed etc
+			// override
 		}
 	}
 	log.Printf("From Shopify %d products were collected", len(products.Products))

@@ -1,25 +1,24 @@
 -- name: CreateVariantPricing :execresult
 INSERT INTO variant_pricing(
-    id,
     variant_id,
     name,
     value,
     created_at,
     updated_at
-) VALUES (?, ?, ?, ?, ?, ?);
+) VALUES (
+    ?, ?, ?, ?, ?
+);
 
 -- name: UpdateVariantPricing :execresult
 UPDATE variant_pricing
 SET
     name = ?,
-    value = ?,
-    updated_at = ?
+    value = ?
 WHERE variant_id = ?;
 
 -- name: GetVariantPricing :many
 SELECT 
     name,
-    value,
-    updated_at
+    value
 FROM variant_pricing
-WHERE variant_id = ?
+WHERE variant_id = ?;

@@ -1,9 +1,9 @@
 -- +goose Up
 CREATE TABLE variant_qty(
-    id VARCHAR(32) UNIQUE NOT NULL,
-    variant_id VARCHAR(32) UNIQUE NOT NULL,
+    id BINARY(16) PRIMARY KEY UNIQUE NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
+    variant_id BINARY(16) UNIQUE NOT NULL,
     name VARCHAR(16) NOT NULL,
-    value VARCHAR(32) NOT NULL,
+    value INTEGER DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
