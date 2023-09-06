@@ -8,8 +8,8 @@ import (
 )
 
 // Product: validation
-func ProductIDValidation(id string) error {
-	if(id == "" || len(id) <= 0 || len(id) > 16) {
+func IDValidation(id string) error {
+	if id == "" || len(id) <= 0 || len(id) > 16 {
 		return errors.New("Invalid product id")
 	}
 	return nil

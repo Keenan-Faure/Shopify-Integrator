@@ -12,6 +12,16 @@ type RequestBodyUser struct {
 }
 
 // object_converter.go
+
+type SearchOrder struct {
+	Notes         string `json:"notes"`
+	WebCode       string `json:"web_code"`
+	TaxTotal      string `json:"tax_total"`
+	OrderTotal    string `json:"order_total"`
+	ShippingTotal string `json:"shipping_total"`
+	DiscountTotal string `json:"discount_total"`
+	UpdatedAt     string `json:"updated_at"`
+}
 type Order struct {
 	Notes             string        `json:"notes"`
 	WebCode           string        `json:"web_code"`
@@ -27,6 +37,13 @@ type Order struct {
 }
 
 type OrderCustomer struct {
+	FirstName string            `json:"first_name"`
+	LastName  string            `json:"last_name"`
+	Address   []CustomerAddress `json:"shipping_address"`
+	UpdatedAt string            `json:"updated_at"`
+}
+
+type Customer struct {
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
 	Address   []CustomerAddress `json:"shipping_address"`
@@ -52,6 +69,10 @@ type OrderLines struct {
 	Qty      int    `json:"qty"`
 	TaxRate  string `json:"tax_rate"`
 	TaxTotal string `json:"tax_total"`
+}
+type SearchCustomer struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }
 type SearchProduct struct {
 	ID          string `json:"id"`

@@ -7,6 +7,91 @@ import (
 	"utils"
 )
 
+// Compile the customer search results
+func CompileCustomerSearchData(
+	customers_name []database.GetCustomersByNameRow,
+	customer_by_id []database.GetCustomersByNameRow) []objects.SearchCustomer {
+	customer := []objects.SearchCustomer{}
+	for _, value := range customers_name {
+		customer = append(customer, objects.SearchCustomer{
+			FirstName: value.FirstName,
+			LastName:  value.LastName,
+		})
+	}
+	for _, value := range customer_by_id {
+		customer = append(customer, objects.SearchCustomer{
+			FirstName: value.FirstName,
+			LastName:  value.LastName,
+		})
+	}
+	return customer
+}
+
+// Compiles the customer data
+func CompileCustomerData(
+	dbconfig *DbConfig,
+	customer_id []byte,
+	r *http.Request) (objects.Customer, error) {
+	customer, err := dbconfig.DB.GetCustomerByID(r.Context(), customer_id)
+	if err != nil {
+		return objects.Customer{}, err
+	}
+	customer_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), customer_id)
+	if err != nil {
+		return objects.Customer{}, err
+	}
+	CustomerAddress := []objects.CustomerAddress{}
+	for _, value := range customer_address {
+		CustomerAddress = append(CustomerAddress, objects.CustomerAddress{
+			FirstName:  value.FirstName,
+			LastName:   value.LastName,
+			Address1:   value.Address1.String,
+			Address2:   value.Address2.String,
+			Suburb:     value.Suburb.String,
+			City:       value.City.String,
+			Province:   value.Province.String,
+			PostalCode: value.PostalCode.String,
+			Company:    value.Company.String,
+		})
+	}
+	return objects.Customer{
+		FirstName: customer.FirstName,
+		LastName:  customer.LastName,
+		Address:   CustomerAddress,
+		UpdatedAt: customer.UpdatedAt.String(),
+	}, nil
+}
+
+// Compiles the order search data
+func CompileOrderSearchResult(
+	customer_fl []database.GetOrdersSearchByCustomerRow,
+	webcode []database.GetOrdersSearchWebCodeRow) []objects.SearchOrder {
+	response := []objects.SearchOrder{}
+	for _, value := range customer_fl {
+		response = append(response, objects.SearchOrder{
+			Notes:         value.Notes.String,
+			WebCode:       value.WebCode.String,
+			TaxTotal:      value.TaxTotal.String,
+			OrderTotal:    value.OrderTotal.String,
+			ShippingTotal: value.ShippingTotal.String,
+			DiscountTotal: value.DiscountTotal.String,
+			UpdatedAt:     value.UpdatedAt.String(),
+		})
+	}
+	for _, value := range webcode {
+		response = append(response, objects.SearchOrder{
+			Notes:         value.Notes.String,
+			WebCode:       value.WebCode.String,
+			TaxTotal:      value.TaxTotal.String,
+			OrderTotal:    value.OrderTotal.String,
+			ShippingTotal: value.ShippingTotal.String,
+			DiscountTotal: value.DiscountTotal.String,
+			UpdatedAt:     value.UpdatedAt.String(),
+		})
+	}
+	return response
+}
+
 // Compiles the order data
 func CompileOrderData(
 	dbconfig *DbConfig,
@@ -109,14 +194,13 @@ func CompileFilterSearch(
 			return response, err
 		}
 		for _, value := range prod_type {
-			search_product := objects.SearchProduct{
+			response = append(response, objects.SearchProduct{
 				ID:          string(value.ID),
 				Title:       value.Title.String,
 				Category:    value.Category.String,
 				ProductType: value.ProductType.String,
 				Vendor:      value.Vendor.String,
-			}
-			response = append(response, search_product)
+			})
 		}
 	}
 	if category != "" {
@@ -129,14 +213,13 @@ func CompileFilterSearch(
 			return response, err
 		}
 		for _, value := range prod_category {
-			search_product := objects.SearchProduct{
+			response = append(response, objects.SearchProduct{
 				ID:          string(value.ID),
 				Title:       value.Title.String,
 				Category:    value.Category.String,
 				ProductType: value.ProductType.String,
 				Vendor:      value.Vendor.String,
-			}
-			response = append(response, search_product)
+			})
 		}
 	}
 	if vendor != "" {
@@ -149,14 +232,13 @@ func CompileFilterSearch(
 			return response, err
 		}
 		for _, value := range prod_vendor {
-			search_product := objects.SearchProduct{
+			response = append(response, objects.SearchProduct{
 				ID:          string(value.ID),
 				Title:       value.Title.String,
 				Category:    value.Category.String,
 				ProductType: value.ProductType.String,
 				Vendor:      value.Vendor.String,
-			}
-			response = append(response, search_product)
+			})
 		}
 	}
 	return response, nil
@@ -168,24 +250,22 @@ func CompileSearchResult(
 	title []database.GetProductsSearchTitleRow) []objects.SearchProduct {
 	response := []objects.SearchProduct{}
 	for _, value := range sku {
-		search_product := objects.SearchProduct{
+		response = append(response, objects.SearchProduct{
 			ID:          string(value.ID),
 			Title:       value.Title.String,
 			Category:    value.Category.String,
 			ProductType: value.ProductType.String,
 			Vendor:      value.Vendor.String,
-		}
-		response = append(response, search_product)
+		})
 	}
 	for _, value := range title {
-		search_product := objects.SearchProduct{
+		response = append(response, objects.SearchProduct{
 			ID:          string(value.ID),
 			Title:       value.Title.String,
 			Category:    value.Category.String,
 			ProductType: value.ProductType.String,
 			Vendor:      value.Vendor.String,
-		}
-		response = append(response, search_product)
+		})
 	}
 	return response
 }
@@ -205,11 +285,10 @@ func CompileProductData(
 	}
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
-		options_sub := objects.ProductOptions{
+		options = append(options, objects.ProductOptions{
 			Name:  value.Name,
 			Value: value.Value,
-		}
-		options = append(options, options_sub)
+		})
 	}
 	variants, err := dbconfig.DB.GetProductVariants(r.Context(), product_id)
 	variant_data, err := CompileVariantData(dbconfig, variants, r)
@@ -243,11 +322,10 @@ func CompileVariantData(
 		}
 		variant_qty := []objects.VariantQty{}
 		for _, sub_value_qty := range qty {
-			sub_variant_qty := objects.VariantQty{
+			variant_qty = append(variant_qty, objects.VariantQty{
 				Name:  sub_value_qty.Name,
 				Value: int(sub_value_qty.Value.Int32),
-			}
-			variant_qty = append(variant_qty, sub_variant_qty)
+			})
 		}
 		pricing, err := dbconfig.DB.GetVariantPricing(r.Context(), value.ID)
 		if err != nil {
@@ -255,13 +333,12 @@ func CompileVariantData(
 		}
 		variant_pricing := []objects.VariantPrice{}
 		for _, sub_value_price := range pricing {
-			sub_variant_price := objects.VariantPrice{
+			variant_pricing = append(variant_pricing, objects.VariantPrice{
 				Name:  sub_value_price.Name,
 				Value: sub_value_price.Value.String,
-			}
-			variant_pricing = append(variant_pricing, sub_variant_price)
+			})
 		}
-		variantData := objects.ProductVariant{
+		variantsArray = append(variantsArray, objects.ProductVariant{
 			Sku:             value.Sku,
 			Option1:         value.Option1.String,
 			Option2:         value.Option2.String,
@@ -270,8 +347,7 @@ func CompileVariantData(
 			VariantPricing:  variant_pricing,
 			VariantQuantity: variant_qty,
 			UpdatedAt:       value.UpdatedAt.String(),
-		}
-		variantsArray = append(variantsArray, variantData)
+		})
 	}
 	return variantsArray, nil
 }

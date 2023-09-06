@@ -18,35 +18,87 @@ import (
 
 // GET /api/customers/search?q=value
 func (dbconfig *DbConfig) CustomerSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	search_query := r.URL.Query().Get("q")
+	if search_query != "" || len(search_query) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
+		return
+	}
+	customers_by_name, err := dbconfig.DB.GetCustomersByName(r.Context(), utils.ConvertStringToLike(search_query))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, customers_by_name)
 }
 
 // GET /api/customers/{id}
 func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	customer_id := chi.URLParam(r, "id")
+	err := IDValidation(customer_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	customer_id_byte := []byte(customer_id)
+	customer, err := CompileCustomerData(dbconfig, customer_id_byte, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, customer)
 }
 
 // GET /api/customers?page=1
 func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+		log.Println("Error decoding page param:", err)
+	}
+	customers, err := dbconfig.DB.GetCustomers(r.Context(), database.GetCustomersParams{
+		Limit:  10,
+		Offset: int32((page - 1) * 10),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, customers)
 }
 
 // GET /api/orders/search?q=value
 func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-
+	search_query := r.URL.Query().Get("q")
+	if search_query != "" || len(search_query) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
+		return
+	}
+	customer_orders, err := dbconfig.DB.GetOrdersSearchByCustomer(r.Context(), utils.ConvertStringToLike(search_query))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), sql.NullString{
+		String: utils.ConvertStringToLike(search_query),
+		Valid:  true,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, CompileOrderSearchResult(customer_orders, webcode_orders))
 }
 
 // GET /api/orders/{id}
 func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
 	order_id := chi.URLParam(r, "id")
-	err := ProductIDValidation(order_id)
+	err := IDValidation(order_id)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	order_id_byte := []byte(order_id)
 	order_data, err := CompileOrderData(dbconfig, order_id_byte, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	RespondWithJSON(w, http.StatusOK, order_data)
 }
@@ -64,6 +116,7 @@ func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, d
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	RespondWithJSON(w, http.StatusOK, dbOrders)
 }
@@ -81,6 +134,7 @@ func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Req
 	response, err := CompileFilterSearch(dbconfig, r, page, query_param_type, query_param_category, query_param_vendor)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	RespondWithJSON(w, http.StatusOK, response)
 }
@@ -90,10 +144,12 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 	search_query := r.URL.Query().Get("q")
 	if search_query != "" || len(search_query) == 0 {
 		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
+		return
 	}
 	sku_search, err := dbconfig.DB.GetProductsSearchSKU(r.Context(), utils.ConvertStringToLike(search_query))
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), sql.NullString{
 		String: utils.ConvertStringToLike(search_query),
@@ -101,6 +157,7 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	RespondWithJSON(w, http.StatusOK, CompileSearchResult(sku_search, title_search))
 }
@@ -108,14 +165,16 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 // GET /api/products/{id}
 func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
 	product_id := chi.URLParam(r, "id")
-	err := ProductIDValidation(product_id)
+	err := IDValidation(product_id)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	product_id_byte := []byte(product_id)
 	product_data, err := CompileProductData(dbconfig, product_id_byte, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	RespondWithJSON(w, http.StatusOK, product_data)
 }
@@ -133,6 +192,7 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	RespondWithJSON(w, http.StatusOK, dbProducts)
 }

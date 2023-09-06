@@ -76,6 +76,21 @@ SELECT
     discount_total,
     updated_at
 FROM orders
-WHERE web_code REGEXP ?
+WHERE web_code LIKE ?
+LIMIT 10;
+
+-- name: GetOrdersSearchByCustomer :many
+SELECT
+    o.notes,
+    o.web_code,
+    o.tax_total,
+    o.order_total,
+    o.shipping_total,
+    o.discount_total,
+    o.updated_at
+FROM orders o
+INNER JOIN customers c
+ON o.customer_id = c.id
+WHERE CONCAT(c.first_name, ' ', c.last_name) LIKE ?
 LIMIT 10;
 

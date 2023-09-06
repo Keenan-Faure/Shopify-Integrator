@@ -16,6 +16,14 @@ SET
     updated_at = ?
 WHERE id = ?;
 
+-- name: GetCustomers :many
+SELECT
+    first_name,
+    last_name,
+    updated_at
+FROM customers
+LIMIT ? OFFSET ?;
+
 -- name: GetCustomerByID :one
 SELECT
     first_name,
@@ -30,5 +38,5 @@ SELECT
     last_name,
     updated_at
 FROM customers
-WHERE CONCAT(first_name, ' ', last_name) REGEXP ?
+WHERE CONCAT(first_name, ' ', last_name) LIKE ?
 LIMIT 10;
