@@ -16,6 +16,35 @@ import (
 	"github.com/go-chi/cors"
 )
 
+// POST /api/customers/
+func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+
+}
+
+// POST /api/orders?token={{token}}&api_key={{key}}
+// ngrok exposed url
+func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+
+}
+
+// POST /api/products/
+func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	params, err := DecodeProductRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if ProductValidation(params) != nil {
+		RespondWithError(w, http.StatusBadRequest, "data validation error")
+		return
+	}
+	// validate if no duplicate sku exists in system
+
+	// validate if no duplicate option values exist in uploaded product variants
+
+	// validate if no duplicate option values exist in product (product_options)
+}
+
 // GET /api/customers/search?q=value
 func (dbconfig *DbConfig) CustomerSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
 	search_query := r.URL.Query().Get("q")

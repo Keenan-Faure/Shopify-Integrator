@@ -10,6 +10,15 @@ type ResponseString struct {
 type RequestBodyUser struct {
 	Name string
 }
+type RequestBodyProduct struct {
+	Title          string           `json:"title"`
+	BodyHTML       string           `json:"body_html"`
+	Category       string           `json:"category"`
+	Vendor         string           `json:"vendor"`
+	ProductType    string           `json:"product_type"`
+	Variants       []ProductVariant `json:"variants"`
+	ProductOptions []ProductOptions `json:"options"`
+}
 
 // object_converter.go
 
