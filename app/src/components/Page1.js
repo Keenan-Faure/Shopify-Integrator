@@ -11,13 +11,18 @@ function Page1(props)
 
         /* Ensures the navbar is set correctly */
         let navigation = document.getElementById("navbar");
+        let search = document.querySelector(".search-area");
         window.onload = function(event)
         {
-            
             navigation.style.left = "30%";
             navigation.style.position = "absolute";
             navigation.style.width = "70%";
             navigation.style.animation = "MoveLeft 1.2s ease";
+            setTimeout(() =>
+            {
+                search.style.opacity = "1";
+                search.style.animation = "appear 1.2s ease-in";
+            }, 1400);
         }
 
         /* animation for the pan elements */
@@ -60,13 +65,6 @@ function Page1(props)
                 filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
             });
         }
-
-        
-        
-
-
-
-
     }, []);
 
 
@@ -87,6 +85,9 @@ function Page1(props)
             </div>
             <div className = "main">
                 <div className = "search">
+                    <form className = "search-area">
+                        <input className ="search-area" type="search" placeholder="Search..." />
+                    </form>    
                 </div>
                 <div className = "main-elements">
                     <div className = "pan"></div>
