@@ -4,7 +4,7 @@ body
     overflow: auto;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
+/* Filter elements */
 .filter 
 {
     position: absolute;
@@ -19,53 +19,100 @@ body
     transition-duration: 0.4s;
     animation: SlideUp 1.2s ease-in;
 }
-.filter:hover 
+.filter-title
 {
-    background-color:rgb(240, 248, 255);
+    position: relative;
+    display: none;
+    padding: 20px;
+    text-align: center;
+    font-size: 18px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    width: 100%;
+    height: 10%;
+    top: 0;
+    left: 0;
+    background-color:rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid black;
+    margin-bottom: 20px;
 }
-
-@keyframes SlideUp 
+.filter-elements 
 {
-    from {top: 20%; opacity: 0;}
-    to {top: 0%; opacity: 1;}
+    position: relative;
+    display: none;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 15px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    width: 100%;
+    height: 10%;
+    top: 0;
+    left: 0;
+    transition-duration: 0.5s;
+    background-color:rgba(61, 61, 61, 0.7);
+    overflow: auto;
+    padding: 20px;
+    cursor: pointer;
+    /*
+    border-left: 2px solid beige;
+    border-right: 2px solid rgb(214, 214, 90);
+    border-top: 2px solid rgb(174, 204, 149);
+    border-bottom: 2px solid rgb(157, 207, 99);
+    */
 }
-
-@keyframes SlideUp2 
+.filter-img 
 {
-    from {top: 20%; opacity: 0;}
-    to {top: 10%; opacity: 1;}
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    background-position: center;
+    background-size: cover;
+    background-image: url(../media/tick.gif);
+    width: 20px;
+    height: 20px;
 }
-
-@keyframes MoveLeft 
+.filter-button 
 {
-    from {position: relative; z-index: 1; width: 100%; left: 0%;}
-    to {z-index: 1; width: 70%; left: 30%;}
+    padding: 0px;
+    display: none;
+	text-align: center;
+	text-decoration: none;
+	font-size: 12px;
+	cursor: pointer;
+	width: 100px;
+	height: 40px;
+	position: relative;
+	background-size: cover;
+	color: black;
+	border: 1px solid #000000;
+	border-radius: 4px;
+	margin: 0;
+	transition-duration: 0.4s;
+    left: 50%;
+    transform: translate(-50%);
 }
-
-@keyframes MoveRight
+.filter-button:hover
 {
-
-    from {z-index: 1; width: 70%; left: 30%;}
-    to {position: relative; z-index: 1; width: 100%; left: 0%;}
+	color: rgb(0, 0, 0);
+	border: 1px solid white;
+	background-position: center;
 }
+/* Search element */
 
-@keyframes appear 
-{
-    from {opacity: 0;}
-    to {opacity: 1;}
-}
+
 /* Main element */
 .main 
 {
     position: absolute;
     display: block;
     left: 51%;
-    top: 10%;
+    top: 13%;
     width: 70%;
     height: 96%;
     opacity: 1;
     transform: translate(-30%, -6%);
-    background-color: rgb(240, 248, 255, 0.2);
+    /* background-color: rgb(240, 248, 255, 0.2); */
     animation: SlideUp2 1.2s ease-in;
 }
 .main-elements 
@@ -99,6 +146,35 @@ body
 {
     background-color:rgb(0, 0, 0, 0.9);
 }
+@keyframes SlideUp 
+{
+    from {top: 20%; opacity: 0;}
+    to {top: 0%; opacity: 1;}
+}
 
+@keyframes SlideUp2 
+{
+    from {top: 20%; opacity: 0;}
+    to {top: 13%; opacity: 1;}
+}
+
+@keyframes MoveLeft 
+{
+    from {position: relative; z-index: 1; width: 100%; left: 0%;}
+    to {z-index: 1; width: 70%; left: 30%;}
+}
+
+@keyframes MoveRight
+{
+
+    from {z-index: 1; width: 70%; left: 30%;}
+    to {position: relative; z-index: 1; width: 100%; left: 0%;}
+}
+
+@keyframes appear 
+{
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
 
 
