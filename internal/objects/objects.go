@@ -102,7 +102,6 @@ type Product struct {
 	UpdatedAt      string           `json:"updated_at"`
 }
 type ProductOptions struct {
-	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 type ProductVariant struct {
