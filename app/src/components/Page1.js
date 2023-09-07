@@ -18,12 +18,12 @@ function Page1(props)
             navigation.style.position = "absolute";
             navigation.style.width = "70%";
             navigation.style.animation = "MoveLeft 1.2s ease";
-            setTimeout(() =>
-            {
-                search.style.opacity = "1";
-                search.style.animation = "appear 1.2s ease-in";
-            }, 1400);
         }
+        setTimeout(() =>
+        {
+            search.style.opacity = "1";
+            search.style.animation = "appear 1.2s ease-in";
+        }, 1400);
 
         /* animation for the pan elements */
         let pan = document.querySelectorAll(".pan");
