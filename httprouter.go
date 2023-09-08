@@ -4,6 +4,7 @@ import (
 	"api"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"integrator/internal/database"
 	"log"
 	"net/http"
@@ -45,38 +46,79 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if OrderValidation(params) != nil {
+	if OrderValidation(order_body) != nil {
 		RespondWithError(w, http.StatusBadRequest, "data validation error")
 		return
 	}
-	// create customer first
-	// customer address(s)
-	// decode shopify order structure
-	// create object in objects
-	// use it to create the address in CreateAddressUtils()
 	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
 		FirstName: "",
 		LastName:  "",
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
-	default_address, err := dbconfig.DB.CreateAddress(r.Context(), CreateAddressUtil())
+	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateDefaultAddress(order_body, customer.ID))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateShippingAddress(order_body, customer.ID))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateBillingAddress(order_body, customer.ID))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	order, err := dbconfig.DB.CreateOrder(r.Context(), database.CreateOrderParams{
 		CustomerID:    customer.ID,
-		Notes:         utils.ConvertStringToSQL(order_body.Notes),
-		WebCode:       utils.ConvertStringToSQL(order_body.WebCode),
-		TaxTotal:      utils.ConvertStringToSQL(order_body.TaxTotal),
-		OrderTotal:    utils.ConvertStringToSQL(order_body.OrderTotal),
-		ShippingTotal: utils.ConvertStringToSQL(order_body.ShippingTotal),
-		DiscountTotal: utils.ConvertStringToSQL(order_body.DiscountTotal),
+		Notes:         utils.ConvertStringToSQL(""),
+		WebCode:       utils.ConvertStringToSQL(order_body.Name),
+		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
+		OrderTotal:    utils.ConvertStringToSQL(order_body.TotalPrice),
+		ShippingTotal: utils.ConvertStringToSQL(order_body.TotalShippingPriceSet.ShopMoney.Amount),
+		DiscountTotal: utils.ConvertStringToSQL(order_body.TotalDiscounts),
 		CreatedAt:     time.Now().UTC(),
 		UpdatedAt:     time.Now().UTC(),
 	})
-	// if they exist
-	// add if valid
-	// add order
-	// link to customer/address
-	// ignore (error) if not valid
+	for _, value := range order_body.LineItems {
+		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+			OrderID:   order.ID,
+			LineType:  utils.ConvertStringToSQL("product"),
+			Sku:       value.Sku,
+			Price:     utils.ConvertStringToSQL(value.Price),
+			Barcode:   utils.ConvertIntToSQL(0),
+			Qty:       utils.ConvertIntToSQL(value.Quantity),
+			TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
+			TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	for _, value := range order_body.ShippingLines {
+		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+			OrderID:   order.ID,
+			LineType:  utils.ConvertStringToSQL("shipping"),
+			Sku:       value.Code,
+			Price:     utils.ConvertStringToSQL(value.Price),
+			Barcode:   utils.ConvertIntToSQL(0),
+			Qty:       utils.ConvertIntToSQL(1),
+			TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
+			TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, []string{"Ok"})
 }
 
 // POST /api/products/

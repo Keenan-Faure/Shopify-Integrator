@@ -26,18 +26,57 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 }
 
 // Creates an address
-func CreateAddressUtil(address objects.OrderAddress, customer_id uuid.UUID) database.CreateAddressParams {
+func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{
 		CustomerID: customer_id,
-		FirstName:  address.Customer.DefaultAddress.FirstName,
-		LastName:   address.Customer.DefaultAddress.FirstName,
-		Address1:   utils.ConvertStringToSQL(address.Customer.DefaultAddress.Address1),
-		Address2:   utils.ConvertStringToSQL(address.Customer.DefaultAddress.Address2),
+		Name:       utils.ConvertStringToSQL("default"),
+		FirstName:  order_body.Customer.DefaultAddress.FirstName,
+		LastName:   order_body.Customer.DefaultAddress.LastName,
+		Address1:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
+		Address2:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
 		Suburb:     utils.ConvertStringToSQL(""),
-		City:       utils.ConvertStringToSQL(address.Customer.DefaultAddress.City),
-		Province:   utils.ConvertStringToSQL(address.Customer.DefaultAddress.Province),
-		PostalCode: utils.ConvertStringToSQL(address.Customer.DefaultAddress.ProvinceCode),
-		Company:    utils.ConvertStringToSQL(address.Customer.DefaultAddress.Company),
+		City:       utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.City),
+		Province:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Province),
+		PostalCode: utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Zip),
+		Company:    utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Company),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+}
+
+// Creates an address
+func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
+	return database.CreateAddressParams{
+		CustomerID: customer_id,
+		Name:       utils.ConvertStringToSQL("shipping"),
+		FirstName:  order_body.ShippingAddress.FirstName,
+		LastName:   order_body.ShippingAddress.LastName,
+		Address1:   utils.ConvertStringToSQL(order_body.ShippingAddress.FirstName),
+		Address2:   utils.ConvertStringToSQL(order_body.ShippingAddress.FirstName),
+		Suburb:     utils.ConvertStringToSQL(""),
+		City:       utils.ConvertStringToSQL(order_body.ShippingAddress.City),
+		Province:   utils.ConvertStringToSQL(order_body.ShippingAddress.Province),
+		PostalCode: utils.ConvertStringToSQL(order_body.ShippingAddress.Zip),
+		Company:    utils.ConvertStringToSQL(order_body.ShippingAddress.Company),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+}
+
+// Creates an address
+func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
+	return database.CreateAddressParams{
+		CustomerID: customer_id,
+		Name:       utils.ConvertStringToSQL("billing"),
+		FirstName:  order_body.BillingAddress.FirstName,
+		LastName:   order_body.BillingAddress.LastName,
+		Address1:   utils.ConvertStringToSQL(order_body.BillingAddress.FirstName),
+		Address2:   utils.ConvertStringToSQL(order_body.BillingAddress.FirstName),
+		Suburb:     utils.ConvertStringToSQL(""),
+		City:       utils.ConvertStringToSQL(order_body.BillingAddress.City),
+		Province:   utils.ConvertStringToSQL(order_body.BillingAddress.Province),
+		PostalCode: utils.ConvertStringToSQL(order_body.BillingAddress.Zip),
+		Company:    utils.ConvertStringToSQL(order_body.BillingAddress.Company),
 		CreatedAt:  time.Now().UTC(),
 		UpdatedAt:  time.Now().UTC(),
 	}
