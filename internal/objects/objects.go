@@ -24,10 +24,6 @@ type RequestBodyProduct struct {
 	ProductOptions []ProductOptions `json:"options"`
 }
 
-type RequestBodyOrder struct {
-	// shopify order structure
-}
-
 // object_converter.go
 
 type SearchOrder struct {
