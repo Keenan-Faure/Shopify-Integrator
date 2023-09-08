@@ -1,6 +1,10 @@
 package objects
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type ResponseString struct {
 	Status string
@@ -18,6 +22,10 @@ type RequestBodyProduct struct {
 	ProductType    string           `json:"product_type"`
 	Variants       []ProductVariant `json:"variants"`
 	ProductOptions []ProductOptions `json:"options"`
+}
+
+type RequestBodyOrder struct {
+	// shopify order structure
 }
 
 // object_converter.go
@@ -43,6 +51,17 @@ type Order struct {
 	OrderCustomer     OrderCustomer `json:"customer"`
 	LineItems         []OrderLines  `json:"line_items"`
 	ShippingLineItems []OrderLines  `json:"shipping_lines"`
+}
+type OrderAddress struct {
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	Address1   string `json:"address_1"`
+	Address2   string `json:"address_2"`
+	Suburb     string `json:"suburb"`
+	City       string `json:"city"`
+	Province   string `json:"province"`
+	PostalCode string `json:"postal_code"`
+	Company    string `json:"company"`
 }
 
 type OrderCustomer struct {
@@ -84,11 +103,11 @@ type SearchCustomer struct {
 	LastName  string `json:"last_name"`
 }
 type SearchProduct struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Category    string `json:"category"`
-	ProductType string `json:"product_type"`
-	Vendor      string `json:"vendor"`
+	ID          uuid.UUID `json:"id"`
+	Title       string    `json:"title"`
+	Category    string    `json:"category"`
+	ProductType string    `json:"product_type"`
+	Vendor      string    `json:"vendor"`
 }
 type Product struct {
 	Active         string           `json:"active"`

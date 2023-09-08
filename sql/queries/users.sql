@@ -39,4 +39,4 @@ SELECT
     name
 FROM users
 WHERE 
-webhook_token = $1 AND name = $2;
+webhook_token = $1 AND api_key = $2;

@@ -9,10 +9,34 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Order: decodes the request body
+func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyOrder{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Order: Validation
+func OrderValidation(order objects.RequestBodyOrder) {
+	if()
+}
+
+// User: validation
+func TokenValidation(key string) error {
+	if key == "" || len(key) <= 0 || len(key) > 32 {
+		return errors.New("invalid product id")
+	}
+	return nil
+}
+
 // Product: validation
 func IDValidation(id string) error {
 	if id == "" || len(id) <= 0 || len(id) > 16 {
-		return errors.New("Invalid product id")
+		return errors.New("invalid product id")
 	}
 	return nil
 }
@@ -100,8 +124,8 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 			option_2_values = append(option_2_values, value.Option2)
 		}
 		counter := 0
-		for key, _ := range option_1_values {
-			for sub_key, _ := range option_2_values {
+		for key := range option_1_values {
+			for sub_key := range option_2_values {
 				if option_2_values[key] == option_2_values[sub_key] && option_1_values[key] == option_1_values[sub_key] {
 					counter += 1
 				}
@@ -123,9 +147,9 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 		option_3_values = append(option_3_values, value.Option3)
 	}
 	counter := 0
-	for key, _ := range option_1_values {
-		for sub_key, _ := range option_2_values {
-			for primal_key, _ := range option_3_values {
+	for key := range option_1_values {
+		for sub_key := range option_2_values {
+			for primal_key := range option_3_values {
 				if (option_3_values[key] == option_3_values[primal_key] &&
 					option_2_values[key] == option_2_values[sub_key]) &&
 					option_1_values[key] == option_1_values[sub_key] {

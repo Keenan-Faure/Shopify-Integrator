@@ -1,24 +1,21 @@
 -- name: CreateProductOption :one
 INSERT INTO product_options(
     product_id,
-    name,
-    value
+    name
 ) VALUES (
-    $1, $2, $3
+    $1, $2
 )
 RETURNING *;
 
 -- name: UpdateProductOption :one
 UPDATE product_options
 SET
-    name = $1,
-    value = $2
-WHERE product_id = $3
+    name = $1
+WHERE product_id = $2
 RETURNING *;
 
 -- name: GetProductOptions :many
 SELECT
-    name,
-    value
+    name
 FROM product_options
 WHERE id = $1;
