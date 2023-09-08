@@ -14,7 +14,7 @@ import Customers from '../JS/Customers';
 
 // Import Style sheet below
 import '../CSS/navigation-bar.css'
-function Navigation_Bar(props )
+function Navigation_Bar(props)
 {
     useEffect(()=> 
     {
@@ -23,22 +23,35 @@ function Navigation_Bar(props )
         let navbar = document.querySelectorAll(".dropbtn");
         let model = document.getElementById("model");
 
-        for(let i = 1; i < navbar.length; i++)
+        /* The user clicks on 'Products' button */
+        navbar[1].onclick = function(event)
+        {
+            if(navbar[1].onclick)
+            {
+                navigation.style.left = "30%";
+                navigation.style.position = "absolute";
+                navigation.style.width = "70%";
+                navigation.style.animation = "MoveLeft 1.2s ease";
+                model.style.animation = "none";
+            } 
+        }
+
+        /* The user clicks on Buttons other than products or home */
+        for(let i = 2; i < navbar.length; i++)
         {
             navbar[i].onclick = function(event)
             {
                 if(navbar[i].onclick)
                 {
-                    navigation.style.left = "30%";
-                    navigation.style.position = "absolute";
-                    navigation.style.width = "70%";
-                    navigation.style.animation = "MoveLeft 1.2s ease";
+                    navigation.style.left = "0%";
+                    navigation.style.position = "relative";
+                    navigation.style.width = "100%";
                     model.style.animation = "none";
                 }
-
             }
         }
 
+        /* The user clicks on 'Home' button */
         navbar[0].onclick = function(event)
         {
             if(navbar[0].onclick)
