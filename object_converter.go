@@ -286,7 +286,6 @@ func CompileProductData(
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
 		options = append(options, objects.ProductOptions{
-			Name:  value.Name,
 			Value: value.Value,
 		})
 	}
