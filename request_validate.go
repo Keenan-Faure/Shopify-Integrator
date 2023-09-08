@@ -106,7 +106,7 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 					counter += 1
 				}
 				if counter > 1 {
-					errors.New("duplicate option values not allowed")
+					return errors.New("duplicate option values not allowed")
 				}
 			}
 		}
@@ -132,7 +132,7 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 					counter += 1
 				}
 				if counter > 1 {
-					errors.New("duplicate option values not allowed")
+					return errors.New("duplicate option values not allowed")
 				}
 			}
 		}

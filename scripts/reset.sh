@@ -13,9 +13,12 @@ else
   echo "'$IMAGE_NAME' does not exist."
 fi
 
-echo "---Redo database migrations---"
+echo "---Reset database migrations---"
 
 source .env
 cd ./sql/schema
 
-goose mysql "$DSN" reset
+SSL_MODE="?sslmode=disable"
+DB_STRING="${DOCKER_DB_URL}${DATABASE}${SSL_MODE}"
+
+goose postgres "$DB_STRING" reset

@@ -4,6 +4,7 @@ import (
 	"api"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"integrator/internal/database"
 	"log"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 )
 
 // POST /api/customers/
@@ -28,7 +30,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 }
 
 // POST /api/products/
-func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Request) {
 	params, err := DecodeProductRequestBody(r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -38,11 +40,40 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, "data validation error")
 		return
 	}
-	// validate if no duplicate sku exists in system
+	err = ProductValidation(params)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
+	err = ValidateDuplicateOption(params)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
+	err = ValidateDuplicateSKU(params, dbconfig, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
+	err = DuplicateOptionValues(params)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
 
-	// validate if no duplicate option values exist in uploaded product variants
-
-	// validate if no duplicate option values exist in product (product_options)
+	// add product to database
+	_, err = dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
+		Active:      "1",
+		Title:       utils.ConvertStringToSQL(params.Title),
+		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
+		Category:    utils.ConvertStringToSQL(params.Category),
+		Vendor:      utils.ConvertStringToSQL(params.Vendor),
+		ProductType: utils.ConvertStringToSQL(params.ProductType),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+	})
+	fmt.Println(err)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	// respond with success message
 }
 
 // GET /api/customers/search?q=value
@@ -67,7 +98,11 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	customer_id_byte := []byte(customer_id)
+	customer_id_byte, err := uuid.Parse(customer_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+customer_id)
+		return
+	}
 	customer, err := CompileCustomerData(dbconfig, customer_id_byte, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -105,10 +140,7 @@ func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), sql.NullString{
-		String: utils.ConvertStringToLike(search_query),
-		Valid:  true,
-	})
+	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), search_query)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}

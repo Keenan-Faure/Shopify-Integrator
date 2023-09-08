@@ -41,6 +41,7 @@ func setupAPI(dbconfig DbConfig) {
 	r.Use(cors.Handler(MiddleWare()))
 	api := chi.NewRouter()
 
+	api.Post("/product", dbconfig.PostProductHandle)
 	api.Post("/register", dbconfig.RegisterHandle)
 	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
 	api.Get("/endpoints", dbconfig.EndpointsHandle)

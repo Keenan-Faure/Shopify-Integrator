@@ -1,12 +1,12 @@
 -- +goose Up
 CREATE TABLE users(
-    id BINARY(16) PRIMARY KEY UNIQUE NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
-    webhook_token BINARY(16) UNIQUE NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
+    id UUID PRIMARY KEY UNIQUE,
+    webhook_token VARCHAR(32) UNIQUE NOT NULL DEFAULT (encode(sha256(random()::text::bytea), 'hex')),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     name TEXT NOT NULL,
     email TEXT NOT NULL,
-    api_key BINARY(16) UNIQUE NOT NULL DEFAULT (UUID_TO_BIN(UUID()))
+    api_key VARCHAR(32) UNIQUE NOT NULL DEFAULT (encode(sha256(random()::text::bytea), 'hex'))
 );
 
 -- +goose Down

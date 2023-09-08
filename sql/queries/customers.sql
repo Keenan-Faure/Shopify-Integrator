@@ -1,20 +1,22 @@
--- name: CreateCustomer :execresult
+-- name: CreateCustomer :one
 INSERT INTO customers(
     first_name,
     last_name,
     created_at,
     updated_at
 ) VALUES(
-    ?, ?, ?, ?
-);
+    $1, $2, $3, $4
+)
+RETURNING *;
 
--- name: UpdateCustomer :execresult
+-- name: UpdateCustomer :one
 UPDATE customers
 SET
-    first_name = ?,
-    last_name = ?,
-    updated_at = ?
-WHERE id = ?;
+    first_name = $1,
+    last_name = $2,
+    updated_at = $3
+WHERE id = $4
+RETURNING *;
 
 -- name: GetCustomers :many
 SELECT
@@ -22,7 +24,7 @@ SELECT
     last_name,
     updated_at
 FROM customers
-LIMIT ? OFFSET ?;
+LIMIT $1 OFFSET $2;
 
 -- name: GetCustomerByID :one
 SELECT
@@ -30,7 +32,7 @@ SELECT
     last_name,
     updated_at
 FROM customers
-WHERE id = ?;
+WHERE id = $1;
 
 -- name: GetCustomersByName :many
 SELECT
@@ -38,5 +40,5 @@ SELECT
     last_name,
     updated_at
 FROM customers
-WHERE CONCAT(first_name, ' ', last_name) LIKE ?
+WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO $1
 LIMIT 10;

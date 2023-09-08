@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TABLE order_lines(
-    id BINARY(16) PRIMARY KEY UNIQUE NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
-    order_id BINARY(16) NOT NULL,
+    id UUID PRIMARY KEY UNIQUE,
+    order_id UUID NOT NULL,
     line_type VARCHAR(16),
     sku VARCHAR(64) NOT NULL,
     price DECIMAL(9, 2) DEFAULT 0.00,
@@ -10,7 +10,11 @@ CREATE TABLE order_lines(
     tax_total DECIMAL(9, 2) DEFAULT 0.00,
     tax_rate  DECIMAL(9, 2) DEFAULT 0.00,
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT fk_orders
+        FOREIGN KEY (order_id)
+            REFERENCES orders(id)
+            ON DELETE CASCADE
 );
 
 -- +goose Down

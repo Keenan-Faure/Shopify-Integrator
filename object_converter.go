@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"objects"
 	"utils"
+	"github.com/google/uuid"
 )
 
 // Compile the customer search results
