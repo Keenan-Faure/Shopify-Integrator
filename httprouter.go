@@ -20,7 +20,49 @@ import (
 
 // POST /api/customers/
 func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-
+	customer_body, err := DecodeCustomerRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if CustomerValidation(customer_body) != nil {
+		RespondWithError(w, http.StatusBadRequest, "data validation error")
+		return
+	}
+	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
+		FirstName: customer_body.FirstName,
+		LastName:  customer_body.LastName,
+		Email:     utils.ConvertStringToSQL(customer_body.Email),
+		Phone:     utils.ConvertStringToSQL(customer_body.Phone),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for key := range customer_body.Address {
+		_, err = dbconfig.DB.CreateAddress(r.Context(), database.CreateAddressParams{
+			CustomerID: customer.ID,
+			Name:       utils.ConvertStringToSQL("default"),
+			FirstName:  customer_body.Address[key].FirstName,
+			LastName:   customer_body.Address[key].LastName,
+			Address1:   utils.ConvertStringToSQL(customer_body.Address[key].Address1),
+			Address2:   utils.ConvertStringToSQL(customer_body.Address[key].Address2),
+			Suburb:     utils.ConvertStringToSQL(""),
+			City:       utils.ConvertStringToSQL(customer_body.Address[key].City),
+			Province:   utils.ConvertStringToSQL(customer_body.Address[key].Province),
+			PostalCode: utils.ConvertStringToSQL(customer_body.Address[key].PostalCode),
+			Company:    utils.ConvertStringToSQL(customer_body.Address[key].Company),
+			CreatedAt:  time.Now().UTC(),
+			UpdatedAt:  time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, []string{"created"})
 }
 
 // POST /api/orders?token={{token}}&api_key={{key}}
@@ -51,11 +93,17 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		return
 	}
 	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
-		FirstName: "",
-		LastName:  "",
+		FirstName: order_body.Customer.FirstName,
+		LastName:  order_body.Customer.FirstName,
+		Email:     utils.ConvertStringToSQL(order_body.Customer.Email),
+		Phone:     utils.ConvertStringToSQL(order_body.Customer.Phone),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateDefaultAddress(order_body, customer.ID))
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -82,6 +130,10 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		CreatedAt:     time.Now().UTC(),
 		UpdatedAt:     time.Now().UTC(),
 	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	for _, value := range order_body.LineItems {
 		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
 			OrderID:   order.ID,
@@ -118,7 +170,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
-	RespondWithJSON(w, http.StatusCreated, []string{"Ok"})
+	RespondWithJSON(w, http.StatusCreated, []string{"created"})
 }
 
 // POST /api/products/

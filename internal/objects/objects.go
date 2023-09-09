@@ -24,6 +24,14 @@ type RequestBodyProduct struct {
 	ProductOptions []ProductOptions `json:"options"`
 }
 
+type RequestBodyCustomer struct {
+	FirstName string            `json:"first_name"`
+	LastName  string            `json:"last_name"`
+	Email     string            `json:"email"`
+	Phone     string            `json:"phone"`
+	Address   []CustomerAddress `json:"shipping_address"`
+}
+
 // object_converter.go
 
 type SearchOrder struct {
@@ -70,6 +78,8 @@ type OrderCustomer struct {
 type Customer struct {
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
+	Email     string            `json:"email"`
+	Phone     string            `json:"phone"`
 	Address   []CustomerAddress `json:"shipping_address"`
 	UpdatedAt string            `json:"updated_at"`
 }

@@ -59,6 +59,8 @@ func CompileCustomerData(
 	return objects.Customer{
 		FirstName: customer.FirstName,
 		LastName:  customer.LastName,
+		Email:     customer.Email.String,
+		Phone:     customer.Phone.String,
 		Address:   CustomerAddress,
 		UpdatedAt: customer.UpdatedAt.String(),
 	}, nil
@@ -288,7 +290,7 @@ func CompileProductData(
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
 		options = append(options, objects.ProductOptions{
-			Value: value.Value,
+			Value: value,
 		})
 	}
 	variants, err := dbconfig.DB.GetProductVariants(r.Context(), product_id)

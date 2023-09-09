@@ -2,10 +2,12 @@
 INSERT INTO customers(
     first_name,
     last_name,
+    email,
+    phone,
     created_at,
     updated_at
 ) VALUES(
-    $1, $2, $3, $4
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 
@@ -14,14 +16,18 @@ UPDATE customers
 SET
     first_name = $1,
     last_name = $2,
-    updated_at = $3
-WHERE id = $4
+    email = $3,
+    phone = $4,
+    updated_at = $5
+WHERE id = $6
 RETURNING *;
 
 -- name: GetCustomers :many
 SELECT
     first_name,
     last_name,
+    email,
+    phone,
     updated_at
 FROM customers
 LIMIT $1 OFFSET $2;
@@ -30,6 +36,8 @@ LIMIT $1 OFFSET $2;
 SELECT
     first_name,
     last_name,
+    email,
+    phone,
     updated_at
 FROM customers
 WHERE id = $1;
@@ -38,6 +46,8 @@ WHERE id = $1;
 SELECT
     first_name,
     last_name,
+    email,
+    phone,
     updated_at
 FROM customers
 WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO $1

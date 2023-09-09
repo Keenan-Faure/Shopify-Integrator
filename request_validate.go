@@ -9,6 +9,25 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Customer: Data validation
+func CustomerValidation(order objects.RequestBodyCustomer) error {
+	if order.FirstName == "" {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// Customer: decode the request body
+func DecodeCustomerRequestBody(r *http.Request) (objects.RequestBodyCustomer, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyCustomer{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
 // Order: decodes the request body
 func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
 	decoder := json.NewDecoder(r.Body)
@@ -20,7 +39,7 @@ func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
 	return params, nil
 }
 
-// Order: Validation
+// Order: data validation
 func OrderValidation(order objects.RequestBodyOrder) error {
 	if order.Name == "" || order.LineItems[0].Sku == "" || order.Customer.FirstName == "" {
 		return errors.New("data validation error")
@@ -28,7 +47,7 @@ func OrderValidation(order objects.RequestBodyOrder) error {
 	return nil
 }
 
-// User: validation
+// User: data validation
 func TokenValidation(key string) error {
 	if key == "" || len(key) <= 0 || len(key) > 32 {
 		return errors.New("invalid product id")
@@ -36,7 +55,7 @@ func TokenValidation(key string) error {
 	return nil
 }
 
-// Product: validation
+// Product: data validation
 func IDValidation(id string) error {
 	if id == "" || len(id) <= 0 || len(id) > 16 {
 		return errors.New("invalid product id")
@@ -44,7 +63,7 @@ func IDValidation(id string) error {
 	return nil
 }
 
-// User: validation
+// User: data validation
 func UserValidation(user objects.RequestBodyUser) error {
 	if user.Name == "" {
 		return errors.New("empty name not allowed")
@@ -52,7 +71,7 @@ func UserValidation(user objects.RequestBodyUser) error {
 	return nil
 }
 
-// Product: validation
+// Product: data validation
 func ProductValidation(product objects.RequestBodyProduct) error {
 	if product.Title == "" {
 		return errors.New("empty title not allowed")
