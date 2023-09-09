@@ -23,3 +23,20 @@ DELETE FROM register_tokens
 WHERE
 token = $1 AND
 email = $2;
+
+-- name: GetToken :one
+SELECT
+    name,
+    email
+FROM register_tokens
+WHERE name = $1
+AND email = $2;
+
+-- name: GetTokenValidation :one
+SELECT
+    name,
+    email,
+    token
+FROM register_tokens
+WHERE name = $1
+AND email = $2;

@@ -32,6 +32,17 @@ type RequestBodyCustomer struct {
 	Address   []CustomerAddress `json:"shipping_address"`
 }
 
+type RequestBodyPreOrder struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type RequestBodyValidateToken struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
+
 // object_converter.go
 
 type SearchOrder struct {

@@ -462,6 +462,67 @@ func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, db
 	RespondWithJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// POST /api/preregister
+func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Request) {
+	request_body, err := DecodePreRegisterRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if PreRegisterValidation(request_body) != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	exists, err := dbconfig.CheckTokenExists(request_body, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if exists {
+		RespondWithError(w, http.StatusConflict, err.Error())
+		return
+	}
+	token, err := dbconfig.DB.CreateToken(r.Context(), database.CreateTokenParams{
+		ID:        uuid.New(),
+		Name:      request_body.Name,
+		Email:     request_body.Email,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	//TODO send an email to the user with the email and token
+	RespondWithJSON(w, http.StatusCreated, token)
+}
+
+// POST /api/validatetoken
+func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Request) {
+	request_body, err := DecodeValidateTokenRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if ValidateTokenValidation(request_body) != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
+		Name:  request_body.Name,
+		Email: request_body.Email,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if token.Token != request_body.Token {
+		RespondWithError(w, http.StatusNotFound, "invalid token for user")
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, []string{"ok"})
+}
+
 // POST /api/register
 func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request) {
 	body, err := DecodeUserRequestBody(r)

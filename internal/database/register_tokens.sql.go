@@ -73,6 +73,60 @@ func (q *Queries) DeleteToken(ctx context.Context, arg DeleteTokenParams) error 
 	return err
 }
 
+const getToken = `-- name: GetToken :one
+SELECT
+    name,
+    email
+FROM register_tokens
+WHERE name = $1
+AND email = $2
+`
+
+type GetTokenParams struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type GetTokenRow struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func (q *Queries) GetToken(ctx context.Context, arg GetTokenParams) (GetTokenRow, error) {
+	row := q.db.QueryRowContext(ctx, getToken, arg.Name, arg.Email)
+	var i GetTokenRow
+	err := row.Scan(&i.Name, &i.Email)
+	return i, err
+}
+
+const getTokenValidation = `-- name: GetTokenValidation :one
+SELECT
+    name,
+    email,
+    token
+FROM register_tokens
+WHERE name = $1
+AND email = $2
+`
+
+type GetTokenValidationParams struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type GetTokenValidationRow struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
+
+func (q *Queries) GetTokenValidation(ctx context.Context, arg GetTokenValidationParams) (GetTokenValidationRow, error) {
+	row := q.db.QueryRowContext(ctx, getTokenValidation, arg.Name, arg.Email)
+	var i GetTokenValidationRow
+	err := row.Scan(&i.Name, &i.Email, &i.Token)
+	return i, err
+}
+
 const updateToken = `-- name: UpdateToken :one
 UPDATE register_tokens
 SET

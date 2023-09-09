@@ -25,6 +25,23 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 	return false, nil
 }
 
+// checks if a token already exists in the database
+func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreOrder, r *http.Request) (bool, error) {
+	token, err := dbconfig.DB.GetToken(r.Context(), database.GetTokenParams{
+		Name:  request_body.Name,
+		Email: request_body.Email,
+	})
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			return false, err
+		}
+	}
+	if token.Email == request_body.Email && token.Name == request_body.Email {
+		return true, nil
+	}
+	return false, nil
+}
+
 // Creates an address
 func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{

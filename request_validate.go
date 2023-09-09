@@ -9,6 +9,48 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// ValidateToken: Data validtion
+func ValidateTokenValidation(token_request objects.RequestBodyValidateToken) error {
+	if token_request.Name == "" || len(token_request.Name) == 0 {
+		return errors.New("data validation error")
+	} else if token_request.Email == "" || len(token_request.Email) == 0 {
+		return errors.New("data validation error")
+	} else if token_request.Token == "" || len(token_request.Token) == 0 {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// ValidateToken: decode the request body
+func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyValidateToken, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyValidateToken{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// PreRegister: Data validation
+func PreRegisterValidation(preorder objects.RequestBodyPreOrder) error {
+	if preorder.Name == "" || len(preorder.Name) == 0 || preorder.Email == "" || len(preorder.Email) == 0 {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// PreRegister: decode the request body
+func DecodePreRegisterRequestBody(r *http.Request) (objects.RequestBodyPreOrder, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyPreOrder{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
 // Customer: Data validation
 func CustomerValidation(order objects.RequestBodyCustomer) error {
 	if order.FirstName == "" {
