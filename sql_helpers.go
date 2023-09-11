@@ -26,7 +26,7 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 }
 
 // checks if a token already exists in the database
-func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreOrder, r *http.Request) (bool, error) {
+func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreRegister, r *http.Request) (bool, error) {
 	token, err := dbconfig.DB.GetToken(r.Context(), database.GetTokenParams{
 		Name:  request_body.Name,
 		Email: request_body.Email,

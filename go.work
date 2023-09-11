@@ -6,4 +6,5 @@ use (
 	./internal/fetch
 	./internal/objects
 	./internal/utils
+	./internal/iocsv
 )
