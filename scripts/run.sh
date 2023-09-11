@@ -22,6 +22,14 @@ docker-compose rm -f
 echo "---Running Docker compose up---"
 docker compose up -d
 
+source .env
+
+until 
+    docker exec $DB_NAME pg_isready;
+do 
+    sleep 3; 
+done
+
 echo "---Running database migrations---"
 docker exec integrator bash -c ./sql/schema/migrations.sh
 

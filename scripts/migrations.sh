@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /web-app/sql/schema
+cd /keenan/sql/schema
 source .env
 
 echo "Checking GOOSE version"
