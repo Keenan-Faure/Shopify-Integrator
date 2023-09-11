@@ -27,3 +27,6 @@ Pushes and pulls data from Shopify with some additional features
   - Enable product variations [true/false]
   - Enable push to Shopufy
   - Enable creation of customers from orders
+
+- Test endpoints
+- Create Product export/import features

@@ -29,10 +29,10 @@ type RequestBodyCustomer struct {
 	LastName  string            `json:"last_name"`
 	Email     string            `json:"email"`
 	Phone     string            `json:"phone"`
-	Address   []CustomerAddress `json:"shipping_address"`
+	Address   []CustomerAddress `json:"address"`
 }
 
-type RequestBodyPreOrder struct {
+type RequestBodyPreRegister struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
@@ -96,6 +96,7 @@ type Customer struct {
 }
 
 type CustomerAddress struct {
+	Type       string `json:"address_type"`
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
 	Address1   string `json:"address_1"`

@@ -33,7 +33,7 @@ func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyValidat
 }
 
 // PreRegister: Data validation
-func PreRegisterValidation(preorder objects.RequestBodyPreOrder) error {
+func PreRegisterValidation(preorder objects.RequestBodyPreRegister) error {
 	if preorder.Name == "" || len(preorder.Name) == 0 || preorder.Email == "" || len(preorder.Email) == 0 {
 		return errors.New("data validation error")
 	}
@@ -41,9 +41,9 @@ func PreRegisterValidation(preorder objects.RequestBodyPreOrder) error {
 }
 
 // PreRegister: decode the request body
-func DecodePreRegisterRequestBody(r *http.Request) (objects.RequestBodyPreOrder, error) {
+func DecodePreRegisterRequestBody(r *http.Request) (objects.RequestBodyPreRegister, error) {
 	decoder := json.NewDecoder(r.Body)
-	params := objects.RequestBodyPreOrder{}
+	params := objects.RequestBodyPreRegister{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		return params, err

@@ -493,8 +493,11 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	//TODO send an email to the user with the email and token
-	RespondWithJSON(w, http.StatusCreated, token)
+	err = SendEmail(token.Token, request_body.Email, request_body.Name)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusCreated, []string{"email sent"})
 }
 
 // POST /api/validatetoken
