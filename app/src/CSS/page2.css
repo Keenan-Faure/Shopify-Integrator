@@ -1,0 +1,88 @@
+.main-container
+{
+    position: fixed;
+    display: block;
+    left: 50%;
+    top: 20%;
+    transform: translate(-50%, -20%);
+    height: 100%;
+    width: 100%;
+    background-color:rgb(119, 136, 153, 0.5);
+    overflow: auto;
+}
+.settings
+{
+    position: relative;
+    height: auto;
+    width: 60%;
+    left: 50%;
+    top: 10%;
+    transform: translate(-50%, 0%);
+    background-color: rgba(252, 252, 252, 0.4);
+    margin-bottom: 5%;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin-bottom: 10%;
+}
+.settings-section
+{
+    position: relative;
+    height: 15%;
+    width: 60%;
+    background-color: rgb(105, 105, 105, 0.7);
+    font-size: 15px;
+    font-family: monospace;
+    margin-top: 30px; 
+    margin-bottom: 30px;
+    transition-duration: 0.4s;
+    left: 50%;
+    transform: translate(-50%);
+    padding: 10px;
+    text-align: center;
+}
+.settings-section:hover 
+{
+    background-color: rgb(105, 105, 105, 0.9);
+}
+.settings-title 
+{
+    padding: 5px;
+}
+.settings-description 
+{
+    font-size: 12px;
+    padding: 5px;
+}
+.settings-bottom
+{
+    position: relative;
+    bottom: 10px;
+    height: 10%;
+    width: 80%;
+    background-color: rgb(100, 149, 237, 0.3);
+    left: 50%;
+    transform: translate(-50%);
+    padding: 10px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.settings-button 
+{
+	text-align: center;
+	text-decoration: none;
+	font-size: 12px;
+	cursor: pointer;
+	width: 100px;
+	height: 30px;
+	position: relative;
+	color: black;
+	border: 1px solid #000000;
+	border-radius: 4px;
+	transition-duration: 0.4s;
+    margin: 10px;
+}
+.settings-button:hover
+{
+	color: rgb(0, 0, 0);
+	border: 1px solid rgb(0, 0, 0);
+	background-position: center;
+}

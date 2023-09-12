@@ -45,7 +45,7 @@ li a:hover
 .navbar 
 {
     overflow: hidden;
-    background-color: rgb(209 209 209 / 95%);
+    background-color: rgba(165, 165, 165, 0.95);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     transition-duration: 0.2s;
     position: fixed;
@@ -55,7 +55,7 @@ li a:hover
 .navbar:hover 
 {
 
-    background-color: rgb(51, 51, 51, 0.99);
+    background-color: rgb(209 209 209 / 98%);
 }
   
 .navbar a 

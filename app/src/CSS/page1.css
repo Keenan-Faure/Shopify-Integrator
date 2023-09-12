@@ -13,7 +13,6 @@ body
     top: 0;
     width: 30%;
     height: 100%;
-    background-color: rgb(240, 248, 255, 0.4);
     padding: 10px;
     opacity: 1;
     transition-duration: 0.4s;
@@ -31,7 +30,6 @@ body
     height: 10%;
     top: 0;
     left: 0;
-    background-color:rgba(255, 255, 255, 0.1);
     border-bottom: 1px solid black;
     margin-bottom: 20px;
 }
@@ -173,6 +171,7 @@ input.search-area
     transform: translate(-50%, 0);
     transition-duration: 0.4s;
     background-color: rgb(0, 0, 0, 0.6);
+    user-select: none;
 }
 .pan:hover 
 {
