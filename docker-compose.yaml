@@ -4,6 +4,8 @@ services:
     volumes:
       - ./app/:/keenan/app
     build: .
+    depends_on:
+      - postgres
     ports:
       - "${PORT}:${PORT}"
     container_name: ${CONTAINER_NAME}

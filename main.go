@@ -21,7 +21,7 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
-	dbCon, err := InitConn(utils.LoadEnv("dsn"))
+	dbCon, err := InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("database") + "?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}

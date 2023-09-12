@@ -105,11 +105,15 @@ func CompileOrderData(
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_customer, err := dbconfig.DB.GetCustomerByID(r.Context(), order.CustomerID)
+	customer_id, err := dbconfig.DB.GetCustomerByOrderID(r.Context(), order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), order.CustomerID)
+	order_customer, err := dbconfig.DB.GetCustomerByID(r.Context(), customer_id)
+	if err != nil {
+		return objects.Order{}, err
+	}
+	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), customer_id)
 	if err != nil {
 		return objects.Order{}, err
 	}

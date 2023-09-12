@@ -22,7 +22,7 @@ import (
 func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	customer_body, err := DecodeCustomerRequestBody(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	if CustomerValidation(customer_body) != nil {
@@ -38,7 +38,7 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	for key := range customer_body.Address {
@@ -58,7 +58,7 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 			UpdatedAt:  time.Now().UTC(),
 		})
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
@@ -85,7 +85,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	}
 	order_body, err := DecodeOrderRequestBody(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	if OrderValidation(order_body) != nil {
@@ -101,26 +101,25 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateDefaultAddress(order_body, customer.ID))
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateShippingAddress(order_body, customer.ID))
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateBillingAddress(order_body, customer.ID))
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	order, err := dbconfig.DB.CreateOrder(r.Context(), database.CreateOrderParams{
-		CustomerID:    customer.ID,
 		Notes:         utils.ConvertStringToSQL(""),
 		WebCode:       utils.ConvertStringToSQL(order_body.Name),
 		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
@@ -131,7 +130,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		UpdatedAt:     time.Now().UTC(),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	for _, value := range order_body.LineItems {
@@ -148,7 +147,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
@@ -166,9 +165,20 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
+	}
+	err = dbconfig.DB.CreateCustomerOrder(r.Context(), database.CreateCustomerOrderParams{
+		ID:         uuid.New(),
+		CustomerID: customer.ID,
+		OrderID:    order.ID,
+		UpdatedAt:  time.Now().UTC(),
+		CreatedAt:  time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
 	}
 	RespondWithJSON(w, http.StatusCreated, []string{"created"})
 }
@@ -177,7 +187,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	params, err := DecodeProductRequestBody(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	if ProductValidation(params) != nil {
@@ -186,15 +196,15 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	}
 	err = ValidateDuplicateOption(params)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 	}
 	err = ValidateDuplicateSKU(params, dbconfig, r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 	}
 	err = DuplicateOptionValues(params)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 	}
 
 	// add product to database
@@ -209,7 +219,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	for key := range params.ProductOptions {
@@ -218,7 +228,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			Name:      params.ProductOptions[key].Value,
 		})
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
@@ -244,7 +254,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
 			_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
@@ -255,12 +265,12 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
 		}
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
@@ -276,7 +286,7 @@ func (dbconfig *DbConfig) CustomerSearchHandle(w http.ResponseWriter, r *http.Re
 	}
 	customers_by_name, err := dbconfig.DB.GetCustomersByName(r.Context(), utils.ConvertStringToLike(search_query))
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 	}
 	RespondWithJSON(w, http.StatusOK, customers_by_name)
 }
@@ -286,7 +296,7 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 	customer_id := chi.URLParam(r, "id")
 	err := IDValidation(customer_id)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	customer_uuid, err := uuid.Parse(customer_id)
@@ -296,7 +306,7 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 	}
 	customer, err := CompileCustomerData(dbconfig, customer_uuid, r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, customer)
@@ -314,7 +324,7 @@ func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request
 		Offset: int32((page - 1) * 10),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, customers)
@@ -329,11 +339,11 @@ func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Reque
 	}
 	customer_orders, err := dbconfig.DB.GetOrdersSearchByCustomer(r.Context(), utils.ConvertStringToLike(search_query))
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 	}
 	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), search_query)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 	}
 	RespondWithJSON(w, http.StatusOK, CompileOrderSearchResult(customer_orders, webcode_orders))
 }
@@ -343,7 +353,7 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 	order_id := chi.URLParam(r, "id")
 	err := IDValidation(order_id)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	order_uuid, err := uuid.Parse(order_id)
@@ -353,7 +363,7 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 	}
 	order_data, err := CompileOrderData(dbconfig, order_uuid, r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, order_data)
@@ -371,7 +381,7 @@ func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, d
 		Offset: int32((page - 1) * 10),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, dbOrders)
@@ -389,7 +399,7 @@ func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Req
 	query_param_vendor := utils.ConfirmFilters(r.URL.Query().Get("vendor"))
 	response, err := CompileFilterSearch(dbconfig, r, page, query_param_type, query_param_category, query_param_vendor)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, response)
@@ -404,7 +414,7 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 	}
 	sku_search, err := dbconfig.DB.GetProductsSearchSKU(r.Context(), utils.ConvertStringToLike(search_query))
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), sql.NullString{
@@ -412,7 +422,7 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 		Valid:  true,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, CompileSearchResult(sku_search, title_search))
@@ -423,7 +433,7 @@ func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, 
 	product_id := chi.URLParam(r, "id")
 	err := IDValidation(product_id)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	product_uuid, err := uuid.Parse(product_id)
@@ -433,7 +443,7 @@ func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, 
 	}
 	product_data, err := CompileProductData(dbconfig, product_uuid, r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, product_data)
@@ -451,7 +461,7 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 		Offset: int32((page - 1) * 10),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, dbProducts)
@@ -466,23 +476,24 @@ func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, db
 func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Request) {
 	request_body, err := DecodePreRegisterRequestBody(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	if PreRegisterValidation(request_body) != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	exists, err := dbconfig.CheckTokenExists(request_body, r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	if exists {
-		RespondWithError(w, http.StatusConflict, err.Error())
+		RespondWithError(w, http.StatusConflict, utils.ConfirmError(err))
 		return
 	}
 	token, err := dbconfig.DB.CreateToken(r.Context(), database.CreateTokenParams{
+		Token:     uuid.New(),
 		ID:        uuid.New(),
 		Name:      request_body.Name,
 		Email:     request_body.Email,
@@ -490,12 +501,12 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	err = SendEmail(token.Token, request_body.Email, request_body.Name)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 	}
 	RespondWithJSON(w, http.StatusCreated, []string{"email sent"})
 }
@@ -504,11 +515,11 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Request) {
 	request_body, err := DecodeValidateTokenRequestBody(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	if ValidateTokenValidation(request_body) != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
@@ -516,10 +527,15 @@ func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Req
 		Email: request_body.Email,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	if token.Token != request_body.Token {
+	request_token, err := uuid.Parse(request_body.Token)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+request_body.Token)
+		return
+	}
+	if token.Token != request_token {
 		RespondWithError(w, http.StatusNotFound, "invalid token for user")
 		return
 	}
@@ -530,16 +546,38 @@ func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Req
 func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request) {
 	body, err := DecodeUserRequestBody(r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
+	if ValidateTokenValidation(body) != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
+		Name:  body.Name,
+		Email: body.Email,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	request_token, err := uuid.Parse(body.Token)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+body.Token)
+		return
+	}
+	if token.Token != request_token {
+		RespondWithError(w, http.StatusNotFound, "invalid token for user")
+		return
+	}
+
 	if UserValidation(body) != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	exists, err := dbconfig.CheckUserExist(body.Name, r)
 	if exists {
-		RespondWithError(w, http.StatusConflict, err.Error())
+		RespondWithError(w, http.StatusConflict, utils.ConfirmError(err))
 		return
 	}
 	user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
@@ -548,7 +586,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		UpdatedAt: time.Time{},
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
 	RespondWithJSON(w, http.StatusCreated, user)

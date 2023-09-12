@@ -12,7 +12,9 @@ type ResponseString struct {
 
 // request_validation.go
 type RequestBodyUser struct {
-	Name string
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Token string `json:"token"`
 }
 type RequestBodyProduct struct {
 	Title          string           `json:"title"`
