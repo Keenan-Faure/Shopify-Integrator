@@ -104,61 +104,61 @@ function Page1(props)
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            Product Title: 
+                            <a className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            Product code:
+                            <a className = "p-d-code">Product code</a>
                             <br/><br/>
 
-                            Options | Category | Type | Vendor
+                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
-                            Price Range: R1200 - R1400
+                            R1200 - R1400
                         </div>
                     </div>
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            Product Title: 
+                            <a className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            Product code:
+                            <a className = "p-d-code">Product code</a>
                             <br/><br/>
-                            
-                            Options | Category | Type | Vendor
+
+                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
-                            Price Range: R1200 - R1400
+                            R1200 - R1400
                         </div>
                     </div>
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            Product Title: 
+                            <a className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            Product code:
+                            <a className = "p-d-code">Product code</a>
                             <br/><br/>
-                            
-                            Options | Category | Type | Vendor
+
+                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
-                            Price Range: R1200 - R1400
+                            R1200 - R1400
                         </div>
                     </div>
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            Product Title: 
+                            <a className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            Product code:
+                            <a className = "p-d-code">Product code</a>
                             <br/><br/>
-                            
-                            Options | Category | Type | Vendor
+
+                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
-                            Price Range: R1200 - R1400
+                            R1200 - R1400
                         </div>
                     </div>
                 </div>
