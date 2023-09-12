@@ -570,7 +570,6 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		RespondWithError(w, http.StatusNotFound, "invalid token for user")
 		return
 	}
-
 	if UserValidation(body) != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
@@ -581,9 +580,10 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
+		ID:        uuid.New(),
 		Name:      body.Name,
-		CreatedAt: time.Time{},
-		UpdatedAt: time.Time{},
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))

@@ -18,6 +18,7 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 		if err.Error() != "sql: no rows in result set" {
 			return false, err
 		}
+		return false, err
 	}
 	if username == name {
 		return true, errors.New("name already exists")

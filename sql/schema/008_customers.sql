@@ -6,11 +6,7 @@ CREATE TABLE customers(
     email VARCHAR(32),
     phone VARCHAR(32),
     created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
-    CONSTRAINT fk_orders
-        FOREIGN KEY (order_id)
-            REFERENCES orders(id)
-            ON DELETE CASCADE
+    updated_at TIMESTAMP NOT NULL
 );
 
 -- +goose Down

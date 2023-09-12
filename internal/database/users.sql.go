@@ -15,15 +15,17 @@ import (
 
 const createUser = `-- name: CreateUser :execresult
 INSERT INTO users (
+    id,
     name,
     email,
     created_at,
     updated_at
-) VALUES ($1, $2, $3, $4)
+) VALUES ($1, $2, $3, $4, $5)
 RETURNING id, webhook_token, created_at, updated_at, name, email, api_key
 `
 
 type CreateUserParams struct {
+	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
@@ -32,6 +34,7 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createUser,
+		arg.ID,
 		arg.Name,
 		arg.Email,
 		arg.CreatedAt,
