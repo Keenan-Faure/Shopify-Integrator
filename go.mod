@@ -14,4 +14,7 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 )
 
-require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+require (
+	github.com/lib/pq v1.10.9
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+)

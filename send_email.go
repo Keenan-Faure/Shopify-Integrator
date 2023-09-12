@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"utils"
 
 	"github.com/go-mail/mail"
 )
@@ -14,9 +15,10 @@ func SendEmail(token, email, name string) error {
 	m.SetHeader("Subject", "Shopify-Integrator Authentication Token")
 	m.SetBody("text/html", fmt.Sprintf("Hi <b>%s</b>, <br> Token: %s", name, token))
 	// m.Attach("lolcat.jpg")
-	d := mail.NewDialer("smtp.gmail.com", 587, "keenan@stock2shop.com", "Re_Ghoul")
+	d := mail.NewDialer("smtp.gmail.com", 587, utils.LoadEnv("email"), utils.LoadEnv("email_psw"))
 
 	if err := d.DialAndSend(m); err != nil {
+		fmt.Println(err)
 		return err
 	}
 	return nil

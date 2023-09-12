@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 type DbConfig struct {
@@ -41,10 +41,24 @@ func setupAPI(dbconfig DbConfig) {
 	r.Use(cors.Handler(MiddleWare()))
 	api := chi.NewRouter()
 
+	api.Post("/products", dbconfig.middlewareAuth(dbconfig.PostProductHandle))
+	api.Post("/customers", dbconfig.middlewareAuth(dbconfig.PostCustomerHandle))
+	api.Post("/orders", dbconfig.middlewareAuth(dbconfig.PostOrderHandle))
 	api.Post("/register", dbconfig.RegisterHandle)
+	api.Post("/preregister", dbconfig.PreRegisterHandle)
 	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
 	api.Get("/endpoints", dbconfig.EndpointsHandle)
 	api.Get("/ready", dbconfig.ReadyHandle)
+	api.Get("/products", dbconfig.middlewareAuth(dbconfig.ProductsHandle))
+	api.Get("/products/{id}", dbconfig.middlewareAuth(dbconfig.ProductHandle))
+	api.Get("/products/search", dbconfig.middlewareAuth(dbconfig.ProductSearchHandle))
+	api.Get("/products/filter", dbconfig.middlewareAuth(dbconfig.ProductFilterHandle))
+	api.Get("/orders", dbconfig.middlewareAuth(dbconfig.OrdersHandle))
+	api.Get("/orders/{id}", dbconfig.middlewareAuth(dbconfig.OrderHandle))
+	api.Get("/orders/search", dbconfig.middlewareAuth(dbconfig.OrderSearchHandle))
+	api.Get("/customers", dbconfig.middlewareAuth(dbconfig.CustomersHandle))
+	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
+	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
 
 	r.Mount("/api", api)
 
