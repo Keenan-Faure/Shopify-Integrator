@@ -28,12 +28,12 @@ func LoopJSONShopify(
 
 // adds shopify products to the database
 func ProcessShopifyProducts(dbconfig *DbConfig, products objects.ShopifyProducts) {
-	for _, value := range products.Products {
-		for _, sub_value := range value.Variants {
-			//create product in database
-			// if error = unique value not allowed etc
-			// override
-		}
-	}
+	// for _, value := range products.Products {
+	// 	for _, sub_value := range value.Variants {
+	// 		//create product in database
+	// 		// if error = unique value not allowed etc
+	// 		// override
+	// 	}
+	// }
 	log.Printf("From Shopify %d products were collected", len(products.Products))
 }

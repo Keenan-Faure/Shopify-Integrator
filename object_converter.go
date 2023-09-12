@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"objects"
 	"utils"
+
+	"github.com/google/uuid"
 )
 
 // Compile the customer search results
@@ -30,7 +32,7 @@ func CompileCustomerSearchData(
 // Compiles the customer data
 func CompileCustomerData(
 	dbconfig *DbConfig,
-	customer_id []byte,
+	customer_id uuid.UUID,
 	r *http.Request) (objects.Customer, error) {
 	customer, err := dbconfig.DB.GetCustomerByID(r.Context(), customer_id)
 	if err != nil {
@@ -57,6 +59,8 @@ func CompileCustomerData(
 	return objects.Customer{
 		FirstName: customer.FirstName,
 		LastName:  customer.LastName,
+		Email:     customer.Email.String,
+		Phone:     customer.Phone.String,
 		Address:   CustomerAddress,
 		UpdatedAt: customer.UpdatedAt.String(),
 	}, nil
@@ -95,7 +99,7 @@ func CompileOrderSearchResult(
 // Compiles the order data
 func CompileOrderData(
 	dbconfig *DbConfig,
-	order_id []byte,
+	order_id uuid.UUID,
 	r *http.Request) (objects.Order, error) {
 	order, err := dbconfig.DB.GetOrderByID(r.Context(), order_id)
 	if err != nil {
@@ -195,7 +199,7 @@ func CompileFilterSearch(
 		}
 		for _, value := range prod_type {
 			response = append(response, objects.SearchProduct{
-				ID:          string(value.ID),
+				ID:          value.ID,
 				Title:       value.Title.String,
 				Category:    value.Category.String,
 				ProductType: value.ProductType.String,
@@ -214,7 +218,7 @@ func CompileFilterSearch(
 		}
 		for _, value := range prod_category {
 			response = append(response, objects.SearchProduct{
-				ID:          string(value.ID),
+				ID:          value.ID,
 				Title:       value.Title.String,
 				Category:    value.Category.String,
 				ProductType: value.ProductType.String,
@@ -233,7 +237,7 @@ func CompileFilterSearch(
 		}
 		for _, value := range prod_vendor {
 			response = append(response, objects.SearchProduct{
-				ID:          string(value.ID),
+				ID:          value.ID,
 				Title:       value.Title.String,
 				Category:    value.Category.String,
 				ProductType: value.ProductType.String,
@@ -251,7 +255,7 @@ func CompileSearchResult(
 	response := []objects.SearchProduct{}
 	for _, value := range sku {
 		response = append(response, objects.SearchProduct{
-			ID:          string(value.ID),
+			ID:          value.ID,
 			Title:       value.Title.String,
 			Category:    value.Category.String,
 			ProductType: value.ProductType.String,
@@ -260,7 +264,7 @@ func CompileSearchResult(
 	}
 	for _, value := range title {
 		response = append(response, objects.SearchProduct{
-			ID:          string(value.ID),
+			ID:          value.ID,
 			Title:       value.Title.String,
 			Category:    value.Category.String,
 			ProductType: value.ProductType.String,
@@ -273,7 +277,7 @@ func CompileSearchResult(
 // Compiles the product data
 func CompileProductData(
 	dbconfig *DbConfig,
-	product_id []byte,
+	product_id uuid.UUID,
 	r *http.Request) (objects.Product, error) {
 	product, err := dbconfig.DB.GetProductByID(r.Context(), product_id)
 	if err != nil {
@@ -286,10 +290,13 @@ func CompileProductData(
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
 		options = append(options, objects.ProductOptions{
-			Value: value.Value,
+			Value: value,
 		})
 	}
 	variants, err := dbconfig.DB.GetProductVariants(r.Context(), product_id)
+	if err != nil {
+		return objects.Product{}, err
+	}
 	variant_data, err := CompileVariantData(dbconfig, variants, r)
 	if err != nil {
 		return objects.Product{}, err

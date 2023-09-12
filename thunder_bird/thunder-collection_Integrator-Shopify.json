@@ -1,0 +1,331 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "Integrator-Shopify",
+    "dateExported": "2023-09-12T10:27:20.523Z",
+    "version": "1.1",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "70132c35-fcca-450b-bcbb-7878da20b42f",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Endpoints",
+            "url": "{{baseUrl}}:{{port}}/api/endpoints",
+            "method": "GET",
+            "sortNum": 40000,
+            "created": "2023-09-11T17:51:07.821Z",
+            "modified": "2023-09-11T17:53:17.106Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "c87cd051-ae1e-4a31-b653-422ed7669624",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Login",
+            "url": "{{baseUrl}}:{{port}}/api/login",
+            "method": "POST",
+            "sortNum": 50000,
+            "created": "2023-09-11T17:56:55.069Z",
+            "modified": "2023-09-11T17:59:04.892Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "583f9094-cb15-468e-a658-6a79219d39d9",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Register",
+            "url": "{{baseUrl}}:{{port}}/api/register",
+            "method": "POST",
+            "sortNum": 55000,
+            "created": "2023-09-11T17:56:58.629Z",
+            "modified": "2023-09-11T17:59:41.020Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "02408870-b0c1-4ee0-8d87-911836aaa4d0",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "ValidateToken (registeration)",
+            "url": "{{baseUrl}}/api/preregister",
+            "method": "POST",
+            "sortNum": 57500,
+            "created": "2023-09-11T17:57:00.767Z",
+            "modified": "2023-09-12T09:32:50.259Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n    \"name\": \"Keenan\",\n    \"email\": \"keenan@stock2shop.com\"\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "12674f77-4dee-4852-8543-d90414029392",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Products",
+            "url": "{{baseUrl}}:{{port}}/api/products?page=1",
+            "method": "GET",
+            "sortNum": 60000,
+            "created": "2023-09-11T17:53:41.316Z",
+            "modified": "2023-09-11T18:02:45.272Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [
+                {
+                    "name": "page",
+                    "value": "1",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "31c301c3-e18f-4c5d-bb62-dbe9b70eecb7",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Customers",
+            "url": "{{baseUrl}}:{{port}}/api/customers?page=1",
+            "method": "GET",
+            "sortNum": 65000,
+            "created": "2023-09-11T18:00:20.185Z",
+            "modified": "2023-09-11T18:02:36.555Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [
+                {
+                    "name": "page",
+                    "value": "1",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "396c8efa-3b60-4da5-8f1f-a3165bbbe0d6",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Orders",
+            "url": "{{baseUrl}}:{{port}}/api/orders",
+            "method": "GET",
+            "sortNum": 67500,
+            "created": "2023-09-11T18:01:50.710Z",
+            "modified": "2023-09-11T18:02:00.484Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "30a25d2a-0141-4d5e-a0bd-165daa8be1d5",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Products",
+            "url": "{{baseUrl}}:{{port}}/api/products",
+            "method": "POST",
+            "sortNum": 70000,
+            "created": "2023-09-11T17:54:22.287Z",
+            "modified": "2023-09-11T18:02:49.139Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n    \"title\": \"test_product\",\n    \"body_html\": \"<p>I am a body_html</p>\",\n    \"category\": \"test_category\",\n    \"vendor\": \"test_vendor\",\n    \"product_type\": \"test_product_type\",\n    \"variants\": [\n        {\n            \"sku\": \"testabc\",\n            \"option1\": \"blue\",\n            \"option2\": \"small\",\n            \"option3\": \"\",\n            \"barcode\": \"2347234-9824\",\n            \"variant_price_tiers\": [\n                {\n                    \"name\": \"Selling Price\",\n                    \"value\": \"1400.00\"\n                },\n                {\n                    \"name\": \"Wholesale Price\",\n                    \"value\": \"1300.00\"\n                }\n            ],\n            \"variant_quantities\": [\n                {\n                    \"name\": \"CapeTown\",\n                    \"value\": \"22\"\n                },\n                {\n                    \"name\": \"Nippon\",\n                    \"value\": \"1\"\n                }\n            ]\n        }\n    ],\n    \"options\": [\n        {\n            \"value\": \"Size\"\n        },\n        {\n            \"value\": \"Colour\"\n        }\n    ]\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "c433812c-8289-4d1b-85a3-fdb0ea7cb286",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Orders",
+            "url": "{{baseUrl}}:{{port}}/api/orders",
+            "method": "POST",
+            "sortNum": 72500,
+            "created": "2023-09-11T18:02:05.463Z",
+            "modified": "2023-09-11T18:02:26.897Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n\t\"id\": 5010223726653,\n\t\"admin_graphql_api_id\": \"gid://shopify/Order/5010223726653\",\n\t\"app_id\": 1354745,\n\t\"browser_ip\": \"102.135.246.72\",\n\t\"buyer_accepts_marketing\": false,\n\t\"cancel_reason\": null,\n\t\"cancelled_at\": null,\n\t\"cart_token\": null,\n\t\"checkout_id\": 31740260155453,\n\t\"checkout_token\": \"9471eb4e4aad1c5c2ae5381d4fea4f72\",\n\t\"client_details\": {\n\t\t\"accept_language\": null,\n\t\t\"browser_height\": null,\n\t\t\"browser_ip\": \"102.135.246.72\",\n\t\t\"browser_width\": null,\n\t\t\"session_hash\": null,\n\t\t\"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0\"\n\t},\n\t\"closed_at\": null,\n\t\"company\": null,\n\t\"confirmed\": true,\n\t\"contact_email\": \"keenan@stock2shop.com\",\n\t\"created_at\": \"2023-02-01T08:55:27+02:00\",\n\t\"currency\": \"ZAR\",\n\t\"current_subtotal_price\": \"2565.00\",\n\t\"current_subtotal_price_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"2565.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"2565.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"current_total_discounts\": \"0.00\",\n\t\"current_total_discounts_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"0.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"0.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"current_total_duties_set\": null,\n\t\"current_total_price\": \"2949.75\",\n\t\"current_total_price_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"2949.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"2949.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"current_total_tax\": \"384.75\",\n\t\"current_total_tax_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"384.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"384.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"customer_locale\": \"en\",\n\t\"device_id\": null,\n\t\"discount_codes\": [],\n\t\"email\": \"keenan@stock2shop.com\",\n\t\"estimated_taxes\": false,\n\t\"financial_status\": \"paid\",\n\t\"fulfillment_status\": null,\n\t\"gateway\": \"manual\",\n\t\"landing_site\": null,\n\t\"landing_site_ref\": null,\n\t\"location_id\": 63480856641,\n\t\"merchant_of_record_app_id\": null,\n\t\"name\": \"#7505\",\n\t\"note\": \"Notes not taken\",\n\t\"note_attributes\": [],\n\t\"number\": 7505,\n\t\"order_number\": 7505,\n\t\"order_status_url\": \"https://keenan-faure.myshopify.com/56527355965/orders/da4d09a024207bbbf612092c68395110/authenticate?key=832b048bd3568b5a53d3342938d0407f\",\n\t\"original_total_duties_set\": null,\n\t\"payment_gateway_names\": [\"manual\"],\n\t\"phone\": \"+27123456789\",\n\t\"presentment_currency\": \"ZAR\",\n\t\"processed_at\": \"2023-02-01T08:55:26+02:00\",\n\t\"processing_method\": \"manual\",\n\t\"reference\": \"3bfd89198864988bead96b07ca014098\",\n\t\"referring_site\": null,\n\t\"source_identifier\": \"3bfd89198864988bead96b07ca014098\",\n\t\"source_name\": \"shopify_draft_order\",\n\t\"source_url\": null,\n\t\"subtotal_price\": \"2565.00\",\n\t\"subtotal_price_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"2565.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"2565.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"tags\": \"\",\n\t\"tax_lines\": [{\n\t\t\"price\": \"384.75\",\n\t\t\"rate\": 0.15,\n\t\t\"title\": \"VAT\",\n\t\t\"price_set\": {\n\t\t\t\"shop_money\": {\n\t\t\t\t\"amount\": \"384.75\",\n\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t},\n\t\t\t\"presentment_money\": {\n\t\t\t\t\"amount\": \"384.75\",\n\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t}\n\t\t},\n\t\t\"channel_liable\": false\n\t}],\n\t\"taxes_included\": false,\n\t\"test\": false,\n\t\"token\": \"da4d09a024207bbbf612092c68395110\",\n\t\"total_discounts\": \"0.00\",\n\t\"total_discounts_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"0.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"0.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"total_line_items_price\": \"2565.00\",\n\t\"total_line_items_price_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"2565.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"2565.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"total_outstanding\": \"0.00\",\n\t\"total_price\": \"2949.75\",\n\t\"total_price_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"2949.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"2949.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"total_shipping_price_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"0.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"0.00\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"total_tax\": \"384.75\",\n\t\"total_tax_set\": {\n\t\t\"shop_money\": {\n\t\t\t\"amount\": \"384.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t},\n\t\t\"presentment_money\": {\n\t\t\t\"amount\": \"384.75\",\n\t\t\t\"currency_code\": \"ZAR\"\n\t\t}\n\t},\n\t\"total_tip_received\": \"0.00\",\n\t\"total_weight\": 0,\n\t\"updated_at\": \"2023-02-01T08:55:28+02:00\",\n\t\"user_id\": 73572122685,\n\t\"billing_address\": {\n\t\t\"first_name\": \"Keenan\",\n\t\t\"address1\": \"14 Tracy Crescent\",\n\t\t\"phone\": null,\n\n\t\t\"city\": \"Cape Town\",\n\t\t\"zip\": \"7786\",\n\t\t\"province\": \"Western Cape\",\n\t\t\"country\": \"South Africa\",\n\t\t\"last_name\": \"Faure\",\n\t\t\"address2\": \"Mitchells Plain\",\n\t\t\"company\": \"Stock2ShopLOL\",\n\t\t\"latitude\": null,\n\t\t\"longitude\": null,\n\t\t\"name\": \"Keenan Faure\",\n\t\t\"country_code\": \"ZA\",\n\t\t\"province_code\": \"WC\"\n\t},\n\t\"customer\": {\n\t\t\"id\": 5514981867581,\n\t\t\"email\": \"keenan@stock2shop.com\",\n\t\t\"accepts_marketing\": false,\n\t\t\"created_at\": \"2022-03-16T14:20:11+02:00\",\n\t\t\"updated_at\": \"2023-02-01T08:55:27+02:00\",\n\t\t\"first_name\": \"Keenan\",\n\t\t\"last_name\": \"Faure\",\n\t\t\"state\": \"disabled\",\n\t\t\"note\": null,\n\t\t\"verified_email\": true,\n\t\t\"multipass_identifier\": null,\n\t\t\"tax_exempt\": false,\n\t\t\"tags\": \"\",\n\t\t\"currency\": \"ZAR\",\n\t\t\"phone\": \"+27123456789\",\n\t\t\"accepts_marketing_updated_at\": \"2022-03-16T14:20:11+02:00\",\n\t\t\"marketing_opt_in_level\": null,\n\t\t\"tax_exemptions\": [],\n\t\t\"email_marketing_consent\": {\n\t\t\t\"state\": \"not_subscribed\",\n\t\t\t\"opt_in_level\": \"single_opt_in\",\n\t\t\t\"consent_updated_at\": null\n\t\t},\n\t\t\"sms_marketing_consent\": {\n\t\t\t\"state\": \"not_subscribed\",\n\t\t\t\"opt_in_level\": \"single_opt_in\",\n\t\t\t\"consent_updated_at\": null,\n\t\t\t\"consent_collected_from\": \"SHOPIFY\"\n\t\t},\n\t\t\"admin_graphql_api_id\": \"gid://shopify/Customer/5514981867581\",\n\t\t\"default_address\": {\n\t\t\t\"id\": 6723049816125,\n\t\t\t\"customer_id\": 5514981867581,\n\t\t\t\"first_name\": \"Keenan\",\n\t\t\t\"last_name\": \"Faure\",\n\t\t\t\"company\": \"Stock2ShopLOL\",\n\t\t\t\"address1\": \"14 Tracy Crescent\",\n\t\t\t\"address2\": \"Mitchells Plain\",\n\t\t\t\"city\": \"Cape Town\",\n\t\t\t\"province\": \"Western Cape\",\n\t\t\t\"country\": \"South Africa\",\n\t\t\t\"zip\": \"7786\",\n\t\t\t\"phone\": \"\",\n\t\t\t\"name\": \"Keenan Faure\",\n\t\t\t\"province_code\": \"WC\",\n\t\t\t\"country_code\": \"ZA\",\n\t\t\t\"country_name\": \"South Africa\",\n\t\t\t\"default\": true\n\t\t}\n\t},\n\t\"discount_applications\": [],\n\t\"fulfillments\": [],\n\t\"line_items\": [{\n\t\t\t\"id\": 11989124120637,\n\t\t\t\"admin_graphql_api_id\": \"gid://shopify/LineItem/11989124120637\",\n\t\t\t\"fulfillable_quantity\": 1,\n\t\t\t\"fulfillment_service\": \"manual\",\n\t\t\t\"fulfillment_status\": null,\n\t\t\t\"gift_card\": false,\n\t\t\t\"grams\": 0,\n\t\t\t\"name\": \"Queen Cakes 10 Pack\",\n\t\t\t\"price\": \"1530.00\",\n\t\t\t\"price_set\": {\n\t\t\t\t\"shop_money\": {\n\t\t\t\t\t\"amount\": \"1530.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t},\n\t\t\t\t\"presentment_money\": {\n\t\t\t\t\t\"amount\": \"1530.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t\"product_exists\": true,\n\t\t\t\"product_id\": 7021642055738,\n\t\t\t\"properties\": [],\n\t\t\t\"quantity\": 1,\n\t\t\t\"requires_shipping\": true,\n\t\t\t\"sku\": \"Queen-C-10-P\",\n\t\t\t\"taxable\": true,\n\t\t\t\"title\": \"Queen Cakes 10 Pack\",\n\t\t\t\"total_discount\": \"0.00\",\n\t\t\t\"total_discount_set\": {\n\t\t\t\t\"shop_money\": {\n\t\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t},\n\t\t\t\t\"presentment_money\": {\n\t\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t\"variant_id\": 39851748655162,\n\t\t\t\"variant_inventory_management\": \"shopify\",\n\t\t\t\"variant_title\": \"Queen Cakes 10 Pack\",\n\t\t\t\"vendor\": \"Mihoyo\",\n\t\t\t\"tax_lines\": [{\n\t\t\t\t\"channel_liable\": false,\n\t\t\t\t\"price\": \"229.50\",\n\t\t\t\t\"price_set\": {\n\t\t\t\t\t\"shop_money\": {\n\t\t\t\t\t\t\"amount\": \"229.50\",\n\t\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t\t},\n\t\t\t\t\t\"presentment_money\": {\n\t\t\t\t\t\t\"amount\": \"229.50\",\n\t\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t\t}\n\t\t\t\t},\n\t\t\t\t\"rate\": 0.15,\n\t\t\t\t\"title\": \"VAT\"\n\t\t\t}],\n\t\t\t\"duties\": [],\n\t\t\t\"discount_allocations\": []\n\t\t},\n\t\t{\n\t\t\t\"id\": 11989124153405,\n\t\t\t\"admin_graphql_api_id\": \"gid://shopify/LineItem/11989124153405\",\n\t\t\t\"fulfillable_quantity\": 1,\n\t\t\t\"fulfillment_service\": \"manual\",\n\t\t\t\"fulfillment_status\": null,\n\t\t\t\"gift_card\": false,\n\t\t\t\"grams\": 0,\n\t\t\t\"name\": \"Database Software V10 - N/A\",\n\t\t\t\"price\": \"1035.00\",\n\t\t\t\"price_set\": {\n\t\t\t\t\"shop_money\": {\n\t\t\t\t\t\"amount\": \"1035.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t},\n\t\t\t\t\"presentment_money\": {\n\t\t\t\t\t\"amount\": \"1035.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t\"product_exists\": true,\n\t\t\t\"product_id\": 7021641629754,\n\t\t\t\"properties\": [],\n\t\t\t\"quantity\": 1,\n\t\t\t\"requires_shipping\": true,\n\t\t\t\"sku\": \"HP-P-BF-1000-PP\",\n\t\t\t\"taxable\": true,\n\t\t\t\"title\": \"Harry Potter Puzzle Brief Case 1000 Pieces Puzzle\",\n\t\t\t\"total_discount\": \"0.00\",\n\t\t\t\"total_discount_set\": {\n\t\t\t\t\"shop_money\": {\n\t\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t},\n\t\t\t\t\"presentment_money\": {\n\t\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t}\n\t\t\t},\n\t\t\t\"variant_id\": 39851748229178,\n\t\t\t\"variant_inventory_management\": \"shopify\",\n\t\t\t\"variant_title\": \"N/A\",\n\t\t\t\"vendor\": \"Keenan-faure\",\n\t\t\t\"tax_lines\": [{\n\t\t\t\t\"channel_liable\": false,\n\t\t\t\t\"price\": \"155.25\",\n\t\t\t\t\"price_set\": {\n\t\t\t\t\t\"shop_money\": {\n\t\t\t\t\t\t\"amount\": \"155.25\",\n\t\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t\t},\n\t\t\t\t\t\"presentment_money\": {\n\t\t\t\t\t\t\"amount\": \"155.25\",\n\t\t\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t\t\t}\n\t\t\t\t},\n\t\t\t\t\"rate\": 0.15,\n\t\t\t\t\"title\": \"VAT\"\n\t\t\t}],\n\t\t\t\"duties\": [],\n\t\t\t\"discount_allocations\": []\n\t\t}\n\t],\n\t\"payment_terms\": null,\n\t\"refunds\": [],\n\t\"shipping_address\": {\n\t\t\"first_name\": \"Keenan\",\n\t\t\"address1\": \"14 Tracy Crescent\",\n\t\t\"phone\": null,\n\t\t\"city\": \"Cape Town\",\n\t\t\"zip\": \"7786\",\n\t\t\"province\": \"Western Cape\",\n\t\t\"country\": \"South Africa\",\n\t\t\"last_name\": \"Faure\",\n\t\t\"address2\": \"Mitchells Plain\",\n\t\t\"company\": \"Stock2ShopLOL\",\n\t\t\"latitude\": -34.02977,\n\t\t\"longitude\": 18.63063,\n\t\t\"name\": \"Keenan Faure\",\n\t\t\"country_code\": \"ZA\",\n\t\t\"province_code\": \"WC\"\n\t},\n\t\"shipping_lines\": [{\n\t\t\"id\": 4153358319809,\n\t\t\"carrier_identifier\": \"650f1a14fa979ec5c74d063e968411d4\",\n\t\t\"code\": \"Free Shipping (2-3 Days)\",\n\t\t\"delivery_category\": null,\n\t\t\"discounted_price\": \"0.00\",\n\t\t\"discounted_price_set\": {\n\t\t\t\"shop_money\": {\n\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t},\n\t\t\t\"presentment_money\": {\n\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t}\n\t\t},\n\t\t\"phone\": null,\n\t\t\"price\": \"0.00\",\n\t\t\"price_set\": {\n\t\t\t\"shop_money\": {\n\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t},\n\t\t\t\"presentment_money\": {\n\t\t\t\t\"amount\": \"0.00\",\n\t\t\t\t\"currency_code\": \"ZAR\"\n\t\t\t}\n\t\t},\n\t\t\"requested_fulfillment_service_id\": null,\n\t\t\"source\": \"shopify\",\n\t\t\"title\": \"Free Shipping (2-3 Days)\",\n\t\t\"tax_lines\": [],\n\t\t\"discount_allocations\": []\n\t}]\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "4c59122c-759d-4e44-a4e2-0664dff14fa1",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Customers",
+            "url": "{{baseUrl}}:{{port}}/api/customers",
+            "method": "POST",
+            "sortNum": 75000,
+            "created": "2023-09-11T18:00:39.588Z",
+            "modified": "2023-09-11T18:02:33.259Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n    \"first_name\": \"Keenan_Test\",\n    \"last_name\": \"Faure_Test\",\n    \"email\": \"keenan@test.com\",\n    \"phone\": \"0987654321\",\n    \"address\": [\n        {\n            \"address_type\": \"default\",\n            \"first_name\": \"Keenan_Test\",\n            \"last_name\": \"Faure_test\",\n            \"address1\": \"14 Tract Failure\",\n            \"address2\": \"Montrose Failure\",\n            \"suburb\": \"Mitchells Failure\",\n            \"city\": \"Cape Town Failure\",\n            \"province\": \"Western Failure\",\n            \"postal_code\": \"7785\",\n            \"company\": \"Failure\"\n        },\n        {\n            \"address_type\": \"shipping\",\n            \"first_name\": \"\",\n            \"last_name\": \"\",\n            \"address1\": \"\",\n            \"address2\": \"\",\n            \"suburb\": \"\",\n            \"city\": \"\",\n            \"province\": \"\",\n            \"postal_code\": \"\",\n            \"company\": \"\"\n        },\n        {\n            \"address_type\": \"billing\",\n            \"first_name\": \"\",\n            \"last_name\": \"\",\n            \"address1\": \"\",\n            \"address2\": \"\",\n            \"suburb\": \"\",\n            \"city\": \"\",\n            \"province\": \"\",\n            \"postal_code\": \"\",\n            \"company\": \"\"\n        }\n    ]\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "f4a8aa45-d3ba-49b1-ad3c-7f4235b42113",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Products Search",
+            "url": "{{baseUrl}}:{{port}}/api/products/search?q=value",
+            "method": "GET",
+            "sortNum": 80000,
+            "created": "2023-09-11T17:55:09.877Z",
+            "modified": "2023-09-11T18:03:23.555Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [
+                {
+                    "name": "q",
+                    "value": "value",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "fb790237-0d20-4756-9844-d4358bf47396",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Customers Search",
+            "url": "{{baseUrl}}:{{port}}/api/customers/search?q=value",
+            "method": "GET",
+            "sortNum": 85000,
+            "created": "2023-09-11T18:01:09.944Z",
+            "modified": "2023-09-11T18:03:19.609Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [
+                {
+                    "name": "q",
+                    "value": "value",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "6da64393-50bd-4202-940e-1a8604c2a99e",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Orders Search",
+            "url": "{{baseUrl}}:{{port}}/api/orders/search?q=value",
+            "method": "GET",
+            "sortNum": 87500,
+            "created": "2023-09-11T18:02:58.835Z",
+            "modified": "2023-09-11T18:03:16.389Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [
+                {
+                    "name": "q",
+                    "value": "value",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "64a9114e-ff3b-4f27-8fb6-8aad67a05d5a",
+            "colId": "5bcf6a36-782f-4031-8d6e-46876bd9d253",
+            "containerId": "",
+            "name": "Products Filter",
+            "url": "{{baseUrl}}:{{port}}/api/products/filter?data=value&page=1",
+            "method": "GET",
+            "sortNum": 90000,
+            "created": "2023-09-11T17:56:10.615Z",
+            "modified": "2023-09-11T18:03:27.453Z",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "value": "ApiKey {{api_key}}"
+                }
+            ],
+            "params": [
+                {
+                    "name": "data",
+                    "value": "value",
+                    "isPath": false
+                },
+                {
+                    "name": "page",
+                    "value": "1",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        }
+    ]
+}

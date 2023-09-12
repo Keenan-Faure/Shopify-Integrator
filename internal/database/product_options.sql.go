@@ -7,55 +7,52 @@ package database
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/google/uuid"
 )
 
-const createProductOption = `-- name: CreateProductOption :execresult
+const createProductOption = `-- name: CreateProductOption :one
 INSERT INTO product_options(
     product_id,
-    name,
-    value
+    name
 ) VALUES (
-    ?, ?, ?
+    $1, $2
 )
+RETURNING id, product_id, name
 `
 
 type CreateProductOptionParams struct {
-	ProductID []byte `json:"product_id"`
-	Name      string `json:"name"`
-	Value     string `json:"value"`
+	ProductID uuid.UUID `json:"product_id"`
+	Name      string    `json:"name"`
 }
 
-func (q *Queries) CreateProductOption(ctx context.Context, arg CreateProductOptionParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createProductOption, arg.ProductID, arg.Name, arg.Value)
+func (q *Queries) CreateProductOption(ctx context.Context, arg CreateProductOptionParams) (ProductOption, error) {
+	row := q.db.QueryRowContext(ctx, createProductOption, arg.ProductID, arg.Name)
+	var i ProductOption
+	err := row.Scan(&i.ID, &i.ProductID, &i.Name)
+	return i, err
 }
 
 const getProductOptions = `-- name: GetProductOptions :many
 SELECT
-    name,
-    value
+    name
 FROM product_options
-WHERE id = ?
+WHERE id = $1
 `
 
-type GetProductOptionsRow struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-func (q *Queries) GetProductOptions(ctx context.Context, id []byte) ([]GetProductOptionsRow, error) {
+func (q *Queries) GetProductOptions(ctx context.Context, id uuid.UUID) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, getProductOptions, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetProductOptionsRow
+	var items []string
 	for rows.Next() {
-		var i GetProductOptionsRow
-		if err := rows.Scan(&i.Name, &i.Value); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, name)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -66,20 +63,22 @@ func (q *Queries) GetProductOptions(ctx context.Context, id []byte) ([]GetProduc
 	return items, nil
 }
 
-const updateProductOption = `-- name: UpdateProductOption :execresult
+const updateProductOption = `-- name: UpdateProductOption :one
 UPDATE product_options
 SET
-    name = ?,
-    value = ?
-WHERE product_id = ?
+    name = $1
+WHERE product_id = $2
+RETURNING id, product_id, name
 `
 
 type UpdateProductOptionParams struct {
-	Name      string `json:"name"`
-	Value     string `json:"value"`
-	ProductID []byte `json:"product_id"`
+	Name      string    `json:"name"`
+	ProductID uuid.UUID `json:"product_id"`
 }
 
-func (q *Queries) UpdateProductOption(ctx context.Context, arg UpdateProductOptionParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateProductOption, arg.Name, arg.Value, arg.ProductID)
+func (q *Queries) UpdateProductOption(ctx context.Context, arg UpdateProductOptionParams) (ProductOption, error) {
+	row := q.db.QueryRowContext(ctx, updateProductOption, arg.Name, arg.ProductID)
+	var i ProductOption
+	err := row.Scan(&i.ID, &i.ProductID, &i.Name)
+	return i, err
 }

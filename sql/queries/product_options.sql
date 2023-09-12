@@ -1,22 +1,21 @@
--- name: CreateProductOption :execresult
+-- name: CreateProductOption :one
 INSERT INTO product_options(
     product_id,
-    name,
-    value
+    name
 ) VALUES (
-    ?, ?, ?
-);
+    $1, $2
+)
+RETURNING *;
 
--- name: UpdateProductOption :execresult
+-- name: UpdateProductOption :one
 UPDATE product_options
 SET
-    name = ?,
-    value = ?
-WHERE product_id = ?;
+    name = $1
+WHERE product_id = $2
+RETURNING *;
 
 -- name: GetProductOptions :many
 SELECT
-    name,
-    value
+    name
 FROM product_options
-WHERE id = ?;
+WHERE id = $1;

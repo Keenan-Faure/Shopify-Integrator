@@ -46,3 +46,63 @@ func TestExtractApiKey(t *testing.T) {
 		t.Errorf("Expected 'error' but found " + err.Error())
 	}
 }
+
+func TestConvertStringToLike(t *testing.T) {
+	fmt.Println("Test case 1 - Valid string")
+	arg := "string"
+	results := ConvertStringToLike(arg)
+	if results[0:1] != "%" || results[len(arg)-1:] != "%" {
+		t.Errorf("Unexpected result")
+	}
+	fmt.Println("Test case 2 - Invalid string")
+	arg = ""
+	results = ConvertStringToLike(arg)
+	if results[0:1] != "%" || results[len(arg)-1:] != "%" {
+		t.Errorf("Unexpected result")
+	}
+}
+
+func TestConfirmFilters(t *testing.T) {
+	fmt.Println("Test case 1 - Valid filter")
+	arg := "string"
+	results := ConfirmFilters(arg)
+	if results != arg {
+		t.Errorf("Unexpected result")
+	}
+	fmt.Println("Test case 2 - Invalid filter")
+	arg = ""
+	results = ConfirmFilters(arg)
+	if results == arg {
+		t.Errorf("Unexpected result")
+	}
+}
+
+func TestConvertStringToSQL(t *testing.T) {
+	fmt.Println("Test case 1 - Valid string")
+	arg := "string"
+	results := ConvertStringToSQL(arg)
+	if !results.Valid {
+		t.Errorf("Expected 'true' but found 'false'")
+	}
+	fmt.Println("Test case 2 - Invalid (empty) string")
+	arg = ""
+	results = ConvertStringToSQL(arg)
+	if results.Valid {
+		t.Errorf("Expected 'false' but found 'true")
+	}
+}
+
+func TestConvertIntToSQL(t *testing.T) {
+	fmt.Println("Test case 1 - Valid Integer")
+	arg := 531
+	results := ConvertIntToSQL(arg)
+	if !results.Valid {
+		t.Errorf("Expected 'true' but found 'false'")
+	}
+	fmt.Println("Test case 2 - Invalid (nil value) Integer")
+	arg = 0
+	results = ConvertIntToSQL(arg)
+	if results.Valid {
+		t.Errorf("Expected 'false' but found 'true")
+	}
+}

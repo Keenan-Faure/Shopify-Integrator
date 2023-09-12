@@ -20,7 +20,13 @@ Pushes and pulls data from Shopify with some additional features
   - automatic product push when update occurs in database (or per fetch_limit)
   - order pushed back to shopify when updated (option to exist - push to Shopify)
 
-- logs
-  - error logging in db
-  - logs contain errors/warnings/info messages on when products/orders were processed.
-  - logs section on front-end to be presented in the dashboard.
+- settings:
+  - Fetch products from Shopify [true/false]
+  - Fetch products timer (minutes)
+  - Enable Webhook [true/false]
+  - Enable product variations [true/false]
+  - Enable push to Shopufy
+  - Enable creation of customers from orders
+
+- Test endpoints
+- Create Product export/import features

@@ -9,15 +9,103 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Product: validation
-func IDValidation(id string) error {
-	if id == "" || len(id) <= 0 || len(id) > 16 {
-		return errors.New("Invalid product id")
+// ValidateToken: Data validtion
+func ValidateTokenValidation(token_request objects.RequestBodyValidateToken) error {
+	if token_request.Name == "" || len(token_request.Name) == 0 {
+		return errors.New("data validation error")
+	} else if token_request.Email == "" || len(token_request.Email) == 0 {
+		return errors.New("data validation error")
+	} else if token_request.Token == "" || len(token_request.Token) == 0 {
+		return errors.New("data validation error")
 	}
 	return nil
 }
 
-// User: validation
+// ValidateToken: decode the request body
+func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyValidateToken, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyValidateToken{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// PreRegister: Data validation
+func PreRegisterValidation(preorder objects.RequestBodyPreRegister) error {
+	if preorder.Name == "" || len(preorder.Name) == 0 || preorder.Email == "" || len(preorder.Email) == 0 {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// PreRegister: decode the request body
+func DecodePreRegisterRequestBody(r *http.Request) (objects.RequestBodyPreRegister, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyPreRegister{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Customer: Data validation
+func CustomerValidation(order objects.RequestBodyCustomer) error {
+	if order.FirstName == "" {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// Customer: decode the request body
+func DecodeCustomerRequestBody(r *http.Request) (objects.RequestBodyCustomer, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyCustomer{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Order: decodes the request body
+func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyOrder{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Order: data validation
+func OrderValidation(order objects.RequestBodyOrder) error {
+	if order.Name == "" || order.LineItems[0].Sku == "" || order.Customer.FirstName == "" {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// User: data validation
+func TokenValidation(key string) error {
+	if key == "" || len(key) <= 0 || len(key) > 32 {
+		return errors.New("invalid product id")
+	}
+	return nil
+}
+
+// Product: data validation
+func IDValidation(id string) error {
+	if id == "" || len(id) <= 0 || len(id) > 16 {
+		return errors.New("invalid product id")
+	}
+	return nil
+}
+
+// User: data validation
 func UserValidation(user objects.RequestBodyUser) error {
 	if user.Name == "" {
 		return errors.New("empty name not allowed")
@@ -25,7 +113,7 @@ func UserValidation(user objects.RequestBodyUser) error {
 	return nil
 }
 
-// Product: validation
+// Product: data validation
 func ProductValidation(product objects.RequestBodyProduct) error {
 	if product.Title == "" {
 		return errors.New("empty title not allowed")
@@ -100,13 +188,13 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 			option_2_values = append(option_2_values, value.Option2)
 		}
 		counter := 0
-		for key, _ := range option_1_values {
-			for sub_key, _ := range option_2_values {
+		for key := range option_1_values {
+			for sub_key := range option_2_values {
 				if option_2_values[key] == option_2_values[sub_key] && option_1_values[key] == option_1_values[sub_key] {
 					counter += 1
 				}
 				if counter > 1 {
-					errors.New("duplicate option values not allowed")
+					return errors.New("duplicate option values not allowed")
 				}
 			}
 		}
@@ -123,16 +211,16 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 		option_3_values = append(option_3_values, value.Option3)
 	}
 	counter := 0
-	for key, _ := range option_1_values {
-		for sub_key, _ := range option_2_values {
-			for primal_key, _ := range option_3_values {
+	for key := range option_1_values {
+		for sub_key := range option_2_values {
+			for primal_key := range option_3_values {
 				if (option_3_values[key] == option_3_values[primal_key] &&
 					option_2_values[key] == option_2_values[sub_key]) &&
 					option_1_values[key] == option_1_values[sub_key] {
 					counter += 1
 				}
 				if counter > 1 {
-					errors.New("duplicate option values not allowed")
+					return errors.New("duplicate option values not allowed")
 				}
 			}
 		}

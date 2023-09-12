@@ -1,4 +1,4 @@
--- name: CreateVariant :execresult
+-- name: CreateVariant :one
 INSERT INTO variants(
     product_id,
     sku,
@@ -9,18 +9,20 @@ INSERT INTO variants(
     created_at,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?
-);
+    $1, $2, $3, $4, $5, $6, $7, $8
+)
+RETURNING *;
 
--- name: UpdateVariant :execresult
+-- name: UpdateVariant :one
 UPDATE variants
 SET
-    option1 = ?,
-    option2 = ?,
-    option3 = ?,
-    barcode = ?,
-    updated_at = ?
-WHERE sku = ?;
+    option1 = $1,
+    option2 = $2,
+    option3 = $3,
+    barcode = $4,
+    updated_at = $5
+WHERE sku = $6
+RETURNING *;
 
 -- name: GetProductVariants :many
 SELECT
@@ -32,7 +34,7 @@ SELECT
     barcode,
     updated_at
 FROM variants
-WHERE product_id = ?;
+WHERE product_id = $1;
 
 -- name: GetVariantBySKU :one
 SELECT
@@ -43,4 +45,4 @@ SELECT
     option3,
     barcode
 FROM variants
-WHERE sku = ?;
+WHERE sku = $1;

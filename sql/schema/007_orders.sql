@@ -1,7 +1,6 @@
 -- +goose Up
 CREATE TABLE orders(
-    id BINARY(16) PRIMARY KEY UNIQUE NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
-    customer_id BINARY(16) NOT NULL,
+    id UUID PRIMARY KEY UNIQUE,
     notes VARCHAR(255) DEFAULT '',
     web_code VARCHAR(32) UNIQUE,
     tax_total DECIMAL(10, 2) DEFAULT 0.00,

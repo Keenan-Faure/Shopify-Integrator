@@ -59,3 +59,17 @@ func ConvertStringToSQL(description string) sql.NullString {
 		Valid:  true,
 	}
 }
+
+// converts a string to a sql.NullInt32 object
+func ConvertIntToSQL(value int) sql.NullInt32 {
+	if value == 0 {
+		return sql.NullInt32{
+			Int32: int32(value),
+			Valid: false,
+		}
+	}
+	return sql.NullInt32{
+		Int32: int32(value),
+		Valid: true,
+	}
+}

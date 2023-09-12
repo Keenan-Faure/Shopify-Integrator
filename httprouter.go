@@ -4,6 +4,7 @@ import (
 	"api"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"integrator/internal/database"
 	"log"
 	"net/http"
@@ -14,17 +15,162 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 )
 
 // POST /api/customers/
 func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-
+	customer_body, err := DecodeCustomerRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if CustomerValidation(customer_body) != nil {
+		RespondWithError(w, http.StatusBadRequest, "data validation error")
+		return
+	}
+	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
+		FirstName: customer_body.FirstName,
+		LastName:  customer_body.LastName,
+		Email:     utils.ConvertStringToSQL(customer_body.Email),
+		Phone:     utils.ConvertStringToSQL(customer_body.Phone),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for key := range customer_body.Address {
+		_, err = dbconfig.DB.CreateAddress(r.Context(), database.CreateAddressParams{
+			CustomerID: customer.ID,
+			Name:       utils.ConvertStringToSQL("default"),
+			FirstName:  customer_body.Address[key].FirstName,
+			LastName:   customer_body.Address[key].LastName,
+			Address1:   utils.ConvertStringToSQL(customer_body.Address[key].Address1),
+			Address2:   utils.ConvertStringToSQL(customer_body.Address[key].Address2),
+			Suburb:     utils.ConvertStringToSQL(""),
+			City:       utils.ConvertStringToSQL(customer_body.Address[key].City),
+			Province:   utils.ConvertStringToSQL(customer_body.Address[key].Province),
+			PostalCode: utils.ConvertStringToSQL(customer_body.Address[key].PostalCode),
+			Company:    utils.ConvertStringToSQL(customer_body.Address[key].Company),
+			CreatedAt:  time.Now().UTC(),
+			UpdatedAt:  time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, []string{"created"})
 }
 
 // POST /api/orders?token={{token}}&api_key={{key}}
 // ngrok exposed url
 func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-
+	web_token := r.URL.Query().Get("token")
+	if TokenValidation(web_token) != nil {
+		RespondWithError(w, http.StatusBadRequest, "invalid token")
+	}
+	api_key := r.URL.Query().Get("api_key")
+	if TokenValidation(api_key) != nil {
+		RespondWithError(w, http.StatusBadRequest, "invalid api_key")
+	}
+	_, err := dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
+		WebhookToken: web_token,
+		ApiKey:       api_key,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusNotFound, "user does not exist")
+	}
+	order_body, err := DecodeOrderRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if OrderValidation(order_body) != nil {
+		RespondWithError(w, http.StatusBadRequest, "data validation error")
+		return
+	}
+	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
+		FirstName: order_body.Customer.FirstName,
+		LastName:  order_body.Customer.FirstName,
+		Email:     utils.ConvertStringToSQL(order_body.Customer.Email),
+		Phone:     utils.ConvertStringToSQL(order_body.Customer.Phone),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateDefaultAddress(order_body, customer.ID))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateShippingAddress(order_body, customer.ID))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateBillingAddress(order_body, customer.ID))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	order, err := dbconfig.DB.CreateOrder(r.Context(), database.CreateOrderParams{
+		CustomerID:    customer.ID,
+		Notes:         utils.ConvertStringToSQL(""),
+		WebCode:       utils.ConvertStringToSQL(order_body.Name),
+		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
+		OrderTotal:    utils.ConvertStringToSQL(order_body.TotalPrice),
+		ShippingTotal: utils.ConvertStringToSQL(order_body.TotalShippingPriceSet.ShopMoney.Amount),
+		DiscountTotal: utils.ConvertStringToSQL(order_body.TotalDiscounts),
+		CreatedAt:     time.Now().UTC(),
+		UpdatedAt:     time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for _, value := range order_body.LineItems {
+		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+			OrderID:   order.ID,
+			LineType:  utils.ConvertStringToSQL("product"),
+			Sku:       value.Sku,
+			Price:     utils.ConvertStringToSQL(value.Price),
+			Barcode:   utils.ConvertIntToSQL(0),
+			Qty:       utils.ConvertIntToSQL(value.Quantity),
+			TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
+			TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	for _, value := range order_body.ShippingLines {
+		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+			OrderID:   order.ID,
+			LineType:  utils.ConvertStringToSQL("shipping"),
+			Sku:       value.Code,
+			Price:     utils.ConvertStringToSQL(value.Price),
+			Barcode:   utils.ConvertIntToSQL(0),
+			Qty:       utils.ConvertIntToSQL(1),
+			TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
+			TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, []string{"created"})
 }
 
 // POST /api/products/
@@ -38,11 +184,87 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, "data validation error")
 		return
 	}
-	// validate if no duplicate sku exists in system
+	err = ValidateDuplicateOption(params)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
+	err = ValidateDuplicateSKU(params, dbconfig, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
+	err = DuplicateOptionValues(params)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+	}
 
-	// validate if no duplicate option values exist in uploaded product variants
-
-	// validate if no duplicate option values exist in product (product_options)
+	// add product to database
+	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
+		Active:      "1",
+		Title:       utils.ConvertStringToSQL(params.Title),
+		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
+		Category:    utils.ConvertStringToSQL(params.Category),
+		Vendor:      utils.ConvertStringToSQL(params.Vendor),
+		ProductType: utils.ConvertStringToSQL(params.ProductType),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for key := range params.ProductOptions {
+		_, err := dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
+			ProductID: product.ID,
+			Name:      params.ProductOptions[key].Value,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	// add variants
+	for key := range params.Variants {
+		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
+			ProductID: product.ID,
+			Sku:       params.Variants[key].Sku,
+			Option1:   utils.ConvertStringToSQL(params.Variants[key].Option1),
+			Option2:   utils.ConvertStringToSQL(params.Variants[key].Option2),
+			Option3:   utils.ConvertStringToSQL(params.Variants[key].Option3),
+			Barcode:   utils.ConvertStringToSQL(params.Variants[key].Barcode),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		// variant pricing & variant qty
+		for key_price := range params.Variants[key].VariantPricing {
+			_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
+				VariantID: variant.ID,
+				Name:      params.Variants[key].VariantPricing[key_price].Name,
+				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_price].Value),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
+				VariantID: variant.ID,
+				Name:      params.Variants[key].VariantQuantity[key_price].Name,
+				Value:     utils.ConvertIntToSQL(params.Variants[key].VariantQuantity[key_price].Value),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, params)
 }
 
 // GET /api/customers/search?q=value
@@ -67,8 +289,12 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	customer_id_byte := []byte(customer_id)
-	customer, err := CompileCustomerData(dbconfig, customer_id_byte, r)
+	customer_uuid, err := uuid.Parse(customer_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+customer_id)
+		return
+	}
+	customer, err := CompileCustomerData(dbconfig, customer_uuid, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -105,10 +331,7 @@ func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), sql.NullString{
-		String: utils.ConvertStringToLike(search_query),
-		Valid:  true,
-	})
+	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), search_query)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
@@ -123,8 +346,12 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	order_id_byte := []byte(order_id)
-	order_data, err := CompileOrderData(dbconfig, order_id_byte, r)
+	order_uuid, err := uuid.Parse(order_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+order_id)
+		return
+	}
+	order_data, err := CompileOrderData(dbconfig, order_uuid, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -199,8 +426,12 @@ func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, 
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	product_id_byte := []byte(product_id)
-	product_data, err := CompileProductData(dbconfig, product_id_byte, r)
+	product_uuid, err := uuid.Parse(product_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+product_id)
+		return
+	}
+	product_data, err := CompileProductData(dbconfig, product_uuid, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -229,6 +460,70 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 // POST /api/login
 func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	RespondWithJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// POST /api/preregister
+func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Request) {
+	request_body, err := DecodePreRegisterRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if PreRegisterValidation(request_body) != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	exists, err := dbconfig.CheckTokenExists(request_body, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if exists {
+		RespondWithError(w, http.StatusConflict, err.Error())
+		return
+	}
+	token, err := dbconfig.DB.CreateToken(r.Context(), database.CreateTokenParams{
+		ID:        uuid.New(),
+		Name:      request_body.Name,
+		Email:     request_body.Email,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	err = SendEmail(token.Token, request_body.Email, request_body.Name)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusCreated, []string{"email sent"})
+}
+
+// POST /api/validatetoken
+func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Request) {
+	request_body, err := DecodeValidateTokenRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if ValidateTokenValidation(request_body) != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
+		Name:  request_body.Name,
+		Email: request_body.Email,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if token.Token != request_body.Token {
+		RespondWithError(w, http.StatusNotFound, "invalid token for user")
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, []string{"ok"})
 }
 
 // POST /api/register

@@ -10,7 +10,7 @@ import (
 // Initiates a connection to the database and
 // if successful returns the connection
 func InitConn(dbURL string) (DbConfig, error) {
-	db, err := sql.Open("mysql", dbURL)
+	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal("Error connecting to the database: ", err)
 		return DbConfig{}, err

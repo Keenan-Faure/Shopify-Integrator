@@ -9,7 +9,27 @@ services:
     container_name: ${CONTAINER_NAME}
     env_file:
       - .env
+    networks:
+      - integrator_net
+
+  postgres:
+        restart: always
+        container_name: ${DB_NAME}
+        image: postgres
+        ports:
+            - "5432:5432"
+        volumes:
+            - integrator_volume:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_USER=${DB_USER}
+            - POSTGRES_PASSWORD=${DB_PSW}
+        networks:
+            - integrator_net
 
 volumes:
     integrator_volume:
         driver: local
+
+networks:
+    integrator_net:
+        driver: bridge

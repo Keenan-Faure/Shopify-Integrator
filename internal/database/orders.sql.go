@@ -9,9 +9,11 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-const createOrder = `-- name: CreateOrder :execresult
+const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders(
     customer_id,
     notes,
@@ -23,12 +25,13 @@ INSERT INTO orders(
     created_at,
     updated_at
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
+RETURNING id, customer_id, notes, web_code, tax_total, order_total, shipping_total, discount_total, created_at, updated_at
 `
 
 type CreateOrderParams struct {
-	CustomerID    []byte         `json:"customer_id"`
+	CustomerID    uuid.UUID      `json:"customer_id"`
 	Notes         sql.NullString `json:"notes"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
@@ -39,8 +42,8 @@ type CreateOrderParams struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createOrder,
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
+	row := q.db.QueryRowContext(ctx, createOrder,
 		arg.CustomerID,
 		arg.Notes,
 		arg.WebCode,
@@ -51,6 +54,20 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (sql.R
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerID,
+		&i.Notes,
+		&i.WebCode,
+		&i.TaxTotal,
+		&i.OrderTotal,
+		&i.ShippingTotal,
+		&i.DiscountTotal,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getOrderByCustomer = `-- name: GetOrderByCustomer :many
@@ -64,11 +81,11 @@ SELECT
     discount_total,
     updated_at
 FROM orders
-WHERE customer_id = ?
+WHERE customer_id = $1
 `
 
 type GetOrderByCustomerRow struct {
-	CustomerID    []byte         `json:"customer_id"`
+	CustomerID    uuid.UUID      `json:"customer_id"`
 	Notes         sql.NullString `json:"notes"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
@@ -78,7 +95,7 @@ type GetOrderByCustomerRow struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetOrderByCustomer(ctx context.Context, customerID []byte) ([]GetOrderByCustomerRow, error) {
+func (q *Queries) GetOrderByCustomer(ctx context.Context, customerID uuid.UUID) ([]GetOrderByCustomerRow, error) {
 	rows, err := q.db.QueryContext(ctx, getOrderByCustomer, customerID)
 	if err != nil {
 		return nil, err
@@ -122,11 +139,11 @@ SELECT
     updated_at,
     created_at
 FROM orders
-WHERE id = ?
+WHERE id = $1
 `
 
 type GetOrderByIDRow struct {
-	CustomerID    []byte         `json:"customer_id"`
+	CustomerID    uuid.UUID      `json:"customer_id"`
 	Notes         sql.NullString `json:"notes"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
@@ -137,7 +154,7 @@ type GetOrderByIDRow struct {
 	CreatedAt     time.Time      `json:"created_at"`
 }
 
-func (q *Queries) GetOrderByID(ctx context.Context, id []byte) (GetOrderByIDRow, error) {
+func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (GetOrderByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getOrderByID, id)
 	var i GetOrderByIDRow
 	err := row.Scan(
@@ -165,7 +182,7 @@ SELECT
     discount_total,
     updated_at
 FROM orders
-LIMIT ? OFFSET ?
+LIMIT $1 OFFSET $2
 `
 
 type GetOrdersParams struct {
@@ -174,7 +191,7 @@ type GetOrdersParams struct {
 }
 
 type GetOrdersRow struct {
-	CustomerID    []byte         `json:"customer_id"`
+	CustomerID    uuid.UUID      `json:"customer_id"`
 	Notes         sql.NullString `json:"notes"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
@@ -228,7 +245,7 @@ SELECT
 FROM orders o
 INNER JOIN customers c
 ON o.customer_id = c.id
-WHERE CONCAT(c.first_name, ' ', c.last_name) LIKE ?
+WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
 LIMIT 10
 `
 
@@ -242,8 +259,8 @@ type GetOrdersSearchByCustomerRow struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetOrdersSearchByCustomer(ctx context.Context, firstName string) ([]GetOrdersSearchByCustomerRow, error) {
-	rows, err := q.db.QueryContext(ctx, getOrdersSearchByCustomer, firstName)
+func (q *Queries) GetOrdersSearchByCustomer(ctx context.Context, similarToEscape string) ([]GetOrdersSearchByCustomerRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOrdersSearchByCustomer, similarToEscape)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +300,7 @@ SELECT
     discount_total,
     updated_at
 FROM orders
-WHERE web_code LIKE ?
+WHERE web_code SIMILAR TO $1
 LIMIT 10
 `
 
@@ -297,8 +314,8 @@ type GetOrdersSearchWebCodeRow struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetOrdersSearchWebCode(ctx context.Context, webCode sql.NullString) ([]GetOrdersSearchWebCodeRow, error) {
-	rows, err := q.db.QueryContext(ctx, getOrdersSearchWebCode, webCode)
+func (q *Queries) GetOrdersSearchWebCode(ctx context.Context, similarToEscape string) ([]GetOrdersSearchWebCodeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOrdersSearchWebCode, similarToEscape)
 	if err != nil {
 		return nil, err
 	}
@@ -328,22 +345,23 @@ func (q *Queries) GetOrdersSearchWebCode(ctx context.Context, webCode sql.NullSt
 	return items, nil
 }
 
-const updateOrder = `-- name: UpdateOrder :execresult
+const updateOrder = `-- name: UpdateOrder :one
 UPDATE orders
 SET
-    customer_id = ?,
-    notes = ?,
-    web_code = ?,
-    tax_total = ?,
-    order_total = ?,
-    shipping_total = ?,
-    discount_total = ?,
-    updated_at = ?
-WHERE id = ?
+    customer_id = $1,
+    notes = $2,
+    web_code = $3,
+    tax_total = $4,
+    order_total = $5,
+    shipping_total = $6,
+    discount_total = $7,
+    updated_at = $8
+WHERE id = $9
+RETURNING id, customer_id, notes, web_code, tax_total, order_total, shipping_total, discount_total, created_at, updated_at
 `
 
 type UpdateOrderParams struct {
-	CustomerID    []byte         `json:"customer_id"`
+	CustomerID    uuid.UUID      `json:"customer_id"`
 	Notes         sql.NullString `json:"notes"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
@@ -351,11 +369,11 @@ type UpdateOrderParams struct {
 	ShippingTotal sql.NullString `json:"shipping_total"`
 	DiscountTotal sql.NullString `json:"discount_total"`
 	UpdatedAt     time.Time      `json:"updated_at"`
-	ID            []byte         `json:"id"`
+	ID            uuid.UUID      `json:"id"`
 }
 
-func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateOrder,
+func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
+	row := q.db.QueryRowContext(ctx, updateOrder,
 		arg.CustomerID,
 		arg.Notes,
 		arg.WebCode,
@@ -366,4 +384,18 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (sql.R
 		arg.UpdatedAt,
 		arg.ID,
 	)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerID,
+		&i.Notes,
+		&i.WebCode,
+		&i.TaxTotal,
+		&i.OrderTotal,
+		&i.ShippingTotal,
+		&i.DiscountTotal,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

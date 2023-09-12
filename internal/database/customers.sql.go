@@ -9,54 +9,85 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-const createCustomer = `-- name: CreateCustomer :execresult
+const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers(
     first_name,
     last_name,
+    email,
+    phone,
     created_at,
     updated_at
 ) VALUES(
-    ?, ?, ?, ?
+    $1, $2, $3, $4, $5, $6
 )
+RETURNING id, order_id, first_name, last_name, email, phone, created_at, updated_at
 `
 
 type CreateCustomerParams struct {
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     sql.NullString `json:"email"`
+	Phone     sql.NullString `json:"phone"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createCustomer,
+func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error) {
+	row := q.db.QueryRowContext(ctx, createCustomer,
 		arg.FirstName,
 		arg.LastName,
+		arg.Email,
+		arg.Phone,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getCustomerByID = `-- name: GetCustomerByID :one
 SELECT
     first_name,
     last_name,
+    email,
+    phone,
     updated_at
 FROM customers
-WHERE id = ?
+WHERE id = $1
 `
 
 type GetCustomerByIDRow struct {
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	UpdatedAt time.Time `json:"updated_at"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     sql.NullString `json:"email"`
+	Phone     sql.NullString `json:"phone"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetCustomerByID(ctx context.Context, id []byte) (GetCustomerByIDRow, error) {
+func (q *Queries) GetCustomerByID(ctx context.Context, id uuid.UUID) (GetCustomerByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getCustomerByID, id)
 	var i GetCustomerByIDRow
-	err := row.Scan(&i.FirstName, &i.LastName, &i.UpdatedAt)
+	err := row.Scan(
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Phone,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
@@ -64,9 +95,11 @@ const getCustomers = `-- name: GetCustomers :many
 SELECT
     first_name,
     last_name,
+    email,
+    phone,
     updated_at
 FROM customers
-LIMIT ? OFFSET ?
+LIMIT $1 OFFSET $2
 `
 
 type GetCustomersParams struct {
@@ -75,9 +108,11 @@ type GetCustomersParams struct {
 }
 
 type GetCustomersRow struct {
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	UpdatedAt time.Time `json:"updated_at"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     sql.NullString `json:"email"`
+	Phone     sql.NullString `json:"phone"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetCustomers(ctx context.Context, arg GetCustomersParams) ([]GetCustomersRow, error) {
@@ -89,7 +124,13 @@ func (q *Queries) GetCustomers(ctx context.Context, arg GetCustomersParams) ([]G
 	var items []GetCustomersRow
 	for rows.Next() {
 		var i GetCustomersRow
-		if err := rows.Scan(&i.FirstName, &i.LastName, &i.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&i.FirstName,
+			&i.LastName,
+			&i.Email,
+			&i.Phone,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -107,20 +148,24 @@ const getCustomersByName = `-- name: GetCustomersByName :many
 SELECT
     first_name,
     last_name,
+    email,
+    phone,
     updated_at
 FROM customers
-WHERE CONCAT(first_name, ' ', last_name) LIKE ?
+WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO $1
 LIMIT 10
 `
 
 type GetCustomersByNameRow struct {
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	UpdatedAt time.Time `json:"updated_at"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     sql.NullString `json:"email"`
+	Phone     sql.NullString `json:"phone"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetCustomersByName(ctx context.Context, firstName string) ([]GetCustomersByNameRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCustomersByName, firstName)
+func (q *Queries) GetCustomersByName(ctx context.Context, similarToEscape string) ([]GetCustomersByNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCustomersByName, similarToEscape)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +173,13 @@ func (q *Queries) GetCustomersByName(ctx context.Context, firstName string) ([]G
 	var items []GetCustomersByNameRow
 	for rows.Next() {
 		var i GetCustomersByNameRow
-		if err := rows.Scan(&i.FirstName, &i.LastName, &i.UpdatedAt); err != nil {
+		if err := rows.Scan(
+			&i.FirstName,
+			&i.LastName,
+			&i.Email,
+			&i.Phone,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -142,27 +193,46 @@ func (q *Queries) GetCustomersByName(ctx context.Context, firstName string) ([]G
 	return items, nil
 }
 
-const updateCustomer = `-- name: UpdateCustomer :execresult
+const updateCustomer = `-- name: UpdateCustomer :one
 UPDATE customers
 SET
-    first_name = ?,
-    last_name = ?,
-    updated_at = ?
-WHERE id = ?
+    first_name = $1,
+    last_name = $2,
+    email = $3,
+    phone = $4,
+    updated_at = $5
+WHERE id = $6
+RETURNING id, order_id, first_name, last_name, email, phone, created_at, updated_at
 `
 
 type UpdateCustomerParams struct {
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	UpdatedAt time.Time `json:"updated_at"`
-	ID        []byte    `json:"id"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     sql.NullString `json:"email"`
+	Phone     sql.NullString `json:"phone"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	ID        uuid.UUID      `json:"id"`
 }
 
-func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, updateCustomer,
+func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) (Customer, error) {
+	row := q.db.QueryRowContext(ctx, updateCustomer,
 		arg.FirstName,
 		arg.LastName,
+		arg.Email,
+		arg.Phone,
 		arg.UpdatedAt,
 		arg.ID,
 	)
+	var i Customer
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

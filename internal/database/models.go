@@ -7,11 +7,14 @@ package database
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Address struct {
-	ID         []byte         `json:"id"`
-	CustomerID []byte         `json:"customer_id"`
+	ID         uuid.UUID      `json:"id"`
+	CustomerID uuid.UUID      `json:"customer_id"`
+	Name       sql.NullString `json:"name"`
 	FirstName  string         `json:"first_name"`
 	LastName   string         `json:"last_name"`
 	Address1   sql.NullString `json:"address1"`
@@ -26,17 +29,19 @@ type Address struct {
 }
 
 type Customer struct {
-	ID        []byte    `json:"id"`
-	OrderID   []byte    `json:"order_id"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uuid.UUID      `json:"id"`
+	OrderID   uuid.UUID      `json:"order_id"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name"`
+	Email     sql.NullString `json:"email"`
+	Phone     sql.NullString `json:"phone"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 type Order struct {
-	ID            []byte         `json:"id"`
-	CustomerID    []byte         `json:"customer_id"`
+	ID            uuid.UUID      `json:"id"`
+	CustomerID    uuid.UUID      `json:"customer_id"`
 	Notes         sql.NullString `json:"notes"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
@@ -48,8 +53,8 @@ type Order struct {
 }
 
 type OrderLine struct {
-	ID        []byte         `json:"id"`
-	OrderID   []byte         `json:"order_id"`
+	ID        uuid.UUID      `json:"id"`
+	OrderID   uuid.UUID      `json:"order_id"`
 	LineType  sql.NullString `json:"line_type"`
 	Sku       string         `json:"sku"`
 	Price     sql.NullString `json:"price"`
@@ -62,7 +67,7 @@ type OrderLine struct {
 }
 
 type Product struct {
-	ID          []byte         `json:"id"`
+	ID          uuid.UUID      `json:"id"`
 	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
@@ -74,25 +79,33 @@ type Product struct {
 }
 
 type ProductOption struct {
-	ID        []byte `json:"id"`
-	ProductID []byte `json:"product_id"`
-	Name      string `json:"name"`
-	Value     string `json:"value"`
+	ID        uuid.UUID `json:"id"`
+	ProductID uuid.UUID `json:"product_id"`
+	Name      string    `json:"name"`
+}
+
+type RegisterToken struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	Token     string    `json:"token"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type User struct {
-	ID           []byte    `json:"id"`
-	WebhookToken []byte    `json:"webhook_token"`
+	ID           uuid.UUID `json:"id"`
+	WebhookToken string    `json:"webhook_token"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
-	ApiKey       []byte    `json:"api_key"`
+	ApiKey       string    `json:"api_key"`
 }
 
 type Variant struct {
-	ID        []byte         `json:"id"`
-	ProductID []byte         `json:"product_id"`
+	ID        uuid.UUID      `json:"id"`
+	ProductID uuid.UUID      `json:"product_id"`
 	Sku       string         `json:"sku"`
 	Option1   sql.NullString `json:"option1"`
 	Option2   sql.NullString `json:"option2"`
@@ -103,8 +116,8 @@ type Variant struct {
 }
 
 type VariantPricing struct {
-	ID        []byte         `json:"id"`
-	VariantID []byte         `json:"variant_id"`
+	ID        uuid.UUID      `json:"id"`
+	VariantID uuid.UUID      `json:"variant_id"`
 	Name      string         `json:"name"`
 	Value     sql.NullString `json:"value"`
 	CreatedAt time.Time      `json:"created_at"`
@@ -112,8 +125,8 @@ type VariantPricing struct {
 }
 
 type VariantQty struct {
-	ID        []byte        `json:"id"`
-	VariantID []byte        `json:"variant_id"`
+	ID        uuid.UUID     `json:"id"`
+	VariantID uuid.UUID     `json:"variant_id"`
 	Name      string        `json:"name"`
 	Value     sql.NullInt32 `json:"value"`
 	CreatedAt time.Time     `json:"created_at"`
