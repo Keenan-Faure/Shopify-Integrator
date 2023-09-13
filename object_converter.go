@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"integrator/internal/database"
 	"net/http"
 	"objects"
@@ -291,12 +292,14 @@ func CompileProductData(
 	if err != nil {
 		return objects.Product{}, err
 	}
+	fmt.Println(product_options)
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
 		options = append(options, objects.ProductOptions{
 			Value: value,
 		})
 	}
+	fmt.Println(options)
 	variants, err := dbconfig.DB.GetProductVariants(r.Context(), product_id)
 	if err != nil {
 		return objects.Product{}, err
@@ -314,7 +317,7 @@ func CompileProductData(
 		ProductType:    product.ProductType.String,
 		Variants:       variant_data,
 		ProductOptions: options,
-		UpdatedAt:      product.UpdatedAt.String(),
+		UpdatedAt:      product.UpdatedAt,
 	}
 	return product_data, nil
 }
@@ -356,7 +359,7 @@ func CompileVariantData(
 			Barcode:         value.Barcode.String,
 			VariantPricing:  variant_pricing,
 			VariantQuantity: variant_qty,
-			UpdatedAt:       value.UpdatedAt.String(),
+			UpdatedAt:       value.UpdatedAt,
 		})
 	}
 	return variantsArray, nil

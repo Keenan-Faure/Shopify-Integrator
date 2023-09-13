@@ -203,10 +203,12 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	err = ValidateDuplicateOption(params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
 	}
 	err = ValidateDuplicateSKU(params, dbconfig, r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
 	}
 	err = DuplicateOptionValues(params)
 	if err != nil {
@@ -290,7 +292,11 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
-	RespondWithJSON(w, http.StatusCreated, params)
+	product_added, err := CompileProductData(dbconfig, product.ID, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusCreated, product_added)
 }
 
 // GET /api/customers/search?q=value

@@ -138,7 +138,7 @@ type Product struct {
 	ProductType    string           `json:"product_type"`
 	Variants       []ProductVariant `json:"variants"`
 	ProductOptions []ProductOptions `json:"options"`
-	UpdatedAt      string           `json:"updated_at"`
+	UpdatedAt      time.Time        `json:"updated_at"`
 }
 type ProductOptions struct {
 	Value string `json:"value"`
@@ -151,7 +151,7 @@ type ProductVariant struct {
 	Barcode         string         `json:"barcode"`
 	VariantPricing  []VariantPrice `json:"variant_price_tiers"`
 	VariantQuantity []VariantQty   `json:"variant_quantities"`
-	UpdatedAt       string         `json:"updated_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 type VariantPrice struct {

@@ -39,11 +39,11 @@ const getProductOptions = `-- name: GetProductOptions :many
 SELECT
     name
 FROM product_options
-WHERE id = $1
+WHERE product_id = $1
 `
 
-func (q *Queries) GetProductOptions(ctx context.Context, id uuid.UUID) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getProductOptions, id)
+func (q *Queries) GetProductOptions(ctx context.Context, productID uuid.UUID) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getProductOptions, productID)
 	if err != nil {
 		return nil, err
 	}
