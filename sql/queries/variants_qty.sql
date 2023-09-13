@@ -1,12 +1,13 @@
 -- name: CreateVariantQty :one
 INSERT INTO variant_qty(
+    id,
     variant_id,
     name,
     value,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 

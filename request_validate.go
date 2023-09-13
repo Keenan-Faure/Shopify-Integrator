@@ -166,6 +166,9 @@ func ValidateDuplicateSKU(
 		if err != nil {
 			return err
 		}
+		if err.Error() == "record not found" {
+			return nil
+		}
 		if db_sku.Sku == value {
 			return errors.New("SKU with code " + value + " already exists")
 		}

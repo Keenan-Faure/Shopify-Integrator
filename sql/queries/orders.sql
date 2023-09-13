@@ -1,5 +1,6 @@
 -- name: CreateOrder :one
 INSERT INTO orders(
+    id,
     notes,
     web_code,
     tax_total,
@@ -9,7 +10,7 @@ INSERT INTO orders(
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
 RETURNING *;
 
@@ -57,6 +58,7 @@ WHERE orders.id in (
 
 -- name: GetOrders :many
 SELECT
+    id,
     notes,
     web_code,
     tax_total,
@@ -69,6 +71,7 @@ LIMIT $1 OFFSET $2;
 
 -- name: GetOrdersSearchWebCode :many
 SELECT
+    id,
     notes,
     web_code,
     tax_total,
@@ -82,6 +85,7 @@ LIMIT 10;
 
 -- name: GetOrdersSearchByCustomer :many
 SELECT
+    o.id,
     o.notes,
     o.web_code,
     o.tax_total,
@@ -90,7 +94,7 @@ SELECT
     o.discount_total,
     o.updated_at
 FROM orders o
-WHERE orders.id in (
+WHERE o.id in (
     SELECT order_id FROM customerorders
     WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
 );

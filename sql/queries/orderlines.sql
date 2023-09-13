@@ -1,5 +1,6 @@
 -- name: CreateOrderLine :one
 INSERT INTO order_lines(
+    id,
     order_id,
     line_type,
     sku,
@@ -11,7 +12,7 @@ INSERT INTO order_lines(
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 )
 RETURNING *;
 

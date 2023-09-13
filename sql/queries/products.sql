@@ -1,5 +1,6 @@
 -- name: CreateProduct :one
 INSERT INTO products(
+    id,
     active,
     title,
     body_html,
@@ -9,7 +10,7 @@ INSERT INTO products(
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
 RETURNING *;
 
@@ -100,6 +101,7 @@ LIMIT 5;
 
 -- name: GetProducts :many
 SELECT
+    id,
     active,
     title,
     body_html,

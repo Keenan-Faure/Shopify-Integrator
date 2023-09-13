@@ -30,6 +30,7 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
+		ID:        uuid.New(),
 		FirstName: customer_body.FirstName,
 		LastName:  customer_body.LastName,
 		Email:     utils.ConvertStringToSQL(customer_body.Email),
@@ -43,6 +44,7 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 	}
 	for key := range customer_body.Address {
 		_, err = dbconfig.DB.CreateAddress(r.Context(), database.CreateAddressParams{
+			ID:         uuid.New(),
 			CustomerID: customer.ID,
 			Name:       utils.ConvertStringToSQL("default"),
 			FirstName:  customer_body.Address[key].FirstName,
@@ -93,6 +95,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		return
 	}
 	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
+		ID:        uuid.New(),
 		FirstName: order_body.Customer.FirstName,
 		LastName:  order_body.Customer.FirstName,
 		Email:     utils.ConvertStringToSQL(order_body.Customer.Email),
@@ -120,6 +123,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		return
 	}
 	order, err := dbconfig.DB.CreateOrder(r.Context(), database.CreateOrderParams{
+		ID:            uuid.New(),
 		Notes:         utils.ConvertStringToSQL(""),
 		WebCode:       utils.ConvertStringToSQL(order_body.Name),
 		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
@@ -135,6 +139,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	}
 	for _, value := range order_body.LineItems {
 		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+			ID:        uuid.New(),
 			OrderID:   order.ID,
 			LineType:  utils.ConvertStringToSQL("product"),
 			Sku:       value.Sku,
@@ -153,6 +158,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	}
 	for _, value := range order_body.ShippingLines {
 		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+			ID:        uuid.New(),
 			OrderID:   order.ID,
 			LineType:  utils.ConvertStringToSQL("shipping"),
 			Sku:       value.Code,
@@ -206,9 +212,9 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 	}
-
 	// add product to database
 	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
+		ID:          uuid.New(),
 		Active:      "1",
 		Title:       utils.ConvertStringToSQL(params.Title),
 		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
@@ -223,7 +229,9 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	for key := range params.ProductOptions {
+		fmt.Println(params.ProductOptions[key])
 		_, err := dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
+			ID:        uuid.New(),
 			ProductID: product.ID,
 			Name:      params.ProductOptions[key].Value,
 		})
@@ -232,9 +240,11 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+	fmt.Println("product options created")
 	// add variants
 	for key := range params.Variants {
 		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
+			ID:        uuid.New(),
 			ProductID: product.ID,
 			Sku:       params.Variants[key].Sku,
 			Option1:   utils.ConvertStringToSQL(params.Variants[key].Option1),
@@ -244,9 +254,14 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
 		// variant pricing & variant qty
 		for key_price := range params.Variants[key].VariantPricing {
 			_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
+				ID:        uuid.New(),
 				VariantID: variant.ID,
 				Name:      params.Variants[key].VariantPricing[key_price].Name,
 				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_price].Value),
@@ -258,6 +273,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				return
 			}
 			_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
+				ID:        uuid.New(),
 				VariantID: variant.ID,
 				Name:      params.Variants[key].VariantQuantity[key_price].Name,
 				Value:     utils.ConvertIntToSQL(params.Variants[key].VariantQuantity[key_price].Value),
@@ -460,6 +476,7 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 		Limit:  10,
 		Offset: int32((page - 1) * 10),
 	})
+	fmt.Println(dbProducts)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -511,36 +528,36 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 	RespondWithJSON(w, http.StatusCreated, []string{"email sent"})
 }
 
-// POST /api/validatetoken
-func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Request) {
-	request_body, err := DecodeValidateTokenRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
-		return
-	}
-	if ValidateTokenValidation(request_body) != nil {
-		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
-		return
-	}
-	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
-		Name:  request_body.Name,
-		Email: request_body.Email,
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
-		return
-	}
-	request_token, err := uuid.Parse(request_body.Token)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+request_body.Token)
-		return
-	}
-	if token.Token != request_token {
-		RespondWithError(w, http.StatusNotFound, "invalid token for user")
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, []string{"ok"})
-}
+// // POST /api/validatetoken
+// func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Request) {
+// 	request_body, err := DecodeValidateTokenRequestBody(r)
+// 	if err != nil {
+// 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+// 		return
+// 	}
+// 	if ValidateTokenValidation(request_body) != nil {
+// 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+// 		return
+// 	}
+// 	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
+// 		Name:  request_body.Name,
+// 		Email: request_body.Email,
+// 	})
+// 	if err != nil {
+// 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+// 		return
+// 	}
+// 	request_token, err := uuid.Parse(request_body.Token)
+// 	if err != nil {
+// 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+request_body.Token)
+// 		return
+// 	}
+// 	if token.Token != request_token {
+// 		RespondWithError(w, http.StatusNotFound, "invalid token for user")
+// 		return
+// 	}
+// 	RespondWithJSON(w, http.StatusOK, []string{"ok"})
+// }
 
 // POST /api/register
 func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request) {

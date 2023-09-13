@@ -20,7 +20,7 @@ func (dbconfig *DbConfig) middlewareAuth(handler authHandler) http.HandlerFunc {
 		dbUser, err := dbconfig.DB.GetUserByApiKey(r.Context(), apiKey)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(w, http.StatusNotFound, "record not found")
+				RespondWithError(w, http.StatusNotFound, "user api_key record not found")
 				return
 			}
 			RespondWithError(w, http.StatusNotFound, err.Error())

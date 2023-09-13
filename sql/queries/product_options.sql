@@ -1,9 +1,10 @@
 -- name: CreateProductOption :one
 INSERT INTO product_options(
+    id,
     product_id,
     name
 ) VALUES (
-    $1, $2
+    $1, $2, $3
 )
 RETURNING *;
 

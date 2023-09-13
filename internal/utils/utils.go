@@ -78,7 +78,7 @@ func ConvertIntToSQL(value int) sql.NullInt32 {
 func ConfirmError(err error) string {
 	if len(err.Error()) > 50 {
 		if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-			return "dupplicate fields not allowed"
+			return "duplicate fields not allowed"
 		}
 	}
 	return err.Error()

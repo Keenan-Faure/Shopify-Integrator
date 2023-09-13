@@ -1,5 +1,6 @@
 -- name: CreateCustomer :one
 INSERT INTO customers(
+    id,
     first_name,
     last_name,
     email,
@@ -7,7 +8,7 @@ INSERT INTO customers(
     created_at,
     updated_at
 ) VALUES(
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING *;
 
@@ -24,6 +25,7 @@ RETURNING *;
 
 -- name: GetCustomers :many
 SELECT
+    id,
     first_name,
     last_name,
     email,
@@ -44,6 +46,7 @@ WHERE id = $1;
 
 -- name: GetCustomersByName :many
 SELECT
+    id,
     first_name,
     last_name,
     email,
