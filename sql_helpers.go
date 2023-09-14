@@ -46,6 +46,7 @@ func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreRe
 // Creates an address
 func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{
+		ID:         uuid.New(),
 		CustomerID: customer_id,
 		Name:       utils.ConvertStringToSQL("default"),
 		FirstName:  order_body.Customer.DefaultAddress.FirstName,
@@ -65,6 +66,7 @@ func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.
 // Creates an address
 func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{
+		ID:         uuid.New(),
 		CustomerID: customer_id,
 		Name:       utils.ConvertStringToSQL("shipping"),
 		FirstName:  order_body.ShippingAddress.FirstName,
@@ -84,6 +86,7 @@ func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid
 // Creates an address
 func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{
+		ID:         uuid.New(),
 		CustomerID: customer_id,
 		Name:       utils.ConvertStringToSQL("billing"),
 		FirstName:  order_body.BillingAddress.FirstName,

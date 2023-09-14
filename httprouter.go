@@ -73,17 +73,20 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	web_token := r.URL.Query().Get("token")
 	if TokenValidation(web_token) != nil {
 		RespondWithError(w, http.StatusBadRequest, "invalid token")
+		return
 	}
-	api_key := r.URL.Query().Get("api_key")
-	if TokenValidation(api_key) != nil {
-		RespondWithError(w, http.StatusBadRequest, "invalid api_key")
+	api_key, err := utils.ExtractAPIKey(r.Header.Get("Authorization"))
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
 	}
-	_, err := dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
+	_, err = dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
 		WebhookToken: web_token,
 		ApiKey:       api_key,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusNotFound, "user does not exist")
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
 	}
 	order_body, err := DecodeOrderRequestBody(r)
 	if err != nil {
@@ -138,41 +141,81 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		return
 	}
 	for _, value := range order_body.LineItems {
-		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
-			ID:        uuid.New(),
-			OrderID:   order.ID,
-			LineType:  utils.ConvertStringToSQL("product"),
-			Sku:       value.Sku,
-			Price:     utils.ConvertStringToSQL(value.Price),
-			Barcode:   utils.ConvertIntToSQL(0),
-			Qty:       utils.ConvertIntToSQL(value.Quantity),
-			TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
-			TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-			return
+		if len(value.TaxLines) > 0 {
+			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+				ID:        uuid.New(),
+				OrderID:   order.ID,
+				LineType:  utils.ConvertStringToSQL("product"),
+				Sku:       value.Sku,
+				Price:     utils.ConvertStringToSQL(value.Price),
+				Barcode:   utils.ConvertIntToSQL(0),
+				Qty:       utils.ConvertIntToSQL(value.Quantity),
+				TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
+				TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+				return
+			}
+		} else {
+			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+				ID:        uuid.New(),
+				OrderID:   order.ID,
+				LineType:  utils.ConvertStringToSQL("product"),
+				Sku:       value.Sku,
+				Price:     utils.ConvertStringToSQL(value.Price),
+				Barcode:   utils.ConvertIntToSQL(0),
+				Qty:       utils.ConvertIntToSQL(value.Quantity),
+				TaxRate:   sql.NullString{},
+				TaxTotal:  sql.NullString{},
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+				return
+			}
 		}
 	}
 	for _, value := range order_body.ShippingLines {
-		_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
-			ID:        uuid.New(),
-			OrderID:   order.ID,
-			LineType:  utils.ConvertStringToSQL("shipping"),
-			Sku:       value.Code,
-			Price:     utils.ConvertStringToSQL(value.Price),
-			Barcode:   utils.ConvertIntToSQL(0),
-			Qty:       utils.ConvertIntToSQL(1),
-			TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
-			TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-			return
+		if len(value.TaxLines) > 0 {
+			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+				ID:        uuid.New(),
+				OrderID:   order.ID,
+				LineType:  utils.ConvertStringToSQL("shipping"),
+				Sku:       value.Code,
+				Price:     utils.ConvertStringToSQL(value.Price),
+				Barcode:   utils.ConvertIntToSQL(0),
+				Qty:       utils.ConvertIntToSQL(1),
+				TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
+				TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+				return
+			}
+		} else {
+			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
+				ID:        uuid.New(),
+				OrderID:   order.ID,
+				LineType:  utils.ConvertStringToSQL("shipping"),
+				Sku:       value.Code,
+				Price:     utils.ConvertStringToSQL(value.Price),
+				Barcode:   utils.ConvertIntToSQL(0),
+				Qty:       utils.ConvertIntToSQL(1),
+				TaxRate:   sql.NullString{},
+				TaxTotal:  sql.NullString{},
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+				return
+			}
 		}
 	}
 	err = dbconfig.DB.CreateCustomerOrder(r.Context(), database.CreateCustomerOrderParams{
@@ -231,7 +274,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	for key := range params.ProductOptions {
-		fmt.Println(params.ProductOptions[key])
 		_, err := dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
 			ID:        uuid.New(),
 			ProductID: product.ID,
@@ -242,7 +284,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
-	fmt.Println("product options created")
 	// add variants
 	for key := range params.Variants {
 		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
@@ -292,7 +333,8 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
-	product_added, err := CompileProductData(dbconfig, product.ID, r)
+	// TODO is it necessary to respond with the created product data
+	product_added, err := CompileProductData(dbconfig, product.ID, r, false)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
@@ -326,7 +368,7 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+customer_id)
 		return
 	}
-	customer, err := CompileCustomerData(dbconfig, customer_uuid, r)
+	customer, err := CompileCustomerData(dbconfig, customer_uuid, r, false)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -341,13 +383,22 @@ func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request
 		page = 1
 		log.Println("Error decoding page param:", err)
 	}
-	customers, err := dbconfig.DB.GetCustomers(r.Context(), database.GetCustomersParams{
+	dbCustomers, err := dbconfig.DB.GetCustomers(r.Context(), database.GetCustomersParams{
 		Limit:  10,
 		Offset: int32((page - 1) * 10),
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
+	}
+	customers := []objects.Customer{}
+	for _, value := range dbCustomers {
+		cust, err := CompileCustomerData(dbconfig, value.ID, r, true)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
+		customers = append(customers, cust)
 	}
 	RespondWithJSON(w, http.StatusOK, customers)
 }
@@ -383,7 +434,7 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+order_id)
 		return
 	}
-	order_data, err := CompileOrderData(dbconfig, order_uuid, r)
+	order_data, err := CompileOrderData(dbconfig, order_uuid, r, false)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -406,7 +457,16 @@ func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, d
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, dbOrders)
+	orders := []objects.Order{}
+	for _, value := range dbOrders {
+		ord, err := CompileOrderData(dbconfig, value.ID, r, true)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
+		orders = append(orders, ord)
+	}
+	RespondWithJSON(w, http.StatusOK, orders)
 }
 
 // GET /api/products/filter?data=value&page=1
@@ -463,7 +523,7 @@ func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, 
 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+product_id)
 		return
 	}
-	product_data, err := CompileProductData(dbconfig, product_uuid, r)
+	product_data, err := CompileProductData(dbconfig, product_uuid, r, false)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -482,12 +542,20 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 		Limit:  10,
 		Offset: int32((page - 1) * 10),
 	})
-	fmt.Println(dbProducts)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, dbProducts)
+	products := []objects.Product{}
+	for _, value := range dbProducts {
+		prod, err := CompileProductData(dbconfig, value.ID, r, true)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
+		products = append(products, prod)
+	}
+	RespondWithJSON(w, http.StatusOK, products)
 }
 
 // POST /api/login
@@ -605,6 +673,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 	user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
 		ID:        uuid.New(),
 		Name:      body.Name,
+		Email:     body.Email,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})

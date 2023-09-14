@@ -94,7 +94,7 @@ func OrderValidation(order objects.RequestBodyOrder) error {
 
 // User: data validation
 func TokenValidation(key string) error {
-	if key == "" || len(key) <= 0 || len(key) > 32 {
+	if key == "" || len(key) <= 0 || len(key) > 64 {
 		return errors.New("invalid product id")
 	}
 	return nil

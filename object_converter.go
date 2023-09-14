@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"integrator/internal/database"
 	"net/http"
 	"objects"
@@ -9,6 +8,9 @@ import (
 
 	"github.com/google/uuid"
 )
+
+// Converts database product to objects.Product
+// func DatabaseToProduct()
 
 // Compile the customer search results
 func CompileCustomerSearchData(
@@ -34,10 +36,21 @@ func CompileCustomerSearchData(
 func CompileCustomerData(
 	dbconfig *DbConfig,
 	customer_id uuid.UUID,
-	r *http.Request) (objects.Customer, error) {
+	r *http.Request,
+	ignore_address bool) (objects.Customer, error) {
 	customer, err := dbconfig.DB.GetCustomerByID(r.Context(), customer_id)
 	if err != nil {
 		return objects.Customer{}, err
+	}
+	if ignore_address {
+		return objects.Customer{
+			FirstName: customer.FirstName,
+			LastName:  customer.LastName,
+			Email:     customer.Email.String,
+			Phone:     customer.Phone.String,
+			Address:   []objects.CustomerAddress{},
+			UpdatedAt: customer.UpdatedAt,
+		}, nil
 	}
 	customer_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), customer_id)
 	if err != nil {
@@ -63,7 +76,7 @@ func CompileCustomerData(
 		Email:     customer.Email.String,
 		Phone:     customer.Phone.String,
 		Address:   CustomerAddress,
-		UpdatedAt: customer.UpdatedAt.String(),
+		UpdatedAt: customer.UpdatedAt,
 	}, nil
 }
 
@@ -80,7 +93,7 @@ func CompileOrderSearchResult(
 			OrderTotal:    value.OrderTotal.String,
 			ShippingTotal: value.ShippingTotal.String,
 			DiscountTotal: value.DiscountTotal.String,
-			UpdatedAt:     value.UpdatedAt.String(),
+			UpdatedAt:     value.UpdatedAt,
 		})
 	}
 	for _, value := range webcode {
@@ -91,7 +104,7 @@ func CompileOrderSearchResult(
 			OrderTotal:    value.OrderTotal.String,
 			ShippingTotal: value.ShippingTotal.String,
 			DiscountTotal: value.DiscountTotal.String,
-			UpdatedAt:     value.UpdatedAt.String(),
+			UpdatedAt:     value.UpdatedAt,
 		})
 	}
 	return response
@@ -101,10 +114,27 @@ func CompileOrderSearchResult(
 func CompileOrderData(
 	dbconfig *DbConfig,
 	order_id uuid.UUID,
-	r *http.Request) (objects.Order, error) {
+	r *http.Request,
+	ignore_ship_cust bool) (objects.Order, error) {
 	order, err := dbconfig.DB.GetOrderByID(r.Context(), order_id)
 	if err != nil {
 		return objects.Order{}, err
+	}
+	if ignore_ship_cust {
+		Order := objects.Order{
+			Notes:             order.Notes.String,
+			WebCode:           order.WebCode.String,
+			TaxTotal:          order.TaxTotal.String,
+			OrderTotal:        order.OrderTotal.String,
+			ShippingTotal:     order.ShippingTotal.String,
+			DiscountTotal:     order.DiscountTotal.String,
+			UpdatedAt:         order.UpdatedAt,
+			CreatedAt:         order.CreatedAt,
+			OrderCustomer:     objects.OrderCustomer{},
+			LineItems:         []objects.OrderLines{},
+			ShippingLineItems: []objects.OrderLines{},
+		}
+		return Order, nil
 	}
 	customer_id, err := dbconfig.DB.GetCustomerByOrderID(r.Context(), order_id)
 	if err != nil {
@@ -165,7 +195,7 @@ func CompileOrderData(
 	OrderCustomer := objects.OrderCustomer{
 		FirstName: order_customer.FirstName,
 		LastName:  order_customer.LastName,
-		UpdatedAt: order_customer.UpdatedAt.String(),
+		UpdatedAt: order_customer.UpdatedAt,
 		Address:   OrderCustomerAddress,
 	}
 	Order := objects.Order{
@@ -175,8 +205,8 @@ func CompileOrderData(
 		OrderTotal:        order.OrderTotal.String,
 		ShippingTotal:     order.ShippingTotal.String,
 		DiscountTotal:     order.DiscountTotal.String,
-		UpdatedAt:         order.UpdatedAt.String(),
-		CreatedAt:         order.CreatedAt.String(),
+		UpdatedAt:         order.UpdatedAt,
+		CreatedAt:         order.CreatedAt,
 		OrderCustomer:     OrderCustomer,
 		LineItems:         LineItems,
 		ShippingLineItems: ShippingLineItems,
@@ -283,7 +313,8 @@ func CompileSearchResult(
 func CompileProductData(
 	dbconfig *DbConfig,
 	product_id uuid.UUID,
-	r *http.Request) (objects.Product, error) {
+	r *http.Request,
+	ignore_variant bool) (objects.Product, error) {
 	product, err := dbconfig.DB.GetProductByID(r.Context(), product_id)
 	if err != nil {
 		return objects.Product{}, err
@@ -292,14 +323,26 @@ func CompileProductData(
 	if err != nil {
 		return objects.Product{}, err
 	}
-	fmt.Println(product_options)
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
 		options = append(options, objects.ProductOptions{
 			Value: value,
 		})
 	}
-	fmt.Println(options)
+	if ignore_variant {
+		product_data := objects.Product{
+			Active:         product.Active,
+			Title:          product.Title.String,
+			BodyHTML:       product.BodyHtml.String,
+			Category:       product.Category.String,
+			Vendor:         product.Vendor.String,
+			ProductType:    product.ProductType.String,
+			Variants:       []objects.ProductVariant{},
+			ProductOptions: options,
+			UpdatedAt:      product.UpdatedAt,
+		}
+		return product_data, nil
+	}
 	variants, err := dbconfig.DB.GetProductVariants(r.Context(), product_id)
 	if err != nil {
 		return objects.Product{}, err

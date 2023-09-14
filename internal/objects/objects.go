@@ -48,13 +48,13 @@ type RequestBodyValidateToken struct {
 // object_converter.go
 
 type SearchOrder struct {
-	Notes         string `json:"notes"`
-	WebCode       string `json:"web_code"`
-	TaxTotal      string `json:"tax_total"`
-	OrderTotal    string `json:"order_total"`
-	ShippingTotal string `json:"shipping_total"`
-	DiscountTotal string `json:"discount_total"`
-	UpdatedAt     string `json:"updated_at"`
+	Notes         string    `json:"notes"`
+	WebCode       string    `json:"web_code"`
+	TaxTotal      string    `json:"tax_total"`
+	OrderTotal    string    `json:"order_total"`
+	ShippingTotal string    `json:"shipping_total"`
+	DiscountTotal string    `json:"discount_total"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 type Order struct {
 	Notes             string        `json:"notes"`
@@ -63,8 +63,8 @@ type Order struct {
 	OrderTotal        string        `json:"order_total"`
 	ShippingTotal     string        `json:"shipping_total"`
 	DiscountTotal     string        `json:"discount_total"`
-	UpdatedAt         string        `json:"updated_at"`
-	CreatedAt         string        `json:"created_at"`
+	UpdatedAt         time.Time     `json:"updated_at"`
+	CreatedAt         time.Time     `json:"created_at"`
 	OrderCustomer     OrderCustomer `json:"customer"`
 	LineItems         []OrderLines  `json:"line_items"`
 	ShippingLineItems []OrderLines  `json:"shipping_lines"`
@@ -85,7 +85,7 @@ type OrderCustomer struct {
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
 	Address   []CustomerAddress `json:"shipping_address"`
-	UpdatedAt string            `json:"updated_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type Customer struct {
@@ -94,7 +94,7 @@ type Customer struct {
 	Email     string            `json:"email"`
 	Phone     string            `json:"phone"`
 	Address   []CustomerAddress `json:"shipping_address"`
-	UpdatedAt string            `json:"updated_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type CustomerAddress struct {
