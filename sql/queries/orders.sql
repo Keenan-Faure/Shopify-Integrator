@@ -99,3 +99,7 @@ WHERE o.id in (
     WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
 );
 
+-- name: RemoveOrder :exec
+DELETE FROM orders
+WHERE id = $1;
+

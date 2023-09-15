@@ -75,14 +75,9 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		RespondWithError(w, http.StatusBadRequest, "invalid token")
 		return
 	}
-	api_key, err := utils.ExtractAPIKey(r.Header.Get("Authorization"))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	_, err = dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
+	_, err := dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
 		WebhookToken: web_token,
-		ApiKey:       api_key,
+		ApiKey:       dbUser.ApiKey,
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))

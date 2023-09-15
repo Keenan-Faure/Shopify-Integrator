@@ -350,6 +350,16 @@ func (q *Queries) GetOrdersSearchWebCode(ctx context.Context, similarToEscape st
 	return items, nil
 }
 
+const removeOrder = `-- name: RemoveOrder :exec
+DELETE FROM orders
+WHERE id = $1
+`
+
+func (q *Queries) RemoveOrder(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, removeOrder, id)
+	return err
+}
+
 const updateOrder = `-- name: UpdateOrder :one
 UPDATE orders
 SET

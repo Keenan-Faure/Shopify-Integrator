@@ -57,6 +57,7 @@ type SearchOrder struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 type Order struct {
+	ID                uuid.UUID     `json:"id"`
 	Notes             string        `json:"notes"`
 	WebCode           string        `json:"web_code"`
 	TaxTotal          string        `json:"tax_total"`

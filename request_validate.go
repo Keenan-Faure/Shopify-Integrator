@@ -86,7 +86,7 @@ func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
 
 // Order: data validation
 func OrderValidation(order objects.RequestBodyOrder) error {
-	if order.Name == "" || order.LineItems[0].Sku == "" || order.Customer.FirstName == "" {
+	if order.Name == "" || order.Customer.FirstName == "" {
 		return errors.New("data validation error")
 	}
 	return nil
