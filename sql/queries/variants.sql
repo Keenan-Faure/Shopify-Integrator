@@ -47,3 +47,7 @@ SELECT
     barcode
 FROM variants
 WHERE sku = $1;
+
+-- name: RemoveVariant :exec
+DELETE FROM variants
+WHERE id = $1;

@@ -102,7 +102,7 @@ func TokenValidation(key string) error {
 
 // Product: data validation
 func IDValidation(id string) error {
-	if id == "" || len(id) <= 0 || len(id) > 16 {
+	if id == "" || len(id) <= 0 || len(id) > 36 {
 		return errors.New("invalid product id")
 	}
 	return nil
@@ -120,6 +120,9 @@ func UserValidation(user objects.RequestBodyUser) error {
 func ProductValidation(product objects.RequestBodyProduct) error {
 	if product.Title == "" {
 		return errors.New("empty title not allowed")
+	}
+	if len(product.Variants) == 0 {
+		return errors.New("product must have a SKU")
 	}
 	if product.Variants[0].Sku == "" {
 		return errors.New("empty SKU codes not allowed")

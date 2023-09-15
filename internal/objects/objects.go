@@ -130,6 +130,7 @@ type SearchProduct struct {
 	Vendor      string    `json:"vendor"`
 }
 type Product struct {
+	ID             uuid.UUID        `json:"id"`
 	Active         string           `json:"active"`
 	Title          string           `json:"title"`
 	BodyHTML       string           `json:"body_html"`

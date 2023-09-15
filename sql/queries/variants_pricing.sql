@@ -25,3 +25,7 @@ SELECT
     value
 FROM variant_pricing
 WHERE variant_id = $1;
+
+-- name: RemovePricing :exec
+DELETE FROM variant_pricing
+WHERE id = $1;

@@ -352,6 +352,7 @@ func CompileProductData(
 		return objects.Product{}, err
 	}
 	product_data := objects.Product{
+		ID:             product_id,
 		Active:         product.Active,
 		Title:          product.Title.String,
 		BodyHTML:       product.BodyHtml.String,

@@ -51,3 +51,7 @@ SELECT
     updated_at
 FROM address
 WHERE customer_id = $1;
+
+-- name: RemoveAddress :exec
+DELETE FROM address
+WHERE id = $1;

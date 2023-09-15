@@ -10,4 +10,3 @@ CREATE TABLE register_tokens(
 
 -- +goose Down
 DROP TABLE register_tokens;
-

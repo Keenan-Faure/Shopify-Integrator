@@ -41,3 +41,7 @@ SELECT
 FROM users
 WHERE 
 webhook_token = $1 AND api_key = $2;
+
+-- name: RemoveUser :exec
+DELETE FROM users
+WHERE api_key = $1;

@@ -111,3 +111,7 @@ SELECT
     updated_at
 FROM products
 LIMIT $1 OFFSET $2;
+
+-- name: RemoveProduct :exec
+DELETE FROM products
+WHERE id = $1;

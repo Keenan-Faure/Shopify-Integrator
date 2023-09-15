@@ -239,8 +239,9 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	if ProductValidation(params) != nil {
-		RespondWithError(w, http.StatusBadRequest, "data validation error")
+	validation := ProductValidation(params)
+	if validation != nil {
+		RespondWithError(w, http.StatusBadRequest, validation.Error())
 		return
 	}
 	err = ValidateDuplicateOption(params)
@@ -370,6 +371,10 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 	}
 	customer, err := CompileCustomerData(dbconfig, customer_uuid, r, false)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
@@ -436,6 +441,10 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 	}
 	order_data, err := CompileOrderData(dbconfig, order_uuid, r, false)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
@@ -525,6 +534,10 @@ func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, 
 	}
 	product_data, err := CompileProductData(dbconfig, product_uuid, r, false)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
@@ -601,37 +614,6 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 	}
 	RespondWithJSON(w, http.StatusCreated, []string{"email sent"})
 }
-
-// // POST /api/validatetoken
-// func (dbconfig *DbConfig) ValidateTokenHandle(w http.ResponseWriter, r *http.Request) {
-// 	request_body, err := DecodeValidateTokenRequestBody(r)
-// 	if err != nil {
-// 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
-// 		return
-// 	}
-// 	if ValidateTokenValidation(request_body) != nil {
-// 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
-// 		return
-// 	}
-// 	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
-// 		Name:  request_body.Name,
-// 		Email: request_body.Email,
-// 	})
-// 	if err != nil {
-// 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
-// 		return
-// 	}
-// 	request_token, err := uuid.Parse(request_body.Token)
-// 	if err != nil {
-// 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+request_body.Token)
-// 		return
-// 	}
-// 	if token.Token != request_token {
-// 		RespondWithError(w, http.StatusNotFound, "invalid token for user")
-// 		return
-// 	}
-// 	RespondWithJSON(w, http.StatusOK, []string{"ok"})
-// }
 
 // POST /api/register
 func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request) {

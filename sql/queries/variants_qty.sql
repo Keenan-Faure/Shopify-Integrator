@@ -25,3 +25,7 @@ SELECT
     value
 FROM variant_qty
 WHERE variant_id = $1;
+
+-- name: RemoveQty :exec
+DELETE FROM variant_qty
+WHERE id = $1;
