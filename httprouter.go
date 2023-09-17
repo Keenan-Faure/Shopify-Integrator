@@ -64,7 +64,9 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
-	RespondWithJSON(w, http.StatusCreated, []string{"created"})
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+		Message: customer.ID.String(),
+	})
 }
 
 // POST /api/orders?token={{token}}&api_key={{key}}
@@ -224,7 +226,9 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusCreated, []string{"created"})
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+		Message: order.ID.String(),
+	})
 }
 
 // POST /api/products/
@@ -680,11 +684,11 @@ func (dbconfig *DbConfig) EndpointsHandle(w http.ResponseWriter, r *http.Request
 func (dbconfig *DbConfig) ReadyHandle(w http.ResponseWriter, r *http.Request) {
 	if dbconfig.Valid {
 		RespondWithJSON(w, 200, objects.ResponseString{
-			Status: "OK",
+			Message: "OK",
 		})
 	} else {
 		RespondWithJSON(w, 503, objects.ResponseString{
-			Status: "Error",
+			Message: "Error",
 		})
 	}
 }

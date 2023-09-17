@@ -7,7 +7,11 @@ import (
 )
 
 type ResponseString struct {
-	Status string
+	Message string `json:"message"`
+}
+
+type RequestString struct {
+	Message string `json:"message"`
 }
 
 // request_validation.go
