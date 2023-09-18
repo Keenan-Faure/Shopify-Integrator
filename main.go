@@ -32,9 +32,10 @@ func main() {
 	if !*flags {
 		fmt.Println("Starting Worker")
 	}
+	fmt.Println("Reading csv file")
+	iocsv.ReadFile("test")
 	fmt.Println("Starting API")
 	setupAPI(dbCon)
-	iocsv.ReadFile("test")
 }
 
 // starts up the API

@@ -8,7 +8,7 @@ import (
 
 // Reads a csv file contents
 func ReadFile(file_name string) error {
-	file_data, err := os.Open("../../" + file_name + ".csv")
+	file_data, err := os.Open(file_name + ".csv")
 	if err != nil {
 		return err
 	}
@@ -19,6 +19,6 @@ func ReadFile(file_name string) error {
 		return err
 	}
 	// parse through data
-	fmt.Println(records)
+	fmt.Println(records[0])
 	return nil
 }
