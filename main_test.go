@@ -67,6 +67,24 @@ func UFetchHelperPost(endpoint, method, auth string, body io.Reader) (*http.Resp
 	return res, nil
 }
 
+func CreateCustmr() objects.RequestBodyCustomer {
+	file, err := os.Open("./test_payloads/customer.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+	respBody, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	customerData := objects.RequestBodyCustomer{}
+	err = json.Unmarshal(respBody, &customerData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return customerData
+}
+
 func CreateOrdr() objects.RequestBodyOrder {
 	file, err := os.Open("./test_payloads/order.json")
 	if err != nil {
@@ -315,7 +333,87 @@ func TestOrderCRUD(t *testing.T) {
 }
 
 func TestCustomerCRUD(t *testing.T) {
+	fmt.Println("Test 1 - Creating customer")
+	dbconfig := SetUpDatabase()
+	body := CreateCustmr()
+	user := CreateDemoUser(&dbconfig)
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res, err := UFetchHelperPost("customers", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	customerData := objects.RequestString{}
+	err = json.Unmarshal(respBody, &customerData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	fmt.Println("Test 2 - Fetching customer")
+	res, err = UFetchHelper("customers/"+customerData.Message, "GET", user.ApiKey)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	customer_id, err := uuid.Parse(customerData.Message)
+	if err != nil {
+		t.Errorf("Unexpected error: " + err.Error())
+	}
+	customerData_fetched, err := CompileCustomerData(&dbconfig, customer_id, res.Request, true)
+	if err != nil {
+		t.Errorf("Unexpected error: " + err.Error())
+	}
+	err = json.Unmarshal(respBody, &customerData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if customerData_fetched.ID.String() != customerData.Message {
+		t.Errorf("Expected '" + customerData_fetched.ID.String() + "' but found: " + customerData.Message)
+	}
 
+	fmt.Println("Test 3 - Deleting customer & recheck")
+	dbconfig.DB.RemoveCustomer(context.Background(), customerData_fetched.ID)
+	type ErrorStruct struct {
+		Error string `json:"error"`
+	}
+	res, err = UFetchHelper("customers/"+customerData.Message, "GET", user.ApiKey)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 404 {
+		t.Errorf("Expected '404' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	data := ErrorStruct{}
+	err = json.Unmarshal(respBody, &data)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if data.Error != "not found" {
+		t.Errorf("Expected 'not found' but found: " + data.Error)
+	}
+	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
 // import / export should also appear here

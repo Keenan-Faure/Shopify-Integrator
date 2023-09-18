@@ -206,6 +206,16 @@ func (q *Queries) GetCustomersByName(ctx context.Context, lower string) ([]GetCu
 	return items, nil
 }
 
+const removeCustomer = `-- name: RemoveCustomer :exec
+DELETE FROM customers
+WHERE id = $1
+`
+
+func (q *Queries) RemoveCustomer(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, removeCustomer, id)
+	return err
+}
+
 const updateCustomer = `-- name: UpdateCustomer :one
 UPDATE customers
 SET

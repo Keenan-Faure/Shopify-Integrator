@@ -58,3 +58,7 @@ WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO LOWER($1)
 AND LOWER(first_name) LIKE CONCAT('%',LOWER($1),'%')
 AND LOWER(last_name) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT 10;
+
+-- name: RemoveCustomer :exec
+DELETE FROM customers
+WHERE id = $1;
