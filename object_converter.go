@@ -4,7 +4,6 @@ import (
 	"integrator/internal/database"
 	"net/http"
 	"objects"
-	"utils"
 
 	"github.com/google/uuid"
 )
@@ -44,6 +43,7 @@ func CompileCustomerData(
 	}
 	if ignore_address {
 		return objects.Customer{
+			ID:        customer_id,
 			FirstName: customer.FirstName,
 			LastName:  customer.LastName,
 			Email:     customer.Email.String,
@@ -122,6 +122,7 @@ func CompileOrderData(
 	}
 	if ignore_ship_cust {
 		Order := objects.Order{
+			ID:                order.ID,
 			Notes:             order.Notes.String,
 			WebCode:           order.WebCode.String,
 			TaxTotal:          order.TaxTotal.String,
@@ -225,9 +226,9 @@ func CompileFilterSearch(
 	response := []objects.SearchProduct{}
 	if product_type != "" {
 		prod_type, err := dbconfig.DB.GetProductsByType(r.Context(), database.GetProductsByTypeParams{
-			ProductType: utils.ConvertStringToSQL(utils.ConvertStringToLike(product_type)),
-			Limit:       10,
-			Offset:      int32((page - 1) * 10),
+			Lower:  product_type,
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
 		})
 		if err != nil {
 			return response, err
@@ -244,9 +245,9 @@ func CompileFilterSearch(
 	}
 	if category != "" {
 		prod_category, err := dbconfig.DB.GetProductsByCategory(r.Context(), database.GetProductsByCategoryParams{
-			Category: utils.ConvertStringToSQL(utils.ConvertStringToLike(category)),
-			Limit:    10,
-			Offset:   int32((page - 1) * 10),
+			Lower:  category,
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
 		})
 		if err != nil {
 			return response, err
@@ -263,7 +264,7 @@ func CompileFilterSearch(
 	}
 	if vendor != "" {
 		prod_vendor, err := dbconfig.DB.GetProductsByVendor(r.Context(), database.GetProductsByVendorParams{
-			Vendor: utils.ConvertStringToSQL(utils.ConvertStringToLike(vendor)),
+			Lower:  vendor,
 			Limit:  10,
 			Offset: int32((page - 1) * 10),
 		})

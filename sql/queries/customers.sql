@@ -36,6 +36,7 @@ LIMIT $1 OFFSET $2;
 
 -- name: GetCustomerByID :one
 SELECT
+    id,
     first_name,
     last_name,
     email,
@@ -53,5 +54,7 @@ SELECT
     phone,
     updated_at
 FROM customers
-WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO $1
+WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO LOWER($1)
+AND LOWER(first_name) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(last_name) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT 10;

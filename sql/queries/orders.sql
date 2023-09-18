@@ -29,6 +29,7 @@ RETURNING *;
 
 -- name: GetOrderByID :one
 SELECT
+    id,
     notes,
     web_code,
     tax_total,
@@ -95,11 +96,14 @@ SELECT
     o.updated_at
 FROM orders o
 WHERE o.id in (
-    SELECT order_id FROM customerorders
-    WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
+    SELECT order_id FROM customerorders co
+    INNER JOIN customers c
+    ON co.customer_id = c.id
+    WHERE CONCAT(LOWER(c.first_name), ' ', LOWER(c.last_name)) SIMILAR TO LOWER($1)
+    AND LOWER(c.first_name) LIKE CONCAT('%',LOWER($1),'%')
+    AND LOWER(c.last_name) LIKE CONCAT('%',LOWER($1),'%')
 );
 
 -- name: RemoveOrder :exec
 DELETE FROM orders
 WHERE id = $1;
-

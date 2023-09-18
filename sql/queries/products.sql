@@ -48,7 +48,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE category LIKE $1
+WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductsByType :many
@@ -60,7 +60,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE product_type LIKE $1
+WHERE LOWER(product_type) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductsByVendor :many
@@ -72,7 +72,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE vendor LIKE $1
+WHERE LOWER(vendor) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductsSearchSKU :many
@@ -85,7 +85,7 @@ SELECT
 FROM products p
 INNER JOIN variants v
 ON p.id = variants.product_id
-WHERE v.sku LIKE $1
+WHERE LOWER(v.sku) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT 5;
 
 -- name: GetProductsSearchTitle :many
@@ -96,7 +96,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE title LIKE $1
+WHERE LOWER(title) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT 5;
 
 -- name: GetProducts :many

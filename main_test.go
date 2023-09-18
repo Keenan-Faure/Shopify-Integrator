@@ -270,7 +270,14 @@ func TestOrderCRUD(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	orderData_fetched := objects.Order{}
+	order_id, err := uuid.Parse(orderData.Message)
+	if err != nil {
+		t.Errorf("Unexpected error: " + err.Error())
+	}
+	orderData_fetched, err := CompileOrderData(&dbconfig, order_id, res.Request, true)
+	if err != nil {
+		t.Errorf("Unexpected error: " + err.Error())
+	}
 	err = json.Unmarshal(respBody, &orderData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())

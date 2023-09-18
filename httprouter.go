@@ -507,10 +507,7 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), sql.NullString{
-		String: utils.ConvertStringToLike(search_query),
-		Valid:  true,
-	})
+	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), search_query)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
