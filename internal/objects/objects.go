@@ -21,6 +21,7 @@ type RequestBodyUser struct {
 	Token string `json:"token"`
 }
 type RequestBodyProduct struct {
+	ProductCode    string           `json:"product_code"`
 	Title          string           `json:"title"`
 	BodyHTML       string           `json:"body_html"`
 	Category       string           `json:"category"`

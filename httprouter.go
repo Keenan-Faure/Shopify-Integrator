@@ -261,6 +261,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 		ID:          uuid.New(),
 		Active:      "1",
+		ProductCode: params.ProductCode,
 		Title:       utils.ConvertStringToSQL(params.Title),
 		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
 		Category:    utils.ConvertStringToSQL(params.Category),

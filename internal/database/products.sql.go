@@ -16,6 +16,7 @@ import (
 const createProduct = `-- name: CreateProduct :one
 INSERT INTO products(
     id,
+    product_code,
     active,
     title,
     body_html,
@@ -25,13 +26,14 @@ INSERT INTO products(
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
-RETURNING id, active, title, body_html, category, vendor, product_type, created_at, updated_at
+RETURNING id, active, product_code, title, body_html, category, vendor, product_type, created_at, updated_at
 `
 
 type CreateProductParams struct {
 	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
 	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
@@ -45,6 +47,7 @@ type CreateProductParams struct {
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
 	row := q.db.QueryRowContext(ctx, createProduct,
 		arg.ID,
+		arg.ProductCode,
 		arg.Active,
 		arg.Title,
 		arg.BodyHtml,
@@ -58,6 +61,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	err := row.Scan(
 		&i.ID,
 		&i.Active,
+		&i.ProductCode,
 		&i.Title,
 		&i.BodyHtml,
 		&i.Category,
@@ -72,6 +76,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 const getProductByID = `-- name: GetProductByID :one
 SELECT
     active,
+    product_code,
     title,
     body_html,
     category,
@@ -84,6 +89,7 @@ WHERE id = $1
 
 type GetProductByIDRow struct {
 	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
@@ -97,6 +103,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (GetProductB
 	var i GetProductByIDRow
 	err := row.Scan(
 		&i.Active,
+		&i.ProductCode,
 		&i.Title,
 		&i.BodyHtml,
 		&i.Category,
@@ -111,6 +118,7 @@ const getProducts = `-- name: GetProducts :many
 SELECT
     id,
     active,
+    product_code,
     title,
     body_html,
     category,
@@ -129,6 +137,7 @@ type GetProductsParams struct {
 type GetProductsRow struct {
 	ID          uuid.UUID      `json:"id"`
 	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
@@ -149,6 +158,7 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 		if err := rows.Scan(
 			&i.ID,
 			&i.Active,
+			&i.ProductCode,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
@@ -172,6 +182,7 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 const getProductsByCategory = `-- name: GetProductsByCategory :many
 SELECT
     id,
+    product_code,
     title,
     body_html,
     category,
@@ -190,6 +201,7 @@ type GetProductsByCategoryParams struct {
 
 type GetProductsByCategoryRow struct {
 	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
@@ -208,6 +220,7 @@ func (q *Queries) GetProductsByCategory(ctx context.Context, arg GetProductsByCa
 		var i GetProductsByCategoryRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductCode,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
@@ -230,6 +243,7 @@ func (q *Queries) GetProductsByCategory(ctx context.Context, arg GetProductsByCa
 const getProductsByType = `-- name: GetProductsByType :many
 SELECT
     id,
+    product_code,
     title,
     body_html,
     category,
@@ -248,6 +262,7 @@ type GetProductsByTypeParams struct {
 
 type GetProductsByTypeRow struct {
 	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
@@ -266,6 +281,7 @@ func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypePa
 		var i GetProductsByTypeRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductCode,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
@@ -288,6 +304,7 @@ func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypePa
 const getProductsByVendor = `-- name: GetProductsByVendor :many
 SELECT
     id,
+    product_code,
     title,
     body_html,
     category,
@@ -306,6 +323,7 @@ type GetProductsByVendorParams struct {
 
 type GetProductsByVendorRow struct {
 	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
@@ -324,6 +342,7 @@ func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVend
 		var i GetProductsByVendorRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductCode,
 			&i.Title,
 			&i.BodyHtml,
 			&i.Category,
@@ -346,6 +365,7 @@ func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVend
 const getProductsSearchSKU = `-- name: GetProductsSearchSKU :many
 SELECT
     p.id,
+    p.product_code,
     p.title,
     p.category,
     p.vendor,
@@ -359,6 +379,7 @@ LIMIT 5
 
 type GetProductsSearchSKURow struct {
 	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	Category    sql.NullString `json:"category"`
 	Vendor      sql.NullString `json:"vendor"`
@@ -376,6 +397,7 @@ func (q *Queries) GetProductsSearchSKU(ctx context.Context, lower string) ([]Get
 		var i GetProductsSearchSKURow
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductCode,
 			&i.Title,
 			&i.Category,
 			&i.Vendor,
@@ -397,6 +419,7 @@ func (q *Queries) GetProductsSearchSKU(ctx context.Context, lower string) ([]Get
 const getProductsSearchTitle = `-- name: GetProductsSearchTitle :many
 SELECT
     id,
+    product_code,
     title,
     category,
     vendor,
@@ -408,6 +431,7 @@ LIMIT 5
 
 type GetProductsSearchTitleRow struct {
 	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	Category    sql.NullString `json:"category"`
 	Vendor      sql.NullString `json:"vendor"`
@@ -425,6 +449,7 @@ func (q *Queries) GetProductsSearchTitle(ctx context.Context, lower string) ([]G
 		var i GetProductsSearchTitleRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.ProductCode,
 			&i.Title,
 			&i.Category,
 			&i.Vendor,
@@ -464,7 +489,7 @@ SET
     product_type = $6,
     updated_at = $7
 WHERE id = $8
-RETURNING id, active, title, body_html, category, vendor, product_type, created_at, updated_at
+RETURNING id, active, product_code, title, body_html, category, vendor, product_type, created_at, updated_at
 `
 
 type UpdateProductParams struct {
@@ -493,6 +518,7 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 	err := row.Scan(
 		&i.ID,
 		&i.Active,
+		&i.ProductCode,
 		&i.Title,
 		&i.BodyHtml,
 		&i.Category,

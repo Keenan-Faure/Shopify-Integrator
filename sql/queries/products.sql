@@ -1,6 +1,7 @@
 -- name: CreateProduct :one
 INSERT INTO products(
     id,
+    product_code,
     active,
     title,
     body_html,
@@ -10,7 +11,7 @@ INSERT INTO products(
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING *;
 
@@ -30,6 +31,7 @@ RETURNING *;
 -- name: GetProductByID :one
 SELECT
     active,
+    product_code,
     title,
     body_html,
     category,
@@ -42,6 +44,7 @@ WHERE id = $1;
 -- name: GetProductsByCategory :many
 SELECT
     id,
+    product_code,
     title,
     body_html,
     category,
@@ -54,6 +57,7 @@ LIMIT $2 OFFSET $3;
 -- name: GetProductsByType :many
 SELECT
     id,
+    product_code,
     title,
     body_html,
     category,
@@ -66,6 +70,7 @@ LIMIT $2 OFFSET $3;
 -- name: GetProductsByVendor :many
 SELECT
     id,
+    product_code,
     title,
     body_html,
     category,
@@ -78,6 +83,7 @@ LIMIT $2 OFFSET $3;
 -- name: GetProductsSearchSKU :many
 SELECT
     p.id,
+    p.product_code,
     p.title,
     p.category,
     p.vendor,
@@ -91,6 +97,7 @@ LIMIT 5;
 -- name: GetProductsSearchTitle :many
 SELECT
     id,
+    product_code,
     title,
     category,
     vendor,
@@ -103,6 +110,7 @@ LIMIT 5;
 SELECT
     id,
     active,
+    product_code,
     title,
     body_html,
     category,

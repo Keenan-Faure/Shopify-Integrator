@@ -75,6 +75,7 @@ type OrderLine struct {
 type Product struct {
 	ID          uuid.UUID      `json:"id"`
 	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`

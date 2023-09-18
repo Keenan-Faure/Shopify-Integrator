@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"integrator/internal/database"
+	"iocsv"
 	"log"
 	"net/http"
 	"utils"
@@ -33,6 +34,7 @@ func main() {
 	}
 	fmt.Println("Starting API")
 	setupAPI(dbCon)
+	iocsv.ReadFile("test")
 }
 
 // starts up the API

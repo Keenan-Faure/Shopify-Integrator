@@ -105,6 +105,7 @@ func CreateOrdr() objects.RequestBodyOrder {
 
 func CreateProd() objects.RequestBodyProduct {
 	return objects.RequestBodyProduct{
+		ProductCode:    "ABC123",
 		Title:          "TestProduct",
 		BodyHTML:       "",
 		Category:       "",
@@ -143,7 +144,7 @@ func TestDatabaseConnection(t *testing.T) {
 		t.Errorf("Expected 'error' but found 'nil'")
 	}
 	fmt.Println("Test Case 2 - Invalid database")
-	dbconfig, err = InitConn(utils.LoadEnv("db_url") + "fake_abc123" + "?sslmode=disable")
+	dbconfig, err = InitConn(utils.LoadEnv("docker_db_url") + "fake_abc123" + "?sslmode=disable")
 	if err != nil && dbconfig.Valid {
 		t.Errorf("Expected 'nil' but found: " + err.Error())
 	}
@@ -155,7 +156,7 @@ func TestDatabaseConnection(t *testing.T) {
 		t.Errorf("Expected 'error' but found 'nil'")
 	}
 	fmt.Println("Test Case 3 - Valid connection url")
-	dbconfig, err = InitConn(utils.LoadEnv("db_url") + utils.LoadEnv("database") + "?sslmode=disable")
+	dbconfig, err = InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("database") + "?sslmode=disable")
 	if err != nil && !dbconfig.Valid {
 		t.Errorf("Expected 'nil' but found: " + err.Error())
 	}
@@ -163,6 +164,7 @@ func TestDatabaseConnection(t *testing.T) {
 		Limit:  1,
 		Offset: 0,
 	})
+	fmt.Println(err)
 	if err != nil {
 		t.Errorf("Expected 'nil' but found 'error'")
 	}

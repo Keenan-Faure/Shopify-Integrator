@@ -8,15 +8,13 @@ import (
 
 // Reads a csv file contents
 func ReadFile(file_name string) error {
-	file_data, err := os.Open("data.csv")
+	file_data, err := os.Open("../../" + file_name + ".csv")
 	if err != nil {
 		return err
 	}
 	defer file_data.Close()
-	return nil
 	fileReader := csv.NewReader(file_data)
 	records, err := fileReader.ReadAll()
-
 	if err != nil {
 		return err
 	}

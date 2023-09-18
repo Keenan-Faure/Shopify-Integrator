@@ -1,4 +1,5 @@
 {
+    "product_code": "ABC123",
     "title": "test_product",
     "body_html": "<p>I am a body_html</p>",
     "category": "test_category",
