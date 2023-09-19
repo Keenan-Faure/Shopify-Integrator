@@ -42,18 +42,22 @@ func ProductOptionValueValidation(
 	dbconfig *DbConfig,
 	r *http.Request) error {
 	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
-	if(err != nil) {
+	if err != nil {
 		return err
 	}
-	option_values, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
-	if(err != nil) {
+	variants, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
+	if err != nil {
 		return err
 	}
-	// get all product option names and corressponding values
-	// do a parallel comparison to find duplicates
-	// if error then return
-	// if duplicate return
-	// otherwise return nil
+	mapp := CreateOptionMap(option_names, variants)
+	// Validate option values
+	// check if the option_name exist in the current map
+	// if it does not raise an error
+	for _, value := range mapp[option_name] {
+		if value == option_value {
+			return errors.New("duplicate option values not allowed")
+		}
+	}
 	return nil
 }
 

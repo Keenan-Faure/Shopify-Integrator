@@ -102,3 +102,16 @@ func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.
 		UpdatedAt:  time.Now().UTC(),
 	}
 }
+
+// Creates a map of product options vs their names
+func CreateOptionMap(option_names []string, variants []database.GetVariantOptionsByProductCodeRow) map[string][]string {
+	mapp := make(map[string][]string)
+	for _, option_name := range option_names {
+		for _, variant := range variants {
+			mapp[option_name] = append(mapp[option_name], variant.Option1.String)
+			mapp[option_name] = append(mapp[option_name], variant.Option2.String)
+			mapp[option_name] = append(mapp[option_name], variant.Option3.String)
+		}
+	}
+	return mapp
+}

@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// iocsv
+// iocsv.go
 
 type CSVProduct struct {
 	Active       string `csv:"active"`
