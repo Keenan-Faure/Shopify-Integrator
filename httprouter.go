@@ -32,11 +32,10 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 	products_added := 0
 	variants_added := 0
 	for _, value := range csv_products {
-		err = ProductValidationImport(value)
-		if(err != nil) {
-			failure_counter ++
+		err = ProductValidationImport(value, dbconfig, r)
+		if err != nil {
+			failure_counter++
 		}
-		
 	}
 }
 

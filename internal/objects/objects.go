@@ -9,6 +9,7 @@ import (
 // iocsv.go
 
 type CSVProduct struct {
+	ProductCode  string `csv:"product_code"`
 	Active       string `csv:"active"`
 	Title        string `csv:"title"`
 	BodyHTML     string `csv:"body_html"`

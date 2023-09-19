@@ -1,3 +1,3 @@
-type,active,title,body_html,category,vendor,product_type,sku,option1_name,option1_value,option2_name,option2_value,option3_name,option3_value,barcode,price_name,price_value,qty_name,qty_value
-product,1,test_title,<p>I am a paragraph</p>,test_category,test_vendor,test_product_type,skubca, size,medium,color,blue,,,,Selling Price,1500.00,Cape Town,5
-product,1,test_title,<p>I am a paragraph</p>,test_category,test_vendor,test_product_type,skuabc,size,small,color,green,,,,Selling Price,,Cape Town,10
+type,active,product_code,title,body_html,category,vendor,product_type,sku,option1_name,option1_value,option2_name,option2_value,option3_name,option3_value,barcode,price_name,price_value,qty_name,qty_value
+product,1,grouper,test_title,<p>I am a paragraph</p>,test_category,test_vendor,test_product_type,skubca, size,medium,color,blue,,,,Selling Price,1500.00,Cape Town,5
+product,1,grouper,test_title,<p>I am a paragraph</p>,test_category,test_vendor,test_product_type,skuabc,size,small,color,green,,,,Selling Price,,Cape Town,10

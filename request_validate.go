@@ -12,7 +12,34 @@ import (
 
 // Validation: Product Import
 func ProductValidationImport(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
-
+	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)
+	if err != nil {
+		return err
+	}
+	err = ProductOptionNameValidation(csv_product.ProductCode, csv_product.Option1Name, dbconfig, r)
+	if err != nil {
+		return err
+	}
+	err = ProductOptionNameValidation(csv_product.ProductCode, csv_product.Option2Name, dbconfig, r)
+	if err != nil {
+		return err
+	}
+	err = ProductOptionNameValidation(csv_product.ProductCode, csv_product.Option3Name, dbconfig, r)
+	if err != nil {
+		return err
+	}
+	err = ProductOptionValueValidation(csv_product.ProductCode, csv_product.Option1Name, csv_product.Option1Value, dbconfig, r)
+	if err != nil {
+		return err
+	}
+	err = ProductOptionValueValidation(csv_product.ProductCode, csv_product.Option2Name, csv_product.Option2Value, dbconfig, r)
+	if err != nil {
+		return err
+	}
+	err = ProductOptionValueValidation(csv_product.ProductCode, csv_product.Option3Name, csv_product.Option3Value, dbconfig, r)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -41,6 +68,9 @@ func ProductOptionValueValidation(
 	option_name string,
 	dbconfig *DbConfig,
 	r *http.Request) error {
+	if option_value == "" || option_name == "" {
+		return nil
+	}
 	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
 	if err != nil {
 		return err
@@ -64,10 +94,12 @@ func ProductOptionValueValidation(
 // Validation: Product | Option Names
 func ProductOptionNameValidation(
 	product_code,
-	option_value,
 	option_name string,
 	dbconfig *DbConfig,
 	r *http.Request) error {
+	if option_name == "" {
+		return nil
+	}
 	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
 	if err != nil {
 		return err
