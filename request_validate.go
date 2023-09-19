@@ -10,6 +10,72 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validation: Product Import
+func ProductValidationImport(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
+
+	return nil
+}
+
+// Validation: Product | SKU
+func ProductSKUValidation(sku string, dbconfig *DbConfig, r *http.Request) error {
+	db_sku, err := dbconfig.DB.GetVariantBySKU(r.Context(), sku)
+	if err.Error() == "record not found" {
+		return nil
+	}
+	if err.Error() == "sql: no rows in result set" {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if db_sku.Sku == sku {
+		return errors.New("SKU with code " + sku + " already exists")
+	}
+	return nil
+}
+
+// Validation: Product | Option Values
+func ProductOptionValueValidation(
+	product_code,
+	option_value,
+	option_name string,
+	dbconfig *DbConfig,
+	r *http.Request) error {
+	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
+	if(err != nil) {
+		return err
+	}
+	option_values, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
+	if(err != nil) {
+		return err
+	}
+	// get all product option names and corressponding values
+	// do a parallel comparison to find duplicates
+	// if error then return
+	// if duplicate return
+	// otherwise return nil
+	return nil
+}
+
+// Validation: Product | Option Names
+func ProductOptionNameValidation(
+	product_code,
+	option_value,
+	option_name string,
+	dbconfig *DbConfig,
+	r *http.Request) error {
+	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
+	if err != nil {
+		return err
+	}
+	for _, value := range option_names {
+		if value == option_name {
+			return errors.New("duplicate option names not allowed")
+		}
+	}
+	return nil
+}
+
 // ValidateToken: Data validtion
 func ValidateTokenValidation(token_request objects.RequestBodyUser) error {
 	if token_request.Name == "" || len(token_request.Name) == 0 {
@@ -213,7 +279,6 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 	} else if len(product.ProductOptions) != 3 {
 		return errors.New("too many option values")
 	}
-
 	option_1_values := []string{}
 	option_2_values := []string{}
 	option_3_values := []string{}

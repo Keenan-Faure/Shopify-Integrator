@@ -20,3 +20,13 @@ SELECT
     name
 FROM product_options
 WHERE product_id = $1;
+
+-- name: GetProductOptionsByCode :many
+SELECT
+    name
+FROM product_options
+WHERE product_id IN (
+    SELECT id
+    FROM products
+    WHERE product_code = $1
+);

@@ -6,6 +6,29 @@ import (
 	"github.com/google/uuid"
 )
 
+// iocsv
+
+type CSVProduct struct {
+	Active       string `csv:"active"`
+	Title        string `csv:"title"`
+	BodyHTML     string `csv:"body_html"`
+	Category     string `csv:"category"`
+	Vendor       string `csv:"vendor"`
+	ProductType  string `csv:"product_type"`
+	SKU          string `csv:"sku"`
+	Option1Name  string `csv:"option1_name"`
+	Option1Value string `csv:"option1_value"`
+	Option2Name  string `csv:"option2_name"`
+	Option2Value string `csv:"option2_value"`
+	Option3Name  string `csv:"option3_name"`
+	Option3Value string `csv:"option3_value"`
+	Barcode      string `csv:"barcode"`
+	PriceName    string `csv:"price_name"`
+	PriceValue   string `csv:"price_value"`
+	QtyName      string `csv:"qty_name"`
+	QtyValue     string `csv:"qty_value"`
+}
+
 type ResponseString struct {
 	Message string `json:"message"`
 }

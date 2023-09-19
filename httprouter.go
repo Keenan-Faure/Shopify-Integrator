@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"integrator/internal/database"
+	"iocsv"
 	"log"
 	"net/http"
 	"objects"
@@ -17,6 +18,27 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/google/uuid"
 )
+
+// POST /api/products/import?file_name={{file}}
+func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	file_name := r.URL.Query().Get("file")
+	csv_products, err := iocsv.ReadFile(file_name)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+	}
+	processed_counter := 0
+	failure_counter := 0
+	skip_counter := 0
+	products_added := 0
+	variants_added := 0
+	for _, value := range csv_products {
+		err = ProductValidationImport(value)
+		if(err != nil) {
+			failure_counter ++
+		}
+		
+	}
+}
 
 // POST /api/customers/
 func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {

@@ -123,3 +123,16 @@ LIMIT $1 OFFSET $2;
 -- name: RemoveProduct :exec
 DELETE FROM products
 WHERE id = $1;
+
+-- name: GetVariantOptionsByProductCode :many
+SELECT
+    v.sku,
+    v.option1,
+    v.option2,
+    v.option3
+FROM variants v
+WHERE v.product_id IN (
+    SELECT product_id
+    FROM products
+    WHERE product_code = $1
+);
