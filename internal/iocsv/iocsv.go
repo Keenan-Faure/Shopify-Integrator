@@ -2,7 +2,6 @@ package iocsv
 
 import (
 	"errors"
-	"fmt"
 	"objects"
 	"os"
 
@@ -23,8 +22,14 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 	if err := gocsv.UnmarshalFile(file_data, &products); err != nil {
 		return []objects.CSVProduct{}, err
 	}
-	for _, product := range products {
-		fmt.Println(product.Title)
-	}
 	return products, nil
+}
+
+// Removes a file from the server
+func RemoveFile(file_name string) error {
+	err := os.Remove(file_name + ".csv")
+	if err != nil {
+		return err
+	}
+	return nil
 }

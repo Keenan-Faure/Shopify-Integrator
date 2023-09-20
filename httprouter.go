@@ -21,22 +21,95 @@ import (
 
 // POST /api/products/import?file_name={{file}}
 func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	file_name := r.URL.Query().Get("file")
+	file_name := r.URL.Query().Get("file_name")
 	csv_products, err := iocsv.ReadFile(file_name)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
 	}
 	processed_counter := 0
 	failure_counter := 0
 	skip_counter := 0
 	products_added := 0
-	variants_added := 0
-	for _, value := range csv_products {
-		err = ProductValidationImport(value, dbconfig, r)
+	products_updated := 0
+	for _, csv_product := range csv_products {
+		err = ProductValidationDatabase(csv_product, dbconfig, r)
 		if err != nil {
 			failure_counter++
+			continue
 		}
+		// add product
+		// increment counter
+		// if already exists
+		// update
+		// increment counter
+		product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
+			ID:          uuid.New(),
+			ProductCode: csv_product.ProductCode,
+			Active:      "1",
+			Title:       utils.ConvertStringToSQL(csv_product.Title),
+			BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
+			Category:    utils.ConvertStringToSQL(csv_product.Category),
+			Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
+			ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+		})
+		// if the product code does exist already
+		// it will cause an error
+		// then we need to update instead
+		if err != nil {
+			// TODO log messages to console?
+			failure_counter++
+			continue
+		}
+		// only create option names if its a new product
+		// i.e only if the create product returns no err
+		// if it returns an error do not update
+		option_names := CreateOptionNames(csv_product)
+		for _, option_name := range option_names {
+			_, err = dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
+				ID:        uuid.New(),
+				ProductID: product.ID,
+				Name:      option_name,
+			})
+			if err != nil {
+				failure_counter++
+				continue
+			}
+		}
+		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
+			ID:        uuid.New(),
+			ProductID: product.ID,
+			Sku:       csv_product.SKU,
+			Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
+			Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
+			Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
+			Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			failure_counter++
+			continue
+		}
+		// variant pricing (break them up on the import)
+		// variant quantity (break them up on the import)
+		// return all errors and increase failure counter
+		processed_counter++
 	}
+	err = iocsv.RemoveFile(file_name)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ImportResponse{
+		ProcessedCounter: processed_counter,
+		FailCounter:      failure_counter,
+		SkipCounter:      skip_counter,
+		ProductsAdded:    products_added,
+		ProductsUpdated:  products_updated,
+	})
 }
 
 // POST /api/customers/
@@ -277,6 +350,15 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	err = DuplicateOptionValues(params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	csv_products := ConvertProductToCSV(params)
+	for _, csv_product := range csv_products {
+		err = ProductValidationDatabase(csv_product, dbconfig, r)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 	// add product to database
 	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{

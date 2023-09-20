@@ -83,3 +83,11 @@ func ConfirmError(err error) string {
 	}
 	return err.Error()
 }
+
+// Checks if a variable is set (string)
+func IssetString(variable string) string {
+	if variable != "" || len(variable) != 0 {
+		return variable
+	}
+	return ""
+}

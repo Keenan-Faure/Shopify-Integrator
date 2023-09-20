@@ -2,7 +2,7 @@
 CREATE TABLE products(
     id UUID PRIMARY KEY UNIQUE,
     active VARCHAR(1) NOT NULL,
-    product_code VARCHAR(64) NOT NULL,
+    product_code VARCHAR(64) UNIQUE NOT NULL,
     title VARCHAR(255),
     body_html TEXT,
     category VARCHAR(64),

@@ -8,6 +8,14 @@ import (
 
 // iocsv.go
 
+type ImportResponse struct {
+	ProcessedCounter int `json:"processed_counter"`
+	FailCounter      int `json:"fail_counter"`
+	SkipCounter      int `json:"skip_counter"`
+	ProductsAdded    int `json:"products_added"`
+	ProductsUpdated  int `json:"products_updated"`
+}
+
 type CSVProduct struct {
 	ProductCode  string `csv:"product_code"`
 	Active       string `csv:"active"`
@@ -39,6 +47,7 @@ type RequestString struct {
 }
 
 // request_validation.go
+
 type RequestBodyUser struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -75,7 +84,6 @@ type RequestBodyValidateToken struct {
 }
 
 // object_converter.go
-
 type SearchOrder struct {
 	Notes         string    `json:"notes"`
 	WebCode       string    `json:"web_code"`

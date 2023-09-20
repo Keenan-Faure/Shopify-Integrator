@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"objects"
 
@@ -10,35 +11,27 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validation: Product (not import)
+
 // Validation: Product Import
-func ProductValidationImport(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
+func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
 	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)
 	if err != nil {
 		return err
 	}
-	err = ProductOptionNameValidation(csv_product.ProductCode, csv_product.Option1Name, dbconfig, r)
-	if err != nil {
-		return err
+	option_names := CreateOptionNames(csv_product)
+	for _, option_name := range option_names {
+		err = ProductOptionNameValidation(csv_product.ProductCode, option_name, dbconfig, r)
+		if err != nil {
+			return err
+		}
 	}
-	err = ProductOptionNameValidation(csv_product.ProductCode, csv_product.Option2Name, dbconfig, r)
-	if err != nil {
-		return err
-	}
-	err = ProductOptionNameValidation(csv_product.ProductCode, csv_product.Option3Name, dbconfig, r)
-	if err != nil {
-		return err
-	}
-	err = ProductOptionValueValidation(csv_product.ProductCode, csv_product.Option1Name, csv_product.Option1Value, dbconfig, r)
-	if err != nil {
-		return err
-	}
-	err = ProductOptionValueValidation(csv_product.ProductCode, csv_product.Option2Name, csv_product.Option2Value, dbconfig, r)
-	if err != nil {
-		return err
-	}
-	err = ProductOptionValueValidation(csv_product.ProductCode, csv_product.Option3Name, csv_product.Option3Value, dbconfig, r)
-	if err != nil {
-		return err
+	option_values := CreateOptionValues(csv_product)
+	for _, option_value := range option_values {
+		err = ProductOptionNameValidation(csv_product.ProductCode, option_value, dbconfig, r)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -104,9 +97,12 @@ func ProductOptionNameValidation(
 	if err != nil {
 		return err
 	}
+	if len(option_names) > 3 {
+		return errors.New("cannot exceed 3 option names")
+	}
 	for _, value := range option_names {
 		if value == option_name {
-			return errors.New("duplicate option names not allowed")
+			log.Println(errors.New("option name already exists, skipping"))
 		}
 	}
 	return nil

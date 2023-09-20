@@ -115,3 +115,53 @@ func CreateOptionMap(option_names []string, variants []database.GetVariantOption
 	}
 	return mapp
 }
+
+// Create Option Name array
+func CreateOptionNames(csv_product objects.CSVProduct) []string {
+	mapp := []string{}
+	mapp = append(mapp, csv_product.Option1Name)
+	mapp = append(mapp, csv_product.Option2Name)
+	mapp = append(mapp, csv_product.Option3Name)
+	return mapp
+}
+
+// Create option Value array
+func CreateOptionValues(csv_product objects.CSVProduct) []string {
+	mapp := []string{}
+	mapp = append(mapp, csv_product.Option1Value)
+	mapp = append(mapp, csv_product.Option2Value)
+	mapp = append(mapp, csv_product.Option3Value)
+	return mapp
+}
+
+// Convert Product (POST) into CSVProduct
+func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProduct {
+	csv_products := []objects.CSVProduct{}
+	for _, variant := range products.Variants {
+
+		// excludes pricing/qty because we dont need that
+		// for verification
+		csv_products = append(csv_products, objects.CSVProduct{
+			ProductCode:  products.ProductCode,
+			Active:       "1",
+			Title:        products.Title,
+			BodyHTML:     products.BodyHTML,
+			Category:     products.Category,
+			Vendor:       products.Vendor,
+			ProductType:  products.ProductType,
+			SKU:          variant.Sku,
+			Option1Name:  utils.IssetString(products.ProductOptions[0].Value),
+			Option1Value: variant.Option1,
+			Option2Name:  utils.IssetString(products.ProductOptions[1].Value),
+			Option2Value: variant.Option2,
+			Option3Name:  utils.IssetString(products.ProductOptions[2].Value),
+			Option3Value: variant.Option3,
+			Barcode:      variant.Barcode,
+			PriceName:    "",
+			PriceValue:   "",
+			QtyName:      "",
+			QtyValue:     "",
+		})
+	}
+	return csv_products
+}
