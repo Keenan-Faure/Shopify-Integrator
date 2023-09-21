@@ -32,17 +32,19 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 	skip_counter := 0
 	products_added := 0
 	products_updated := 0
+	variants_updated := 0
+	variants_added := 0
 	for _, csv_product := range csv_products {
+		// Issue
+		// if it updates a product it will never know
+		// what product id the product has
+		product_exists := false
 		err = ProductValidationDatabase(csv_product, dbconfig, r)
 		if err != nil {
+			fmt.Println(err.Error())
 			failure_counter++
 			continue
 		}
-		// add product
-		// increment counter
-		// if already exists
-		// update
-		// increment counter
 		product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 			ID:          uuid.New(),
 			ProductCode: csv_product.ProductCode,
@@ -55,27 +57,49 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 			CreatedAt:   time.Now().UTC(),
 			UpdatedAt:   time.Now().UTC(),
 		})
-		// if the product code does exist already
-		// it will cause an error
-		// then we need to update instead
 		if err != nil {
-			// TODO log messages to console?
-			failure_counter++
-			continue
-		}
-		// only create option names if its a new product
-		// i.e only if the create product returns no err
-		// if it returns an error do not update
-		option_names := CreateOptionNames(csv_product)
-		for _, option_name := range option_names {
-			_, err = dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
-				ID:        uuid.New(),
-				ProductID: product.ID,
-				Name:      option_name,
-			})
-			if err != nil {
+			fmt.Println("1: " + err.Error())
+			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
+				product_exists = true
+				// update product
+				err := dbconfig.DB.UpdateProduct(r.Context(), database.UpdateProductParams{
+					Active:      "1",
+					Title:       utils.ConvertStringToSQL(csv_product.Title),
+					BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
+					Category:    utils.ConvertStringToSQL(csv_product.Category),
+					Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
+					ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
+					UpdatedAt:   time.Now().UTC(),
+					ProductCode: csv_product.ProductCode,
+				})
+				if err != nil {
+					fmt.Println("2: " + err.Error())
+					failure_counter++
+					continue
+				}
+				products_updated++
+			} else {
+				// TODO log messages to console?
+				fmt.Println("3: " + err.Error())
 				failure_counter++
 				continue
+			}
+		}
+		if !product_exists {
+			option_names := CreateOptionNamesMap(csv_product)
+			for _, option_name := range option_names {
+				if option_name != "" {
+					_, err = dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
+						ID:        uuid.New(),
+						ProductID: product.ID,
+						Name:      option_name,
+					})
+					if err != nil {
+						fmt.Println("4: " + err.Error())
+						failure_counter++
+						continue
+					}
+				}
 			}
 		}
 		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
@@ -90,12 +114,79 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
+			fmt.Println("5: " + err.Error())
+			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
+				// updated variant
+				// update pricing because its the same SKU
+				// and quantity
+				err := dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
+					Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
+					Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
+					Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
+					Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
+					UpdatedAt: time.Now().UTC(),
+				})
+				if err != nil {
+					fmt.Println("6: " + err.Error())
+					failure_counter++
+					continue
+				}
+				err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
+					Name:  csv_product.PriceName,
+					Value: utils.ConvertStringToSQL(csv_product.PriceName),
+					Sku:   csv_product.SKU,
+				})
+				if err != nil {
+					fmt.Println("7: " + err.Error())
+					failure_counter++
+					continue
+				}
+				err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
+					Name:  csv_product.QtyName,
+					Value: utils.ConvertIntToSQL(csv_product.QtyValue),
+					Sku:   csv_product.SKU,
+				})
+				if err != nil {
+					fmt.Println("8: " + err.Error())
+					failure_counter++
+					continue
+				}
+				variants_updated++
+				continue
+			}
+			fmt.Println("9: " + err.Error())
 			failure_counter++
 			continue
 		}
-		// variant pricing (break them up on the import)
-		// variant quantity (break them up on the import)
-		// return all errors and increase failure counter
+		variants_added++
+		// create new price lists, we dont need to confirm if the price lists exist anymore
+		// because its a new product
+		_, err = dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
+			ID:        uuid.New(),
+			VariantID: variant.ID,
+			Name:      csv_product.PriceName,
+			Value:     utils.ConvertStringToSQL(csv_product.PriceValue),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			fmt.Println("10: " + err.Error())
+			failure_counter++
+			continue
+		}
+		_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
+			ID:        uuid.New(),
+			VariantID: variant.ID,
+			Name:      csv_product.QtyName,
+			Value:     utils.ConvertIntToSQL(csv_product.QtyValue),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			fmt.Println("11: " + err.Error())
+			failure_counter++
+			continue
+		}
 		processed_counter++
 	}
 	err = iocsv.RemoveFile(file_name)
@@ -109,6 +200,8 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 		SkipCounter:      skip_counter,
 		ProductsAdded:    products_added,
 		ProductsUpdated:  products_updated,
+		VariantsAdded:    variants_added,
+		VariantsUpdated:  variants_updated,
 	})
 }
 

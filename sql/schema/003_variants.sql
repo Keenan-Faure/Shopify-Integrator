@@ -2,7 +2,7 @@
 CREATE TABLE variants(
     id UUID PRIMARY KEY,
     product_id UUID NOT NULL,
-    sku VARCHAR(64) UNIQUE NOT NULL,
+    sku TEXT UNIQUE NOT NULL,
     option1 VARCHAR(16),
     option2 VARCHAR(16),
     option3 VARCHAR(16),

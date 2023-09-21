@@ -14,6 +14,8 @@ type ImportResponse struct {
 	SkipCounter      int `json:"skip_counter"`
 	ProductsAdded    int `json:"products_added"`
 	ProductsUpdated  int `json:"products_updated"`
+	VariantsAdded    int `json:"variants_added"`
+	VariantsUpdated  int `json:"variants_updated"`
 }
 
 type CSVProduct struct {
@@ -35,7 +37,7 @@ type CSVProduct struct {
 	PriceName    string `csv:"price_name"`
 	PriceValue   string `csv:"price_value"`
 	QtyName      string `csv:"qty_name"`
-	QtyValue     string `csv:"qty_value"`
+	QtyValue     int    `csv:"qty_value"`
 }
 
 type ResponseString struct {

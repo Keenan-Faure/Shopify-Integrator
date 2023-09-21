@@ -114,6 +114,47 @@ func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (GetProductB
 	return i, err
 }
 
+const getProductByProductCode = `-- name: GetProductByProductCode :one
+SELECT
+    active,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE product_code = $1
+`
+
+type GetProductByProductCodeRow struct {
+	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProductByProductCode(ctx context.Context, productCode string) (GetProductByProductCodeRow, error) {
+	row := q.db.QueryRowContext(ctx, getProductByProductCode, productCode)
+	var i GetProductByProductCodeRow
+	err := row.Scan(
+		&i.Active,
+		&i.ProductCode,
+		&i.Title,
+		&i.BodyHtml,
+		&i.Category,
+		&i.Vendor,
+		&i.ProductType,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProducts = `-- name: GetProducts :many
 SELECT
     id,
@@ -527,54 +568,43 @@ func (q *Queries) RemoveProduct(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const updateProduct = `-- name: UpdateProduct :one
+const updateProduct = `-- name: UpdateProduct :exec
 UPDATE products
 SET
     active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
-    updated_at = $7
-WHERE id = $8
-RETURNING id, active, product_code, title, body_html, category, vendor, product_type, created_at, updated_at
+    product_code = $2,
+    title = $3,
+    body_html = $4,
+    category = $5,
+    vendor = $6,
+    product_type = $7,
+    updated_at = $8
+WHERE product_code = $9
 `
 
 type UpdateProductParams struct {
-	Active      string         `json:"active"`
-	Title       sql.NullString `json:"title"`
-	BodyHtml    sql.NullString `json:"body_html"`
-	Category    sql.NullString `json:"category"`
-	Vendor      sql.NullString `json:"vendor"`
-	ProductType sql.NullString `json:"product_type"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	ID          uuid.UUID      `json:"id"`
+	Active        string         `json:"active"`
+	ProductCode   string         `json:"product_code"`
+	Title         sql.NullString `json:"title"`
+	BodyHtml      sql.NullString `json:"body_html"`
+	Category      sql.NullString `json:"category"`
+	Vendor        sql.NullString `json:"vendor"`
+	ProductType   sql.NullString `json:"product_type"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	ProductCode_2 string         `json:"product_code_2"`
 }
 
-func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
-	row := q.db.QueryRowContext(ctx, updateProduct,
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) error {
+	_, err := q.db.ExecContext(ctx, updateProduct,
 		arg.Active,
+		arg.ProductCode,
 		arg.Title,
 		arg.BodyHtml,
 		arg.Category,
 		arg.Vendor,
 		arg.ProductType,
 		arg.UpdatedAt,
-		arg.ID,
+		arg.ProductCode_2,
 	)
-	var i Product
-	err := row.Scan(
-		&i.ID,
-		&i.Active,
-		&i.ProductCode,
-		&i.Title,
-		&i.BodyHtml,
-		&i.Category,
-		&i.Vendor,
-		&i.ProductType,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	return err
 }

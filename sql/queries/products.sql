@@ -15,18 +15,18 @@ INSERT INTO products(
 )
 RETURNING *;
 
--- name: UpdateProduct :one
+-- name: UpdateProduct :exec
 UPDATE products
 SET
     active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
-    updated_at = $7
-WHERE id = $8
-RETURNING *;
+    product_code = $2,
+    title = $3,
+    body_html = $4,
+    category = $5,
+    vendor = $6,
+    product_type = $7,
+    updated_at = $8
+WHERE product_code = $9;
 
 -- name: GetProductByID :one
 SELECT
@@ -40,6 +40,19 @@ SELECT
     updated_at
 FROM products
 WHERE id = $1;
+
+-- name: GetProductByProductCode :one
+SELECT
+    active,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE product_code = $1;
 
 -- name: GetProductsByCategory :many
 SELECT

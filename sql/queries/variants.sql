@@ -14,7 +14,7 @@ INSERT INTO variants(
 )
 RETURNING *;
 
--- name: UpdateVariant :one
+-- name: UpdateVariant :exec
 UPDATE variants
 SET
     option1 = $1,
@@ -22,8 +22,7 @@ SET
     option3 = $3,
     barcode = $4,
     updated_at = $5
-WHERE sku = $6
-RETURNING *;
+WHERE sku = $6;
 
 -- name: GetProductVariants :many
 SELECT

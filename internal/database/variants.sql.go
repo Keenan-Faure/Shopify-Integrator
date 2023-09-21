@@ -168,7 +168,7 @@ func (q *Queries) RemoveVariant(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const updateVariant = `-- name: UpdateVariant :one
+const updateVariant = `-- name: UpdateVariant :exec
 UPDATE variants
 SET
     option1 = $1,
@@ -177,7 +177,6 @@ SET
     barcode = $4,
     updated_at = $5
 WHERE sku = $6
-RETURNING id, product_id, sku, option1, option2, option3, barcode, created_at, updated_at
 `
 
 type UpdateVariantParams struct {
@@ -189,8 +188,8 @@ type UpdateVariantParams struct {
 	Sku       string         `json:"sku"`
 }
 
-func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (Variant, error) {
-	row := q.db.QueryRowContext(ctx, updateVariant,
+func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) error {
+	_, err := q.db.ExecContext(ctx, updateVariant,
 		arg.Option1,
 		arg.Option2,
 		arg.Option3,
@@ -198,17 +197,5 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) (V
 		arg.UpdatedAt,
 		arg.Sku,
 	)
-	var i Variant
-	err := row.Scan(
-		&i.ID,
-		&i.ProductID,
-		&i.Sku,
-		&i.Option1,
-		&i.Option2,
-		&i.Option3,
-		&i.Barcode,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	return err
 }

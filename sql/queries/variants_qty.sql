@@ -11,13 +11,14 @@ INSERT INTO variant_qty(
 )
 RETURNING *;
 
--- name: UpdateVariantQty :one
+-- name: UpdateVariantQty :exec
 UPDATE variant_qty
 SET
-    name = $1,
-    value = $2
-WHERE variant_id = $3
-RETURNING *;
+    value = $1
+WHERE variant_id IN (
+    SELECT id FROM variants
+    WHERE sku = $2
+) AND name = $3;
 
 -- name: GetVariantQty :many
 SELECT 
@@ -25,6 +26,16 @@ SELECT
     value
 FROM variant_qty
 WHERE variant_id = $1;
+
+-- name: GetVariantQtyBySKU :many
+SELECT
+    name,
+    value
+FROM variant_qty
+WHERE variant_id IN (
+    SELECT id FROM variants
+    WHERE sku = $1
+);
 
 -- name: RemoveQty :exec
 DELETE FROM variant_qty

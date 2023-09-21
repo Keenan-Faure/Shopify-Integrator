@@ -93,6 +93,45 @@ func (q *Queries) GetVariantQty(ctx context.Context, variantID uuid.UUID) ([]Get
 	return items, nil
 }
 
+const getVariantQtyBySKU = `-- name: GetVariantQtyBySKU :many
+SELECT
+    name,
+    value
+FROM variant_qty
+WHERE variant_id IN (
+    SELECT id FROM variants
+    WHERE sku = $1
+)
+`
+
+type GetVariantQtyBySKURow struct {
+	Name  string        `json:"name"`
+	Value sql.NullInt32 `json:"value"`
+}
+
+func (q *Queries) GetVariantQtyBySKU(ctx context.Context, sku string) ([]GetVariantQtyBySKURow, error) {
+	rows, err := q.db.QueryContext(ctx, getVariantQtyBySKU, sku)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetVariantQtyBySKURow
+	for rows.Next() {
+		var i GetVariantQtyBySKURow
+		if err := rows.Scan(&i.Name, &i.Value); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeQty = `-- name: RemoveQty :exec
 DELETE FROM variant_qty
 WHERE id = $1
@@ -103,31 +142,23 @@ func (q *Queries) RemoveQty(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
-const updateVariantQty = `-- name: UpdateVariantQty :one
+const updateVariantQty = `-- name: UpdateVariantQty :exec
 UPDATE variant_qty
 SET
-    name = $1,
-    value = $2
-WHERE variant_id = $3
-RETURNING id, variant_id, name, value, created_at, updated_at
+    value = $1
+WHERE variant_id IN (
+    SELECT id FROM variants
+    WHERE sku = $2
+) AND name = $3
 `
 
 type UpdateVariantQtyParams struct {
-	Name      string        `json:"name"`
-	Value     sql.NullInt32 `json:"value"`
-	VariantID uuid.UUID     `json:"variant_id"`
+	Value sql.NullInt32 `json:"value"`
+	Sku   string        `json:"sku"`
+	Name  string        `json:"name"`
 }
 
-func (q *Queries) UpdateVariantQty(ctx context.Context, arg UpdateVariantQtyParams) (VariantQty, error) {
-	row := q.db.QueryRowContext(ctx, updateVariantQty, arg.Name, arg.Value, arg.VariantID)
-	var i VariantQty
-	err := row.Scan(
-		&i.ID,
-		&i.VariantID,
-		&i.Name,
-		&i.Value,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) UpdateVariantQty(ctx context.Context, arg UpdateVariantQtyParams) error {
+	_, err := q.db.ExecContext(ctx, updateVariantQty, arg.Value, arg.Sku, arg.Name)
+	return err
 }

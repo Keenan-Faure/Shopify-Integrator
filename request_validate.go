@@ -19,14 +19,14 @@ func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfi
 	if err != nil {
 		return err
 	}
-	option_names := CreateOptionNames(csv_product)
+	option_names := CreateOptionNamesMap(csv_product)
 	for _, option_name := range option_names {
 		err = ProductOptionNameValidation(csv_product.ProductCode, option_name, dbconfig, r)
 		if err != nil {
 			return err
 		}
 	}
-	option_values := CreateOptionValues(csv_product)
+	option_values := CreateOptionValuesMap(csv_product)
 	for _, option_value := range option_values {
 		err = ProductOptionNameValidation(csv_product.ProductCode, option_value, dbconfig, r)
 		if err != nil {
@@ -39,13 +39,13 @@ func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfi
 // Validation: Product | SKU
 func ProductSKUValidation(sku string, dbconfig *DbConfig, r *http.Request) error {
 	db_sku, err := dbconfig.DB.GetVariantBySKU(r.Context(), sku)
-	if err.Error() == "record not found" {
-		return nil
-	}
-	if err.Error() == "sql: no rows in result set" {
-		return nil
-	}
 	if err != nil {
+		if err.Error() == "record not found" {
+			return nil
+		}
+		if err.Error() == "sql: no rows in result set" {
+			return nil
+		}
 		return err
 	}
 	if db_sku.Sku == sku {

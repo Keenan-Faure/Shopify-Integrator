@@ -5,6 +5,7 @@ import (
 	"integrator/internal/database"
 	"net/http"
 	"objects"
+	"strings"
 	"time"
 	"utils"
 
@@ -117,7 +118,7 @@ func CreateOptionMap(option_names []string, variants []database.GetVariantOption
 }
 
 // Create Option Name array
-func CreateOptionNames(csv_product objects.CSVProduct) []string {
+func CreateOptionNamesMap(csv_product objects.CSVProduct) []string {
 	mapp := []string{}
 	mapp = append(mapp, csv_product.Option1Name)
 	mapp = append(mapp, csv_product.Option2Name)
@@ -126,7 +127,7 @@ func CreateOptionNames(csv_product objects.CSVProduct) []string {
 }
 
 // Create option Value array
-func CreateOptionValues(csv_product objects.CSVProduct) []string {
+func CreateOptionValuesMap(csv_product objects.CSVProduct) []string {
 	mapp := []string{}
 	mapp = append(mapp, csv_product.Option1Value)
 	mapp = append(mapp, csv_product.Option2Value)
@@ -160,8 +161,40 @@ func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProdu
 			PriceName:    "",
 			PriceValue:   "",
 			QtyName:      "",
-			QtyValue:     "",
+			QtyValue:     0,
 		})
 	}
 	return csv_products
+}
+
+// Checks if a price tier already exists
+// in the database for a certain SKU
+func CheckExistsPriceTier(dbconfig *DbConfig, r *http.Request, sku, price_tier string) (bool, error) {
+	price_tiers, err := dbconfig.DB.GetVariantPricingBySKU(r.Context(), sku)
+	if err != nil {
+		return false, err
+	}
+	price_tier_split := strings.Split(price_tier, "_")
+	for _, value := range price_tiers {
+		if value.Name == price_tier_split[0] {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// Checks if a warehouse already exists
+// in the database for a certain SKU
+func CheckExistsWarehouse(dbconfig *DbConfig, r *http.Request, sku, warehouse string) (bool, error) {
+	warehouses, err := dbconfig.DB.GetVariantQtyBySKU(r.Context(), sku)
+	if err != nil {
+		return false, err
+	}
+	warehouse_split := strings.Split(warehouse, "_")
+	for _, value := range warehouses {
+		if value.Name == warehouse_split[0] {
+			return true, nil
+		}
+	}
+	return false, nil
 }
