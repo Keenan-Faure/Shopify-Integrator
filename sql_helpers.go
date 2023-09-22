@@ -198,3 +198,6 @@ func CheckExistsWarehouse(dbconfig *DbConfig, r *http.Request, sku, warehouse st
 	}
 	return false, nil
 }
+
+// Fetches the product code from the Database
+// if te

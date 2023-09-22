@@ -19,14 +19,13 @@ RETURNING *;
 UPDATE products
 SET
     active = $1,
-    product_code = $2,
-    title = $3,
-    body_html = $4,
-    category = $5,
-    vendor = $6,
-    product_type = $7,
-    updated_at = $8
-WHERE product_code = $9;
+    title = $2,
+    body_html = $3,
+    category = $4,
+    vendor = $5,
+    product_type = $6,
+    updated_at = $7
+WHERE product_code = $8;
 
 -- name: GetProductByID :one
 SELECT
@@ -149,3 +148,9 @@ WHERE v.product_id IN (
     FROM products
     WHERE product_code = $1
 );
+
+-- name: GetProductIDByCode :one
+SELECT
+    id
+FROM products
+WHERE product_code = $1;

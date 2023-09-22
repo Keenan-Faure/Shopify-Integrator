@@ -35,16 +35,8 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 	variants_updated := 0
 	variants_added := 0
 	for _, csv_product := range csv_products {
-		// Issue
-		// if it updates a product it will never know
-		// what product id the product has
 		product_exists := false
-		err = ProductValidationDatabase(csv_product, dbconfig, r)
-		if err != nil {
-			fmt.Println(err.Error())
-			failure_counter++
-			continue
-		}
+		// err := ProductValidationDatabase(csv_product, dbconfig, r)
 		product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 			ID:          uuid.New(),
 			ProductCode: csv_product.ProductCode,
@@ -64,13 +56,13 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 				// update product
 				err := dbconfig.DB.UpdateProduct(r.Context(), database.UpdateProductParams{
 					Active:      "1",
+					ProductCode: csv_product.ProductCode,
 					Title:       utils.ConvertStringToSQL(csv_product.Title),
 					BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
 					Category:    utils.ConvertStringToSQL(csv_product.Category),
 					Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
 					ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
 					UpdatedAt:   time.Now().UTC(),
-					ProductCode: csv_product.ProductCode,
 				})
 				if err != nil {
 					fmt.Println("2: " + err.Error())
@@ -84,6 +76,9 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 				failure_counter++
 				continue
 			}
+		}
+		if !product_exists {
+			products_added++
 		}
 		if !product_exists {
 			option_names := CreateOptionNamesMap(csv_product)
@@ -102,6 +97,14 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 				}
 			}
 		}
+		if product.ID == uuid.Nil {
+			product.ID, err = dbconfig.DB.GetProductIDByCode(r.Context(), csv_product.ProductCode)
+			if err != nil {
+				fmt.Println("4.5: " + err.Error())
+				failure_counter++
+				continue
+			}
+		}
 		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
 			ID:        uuid.New(),
 			ProductID: product.ID,
@@ -116,15 +119,13 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 		if err != nil {
 			fmt.Println("5: " + err.Error())
 			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				// updated variant
-				// update pricing because its the same SKU
-				// and quantity
 				err := dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
 					Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
 					Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
 					Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
 					Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
 					UpdatedAt: time.Now().UTC(),
+					Sku:       csv_product.SKU,
 				})
 				if err != nil {
 					fmt.Println("6: " + err.Error())
@@ -133,7 +134,7 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 				}
 				err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
 					Name:  csv_product.PriceName,
-					Value: utils.ConvertStringToSQL(csv_product.PriceName),
+					Value: utils.ConvertStringToSQL(csv_product.PriceValue),
 					Sku:   csv_product.SKU,
 				})
 				if err != nil {
@@ -159,8 +160,14 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 			continue
 		}
 		variants_added++
-		// create new price lists, we dont need to confirm if the price lists exist anymore
-		// because its a new product
+		if variant.ID == uuid.Nil {
+			variant.ID, err = dbconfig.DB.GetVariantIDByCode(r.Context(), csv_product.SKU)
+			if err != nil {
+				fmt.Println("9.5: " + err.Error())
+				failure_counter++
+				continue
+			}
+		}
 		_, err = dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
 			ID:        uuid.New(),
 			VariantID: variant.ID,
