@@ -19,8 +19,28 @@ import (
 	"github.com/google/uuid"
 )
 
+// GET /api/products/export
+func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	// get products to export (CSVProducts object)
+	product_ids, err := dbconfig.DB.GetProductIDs(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for _, product_id := range product_ids {
+		_, err := CompileProductData(dbconfig, product_id, r, false)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	// create a file
+	// write all changes to the file
+	// use javascript to return that file to be sent on the browser
+}
+
 // POST /api/products/import?file_name={{file}}
-func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	file_name := r.URL.Query().Get("file_name")
 	csv_products, err := iocsv.ReadFile(file_name)
 	if err != nil {
@@ -29,7 +49,6 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 	}
 	processed_counter := 0
 	failure_counter := 0
-	skip_counter := 0
 	products_added := 0
 	products_updated := 0
 	variants_updated := 0
@@ -132,21 +151,23 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 					failure_counter++
 					continue
 				}
-				err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-					Name:  csv_product.PriceName,
-					Value: utils.ConvertStringToSQL(csv_product.PriceValue),
-					Sku:   csv_product.SKU,
-				})
-				if err != nil {
-					fmt.Println("7: " + err.Error())
-					failure_counter++
-					continue
-				}
-				err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
-					Name:  csv_product.QtyName,
-					Value: utils.ConvertIntToSQL(csv_product.QtyValue),
-					Sku:   csv_product.SKU,
-				})
+
+				// create function to read in the warehouses / pricing separately
+				// err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
+				// 	Name:  csv_product.PriceName,
+				// 	Value: utils.ConvertStringToSQL(csv_product.PriceValue),
+				// 	Sku:   csv_product.SKU,
+				// })
+				// if err != nil {
+				// 	fmt.Println("7: " + err.Error())
+				// 	failure_counter++
+				// 	continue
+				// }
+				// err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
+				// 	Name:  csv_product.QtyName,
+				// 	Value: utils.ConvertIntToSQL(csv_product.QtyValue),
+				// 	Sku:   csv_product.SKU,
+				// })
 				if err != nil {
 					fmt.Println("8: " + err.Error())
 					failure_counter++
@@ -168,27 +189,27 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 				continue
 			}
 		}
-		_, err = dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
-			ID:        uuid.New(),
-			VariantID: variant.ID,
-			Name:      csv_product.PriceName,
-			Value:     utils.ConvertStringToSQL(csv_product.PriceValue),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			fmt.Println("10: " + err.Error())
-			failure_counter++
-			continue
-		}
-		_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
-			ID:        uuid.New(),
-			VariantID: variant.ID,
-			Name:      csv_product.QtyName,
-			Value:     utils.ConvertIntToSQL(csv_product.QtyValue),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
+		// _, err = dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
+		// 	ID:        uuid.New(),
+		// 	VariantID: variant.ID,
+		// 	Name:      csv_product.PriceName,
+		// 	Value:     utils.ConvertStringToSQL(csv_product.PriceValue),
+		// 	CreatedAt: time.Now().UTC(),
+		// 	UpdatedAt: time.Now().UTC(),
+		// })
+		// if err != nil {
+		// 	fmt.Println("10: " + err.Error())
+		// 	failure_counter++
+		// 	continue
+		// }
+		// _, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
+		// 	ID:        uuid.New(),
+		// 	VariantID: variant.ID,
+		// 	Name:      csv_product.QtyName,
+		// 	Value:     utils.ConvertIntToSQL(csv_product.QtyValue),
+		// 	CreatedAt: time.Now().UTC(),
+		// 	UpdatedAt: time.Now().UTC(),
+		// })
 		if err != nil {
 			fmt.Println("11: " + err.Error())
 			failure_counter++
@@ -204,7 +225,6 @@ func (dbconfig *DbConfig) ProductImport(w http.ResponseWriter, r *http.Request, 
 	RespondWithJSON(w, http.StatusOK, objects.ImportResponse{
 		ProcessedCounter: processed_counter,
 		FailCounter:      failure_counter,
-		SkipCounter:      skip_counter,
 		ProductsAdded:    products_added,
 		ProductsUpdated:  products_updated,
 		VariantsAdded:    variants_added,

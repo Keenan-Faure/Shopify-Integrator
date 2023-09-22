@@ -158,11 +158,12 @@ func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProdu
 			Option3Name:  utils.IssetString(products.ProductOptions[2].Value),
 			Option3Value: variant.Option3,
 			Barcode:      variant.Barcode,
-			PriceName:    "",
-			PriceValue:   "",
-			QtyName:      "",
-			QtyValue:     0,
 		})
+		// should be able to create a function here that combines all qty
+		// of a product into a single array
+		// which can be assigned to the object
+
+		// same with the price
 	}
 	return csv_products
 }

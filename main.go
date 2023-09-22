@@ -44,7 +44,7 @@ func setupAPI(dbconfig DbConfig) {
 	r.Use(cors.Handler(MiddleWare()))
 	api := chi.NewRouter()
 
-	api.Post("/products/import", dbconfig.middlewareAuth(dbconfig.ProductImport))
+	api.Post("/products/import", dbconfig.middlewareAuth(dbconfig.ProductImportHandle))
 	api.Post("/products", dbconfig.middlewareAuth(dbconfig.PostProductHandle))
 	api.Post("/customers", dbconfig.middlewareAuth(dbconfig.PostCustomerHandle))
 	api.Post("/orders", dbconfig.middlewareAuth(dbconfig.PostOrderHandle))
@@ -63,6 +63,7 @@ func setupAPI(dbconfig DbConfig) {
 	api.Get("/customers", dbconfig.middlewareAuth(dbconfig.CustomersHandle))
 	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
 	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
+	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 
 	r.Mount("/api", api)
 

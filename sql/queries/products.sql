@@ -154,3 +154,6 @@ SELECT
     id
 FROM products
 WHERE product_code = $1;
+
+-- name: GetProductIDs :many
+SELECT id FROM products;

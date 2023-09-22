@@ -11,7 +11,6 @@ import (
 type ImportResponse struct {
 	ProcessedCounter int `json:"processed_counter"`
 	FailCounter      int `json:"fail_counter"`
-	SkipCounter      int `json:"skip_counter"`
 	ProductsAdded    int `json:"products_added"`
 	ProductsUpdated  int `json:"products_updated"`
 	VariantsAdded    int `json:"variants_added"`
@@ -34,10 +33,14 @@ type CSVProduct struct {
 	Option3Name  string `csv:"option3_name"`
 	Option3Value string `csv:"option3_value"`
 	Barcode      string `csv:"barcode"`
-	PriceName    string `csv:"price_name"`
-	PriceValue   string `csv:"price_value"`
-	QtyName      string `csv:"qty_name"`
-	QtyValue     int    `csv:"qty_value"`
+}
+
+type CSVQuantity struct {
+	
+}
+
+type CSVPricing struct {
+
 }
 
 type ResponseString struct {

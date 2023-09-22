@@ -169,6 +169,33 @@ func (q *Queries) GetProductIDByCode(ctx context.Context, productCode string) (u
 	return id, err
 }
 
+const getProductIDs = `-- name: GetProductIDs :many
+SELECT id FROM products
+`
+
+func (q *Queries) GetProductIDs(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getProductIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProducts = `-- name: GetProducts :many
 SELECT
     id,
