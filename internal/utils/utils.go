@@ -104,14 +104,3 @@ func IssetInt(variable string) int {
 	}
 	return 0
 }
-
-// // Checks if a key exists
-// // in an array
-// func CheckKeyExist(array []int, key int) bool {
-// 	for _, value := range array {
-// 		if value == key {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
