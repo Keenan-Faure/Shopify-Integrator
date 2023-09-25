@@ -47,176 +47,182 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
+	fmt.Println(csv_products)
 	processed_counter := 0
 	failure_counter := 0
 	products_added := 0
 	products_updated := 0
 	variants_updated := 0
 	variants_added := 0
-	for _, csv_product := range csv_products {
-		product_exists := false
-		// err := ProductValidationDatabase(csv_product, dbconfig, r)
-		product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
-			ID:          uuid.New(),
-			ProductCode: csv_product.ProductCode,
-			Active:      "1",
-			Title:       utils.ConvertStringToSQL(csv_product.Title),
-			BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
-			Category:    utils.ConvertStringToSQL(csv_product.Category),
-			Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
-			ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
-		})
-		if err != nil {
-			fmt.Println("1: " + err.Error())
-			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				product_exists = true
-				// update product
-				err := dbconfig.DB.UpdateProduct(r.Context(), database.UpdateProductParams{
-					Active:      "1",
-					ProductCode: csv_product.ProductCode,
-					Title:       utils.ConvertStringToSQL(csv_product.Title),
-					BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
-					Category:    utils.ConvertStringToSQL(csv_product.Category),
-					Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
-					ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
-					UpdatedAt:   time.Now().UTC(),
-				})
-				if err != nil {
-					fmt.Println("2: " + err.Error())
-					failure_counter++
-					continue
-				}
-				products_updated++
-			} else {
-				// TODO log messages to console?
-				fmt.Println("3: " + err.Error())
-				failure_counter++
-				continue
-			}
-		}
-		if !product_exists {
-			products_added++
-		}
-		if !product_exists {
-			option_names := CreateOptionNamesMap(csv_product)
-			for _, option_name := range option_names {
-				if option_name != "" {
-					_, err = dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
-						ID:        uuid.New(),
-						ProductID: product.ID,
-						Name:      option_name,
-					})
-					if err != nil {
-						fmt.Println("4: " + err.Error())
-						failure_counter++
-						continue
-					}
-				}
-			}
-		}
-		if product.ID == uuid.Nil {
-			product.ID, err = dbconfig.DB.GetProductIDByCode(r.Context(), csv_product.ProductCode)
-			if err != nil {
-				fmt.Println("4.5: " + err.Error())
-				failure_counter++
-				continue
-			}
-		}
-		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
-			ID:        uuid.New(),
-			ProductID: product.ID,
-			Sku:       csv_product.SKU,
-			Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
-			Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
-			Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
-			Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			fmt.Println("5: " + err.Error())
-			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				err := dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
-					Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
-					Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
-					Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
-					Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
-					UpdatedAt: time.Now().UTC(),
-					Sku:       csv_product.SKU,
-				})
-				if err != nil {
-					fmt.Println("6: " + err.Error())
-					failure_counter++
-					continue
-				}
-
-				// create function to read in the warehouses / pricing separately
-				// err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-				// 	Name:  csv_product.PriceName,
-				// 	Value: utils.ConvertStringToSQL(csv_product.PriceValue),
-				// 	Sku:   csv_product.SKU,
-				// })
-				// if err != nil {
-				// 	fmt.Println("7: " + err.Error())
-				// 	failure_counter++
-				// 	continue
-				// }
-				// err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
-				// 	Name:  csv_product.QtyName,
-				// 	Value: utils.ConvertIntToSQL(csv_product.QtyValue),
-				// 	Sku:   csv_product.SKU,
-				// })
-				if err != nil {
-					fmt.Println("8: " + err.Error())
-					failure_counter++
-					continue
-				}
-				variants_updated++
-				continue
-			}
-			fmt.Println("9: " + err.Error())
-			failure_counter++
-			continue
-		}
-		variants_added++
-		if variant.ID == uuid.Nil {
-			variant.ID, err = dbconfig.DB.GetVariantIDByCode(r.Context(), csv_product.SKU)
-			if err != nil {
-				fmt.Println("9.5: " + err.Error())
-				failure_counter++
-				continue
-			}
-		}
-		// _, err = dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
-		// 	ID:        uuid.New(),
-		// 	VariantID: variant.ID,
-		// 	Name:      csv_product.PriceName,
-		// 	Value:     utils.ConvertStringToSQL(csv_product.PriceValue),
-		// 	CreatedAt: time.Now().UTC(),
-		// 	UpdatedAt: time.Now().UTC(),
-		// })
-		// if err != nil {
-		// 	fmt.Println("10: " + err.Error())
-		// 	failure_counter++
-		// 	continue
-		// }
-		// _, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
-		// 	ID:        uuid.New(),
-		// 	VariantID: variant.ID,
-		// 	Name:      csv_product.QtyName,
-		// 	Value:     utils.ConvertIntToSQL(csv_product.QtyValue),
-		// 	CreatedAt: time.Now().UTC(),
-		// 	UpdatedAt: time.Now().UTC(),
-		// })
-		if err != nil {
-			fmt.Println("11: " + err.Error())
-			failure_counter++
-			continue
-		}
-		processed_counter++
-	}
+	// for _, csv_product := range csv_products {
+	// 	product_exists := false
+	// 	// err := ProductValidationDatabase(csv_product, dbconfig, r)
+	// 	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
+	// 		ID:          uuid.New(),
+	// 		ProductCode: csv_product.ProductCode,
+	// 		Active:      "1",
+	// 		Title:       utils.ConvertStringToSQL(csv_product.Title),
+	// 		BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
+	// 		Category:    utils.ConvertStringToSQL(csv_product.Category),
+	// 		Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
+	// 		ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
+	// 		CreatedAt:   time.Now().UTC(),
+	// 		UpdatedAt:   time.Now().UTC(),
+	// 	})
+	// 	if err != nil {
+	// 		fmt.Println("1: " + err.Error())
+	// 		if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
+	// 			product_exists = true
+	// 			// update product
+	// 			err := dbconfig.DB.UpdateProduct(r.Context(), database.UpdateProductParams{
+	// 				Active:      "1",
+	// 				ProductCode: csv_product.ProductCode,
+	// 				Title:       utils.ConvertStringToSQL(csv_product.Title),
+	// 				BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
+	// 				Category:    utils.ConvertStringToSQL(csv_product.Category),
+	// 				Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
+	// 				ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
+	// 				UpdatedAt:   time.Now().UTC(),
+	// 			})
+	// 			if err != nil {
+	// 				fmt.Println("2: " + err.Error())
+	// 				failure_counter++
+	// 				continue
+	// 			}
+	// 			products_updated++
+	// 		} else {
+	// 			// TODO log messages to console?
+	// 			fmt.Println("3: " + err.Error())
+	// 			failure_counter++
+	// 			continue
+	// 		}
+	// 	}
+	// 	if !product_exists {
+	// 		products_added++
+	// 	}
+	// 	if !product_exists {
+	// 		option_names := CreateOptionNamesMap(csv_product)
+	// 		for _, option_name := range option_names {
+	// 			if option_name != "" {
+	// 				_, err = dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
+	// 					ID:        uuid.New(),
+	// 					ProductID: product.ID,
+	// 					Name:      option_name,
+	// 				})
+	// 				if err != nil {
+	// 					fmt.Println("4: " + err.Error())
+	// 					failure_counter++
+	// 					continue
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	if product.ID == uuid.Nil {
+	// 		product.ID, err = dbconfig.DB.GetProductIDByCode(r.Context(), csv_product.ProductCode)
+	// 		if err != nil {
+	// 			fmt.Println("4.5: " + err.Error())
+	// 			failure_counter++
+	// 			continue
+	// 		}
+	// 	}
+	// 	variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
+	// 		ID:        uuid.New(),
+	// 		ProductID: product.ID,
+	// 		Sku:       csv_product.SKU,
+	// 		Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
+	// 		Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
+	// 		Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
+	// 		Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
+	// 		CreatedAt: time.Now().UTC(),
+	// 		UpdatedAt: time.Now().UTC(),
+	// 	})
+	// 	if err != nil {
+	// 		fmt.Println("5: " + err.Error())
+	// 		if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
+	// 			err := dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
+	// 				Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
+	// 				Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
+	// 				Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
+	// 				Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
+	// 				UpdatedAt: time.Now().UTC(),
+	// 				Sku:       csv_product.SKU,
+	// 			})
+	// 			if err != nil {
+	// 				fmt.Println("6: " + err.Error())
+	// 				failure_counter++
+	// 				continue
+	// 			}
+	// 			for _, pricing_value := range csv_product.Pricing {
+	// 				err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
+	// 					Name:  pricing_value.Name,
+	// 					Value: utils.ConvertStringToSQL(pricing_value.Value),
+	// 					Sku:   csv_product.SKU,
+	// 				})
+	// 				if err != nil {
+	// 					fmt.Println("7: " + err.Error())
+	// 					failure_counter++
+	// 					continue
+	// 				}
+	// 			}
+	// 			for _, qty_value := range csv_product.Warehouses {
+	// 				err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
+	// 					Name:  qty_value.Name,
+	// 					Value: utils.ConvertIntToSQL(qty_value.Value),
+	// 					Sku:   csv_product.SKU,
+	// 				})
+	// 				if err != nil {
+	// 					fmt.Println("8: " + err.Error())
+	// 					failure_counter++
+	// 					continue
+	// 				}
+	// 			}
+	// 			variants_updated++
+	// 			continue
+	// 		}
+	// 		fmt.Println("9: " + err.Error())
+	// 		failure_counter++
+	// 		continue
+	// 	}
+	// 	variants_added++
+	// 	if variant.ID == uuid.Nil {
+	// 		variant.ID, err = dbconfig.DB.GetVariantIDByCode(r.Context(), csv_product.SKU)
+	// 		if err != nil {
+	// 			fmt.Println("9.5: " + err.Error())
+	// 			failure_counter++
+	// 			continue
+	// 		}
+	// 	}
+	// 	for _, pricing_value := range csv_product.Pricing {
+	// 		err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
+	// 			Name:  pricing_value.Name,
+	// 			Value: utils.ConvertStringToSQL(pricing_value.Value),
+	// 			Sku:   csv_product.SKU,
+	// 		})
+	// 		if err != nil {
+	// 			fmt.Println("7: " + err.Error())
+	// 			failure_counter++
+	// 			continue
+	// 		}
+	// 	}
+	// 	for _, qty_value := range csv_product.Warehouses {
+	// 		err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
+	// 			Name:  qty_value.Name,
+	// 			Value: utils.ConvertIntToSQL(qty_value.Value),
+	// 			Sku:   csv_product.SKU,
+	// 		})
+	// 		if err != nil {
+	// 			fmt.Println("8: " + err.Error())
+	// 			failure_counter++
+	// 			continue
+	// 		}
+	// 	}
+	// 	if err != nil {
+	// 		fmt.Println("11: " + err.Error())
+	// 		failure_counter++
+	// 		continue
+	// 	}
+	// 	processed_counter++
+	// }
 	err = iocsv.RemoveFile(file_name)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

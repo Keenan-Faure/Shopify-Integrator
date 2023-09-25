@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -91,3 +92,26 @@ func IssetString(variable string) string {
 	}
 	return ""
 }
+
+// Checks if a variable is set (string)
+func IssetInt(variable string) int {
+	if variable != "" || len(variable) != 0 {
+		integer, err := strconv.Atoi(variable)
+		if err != nil {
+			return 0
+		}
+		return integer
+	}
+	return 0
+}
+
+// // Checks if a key exists
+// // in an array
+// func CheckKeyExist(array []int, key int) bool {
+// 	for _, value := range array {
+// 		if value == key {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }

@@ -18,29 +18,33 @@ type ImportResponse struct {
 }
 
 type CSVProduct struct {
-	ProductCode  string `csv:"product_code"`
-	Active       string `csv:"active"`
-	Title        string `csv:"title"`
-	BodyHTML     string `csv:"body_html"`
-	Category     string `csv:"category"`
-	Vendor       string `csv:"vendor"`
-	ProductType  string `csv:"product_type"`
-	SKU          string `csv:"sku"`
-	Option1Name  string `csv:"option1_name"`
-	Option1Value string `csv:"option1_value"`
-	Option2Name  string `csv:"option2_name"`
-	Option2Value string `csv:"option2_value"`
-	Option3Name  string `csv:"option3_name"`
-	Option3Value string `csv:"option3_value"`
-	Barcode      string `csv:"barcode"`
+	ProductCode  string        `csv:"product_code"`
+	Active       string        `csv:"active"`
+	Title        string        `csv:"title"`
+	BodyHTML     string        `csv:"body_html"`
+	Category     string        `csv:"category"`
+	Vendor       string        `csv:"vendor"`
+	ProductType  string        `csv:"product_type"`
+	SKU          string        `csv:"sku"`
+	Option1Name  string        `csv:"option1_name"`
+	Option1Value string        `csv:"option1_value"`
+	Option2Name  string        `csv:"option2_name"`
+	Option2Value string        `csv:"option2_value"`
+	Option3Name  string        `csv:"option3_name"`
+	Option3Value string        `csv:"option3_value"`
+	Barcode      string        `csv:"barcode"`
+	Warehouses   []CSVQuantity `csv:"-"`
+	Pricing      []CSVPricing  `csv:"-"`
 }
 
 type CSVQuantity struct {
-	
+	Name  string
+	Value int
 }
 
 type CSVPricing struct {
-
+	Name  string
+	Value string
 }
 
 type ResponseString struct {

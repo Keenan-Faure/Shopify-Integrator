@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"integrator/internal/database"
-	"iocsv"
 	"log"
 	"net/http"
 	"utils"
@@ -32,8 +31,6 @@ func main() {
 	if !*flags {
 		fmt.Println("Starting Worker")
 	}
-	fmt.Println("Reading csv file")
-	iocsv.ReadFile("test")
 	fmt.Println("Starting API")
 	setupAPI(dbCon)
 }
