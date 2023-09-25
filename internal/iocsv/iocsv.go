@@ -41,8 +41,8 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 	}
 	for key, value := range records {
 		if key == 0 {
-			qty_header_map = GetKeysByMatcher(value, "price_")
-			price_header_map = GetKeysByMatcher(value, "qty_")
+			qty_header_map = GetKeysByMatcher(value, "qty_")
+			price_header_map = GetKeysByMatcher(value, "price_")
 			continue
 		}
 		break

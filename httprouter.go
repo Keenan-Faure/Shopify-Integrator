@@ -53,7 +53,6 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 	products_updated := 0
 	variants_updated := 0
 	variants_added := 0
-	fmt.Println(csv_products)
 	for _, csv_product := range csv_products {
 		product_exists := false
 		// err := ProductValidationDatabase(csv_product, dbconfig, r)
@@ -193,10 +192,13 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			}
 		}
 		for _, pricing_value := range csv_product.Pricing {
-			err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-				Name:  pricing_value.Name,
-				Value: utils.ConvertStringToSQL(pricing_value.Value),
-				Sku:   csv_product.SKU,
+			_, err = dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
+				ID:        uuid.New(),
+				VariantID: variant.ID,
+				Name:      pricing_value.Name,
+				Value:     utils.ConvertStringToSQL(pricing_value.Value),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
 				fmt.Println("7: " + err.Error())
@@ -205,10 +207,13 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			}
 		}
 		for _, qty_value := range csv_product.Warehouses {
-			err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
-				Name:  qty_value.Name,
-				Value: utils.ConvertIntToSQL(qty_value.Value),
-				Sku:   csv_product.SKU,
+			_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
+				ID:        uuid.New(),
+				VariantID: variant.ID,
+				Name:      qty_value.Name,
+				Value:     utils.ConvertIntToSQL(qty_value.Value),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
 				fmt.Println("8: " + err.Error())
