@@ -21,19 +21,21 @@ import (
 
 // GET /api/products/export
 func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// get products to export (CSVProducts object)
 	product_ids, err := dbconfig.DB.GetProductIDs(r.Context())
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	products := []objects.Product{}
 	for _, product_id := range product_ids {
-		_, err := CompileProductData(dbconfig, product_id, r, false)
+		product, err := CompileProductData(dbconfig, product_id, r, false)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
+		products = append(products, product)
 	}
+	iocsv.WriteCSV("results", products)
 	// create a file
 	// write all changes to the file
 	// use javascript to return that file to be sent on the browser

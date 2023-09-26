@@ -8,9 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Converts database product to objects.Product
-// func DatabaseToProduct()
-
 // Compile the customer search results
 func CompileCustomerSearchData(
 	customers_name []database.GetCustomersByNameRow,

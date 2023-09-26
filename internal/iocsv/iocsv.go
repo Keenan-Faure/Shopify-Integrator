@@ -6,11 +6,117 @@ import (
 	"fmt"
 	"objects"
 	"os"
+	"reflect"
 	"strings"
 	"utils"
 
 	"github.com/gocarina/gocsv"
 )
+
+// Writes data onto a csv file
+func WriteCSV(file_name string, product_data []objects.Product) error {
+	// need to generate csv headers that are dynamic
+	fmt.Println(product_data)
+	fmt.Println("----")
+	headers := generateHeaders(product_data[0])
+	// create method to convert objects.product to []string
+	// have to use the key => value somehow
+
+	data := [][]string{
+		headers,
+		{"productdata"},
+	}
+	file, err := os.Create(file_name + ".csv")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	err = writer.WriteAll(data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// use reflect to return the same
+// values from the product object
+
+// Generates a []string containing the export headers
+func generateHeaders(product objects.Product) []string {
+	headers_products := reflect.TypeOf(objects.Product{})
+	headers_variants := reflect.TypeOf(objects.ProductVariant{})
+	headers_variant_pricing := getVariantPricingCSV(product, true)
+	headers_variant_qty := getVariantQtyCSV(product, true)
+	product_headers := make([]string, headers_products.NumField())
+	for key := range product_headers {
+		product_headers[key] = headers_products.Field(key).Name
+	}
+	variant_headers := make([]string, headers_variants.NumField())
+	for key := range variant_headers {
+		variant_headers[key] = headers_variants.Field(key).Name
+	}
+	product_headers = append(product_headers, generateProductOptions()...)
+	product_headers = append(product_headers, variant_headers...)
+	product_headers = append(product_headers, headers_variant_pricing...)
+	product_headers = append(product_headers, headers_variant_qty...)
+	return product_headers
+}
+
+func generateReference() []string {
+	return []string{
+		"active",
+		"title",
+	}
+}
+
+// Create function to extract the product_options per variant option
+// option1_name, option1_value etc...
+func generateProductOptions() []string {
+	return []string{"option1_name", "option1_value", "option2_name",
+		"option2_value", "option3_name", "option3_value"}
+}
+
+// Returns the name of each warehouse
+func getVariantPricingCSV(product objects.Product, key bool) []string {
+	qty_headers := []string{}
+	if len(product.Variants) > 0 {
+		for _, variant := range product.Variants {
+			if len(variant.VariantQuantity) > 0 {
+				for _, qty := range variant.VariantQuantity {
+					if key {
+						qty_headers = append(qty_headers, "qty_"+qty.Name)
+					} else {
+						qty_headers = append(qty_headers, string(qty.Value))
+					}
+				}
+			}
+		}
+	}
+	return qty_headers
+}
+
+// Returns the name of each price tier
+func getVariantQtyCSV(product objects.Product, key bool) []string {
+	pricing_headers := []string{}
+	if len(product.Variants) > 0 {
+		for _, variant := range product.Variants {
+			if len(variant.VariantPricing) > 0 {
+				for _, pricing := range variant.VariantPricing {
+					if key {
+						pricing_headers = append(pricing_headers, "price_"+pricing.Name)
+					} else {
+						pricing_headers = append(pricing_headers, pricing.Value)
+					}
+				}
+			}
+		}
+	}
+	return pricing_headers
+}
 
 // Reads a csv file contents
 func ReadFile(file_name string) ([]objects.CSVProduct, error) {
@@ -48,7 +154,6 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 		break
 	}
 	for key := range records {
-		fmt.Println(key)
 		if key == 0 {
 			continue
 		}
