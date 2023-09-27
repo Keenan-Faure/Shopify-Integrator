@@ -8,6 +8,21 @@ import (
 
 // iocsv.go
 
+type ExportVariant struct {
+	Sku     string `json:"sku"`
+	Barcode string `json:"barcode"`
+}
+
+type ExportProduct struct {
+	ID          uuid.UUID `json:"id"`
+	Active      string    `json:"active"`
+	Title       string    `json:"title"`
+	BodyHTML    string    `json:"body_html"`
+	Category    string    `json:"category"`
+	Vendor      string    `json:"vendor"`
+	ProductType string    `json:"product_type"`
+}
+
 type ImportResponse struct {
 	ProcessedCounter int `json:"processed_counter"`
 	FailCounter      int `json:"fail_counter"`

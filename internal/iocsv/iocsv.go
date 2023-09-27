@@ -10,67 +10,47 @@ import (
 	"strings"
 	"utils"
 
+	"github.com/fatih/structs"
 	"github.com/gocarina/gocsv"
 )
 
-// Writes data onto a csv file
-func WriteCSV(file_name string, product_data []objects.Product) error {
-	// need to generate csv headers that are dynamic
-	fmt.Println(product_data)
-	fmt.Println("----")
-	headers := generateHeaders(product_data[0])
-	// create method to convert objects.product to []string
-	// have to use the key => value somehow
-
-	data := [][]string{
-		headers,
-		{"productdata"},
+func CSVProductHeaders(product objects.Product) {
+	headers := []string{}
+	product_fields := structs.Fields(&objects.ExportProduct{})
+	for _, value := range product_fields {
+		headers = append(headers, value.Tag("json"))
 	}
-	file, err := os.Create(file_name + ".csv")
-	if err != nil {
-		return err
+	variant_fields := structs.Fields(&objects.ExportVariant{})
+	for _, value := range variant_fields {
+		headers = append(headers, value.Tag("json"))
 	}
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	err = writer.WriteAll(data)
-	if err != nil {
-		return err
-	}
-	return nil
+	headers = append(headers, generateProductOptions()...)
+	headers = append(headers, getVariantPricingCSV(product, true)...)
+	headers = append(headers, getVariantQtyCSV(product, true)...)
+	fmt.Println(headers)
 }
 
-// use reflect to return the same
-// values from the product object
-
-// Generates a []string containing the export headers
-func generateHeaders(product objects.Product) []string {
-	headers_products := reflect.TypeOf(objects.Product{})
-	headers_variants := reflect.TypeOf(objects.ProductVariant{})
-	headers_variant_pricing := getVariantPricingCSV(product, true)
-	headers_variant_qty := getVariantQtyCSV(product, true)
-	product_headers := make([]string, headers_products.NumField())
-	for key := range product_headers {
-		product_headers[key] = headers_products.Field(key).Name
+func CSVProductValuesByVariant(product objects.Product, variant objects.ProductVariant) {
+	headers := []string{}
+	product_fields := structs.Values(product)
+	for _, value := range product_fields {
+		if reflect.TypeOf(value).String() == "uuid.UUID" {
+			headers = append(headers, fmt.Sprintf("%v", value))
+			continue
+		}
+		if structs.IsStruct(value) || reflect.TypeOf(value).Kind() == reflect.Slice {
+			continue
+		}
+		if reflect.TypeOf(value).String() == "time.Time" {
+			headers = append(headers, fmt.Sprintf("%v", value))
+			continue
+		}
+		headers = append(headers, fmt.Sprintf("%v", value))
 	}
-	variant_headers := make([]string, headers_variants.NumField())
-	for key := range variant_headers {
-		variant_headers[key] = headers_variants.Field(key).Name
-	}
-	product_headers = append(product_headers, generateProductOptions()...)
-	product_headers = append(product_headers, variant_headers...)
-	product_headers = append(product_headers, headers_variant_pricing...)
-	product_headers = append(product_headers, headers_variant_qty...)
-	return product_headers
-}
-
-func generateReference() []string {
-	return []string{
-		"active",
-		"title",
-	}
+	// add variant options
+	// add variant qty/pricing
+	// done
+	fmt.Println(headers)
 }
 
 // Create function to extract the product_options per variant option
@@ -90,7 +70,7 @@ func getVariantPricingCSV(product objects.Product, key bool) []string {
 					if key {
 						qty_headers = append(qty_headers, "qty_"+qty.Name)
 					} else {
-						qty_headers = append(qty_headers, string(qty.Value))
+						qty_headers = append(qty_headers, fmt.Sprintf("%v", qty.Value))
 					}
 				}
 			}

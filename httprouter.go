@@ -35,7 +35,9 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 		}
 		products = append(products, product)
 	}
-	iocsv.WriteCSV("results", products)
+	iocsv.CSVProductHeaders(products[0])
+	iocsv.CSVProductValuesByVariant(products[0], products[0].Variants[0])
+	// iocsv.WriteCSV("results", products)
 	// create a file
 	// write all changes to the file
 	// use javascript to return that file to be sent on the browser
