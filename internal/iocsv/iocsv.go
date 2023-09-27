@@ -25,8 +25,10 @@ func CSVProductHeaders(product objects.Product) {
 		headers = append(headers, value.Tag("json"))
 	}
 	headers = append(headers, generateProductOptions()...)
-	headers = append(headers, getVariantPricingCSV(product, true)...)
-	headers = append(headers, getVariantQtyCSV(product, true)...)
+	if len(product.Variants) > 0 {
+		headers = append(headers, getVariantPricingCSV(product.Variants[0], true)...)
+		headers = append(headers, getVariantQtyCSV(product.Variants[0], true)...)
+	}
 	fmt.Println(headers)
 }
 
@@ -47,10 +49,29 @@ func CSVProductValuesByVariant(product objects.Product, variant objects.ProductV
 		}
 		headers = append(headers, fmt.Sprintf("%v", value))
 	}
-	// add variant options
+	headers = append(headers, CSVVariantOptions(product, variant)...)
+	headers = append(headers, getVariantPricingCSV(variant, false)...)
+	headers = append(headers, getVariantQtyCSV(variant, false)...)
 	// add variant qty/pricing
 	// done
 	fmt.Println(headers)
+}
+
+func CSVVariantOptions(product objects.Product, variant objects.ProductVariant) []string {
+	header := []string{}
+	for key, value := range product.ProductOptions {
+		if key == 0 {
+			header = append(header, value.Value)
+			header = append(header, variant.Option1)
+		} else if key == 1 {
+			header = append(header, value.Value)
+			header = append(header, variant.Option2)
+		} else if key == 2 {
+			header = append(header, value.Value)
+			header = append(header, variant.Option3)
+		}
+	}
+	return header
 }
 
 // Create function to extract the product_options per variant option
@@ -61,18 +82,14 @@ func generateProductOptions() []string {
 }
 
 // Returns the name of each warehouse
-func getVariantPricingCSV(product objects.Product, key bool) []string {
+func getVariantPricingCSV(variant objects.ProductVariant, key bool) []string {
 	qty_headers := []string{}
-	if len(product.Variants) > 0 {
-		for _, variant := range product.Variants {
-			if len(variant.VariantQuantity) > 0 {
-				for _, qty := range variant.VariantQuantity {
-					if key {
-						qty_headers = append(qty_headers, "qty_"+qty.Name)
-					} else {
-						qty_headers = append(qty_headers, fmt.Sprintf("%v", qty.Value))
-					}
-				}
+	if len(variant.VariantQuantity) > 0 {
+		for _, qty := range variant.VariantQuantity {
+			if key {
+				qty_headers = append(qty_headers, "qty_"+qty.Name)
+			} else {
+				qty_headers = append(qty_headers, fmt.Sprintf("%v", qty.Value))
 			}
 		}
 	}
@@ -80,18 +97,14 @@ func getVariantPricingCSV(product objects.Product, key bool) []string {
 }
 
 // Returns the name of each price tier
-func getVariantQtyCSV(product objects.Product, key bool) []string {
+func getVariantQtyCSV(variant objects.ProductVariant, key bool) []string {
 	pricing_headers := []string{}
-	if len(product.Variants) > 0 {
-		for _, variant := range product.Variants {
-			if len(variant.VariantPricing) > 0 {
-				for _, pricing := range variant.VariantPricing {
-					if key {
-						pricing_headers = append(pricing_headers, "price_"+pricing.Name)
-					} else {
-						pricing_headers = append(pricing_headers, pricing.Value)
-					}
-				}
+	if len(variant.VariantPricing) > 0 {
+		for _, pricing := range variant.VariantPricing {
+			if key {
+				pricing_headers = append(pricing_headers, "price_"+pricing.Name)
+			} else {
+				pricing_headers = append(pricing_headers, pricing.Value)
 			}
 		}
 	}
