@@ -35,11 +35,26 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 		}
 		products = append(products, product)
 	}
-	iocsv.CSVProductHeaders(products[0])
-	iocsv.CSVProductValuesByVariant(products[0], products[0].Variants[0])
-	// iocsv.WriteCSV("results", products)
-	// create a file
-	// write all changes to the file
+	csv_data := [][]string{}
+	headers := []string{}
+	if len(products) > 0 {
+		headers = iocsv.CSVProductHeaders(products[0])
+	}
+	csv_data = append(csv_data, headers)
+	for _, product := range products {
+		for _, variant := range product.Variants {
+			row := iocsv.CSVProductValuesByVariant(product, variant)
+			csv_data = append(csv_data, row)
+		}
+	}
+	err = iocsv.WriteFile(csv_data)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "Exported",
+	})
 	// use javascript to return that file to be sent on the browser
 }
 

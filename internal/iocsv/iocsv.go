@@ -8,13 +8,14 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 	"utils"
 
 	"github.com/fatih/structs"
 	"github.com/gocarina/gocsv"
 )
 
-func CSVProductHeaders(product objects.Product) {
+func CSVProductHeaders(product objects.Product) []string {
 	headers := []string{}
 	product_fields := structs.Fields(&objects.ExportProduct{})
 	for _, value := range product_fields {
@@ -29,10 +30,10 @@ func CSVProductHeaders(product objects.Product) {
 		headers = append(headers, getVariantPricingCSV(product.Variants[0], true)...)
 		headers = append(headers, getVariantQtyCSV(product.Variants[0], true)...)
 	}
-	fmt.Println(headers)
+	return headers
 }
 
-func CSVProductValuesByVariant(product objects.Product, variant objects.ProductVariant) {
+func CSVProductValuesByVariant(product objects.Product, variant objects.ProductVariant) []string {
 	headers := []string{}
 	product_fields := structs.Values(product)
 	for _, value := range product_fields {
@@ -49,12 +50,23 @@ func CSVProductValuesByVariant(product objects.Product, variant objects.ProductV
 		}
 		headers = append(headers, fmt.Sprintf("%v", value))
 	}
+	headers = append(headers, CSVProductVariant(variant)...)
 	headers = append(headers, CSVVariantOptions(product, variant)...)
 	headers = append(headers, getVariantPricingCSV(variant, false)...)
 	headers = append(headers, getVariantQtyCSV(variant, false)...)
-	// add variant qty/pricing
-	// done
-	fmt.Println(headers)
+	return headers
+}
+
+// generates the variants
+func CSVProductVariant(variant objects.ProductVariant) []string {
+	headers := []string{}
+	variant_fields := structs.Fields(variant)
+	for _, value := range variant_fields {
+		if value.Tag("json") == "sku" || value.Tag("json") == "barcode" {
+			headers = append(headers, value.Value().(string))
+		}
+	}
+	return headers
 }
 
 func CSVVariantOptions(product objects.Product, variant objects.ProductVariant) []string {
@@ -109,6 +121,22 @@ func getVariantQtyCSV(variant objects.ProductVariant, key bool) []string {
 		}
 	}
 	return pricing_headers
+}
+
+// Writes data to a file
+func WriteFile(data [][]string) error {
+	f, err := os.Create("product_export-" + time.Now().UTC().String() + ".csv")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	w := csv.NewWriter(f)
+	err = w.WriteAll(data)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Reads a csv file contents
