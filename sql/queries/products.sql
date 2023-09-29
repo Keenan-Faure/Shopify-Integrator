@@ -136,6 +136,10 @@ LIMIT $1 OFFSET $2;
 DELETE FROM products
 WHERE id = $1;
 
+-- name: RemoveProductByCode :exec
+DELETE FROM products
+WHERE product_code = $1;
+
 -- name: GetVariantOptionsByProductCode :many
 SELECT
     v.sku,

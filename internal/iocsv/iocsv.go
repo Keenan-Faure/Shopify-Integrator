@@ -124,19 +124,33 @@ func getVariantQtyCSV(variant objects.ProductVariant, key bool) []string {
 }
 
 // Writes data to a file
-func WriteFile(data [][]string) error {
-	f, err := os.Create("product_export-" + time.Now().UTC().String() + ".csv")
+func WriteFile(data [][]string, file_name string) (string, error) {
+	if file_name != "" {
+		f, err := os.Create(file_name + ".csv")
+		if err != nil {
+			return "", err
+		}
+		defer f.Close()
+		w := csv.NewWriter(f)
+		err = w.WriteAll(data)
+
+		if err != nil {
+			return "", err
+		}
+		return "", nil
+	}
+	csv_name := "product_export-" + time.Now().UTC().String() + ".csv"
+	f, err := os.Create(csv_name)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer f.Close()
 	w := csv.NewWriter(f)
 	err = w.WriteAll(data)
-
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return csv_name, nil
 }
 
 // Reads a csv file contents
@@ -224,7 +238,7 @@ func RemoveFile(file_name string) error {
 	return nil
 }
 
-// returns the keys of all items
+// Returns the keys of all items
 // in an array that matches a string
 func GetKeysByMatcher(headers []string, match string) map[int]string {
 	matcher := make(map[int]string)
@@ -235,5 +249,3 @@ func GetKeysByMatcher(headers []string, match string) map[int]string {
 	}
 	return matcher
 }
-
-// TODO does not want to update even though it exists inside the object

@@ -47,13 +47,13 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 			csv_data = append(csv_data, row)
 		}
 	}
-	err = iocsv.WriteFile(csv_data)
+	file_name, err := iocsv.WriteFile(csv_data, "")
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "Exported",
+		Message: file_name,
 	})
 	// use javascript to return that file to be sent on the browser
 }

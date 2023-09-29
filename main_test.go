@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"integrator/internal/database"
 	"io"
+	"iocsv"
 	"log"
 	"net/http"
 	"objects"
@@ -83,6 +84,14 @@ func CreateCustmr() objects.RequestBodyCustomer {
 		fmt.Println(err)
 	}
 	return customerData
+}
+
+func CreateTestCSVFile() {
+	data := [][]string{
+		{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price", "qty_Cape Town", "qty_Japan"},
+		{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00", "10", "5"},
+	}
+	iocsv.WriteFile(data, "test_import")
 }
 
 func CreateOrdr() objects.RequestBodyOrder {
@@ -418,4 +427,64 @@ func TestCustomerCRUD(t *testing.T) {
 	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
-// import / export should also appear here
+func TestProductIO(t *testing.T) {
+	fmt.Println("Test 1 - Importing products")
+	dbconfig := SetUpDatabase()
+	user := CreateDemoUser(&dbconfig)
+	CreateTestCSVFile()
+	res, err := UFetchHelper("products/import?file_name=test_import", "POST", user.ApiKey)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	importResponse := objects.ImportResponse{}
+	err = json.Unmarshal(respBody, &importResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if importResponse.FailCounter != 0 {
+		t.Errorf("Expected '0', but found " + fmt.Sprint(importResponse.FailCounter))
+	}
+	variant, err := dbconfig.DB.GetVariantBySKU(context.Background(), "skubca")
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if variant.Sku != "skubca" {
+		t.Errorf("Expected 'skubca', but found " + variant.Sku)
+	}
+	_, err = os.Open("test_import.csv")
+	if err == nil {
+		t.Errorf("Expected error but found nil")
+	}
+	dbconfig.DB.RemoveProductByCode(context.Background(), "grouper")
+	fmt.Println("Test 2 - Exporting products")
+	res, err = UFetchHelperPost("products/export", "GET", user.ApiKey, nil)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	exportResponse := objects.ResponseString{}
+	err = json.Unmarshal(respBody, &exportResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if exportResponse.Message == "" {
+		t.Errorf("Expected a file name, but found " + exportResponse.Message)
+	}
+	err = os.Remove(exportResponse.Message)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+}

@@ -15,6 +15,7 @@ type ExportVariant struct {
 
 type ExportProduct struct {
 	ID          uuid.UUID `json:"id"`
+	ProductCode string    `json:"product_code"`
 	Active      string    `json:"active"`
 	Title       string    `json:"title"`
 	BodyHTML    string    `json:"body_html"`
@@ -194,6 +195,7 @@ type SearchProduct struct {
 }
 type Product struct {
 	ID             uuid.UUID        `json:"id"`
+	ProductCode    string           `json:"product_code"`
 	Active         string           `json:"active"`
 	Title          string           `json:"title"`
 	BodyHTML       string           `json:"body_html"`

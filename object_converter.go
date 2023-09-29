@@ -329,6 +329,7 @@ func CompileProductData(
 	}
 	if ignore_variant {
 		product_data := objects.Product{
+			ProductCode:    product.ProductCode,
 			Active:         product.Active,
 			Title:          product.Title.String,
 			BodyHTML:       product.BodyHtml.String,
@@ -351,6 +352,7 @@ func CompileProductData(
 	}
 	product_data := objects.Product{
 		ID:             product_id,
+		ProductCode:    product.ProductCode,
 		Active:         product.Active,
 		Title:          product.Title.String,
 		BodyHTML:       product.BodyHtml.String,

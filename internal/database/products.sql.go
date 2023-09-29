@@ -609,6 +609,16 @@ func (q *Queries) RemoveProduct(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const removeProductByCode = `-- name: RemoveProductByCode :exec
+DELETE FROM products
+WHERE product_code = $1
+`
+
+func (q *Queries) RemoveProductByCode(ctx context.Context, productCode string) error {
+	_, err := q.db.ExecContext(ctx, removeProductByCode, productCode)
+	return err
+}
+
 const updateProduct = `-- name: UpdateProduct :exec
 UPDATE products
 SET
