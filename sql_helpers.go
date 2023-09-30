@@ -139,10 +139,7 @@ func CreateOptionValuesMap(csv_product objects.CSVProduct) []string {
 func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProduct {
 	csv_products := []objects.CSVProduct{}
 	for _, variant := range products.Variants {
-
-		// excludes pricing/qty because we dont need that
-		// for verification
-		csv_products = append(csv_products, objects.CSVProduct{
+		csv_product := objects.CSVProduct{
 			ProductCode:  products.ProductCode,
 			Active:       "1",
 			Title:        products.Title,
@@ -151,19 +148,21 @@ func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProdu
 			Vendor:       products.Vendor,
 			ProductType:  products.ProductType,
 			SKU:          variant.Sku,
-			Option1Name:  utils.IssetString(products.ProductOptions[0].Value),
 			Option1Value: variant.Option1,
-			Option2Name:  utils.IssetString(products.ProductOptions[1].Value),
 			Option2Value: variant.Option2,
-			Option3Name:  utils.IssetString(products.ProductOptions[2].Value),
 			Option3Value: variant.Option3,
 			Barcode:      variant.Barcode,
-		})
-		// should be able to create a function here that combines all qty
-		// of a product into a single array
-		// which can be assigned to the object
-
-		// same with the price
+		}
+		if len(products.ProductOptions) == 1 {
+			csv_product.Option1Name = utils.IssetString(products.ProductOptions[0].Value)
+			if len(products.ProductOptions) == 2 {
+				csv_product.Option2Name = utils.IssetString(products.ProductOptions[1].Value)
+				if len(products.ProductOptions) == 3 {
+					csv_product.Option3Name = utils.IssetString(products.ProductOptions[2].Value)
+				}
+			}
+		}
+		csv_products = append(csv_products, csv_product)
 	}
 	return csv_products
 }

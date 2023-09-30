@@ -52,13 +52,14 @@ func TestConvertStringToLike(t *testing.T) {
 	fmt.Println("Test case 1 - Valid string")
 	arg := "string"
 	results := ConvertStringToLike(arg)
-	if results[0:1] != "%" || results[len(arg)-1:] != "%" {
+	fmt.Println(results[len(arg)+1:])
+	if results[0:1] != "%" || results[len(arg)+1:] != "%" {
 		t.Errorf("Unexpected result")
 	}
 	fmt.Println("Test case 2 - Invalid string")
 	arg = ""
 	results = ConvertStringToLike(arg)
-	if results[0:1] != "%" || results[len(arg)-1:] != "%" {
+	if results[0:1] != "%" || results[len(arg)+1:] != "%" {
 		t.Errorf("Unexpected result")
 	}
 }
@@ -73,7 +74,7 @@ func TestConfirmFilters(t *testing.T) {
 	fmt.Println("Test case 2 - Invalid filter")
 	arg = ""
 	results = ConfirmFilters(arg)
-	if results == arg {
+	if results != arg {
 		t.Errorf("Unexpected result")
 	}
 }
@@ -103,7 +104,7 @@ func TestConvertIntToSQL(t *testing.T) {
 	fmt.Println("Test case 2 - Invalid (nil value) Integer")
 	arg = 0
 	results = ConvertIntToSQL(arg)
-	if results.Valid {
+	if !results.Valid {
 		t.Errorf("Expected 'false' but found 'true")
 	}
 }
