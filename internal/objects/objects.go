@@ -7,7 +7,6 @@ import (
 )
 
 // iocsv.go
-
 type ExportVariant struct {
 	Sku     string `json:"sku"`
 	Barcode string `json:"barcode"`

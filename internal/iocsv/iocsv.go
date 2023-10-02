@@ -4,8 +4,10 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"log"
 	"objects"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
@@ -14,6 +16,8 @@ import (
 	"github.com/fatih/structs"
 	"github.com/gocarina/gocsv"
 )
+
+const csv_remove_time = 300 * time.Second // 300 seconds
 
 func CSVProductHeaders(product objects.Product) []string {
 	headers := []string{}
@@ -248,4 +252,21 @@ func GetKeysByMatcher(headers []string, match string) map[int]string {
 		}
 	}
 	return matcher
+}
+
+// loop function that uses Goroutine to run
+// a function each interval
+func LoopRemoveCSV() {
+	ticker := time.NewTicker(csv_remove_time)
+	for ; ; <-ticker.C {
+		files, err := filepath.Glob("product_export*")
+		if err != nil {
+			log.Println(err)
+		}
+		for _, file := range files {
+			if err := os.Remove(file); err != nil {
+				log.Println(err)
+			}
+		}
+	}
 }

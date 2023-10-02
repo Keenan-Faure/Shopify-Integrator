@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fetch"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -28,10 +29,19 @@ func main() {
 	flags := flag.Bool("test", false, "Enable server for tests only")
 	flag.Parse()
 
+	shopifyConfig := fetch.InitConfigShopify(
+		utils.LoadEnv("store_name"),
+		utils.LoadEnv("api_key"),
+		utils.LoadEnv("api_password"),
+		utils.LoadEnv("api_version"),
+	)
 	if !*flags {
-		fmt.Println("Starting Worker")
+		fmt.Println("Starting Workers")
+		// go iocsv.LoopRemoveCSV()
+		// go fetch.LoopJSONShopify()
 	}
 	fmt.Println("Starting API")
+	shopifyConfig.GetProductBySKU("GenImp-r-ec")
 	setupAPI(dbCon)
 }
 

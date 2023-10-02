@@ -1,12 +1,15 @@
 package fetch
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 	"objects"
 	"time"
+
+	"github.com/shurcooL/graphql"
 )
 
 const PRODUCT_FETCH_LIMIT = "50" // limit on products to fetch
@@ -19,6 +22,34 @@ type ConfigShopify struct {
 	Valid       bool
 }
 
+// Checks if the product SKU exists on the website
+func (shopifyConfig *ConfigShopify) GetProductBySKU(sku string) bool {
+	client := graphql.NewClient(shopifyConfig.Url+"/graphql.json", nil)
+	variables := map[string]any{
+		"sku": graphql.String(sku),
+	}
+	var respData struct {
+		ProductVariants struct {
+			Edges []struct {
+				Node struct {
+					Sku string
+				}
+			}
+		} `graphql:"productVariants(query: $sku, first: 1)"`
+	}
+
+	err := client.Query(context.Background(), &respData, variables)
+	if err != nil {
+		log.Println(err)
+	}
+	for _, value := range respData.ProductVariants.Edges {
+		if value.Node.Sku == sku {
+			return true
+		}
+	}
+	return false
+}
+
 // Initiates the connection string for shopify
 func InitConfigShopify(store_name, api_key, api_password, version string) ConfigShopify {
 	validation := validateConfigShopify(store_name, api_key, api_password)
@@ -29,7 +60,7 @@ func InitConfigShopify(store_name, api_key, api_password, version string) Config
 		APIKey:      api_key,
 		APIPassword: api_password,
 		Version:     version,
-		Url:         "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + version + "/products.json",
+		Url:         "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + version,
 		Valid:       validation,
 	}
 }
