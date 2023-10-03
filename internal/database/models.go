@@ -89,6 +89,7 @@ type ProductOption struct {
 	ID        uuid.UUID `json:"id"`
 	ProductID uuid.UUID `json:"product_id"`
 	Name      string    `json:"name"`
+	Position  int32     `json:"position"`
 }
 
 type RegisterToken struct {
@@ -98,6 +99,22 @@ type RegisterToken struct {
 	Token     uuid.UUID `json:"token"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type ShopifyPid struct {
+	ID               uuid.UUID `json:"id"`
+	ProductCode      string    `json:"product_code"`
+	ShopifyProductID string    `json:"shopify_product_id"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type ShopifyVid struct {
+	ID               uuid.UUID `json:"id"`
+	Sku              string    `json:"sku"`
+	ShopifyVariantID string    `json:"shopify_variant_id"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 type User struct {

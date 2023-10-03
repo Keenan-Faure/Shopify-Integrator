@@ -12,6 +12,34 @@ import (
 	"github.com/google/uuid"
 )
 
+// Checks if the VID exists internally.
+// Returns an empty string if it doesn't
+// and the VID if it does
+func (dbconfig *DbConfig) ExistsVID(sku string, r *http.Request) (string, error) {
+	pid, err := dbconfig.DB.GetVIDBySKU(r.Context(), sku)
+	if err != nil {
+		return "", err
+	}
+	if len(pid.ShopifyVariantID) > 0 && pid.ShopifyVariantID != "" {
+		return pid.ShopifyVariantID, nil
+	}
+	return "", nil
+}
+
+// Checks if the PID exists internally
+// Returns an empty string if it doesn't
+// and the PID if it does
+func (dbconfig *DbConfig) ExistsPID(product_code string, r *http.Request) (string, error) {
+	pid, err := dbconfig.DB.GetPIDByProductCode(r.Context(), product_code)
+	if err != nil {
+		return "", err
+	}
+	if len(pid.ShopifyProductID) > 0 && pid.ShopifyProductID != "" {
+		return pid.ShopifyProductID, nil
+	}
+	return "", nil
+}
+
 // checks if a username already exists inside database
 func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, error) {
 	username, err := dbconfig.DB.GetUserByName(r.Context(), name)
@@ -105,13 +133,21 @@ func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.
 }
 
 // Creates a map of product options vs their names
-func CreateOptionMap(option_names []string, variants []database.GetVariantOptionsByProductCodeRow) map[string][]string {
+// map[OptionName][OptionValue]
+func CreateOptionMap(
+	option_names []objects.ProductOptions,
+	variants []objects.ProductVariant) map[string][]string {
 	mapp := make(map[string][]string)
 	for _, option_name := range option_names {
 		for _, variant := range variants {
-			mapp[option_name] = append(mapp[option_name], variant.Option1.String)
-			mapp[option_name] = append(mapp[option_name], variant.Option2.String)
-			mapp[option_name] = append(mapp[option_name], variant.Option3.String)
+			if option_name.Position == 1 {
+				mapp[option_name.Value] = append(mapp[option_name.Value], variant.Option1)
+			} else if option_name.Position == 2 {
+				mapp[option_name.Value] = append(mapp[option_name.Value], variant.Option2)
+			} else if option_name.Position == 3 {
+				mapp[option_name.Value] = append(mapp[option_name.Value], variant.Option3)
+			}
+			// TODO what happens here?
 		}
 	}
 	return mapp
@@ -198,6 +234,3 @@ func CheckExistsWarehouse(dbconfig *DbConfig, r *http.Request, sku, warehouse st
 	}
 	return false, nil
 }
-
-// Fetches the product code from the Database
-// if te

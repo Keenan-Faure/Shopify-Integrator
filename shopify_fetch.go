@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fetch"
 	"log"
 	"objects"
+	"shopify"
 	"time"
 )
 
@@ -13,7 +13,7 @@ const fetch_time_shopify = 120 * time.Second // 120 seconds
 // a function each interval
 func LoopJSONShopify(
 	dbconfig *DbConfig,
-	shopifyConfig fetch.ConfigShopify,
+	shopifyConfig shopify.ConfigShopify,
 	interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for ; ; <-ticker.C {

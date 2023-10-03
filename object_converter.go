@@ -8,6 +8,34 @@ import (
 	"github.com/google/uuid"
 )
 
+// Convert objects.Product into objects.ShopifyProduct
+func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
+	return objects.ShopifyProduct{
+		Title:    product.Title,
+		BodyHTML: product.BodyHTML,
+		Vendor:   product.Vendor,
+		Type:     product.ProductType,
+		Status:   "active", // TODO add status as a general setting
+		Options:  CompileShopifyOptions(product),
+	}
+}
+
+// Compiles the ShopifyOptions array
+func CompileShopifyOptions(product objects.Product) []objects.ShopifyOptions {
+	shopify_options := []objects.ShopifyOptions{}
+	options_map := CreateOptionMap(product.ProductOptions, product.Variants)
+	i := 1
+	for key, value := range options_map {
+		shopify_options = append(shopify_options, objects.ShopifyOptions{
+			Name:     key,
+			Values:   value,
+			Position: i,
+		})
+		i++
+	}
+	return shopify_options
+}
+
 // Compile the customer search results
 func CompileCustomerSearchData(
 	customers_name []database.GetCustomersByNameRow,
@@ -324,7 +352,7 @@ func CompileProductData(
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
 		options = append(options, objects.ProductOptions{
-			Value: value,
+			Value: value.Name,
 		})
 	}
 	if ignore_variant {

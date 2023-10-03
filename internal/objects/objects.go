@@ -206,7 +206,8 @@ type Product struct {
 	UpdatedAt      time.Time        `json:"updated_at"`
 }
 type ProductOptions struct {
-	Value string `json:"value"`
+	Value    string `json:"value"`
+	Position int    `json:"position"`
 }
 type ProductVariant struct {
 	Sku             string         `json:"sku"`
@@ -279,7 +280,7 @@ type ShopifyVariant struct {
 }
 
 type ShopifyOptions struct {
-	Name     string `json:"name"`
-	Values   string `json:"values"`
-	Position string `json:"position"`
+	Name     string   `json:"name"`
+	Values   []string `json:"values"`
+	Position int      `json:"position"`
 }

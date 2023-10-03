@@ -11,8 +11,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Validation: Product (not import)
-
 // Validation: Product Import
 func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
 	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)
@@ -64,18 +62,30 @@ func ProductOptionValueValidation(
 	if option_value == "" || option_name == "" {
 		return nil
 	}
-	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
+	option_names_db, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
 	if err != nil {
 		return err
 	}
-	variants, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
+	option_names := []objects.ProductOptions{}
+	for _, option_name := range option_names_db {
+		option_names = append(option_names, objects.ProductOptions{
+			Value:    option_name.Name,
+			Position: int(option_name.Position),
+		})
+	}
+	variants_db, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
 	if err != nil {
 		return err
+	}
+	variants := []objects.ProductVariant{}
+	for _, variant := range variants_db {
+		variants = append(variants, objects.ProductVariant{
+			Option1: variant.Option1.String,
+			Option2: variant.Option2.String,
+			Option3: variant.Option3.String,
+		})
 	}
 	mapp := CreateOptionMap(option_names, variants)
-	// Validate option values
-	// check if the option_name exist in the current map
-	// if it does not raise an error
 	for _, value := range mapp[option_name] {
 		if value == option_value {
 			return errors.New("duplicate option values not allowed")
@@ -101,7 +111,10 @@ func ProductOptionNameValidation(
 		return errors.New("cannot exceed 3 option names")
 	}
 	for _, value := range option_names {
-		if value == option_name {
+		if value.Position > 3 || value.Position < 0 {
+			return errors.New("invalid option name position for product " + product_code)
+		}
+		if value.Name == option_name {
 			log.Println(errors.New("option name already exists, skipping"))
 		}
 	}

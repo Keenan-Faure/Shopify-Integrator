@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fetch"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
 	"log"
 	"net/http"
+	"shopify"
 	"utils"
 
 	"github.com/go-chi/chi/v5"
@@ -29,7 +29,7 @@ func main() {
 	flags := flag.Bool("test", false, "Enable server for tests only")
 	flag.Parse()
 
-	shopifyConfig := fetch.InitConfigShopify(
+	shopifyConfig := shopify.InitConfigShopify(
 		utils.LoadEnv("store_name"),
 		utils.LoadEnv("api_key"),
 		utils.LoadEnv("api_password"),
@@ -38,7 +38,7 @@ func main() {
 	if !*flags {
 		fmt.Println("Starting Workers")
 		// go iocsv.LoopRemoveCSV()
-		// go fetch.LoopJSONShopify()
+		// go shopify.LoopJSONShopify()
 	}
 	fmt.Println("Starting API")
 	shopifyConfig.GetProductBySKU("GenImp-r-ec")

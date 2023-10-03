@@ -74,7 +74,6 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 	variants_added := 0
 	for _, csv_product := range csv_products {
 		product_exists := false
-		// err := ProductValidationDatabase(csv_product, dbconfig, r)
 		product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 			ID:          uuid.New(),
 			ProductCode: csv_product.ProductCode,
@@ -91,7 +90,6 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			fmt.Println("1: " + err.Error())
 			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
 				product_exists = true
-				// update product
 				err := dbconfig.DB.UpdateProduct(r.Context(), database.UpdateProductParams{
 					Active:      "1",
 					ProductCode: csv_product.ProductCode,
@@ -120,12 +118,13 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		}
 		if !product_exists {
 			option_names := CreateOptionNamesMap(csv_product)
-			for _, option_name := range option_names {
+			for key, option_name := range option_names {
 				if option_name != "" {
 					_, err = dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
 						ID:        uuid.New(),
 						ProductID: product.ID,
 						Name:      option_name,
+						Position:  int32(key + 1),
 					})
 					if err != nil {
 						fmt.Println("4: " + err.Error())
@@ -532,6 +531,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			ID:        uuid.New(),
 			ProductID: product.ID,
 			Name:      params.ProductOptions[key].Value,
+			Position:  int32(key + 1),
 		})
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
