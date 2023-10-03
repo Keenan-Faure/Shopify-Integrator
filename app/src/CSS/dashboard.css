@@ -1,0 +1,11 @@
+.logout 
+{
+    position: absolute;
+    padding: 20px;
+    text-align: center;
+    left: 50%;
+    top: 20%;
+    transform: translate(-50%, -50%);
+    background-color:darkslategray;
+    cursor: pointer;
+}

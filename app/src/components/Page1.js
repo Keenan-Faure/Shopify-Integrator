@@ -19,6 +19,7 @@ function Page1(props)
 
         /* animation for the pan elements */
         let pan = document.querySelectorAll(".pan");
+        let pag = document.getElementById("pag");
         setTimeout(() =>
         {
             for(let i = 0; i < pan.length; i ++)
@@ -26,6 +27,8 @@ function Page1(props)
                 pan[i].style.display = "block";
                 pan[i].style.animation = "appear 1.2s ease-in";
             }
+            pag.style.display = "block";
+            pag.style.animation = "appear 1.4s ease-in";
         }, 1400);
 
         /* filter element animation */
@@ -75,8 +78,86 @@ function Page1(props)
                 pan_price[i].style.color = "black"; 
             }
         }
-        
 
+        /* animation for the pagination elements 
+        let num = document.querySelector(".pagination").childNodes;
+        for(let i = 1; i < num.length - 1; i++)
+        {
+            num[i].addEventListener("click", () =>
+            {
+                let prev = document.querySelector(".activee");
+                prev.className = "";
+                num[i].className = "activee";
+            });
+        }
+        */
+
+
+
+        /* Script to automatically format the number of elements on each page */
+        const content = document.querySelector('.main-elements'); 
+        const itemsPerPage = 4;
+        let currentPage = 0;
+        const items = Array.from(content.getElementsByClassName('pan'));
+        console.log("YE");
+        console.log(items);
+          
+        function showPage(page) 
+        {
+        const startIndex = page * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        items.forEach((item, index) => 
+        {
+            item.classList.toggle('hidden', index < startIndex || index >= endIndex);
+        });
+        updateActiveButtonStates();
+        }
+        
+        function createPageButtons() 
+        {
+        const totalPages = Math.ceil(items.length / itemsPerPage);
+        const paginationContainer = document.createElement('div');
+        const paginationDiv = document.body.appendChild(paginationContainer);
+        paginationContainer.classList.add('pagination');
+        
+        
+        // Add page buttons
+            for (let i = 0; i < totalPages; i++) 
+            {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i + 1;
+                pageButton.addEventListener('click', () => 
+                {
+                currentPage = i;
+                showPage(currentPage);
+                updateActiveButtonStates();
+                });
+            
+                content.appendChild(paginationContainer);
+                paginationDiv.appendChild(pageButton);
+                pag.appendChild(paginationDiv);
+            }
+        }
+        
+        function updateActiveButtonStates() 
+        {
+        const pageButtons = document.querySelectorAll('.pagination button');
+        pageButtons.forEach((button, index) => 
+        {
+            if (index === currentPage) 
+            {
+            button.classList.add('active');
+            } 
+            else 
+            {
+            button.classList.remove('active');
+            }
+        });
+        }
+        
+        createPageButtons(); // Call this function to create the page buttons initially
+        showPage(currentPage);
+    
     }, []);
 
     return (
@@ -161,7 +242,56 @@ function Page1(props)
                             R1200 - R1400
                         </div>
                     </div>
+
+                    <div className = "pan">
+                        <div className = "pan-img"></div>
+                        <div className = "pan-details">
+                            <a className = "p-d-title">Product Title</a>
+                            <br/><br/>
+
+                            <a className = "p-d-code">Product code</a>
+                            <br/><br/>
+
+                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                        </div>
+                        <div className = "pan-price">
+                            R1200 - R1400
+                        </div>
+                    </div>
+
+                    <div className = "pan">
+                        <div className = "pan-img"></div>
+                        <div className = "pan-details">
+                            <a className = "p-d-title">Product Title</a>
+                            <br/><br/>
+
+                            <a className = "p-d-code">Product code</a>
+                            <br/><br/>
+
+                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                        </div>
+                        <div className = "pan-price">
+                            R1200 - R1400
+                        </div>
+                    </div>
+
+                    <div className = "pan">
+                        <div className = "pan-img"></div>
+                        <div className = "pan-details">
+                            <a className = "p-d-title">Product Title</a>
+                            <br/><br/>
+
+                            <a className = "p-d-code">Product code</a>
+                            <br/><br/>
+
+                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                        </div>
+                        <div className = "pan-price">
+                            R1200 - R1400
+                        </div>
+                    </div>
                 </div>
+                <div className = "center" id = "pag"></div>
             </div>
         </>
     );
