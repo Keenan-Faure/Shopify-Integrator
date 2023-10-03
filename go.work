@@ -4,7 +4,7 @@ use (
 	.
 	./api
 	./internal/fetch
+	./internal/iocsv
 	./internal/objects
 	./internal/utils
-	./internal/iocsv
 )

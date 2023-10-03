@@ -3,28 +3,129 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"objects"
 
+	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 )
 
+// Validation: Product (not import)
+
+// Validation: Product Import
+func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
+	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)
+	if err != nil {
+		return err
+	}
+	option_names := CreateOptionNamesMap(csv_product)
+	for _, option_name := range option_names {
+		err = ProductOptionNameValidation(csv_product.ProductCode, option_name, dbconfig, r)
+		if err != nil {
+			return err
+		}
+	}
+	option_values := CreateOptionValuesMap(csv_product)
+	for _, option_value := range option_values {
+		err = ProductOptionNameValidation(csv_product.ProductCode, option_value, dbconfig, r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Validation: Product | SKU
+func ProductSKUValidation(sku string, dbconfig *DbConfig, r *http.Request) error {
+	db_sku, err := dbconfig.DB.GetVariantBySKU(r.Context(), sku)
+	if err != nil {
+		if err.Error() == "record not found" {
+			return nil
+		}
+		if err.Error() == "sql: no rows in result set" {
+			return nil
+		}
+		return err
+	}
+	if db_sku.Sku == sku {
+		return errors.New("SKU with code " + sku + " already exists")
+	}
+	return nil
+}
+
+// Validation: Product | Option Values
+func ProductOptionValueValidation(
+	product_code,
+	option_value,
+	option_name string,
+	dbconfig *DbConfig,
+	r *http.Request) error {
+	if option_value == "" || option_name == "" {
+		return nil
+	}
+	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
+	if err != nil {
+		return err
+	}
+	variants, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
+	if err != nil {
+		return err
+	}
+	mapp := CreateOptionMap(option_names, variants)
+	// Validate option values
+	// check if the option_name exist in the current map
+	// if it does not raise an error
+	for _, value := range mapp[option_name] {
+		if value == option_value {
+			return errors.New("duplicate option values not allowed")
+		}
+	}
+	return nil
+}
+
+// Validation: Product | Option Names
+func ProductOptionNameValidation(
+	product_code,
+	option_name string,
+	dbconfig *DbConfig,
+	r *http.Request) error {
+	if option_name == "" {
+		return nil
+	}
+	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
+	if err != nil {
+		return err
+	}
+	if len(option_names) > 3 {
+		return errors.New("cannot exceed 3 option names")
+	}
+	for _, value := range option_names {
+		if value == option_name {
+			log.Println(errors.New("option name already exists, skipping"))
+		}
+	}
+	return nil
+}
+
 // ValidateToken: Data validtion
-func ValidateTokenValidation(token_request objects.RequestBodyValidateToken) error {
+func ValidateTokenValidation(token_request objects.RequestBodyUser) error {
 	if token_request.Name == "" || len(token_request.Name) == 0 {
 		return errors.New("data validation error")
 	} else if token_request.Email == "" || len(token_request.Email) == 0 {
 		return errors.New("data validation error")
-	} else if token_request.Token == "" || len(token_request.Token) == 0 {
-		return errors.New("data validation error")
+	}
+	_, err := uuid.Parse(token_request.Token)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
 // ValidateToken: decode the request body
-func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyValidateToken, error) {
+func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyUser, error) {
 	decoder := json.NewDecoder(r.Body)
-	params := objects.RequestBodyValidateToken{}
+	params := objects.RequestBodyUser{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		return params, err
@@ -83,7 +184,7 @@ func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
 
 // Order: data validation
 func OrderValidation(order objects.RequestBodyOrder) error {
-	if order.Name == "" || order.LineItems[0].Sku == "" || order.Customer.FirstName == "" {
+	if order.Name == "" {
 		return errors.New("data validation error")
 	}
 	return nil
@@ -91,7 +192,7 @@ func OrderValidation(order objects.RequestBodyOrder) error {
 
 // User: data validation
 func TokenValidation(key string) error {
-	if key == "" || len(key) <= 0 || len(key) > 32 {
+	if key == "" || len(key) <= 0 || len(key) > 64 {
 		return errors.New("invalid product id")
 	}
 	return nil
@@ -99,7 +200,7 @@ func TokenValidation(key string) error {
 
 // Product: data validation
 func IDValidation(id string) error {
-	if id == "" || len(id) <= 0 || len(id) > 16 {
+	if id == "" || len(id) <= 0 || len(id) > 36 {
 		return errors.New("invalid product id")
 	}
 	return nil
@@ -117,6 +218,9 @@ func UserValidation(user objects.RequestBodyUser) error {
 func ProductValidation(product objects.RequestBodyProduct) error {
 	if product.Title == "" {
 		return errors.New("empty title not allowed")
+	}
+	if len(product.Variants) == 0 {
+		return errors.New("product must have a SKU")
 	}
 	if product.Variants[0].Sku == "" {
 		return errors.New("empty SKU codes not allowed")
@@ -160,6 +264,12 @@ func ValidateDuplicateSKU(
 	}
 	for _, value := range sku_array {
 		db_sku, err := dbconfig.DB.GetVariantBySKU(r.Context(), value)
+		if err.Error() == "record not found" {
+			return nil
+		}
+		if err.Error() == "sql: no rows in result set" {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -201,7 +311,6 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 	} else if len(product.ProductOptions) != 3 {
 		return errors.New("too many option values")
 	}
-
 	option_1_values := []string{}
 	option_2_values := []string{}
 	option_3_values := []string{}

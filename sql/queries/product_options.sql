@@ -1,9 +1,10 @@
 -- name: CreateProductOption :one
 INSERT INTO product_options(
+    id,
     product_id,
     name
 ) VALUES (
-    $1, $2
+    $1, $2, $3
 )
 RETURNING *;
 
@@ -18,4 +19,14 @@ RETURNING *;
 SELECT
     name
 FROM product_options
-WHERE id = $1;
+WHERE product_id = $1;
+
+-- name: GetProductOptionsByCode :many
+SELECT
+    name
+FROM product_options
+WHERE product_id IN (
+    SELECT id
+    FROM products
+    WHERE product_code = $1
+);

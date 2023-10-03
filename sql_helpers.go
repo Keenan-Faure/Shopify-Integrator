@@ -5,6 +5,7 @@ import (
 	"integrator/internal/database"
 	"net/http"
 	"objects"
+	"strings"
 	"time"
 	"utils"
 
@@ -18,6 +19,7 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 		if err.Error() != "sql: no rows in result set" {
 			return false, err
 		}
+		return false, err
 	}
 	if username == name {
 		return true, errors.New("name already exists")
@@ -45,6 +47,7 @@ func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreRe
 // Creates an address
 func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{
+		ID:         uuid.New(),
 		CustomerID: customer_id,
 		Name:       utils.ConvertStringToSQL("default"),
 		FirstName:  order_body.Customer.DefaultAddress.FirstName,
@@ -64,6 +67,7 @@ func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.
 // Creates an address
 func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{
+		ID:         uuid.New(),
 		CustomerID: customer_id,
 		Name:       utils.ConvertStringToSQL("shipping"),
 		FirstName:  order_body.ShippingAddress.FirstName,
@@ -83,6 +87,7 @@ func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid
 // Creates an address
 func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
 	return database.CreateAddressParams{
+		ID:         uuid.New(),
 		CustomerID: customer_id,
 		Name:       utils.ConvertStringToSQL("billing"),
 		FirstName:  order_body.BillingAddress.FirstName,
@@ -98,3 +103,101 @@ func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.
 		UpdatedAt:  time.Now().UTC(),
 	}
 }
+
+// Creates a map of product options vs their names
+func CreateOptionMap(option_names []string, variants []database.GetVariantOptionsByProductCodeRow) map[string][]string {
+	mapp := make(map[string][]string)
+	for _, option_name := range option_names {
+		for _, variant := range variants {
+			mapp[option_name] = append(mapp[option_name], variant.Option1.String)
+			mapp[option_name] = append(mapp[option_name], variant.Option2.String)
+			mapp[option_name] = append(mapp[option_name], variant.Option3.String)
+		}
+	}
+	return mapp
+}
+
+// Create Option Name array
+func CreateOptionNamesMap(csv_product objects.CSVProduct) []string {
+	mapp := []string{}
+	mapp = append(mapp, csv_product.Option1Name)
+	mapp = append(mapp, csv_product.Option2Name)
+	mapp = append(mapp, csv_product.Option3Name)
+	return mapp
+}
+
+// Create option Value array
+func CreateOptionValuesMap(csv_product objects.CSVProduct) []string {
+	mapp := []string{}
+	mapp = append(mapp, csv_product.Option1Value)
+	mapp = append(mapp, csv_product.Option2Value)
+	mapp = append(mapp, csv_product.Option3Value)
+	return mapp
+}
+
+// Convert Product (POST) into CSVProduct
+func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProduct {
+	csv_products := []objects.CSVProduct{}
+	for _, variant := range products.Variants {
+		csv_product := objects.CSVProduct{
+			ProductCode:  products.ProductCode,
+			Active:       "1",
+			Title:        products.Title,
+			BodyHTML:     products.BodyHTML,
+			Category:     products.Category,
+			Vendor:       products.Vendor,
+			ProductType:  products.ProductType,
+			SKU:          variant.Sku,
+			Option1Value: variant.Option1,
+			Option2Value: variant.Option2,
+			Option3Value: variant.Option3,
+			Barcode:      variant.Barcode,
+		}
+		if len(products.ProductOptions) == 1 {
+			csv_product.Option1Name = utils.IssetString(products.ProductOptions[0].Value)
+			if len(products.ProductOptions) == 2 {
+				csv_product.Option2Name = utils.IssetString(products.ProductOptions[1].Value)
+				if len(products.ProductOptions) == 3 {
+					csv_product.Option3Name = utils.IssetString(products.ProductOptions[2].Value)
+				}
+			}
+		}
+		csv_products = append(csv_products, csv_product)
+	}
+	return csv_products
+}
+
+// Checks if a price tier already exists
+// in the database for a certain SKU
+func CheckExistsPriceTier(dbconfig *DbConfig, r *http.Request, sku, price_tier string) (bool, error) {
+	price_tiers, err := dbconfig.DB.GetVariantPricingBySKU(r.Context(), sku)
+	if err != nil {
+		return false, err
+	}
+	price_tier_split := strings.Split(price_tier, "_")
+	for _, value := range price_tiers {
+		if value.Name == price_tier_split[0] {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// Checks if a warehouse already exists
+// in the database for a certain SKU
+func CheckExistsWarehouse(dbconfig *DbConfig, r *http.Request, sku, warehouse string) (bool, error) {
+	warehouses, err := dbconfig.DB.GetVariantQtyBySKU(r.Context(), sku)
+	if err != nil {
+		return false, err
+	}
+	warehouse_split := strings.Split(warehouse, "_")
+	for _, value := range warehouses {
+		if value.Name == warehouse_split[0] {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// Fetches the product code from the Database
+// if te

@@ -6,15 +6,79 @@ import (
 	"github.com/google/uuid"
 )
 
+// iocsv.go
+type ExportVariant struct {
+	Sku     string `json:"sku"`
+	Barcode string `json:"barcode"`
+}
+
+type ExportProduct struct {
+	ID          uuid.UUID `json:"id"`
+	ProductCode string    `json:"product_code"`
+	Active      string    `json:"active"`
+	Title       string    `json:"title"`
+	BodyHTML    string    `json:"body_html"`
+	Category    string    `json:"category"`
+	Vendor      string    `json:"vendor"`
+	ProductType string    `json:"product_type"`
+}
+
+type ImportResponse struct {
+	ProcessedCounter int `json:"processed_counter"`
+	FailCounter      int `json:"fail_counter"`
+	ProductsAdded    int `json:"products_added"`
+	ProductsUpdated  int `json:"products_updated"`
+	VariantsAdded    int `json:"variants_added"`
+	VariantsUpdated  int `json:"variants_updated"`
+}
+
+type CSVProduct struct {
+	ProductCode  string        `csv:"product_code"`
+	Active       string        `csv:"active"`
+	Title        string        `csv:"title"`
+	BodyHTML     string        `csv:"body_html"`
+	Category     string        `csv:"category"`
+	Vendor       string        `csv:"vendor"`
+	ProductType  string        `csv:"product_type"`
+	SKU          string        `csv:"sku"`
+	Option1Name  string        `csv:"option1_name"`
+	Option1Value string        `csv:"option1_value"`
+	Option2Name  string        `csv:"option2_name"`
+	Option2Value string        `csv:"option2_value"`
+	Option3Name  string        `csv:"option3_name"`
+	Option3Value string        `csv:"option3_value"`
+	Barcode      string        `csv:"barcode"`
+	Warehouses   []CSVQuantity `csv:"-"`
+	Pricing      []CSVPricing  `csv:"-"`
+}
+
+type CSVQuantity struct {
+	Name  string
+	Value int
+}
+
+type CSVPricing struct {
+	Name  string
+	Value string
+}
+
 type ResponseString struct {
-	Status string
+	Message string `json:"message"`
+}
+
+type RequestString struct {
+	Message string `json:"message"`
 }
 
 // request_validation.go
+
 type RequestBodyUser struct {
-	Name string
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Token string `json:"token"`
 }
 type RequestBodyProduct struct {
+	ProductCode    string           `json:"product_code"`
 	Title          string           `json:"title"`
 	BodyHTML       string           `json:"body_html"`
 	Category       string           `json:"category"`
@@ -44,25 +108,25 @@ type RequestBodyValidateToken struct {
 }
 
 // object_converter.go
-
 type SearchOrder struct {
-	Notes         string `json:"notes"`
-	WebCode       string `json:"web_code"`
-	TaxTotal      string `json:"tax_total"`
-	OrderTotal    string `json:"order_total"`
-	ShippingTotal string `json:"shipping_total"`
-	DiscountTotal string `json:"discount_total"`
-	UpdatedAt     string `json:"updated_at"`
+	Notes         string    `json:"notes"`
+	WebCode       string    `json:"web_code"`
+	TaxTotal      string    `json:"tax_total"`
+	OrderTotal    string    `json:"order_total"`
+	ShippingTotal string    `json:"shipping_total"`
+	DiscountTotal string    `json:"discount_total"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 type Order struct {
+	ID                uuid.UUID     `json:"id"`
 	Notes             string        `json:"notes"`
 	WebCode           string        `json:"web_code"`
 	TaxTotal          string        `json:"tax_total"`
 	OrderTotal        string        `json:"order_total"`
 	ShippingTotal     string        `json:"shipping_total"`
 	DiscountTotal     string        `json:"discount_total"`
-	UpdatedAt         string        `json:"updated_at"`
-	CreatedAt         string        `json:"created_at"`
+	UpdatedAt         time.Time     `json:"updated_at"`
+	CreatedAt         time.Time     `json:"created_at"`
 	OrderCustomer     OrderCustomer `json:"customer"`
 	LineItems         []OrderLines  `json:"line_items"`
 	ShippingLineItems []OrderLines  `json:"shipping_lines"`
@@ -83,16 +147,17 @@ type OrderCustomer struct {
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
 	Address   []CustomerAddress `json:"shipping_address"`
-	UpdatedAt string            `json:"updated_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type Customer struct {
+	ID        uuid.UUID         `json:"id"`
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
 	Email     string            `json:"email"`
 	Phone     string            `json:"phone"`
 	Address   []CustomerAddress `json:"shipping_address"`
-	UpdatedAt string            `json:"updated_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type CustomerAddress struct {
@@ -128,6 +193,8 @@ type SearchProduct struct {
 	Vendor      string    `json:"vendor"`
 }
 type Product struct {
+	ID             uuid.UUID        `json:"id"`
+	ProductCode    string           `json:"product_code"`
 	Active         string           `json:"active"`
 	Title          string           `json:"title"`
 	BodyHTML       string           `json:"body_html"`
@@ -136,7 +203,7 @@ type Product struct {
 	ProductType    string           `json:"product_type"`
 	Variants       []ProductVariant `json:"variants"`
 	ProductOptions []ProductOptions `json:"options"`
-	UpdatedAt      string           `json:"updated_at"`
+	UpdatedAt      time.Time        `json:"updated_at"`
 }
 type ProductOptions struct {
 	Value string `json:"value"`
@@ -149,7 +216,7 @@ type ProductVariant struct {
 	Barcode         string         `json:"barcode"`
 	VariantPricing  []VariantPrice `json:"variant_price_tiers"`
 	VariantQuantity []VariantQty   `json:"variant_quantities"`
-	UpdatedAt       string         `json:"updated_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 type VariantPrice struct {

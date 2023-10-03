@@ -1,6 +1,6 @@
 -- name: CreateOrder :one
 INSERT INTO orders(
-    customer_id,
+    id,
     notes,
     web_code,
     tax_total,
@@ -17,20 +17,19 @@ RETURNING *;
 -- name: UpdateOrder :one
 UPDATE orders
 SET
-    customer_id = $1,
-    notes = $2,
-    web_code = $3,
-    tax_total = $4,
-    order_total = $5,
-    shipping_total = $6,
-    discount_total = $7,
-    updated_at = $8
-WHERE id = $9
+    notes = $1,
+    web_code = $2,
+    tax_total = $3,
+    order_total = $4,
+    shipping_total = $5,
+    discount_total = $6,
+    updated_at = $7
+WHERE id = $8
 RETURNING *;
 
 -- name: GetOrderByID :one
 SELECT
-    customer_id,
+    id,
     notes,
     web_code,
     tax_total,
@@ -44,20 +43,23 @@ WHERE id = $1;
 
 -- name: GetOrderByCustomer :many
 SELECT
-    customer_id,
-    notes,
-    web_code,
-    tax_total,
-    order_total,
-    shipping_total,
-    discount_total,
-    updated_at
-FROM orders
-WHERE customer_id = $1;
+    o.id,
+    o.notes,
+    o.web_code,
+    o.tax_total,
+    o.order_total,
+    o.shipping_total,
+    o.discount_total,
+    o.updated_at
+FROM orders o 
+WHERE orders.id in (
+    SELECT order_id FROM customerorders
+    WHERE customer_id = $1
+);
 
 -- name: GetOrders :many
 SELECT
-    customer_id,
+    id,
     notes,
     web_code,
     tax_total,
@@ -70,6 +72,7 @@ LIMIT $1 OFFSET $2;
 
 -- name: GetOrdersSearchWebCode :many
 SELECT
+    id,
     notes,
     web_code,
     tax_total,
@@ -83,6 +86,7 @@ LIMIT 10;
 
 -- name: GetOrdersSearchByCustomer :many
 SELECT
+    o.id,
     o.notes,
     o.web_code,
     o.tax_total,
@@ -91,8 +95,15 @@ SELECT
     o.discount_total,
     o.updated_at
 FROM orders o
-INNER JOIN customers c
-ON o.customer_id = c.id
-WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
-LIMIT 10;
+WHERE o.id in (
+    SELECT order_id FROM customerorders co
+    INNER JOIN customers c
+    ON co.customer_id = c.id
+    WHERE CONCAT(LOWER(c.first_name), ' ', LOWER(c.last_name)) SIMILAR TO LOWER($1)
+    AND LOWER(c.first_name) LIKE CONCAT('%',LOWER($1),'%')
+    AND LOWER(c.last_name) LIKE CONCAT('%',LOWER($1),'%')
+);
 
+-- name: RemoveOrder :exec
+DELETE FROM orders
+WHERE id = $1;

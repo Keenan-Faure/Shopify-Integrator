@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -62,14 +63,38 @@ func ConvertStringToSQL(description string) sql.NullString {
 
 // converts a string to a sql.NullInt32 object
 func ConvertIntToSQL(value int) sql.NullInt32 {
-	if value == 0 {
-		return sql.NullInt32{
-			Int32: int32(value),
-			Valid: false,
-		}
-	}
 	return sql.NullInt32{
 		Int32: int32(value),
 		Valid: true,
 	}
+}
+
+// Checks if the error is a duplicated error
+func ConfirmError(err error) string {
+	if len(err.Error()) >= 50 {
+		if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
+			return "duplicate fields not allowed"
+		}
+	}
+	return err.Error()
+}
+
+// Checks if a variable is set (string)
+func IssetString(variable string) string {
+	if variable != "" || len(variable) != 0 {
+		return variable
+	}
+	return ""
+}
+
+// Checks if a variable is set (string)
+func IssetInt(variable string) int {
+	if variable != "" || len(variable) != 0 {
+		integer, err := strconv.Atoi(variable)
+		if err != nil {
+			return 0
+		}
+		return integer
+	}
+	return 0
 }

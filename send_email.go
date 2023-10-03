@@ -5,16 +5,15 @@ import (
 	"utils"
 
 	"github.com/go-mail/mail"
+	"github.com/google/uuid"
 )
 
-func SendEmail(token, email, name string) error {
+func SendEmail(token uuid.UUID, email, name string) error {
 	m := mail.NewMessage()
-	m.SetHeader("From", "keenan@stock2shop.com")
+	m.SetHeader("From", utils.LoadEnv("email"))
 	m.SetHeader("To", email)
-	// m.SetAddressHeader("Cc", "oliver.doe@example.com", "Oliver")
 	m.SetHeader("Subject", "Shopify-Integrator Authentication Token")
-	m.SetBody("text/html", fmt.Sprintf("Hi <b>%s</b>, <br> Token: %s", name, token))
-	// m.Attach("lolcat.jpg")
+	m.SetBody("text/html", fmt.Sprintf("<h4>Hi <b>%s</b>,</h4> <br/> Token: <br/> <textarea style='resize:none' rows='2' cols='40'>%v</textarea>", name, token.String()))
 	d := mail.NewDialer("smtp.gmail.com", 587, utils.LoadEnv("email"), utils.LoadEnv("email_psw"))
 
 	if err := d.DialAndSend(m); err != nil {

@@ -14,6 +14,8 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 )
 
+require github.com/fatih/structs v1.1.0 // indirect
+
 require (
 	github.com/lib/pq v1.10.9
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

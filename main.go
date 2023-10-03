@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fetch"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -21,17 +22,26 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
-	dbCon, err := InitConn(utils.LoadEnv("dsn"))
+	dbCon, err := InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("database") + "?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}
 	flags := flag.Bool("test", false, "Enable server for tests only")
 	flag.Parse()
 
+	shopifyConfig := fetch.InitConfigShopify(
+		utils.LoadEnv("store_name"),
+		utils.LoadEnv("api_key"),
+		utils.LoadEnv("api_password"),
+		utils.LoadEnv("api_version"),
+	)
 	if !*flags {
-		fmt.Println("Starting Worker")
+		fmt.Println("Starting Workers")
+		// go iocsv.LoopRemoveCSV()
+		// go fetch.LoopJSONShopify()
 	}
 	fmt.Println("Starting API")
+	shopifyConfig.GetProductBySKU("GenImp-r-ec")
 	setupAPI(dbCon)
 }
 
@@ -41,6 +51,7 @@ func setupAPI(dbconfig DbConfig) {
 	r.Use(cors.Handler(MiddleWare()))
 	api := chi.NewRouter()
 
+	api.Post("/products/import", dbconfig.middlewareAuth(dbconfig.ProductImportHandle))
 	api.Post("/products", dbconfig.middlewareAuth(dbconfig.PostProductHandle))
 	api.Post("/customers", dbconfig.middlewareAuth(dbconfig.PostCustomerHandle))
 	api.Post("/orders", dbconfig.middlewareAuth(dbconfig.PostOrderHandle))
@@ -59,6 +70,7 @@ func setupAPI(dbconfig DbConfig) {
 	api.Get("/customers", dbconfig.middlewareAuth(dbconfig.CustomersHandle))
 	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
 	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
+	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 
 	r.Mount("/api", api)
 

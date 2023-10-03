@@ -1,22 +1,24 @@
 -- name: CreateVariantQty :one
 INSERT INTO variant_qty(
+    id,
     variant_id,
     name,
     value,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING *;
 
--- name: UpdateVariantQty :one
+-- name: UpdateVariantQty :exec
 UPDATE variant_qty
 SET
-    name = $1,
-    value = $2
-WHERE variant_id = $3
-RETURNING *;
+    value = $1
+WHERE variant_id IN (
+    SELECT id FROM variants
+    WHERE sku = $2
+) AND name = $3;
 
 -- name: GetVariantQty :many
 SELECT 
@@ -24,3 +26,17 @@ SELECT
     value
 FROM variant_qty
 WHERE variant_id = $1;
+
+-- name: GetVariantQtyBySKU :many
+SELECT
+    name,
+    value
+FROM variant_qty
+WHERE variant_id IN (
+    SELECT id FROM variants
+    WHERE sku = $1
+);
+
+-- name: RemoveQty :exec
+DELETE FROM variant_qty
+WHERE id = $1;
