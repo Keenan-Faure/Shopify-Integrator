@@ -35,7 +35,7 @@ const Layout = () => {
       <div className = "navbar" id = "navbar">
 
         <div className = "dropdown">
-          <button onClick = {navigateToDashboard} className = "dropbtn">Home</button>
+          <button onClick = {navigateToDashboard} className = "dropbtn">DashBoard</button>
         </div>
 
         <div className = "dropdown">
@@ -57,6 +57,8 @@ const Layout = () => {
         <div className = "avatar">
           <img className = "avatar" src = {MyImage} />
         </div>
+
+
       </div>
       
       <Outlet />

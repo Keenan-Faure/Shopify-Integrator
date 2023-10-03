@@ -51,7 +51,7 @@ function Navigation_Bar(props)
             }
         }
 
-        /* The user clicks on 'Home' button */
+        /* The user clicks on 'Dashboard' button */
         navbar[0].onclick = function(event)
         {
             if(navbar[0].onclick)
@@ -60,7 +60,8 @@ function Navigation_Bar(props)
                 navigation.style.position = "fixed";
                 navigation.style.left = "0%";
                 navigation.style.width = "100%";
-                model.style.animation = "FadeIn 1s ease-in";
+                model.style.animation = "none";
+                model.style.display = "none";
             }
         }
 

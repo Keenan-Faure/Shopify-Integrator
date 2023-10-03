@@ -18,7 +18,6 @@
     left: 50%;
     top: 10%;
     transform: translate(-50%, 0%);
-    background-color: rgba(252, 252, 252, 0.4);
     margin-bottom: 5%;
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin-bottom: 10%;
@@ -85,4 +84,35 @@
 	color: rgb(0, 0, 0);
 	border: 1px solid rgb(0, 0, 0);
 	background-position: center;
+}
+
+.center 
+{
+    text-align: center;
+    position: relative;
+    top: -20px;
+}
+.pagination 
+{
+    display: inline-block;
+}
+.pagination a 
+{
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    transition: background-color .3s;
+    border: 1px solid #ddd;
+    margin: 0 4px;
+}
+.pagination a.active 
+{
+    background-color: #4CAF50;
+    color: white;
+    border: 1px solid #4CAF50;
+}
+.pagination a:hover:not(.active) 
+{
+    background-color: #ddd;
 }
