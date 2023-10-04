@@ -20,6 +20,19 @@ func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
 	}
 }
 
+// Convert objects.Variant into objects.ShopifyVariant
+func ConvertVariantToShopify(variant objects.ProductVariant) objects.ShopifyVariant {
+	return objects.ShopifyVariant{
+		Sku:            variant.Sku,
+		Price:          "", // TODO have a setting to set the default price
+		CompareAtPrice: "",
+		Option1:        variant.Option1,
+		Option2:        variant.Option2,
+		Option3:        variant.Option3,
+		Barcode:        variant.Barcode,
+	}
+}
+
 // Compiles the ShopifyOptions array
 func CompileShopifyOptions(product objects.Product) []objects.ShopifyOptions {
 	shopify_options := []objects.ShopifyOptions{}
@@ -408,8 +421,9 @@ func CompileVariantData(
 		variant_qty := []objects.VariantQty{}
 		for _, sub_value_qty := range qty {
 			variant_qty = append(variant_qty, objects.VariantQty{
-				Name:  sub_value_qty.Name,
-				Value: int(sub_value_qty.Value.Int32),
+				IsDefault: sub_value_qty.Isdefault,
+				Name:      sub_value_qty.Name,
+				Value:     int(sub_value_qty.Value.Int32),
 			})
 		}
 		pricing, err := dbconfig.DB.GetVariantPricing(r.Context(), value.ID)
@@ -419,8 +433,9 @@ func CompileVariantData(
 		variant_pricing := []objects.VariantPrice{}
 		for _, sub_value_price := range pricing {
 			variant_pricing = append(variant_pricing, objects.VariantPrice{
-				Name:  sub_value_price.Name,
-				Value: sub_value_price.Value.String,
+				IsDefault: sub_value_price.Isdefault,
+				Name:      sub_value_price.Name,
+				Value:     sub_value_price.Value.String,
 			})
 		}
 		variantsArray = append(variantsArray, objects.ProductVariant{

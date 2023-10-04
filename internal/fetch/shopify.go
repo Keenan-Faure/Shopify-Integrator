@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -35,13 +36,46 @@ func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.Sho
 	if err != nil {
 		return err
 	}
+	if res.StatusCode != 201 {
+		return errors.New("unexpected http status code")
+	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	products := objects.ShopifyProducts{}
+	products := objects.ShopifyProductResponse{}
+	err = json.Unmarshal(respBody, &products)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	// FIXME add IDs in response to database
+	return nil
+}
+
+// Updates a product on Shopify
+func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.ShopifyProduct, id string) error {
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
+	if err != nil {
+		return err
+	}
+	res, err := configShopify.FetchHelper("products/"+id+".json", http.MethodPut, &buffer)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		return errors.New("unexpected http status code")
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	products := objects.ShopifyProductResponse{}
 	err = json.Unmarshal(respBody, &products)
 	if err != nil {
 		log.Println(err)
@@ -50,35 +84,62 @@ func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.Sho
 	return nil
 }
 
-// Updates a product on Shopify
-func (configShopify *ConfigShopify) UpdateProductShopify(product objects.Product, id string) error {
-	// create request body
-	// send PUT request to update product using request data
-
-	// if error respond with error message
-
+// Adds a product variant on Shopify
+func (configShopify *ConfigShopify) AddVariantShopify(variant objects.ShopifyVariant, id string) error {
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(variant)
+	if err != nil {
+		return err
+	}
+	res, err := configShopify.FetchHelper("products/"+id+"/variants.json", http.MethodPost, &buffer)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 201 {
+		return errors.New("unexpected http status code")
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	products := objects.ShopifyVariantResponse{}
+	err = json.Unmarshal(respBody, &products)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	// FIXME add IDs in response to database
 	return nil
 }
 
 // Updates a product variant on Shopify
-func (configShopify *ConfigShopify) UpdateVariantShopify(product objects.Product, id string) error {
-	// create request body
-	// send PUT request to update product using request data
-
-	// if error respond with error message
-	return nil
-}
-
-// Adds a product variant on Shopify
-func (configShopify *ConfigShopify) AddVariantShopify(product objects.Product, id string) error {
-	// check if we have ID's for the variant internally
-	// If yes, then update (UpdateVariantShopify)
-
-	// check if the product exists on the website (getProductBySKU)
-
-	// If yes, then update
-	// retrieve the IDs to use in future updates
-	// save id's
+func (configShopify *ConfigShopify) UpdateVariantShopify(variant objects.ShopifyVariant, variant_id string) error {
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(variant)
+	if err != nil {
+		return err
+	}
+	res, err := configShopify.FetchHelper("variants/"+variant_id+".json", http.MethodPut, &buffer)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		return errors.New("unexpected http status code")
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	products := objects.ShopifyVariantResponse{}
+	err = json.Unmarshal(respBody, &products)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 	return nil
 }
 

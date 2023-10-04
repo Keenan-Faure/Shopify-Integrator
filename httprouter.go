@@ -171,9 +171,10 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 				}
 				for _, pricing_value := range csv_product.Pricing {
 					err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-						Name:  pricing_value.Name,
-						Value: utils.ConvertStringToSQL(pricing_value.Value),
-						Sku:   csv_product.SKU,
+						Name:      pricing_value.Name,
+						Value:     utils.ConvertStringToSQL(pricing_value.Value),
+						Isdefault: pricing_value.IsDefault,
+						Sku:       csv_product.SKU,
 					})
 					if err != nil {
 						fmt.Println("7: " + err.Error())
@@ -183,9 +184,10 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 				}
 				for _, qty_value := range csv_product.Warehouses {
 					err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
-						Name:  qty_value.Name,
-						Value: utils.ConvertIntToSQL(qty_value.Value),
-						Sku:   csv_product.SKU,
+						Name:      qty_value.Name,
+						Value:     utils.ConvertIntToSQL(qty_value.Value),
+						Isdefault: qty_value.IsDefault,
+						Sku:       csv_product.SKU,
 					})
 					if err != nil {
 						fmt.Println("8: " + err.Error())
@@ -229,6 +231,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 				ID:        uuid.New(),
 				VariantID: variant.ID,
 				Name:      qty_value.Name,
+				Isdefault: qty_value.IsDefault,
 				Value:     utils.ConvertIntToSQL(qty_value.Value),
 				CreatedAt: time.Now().UTC(),
 				UpdatedAt: time.Now().UTC(),
@@ -523,6 +526,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
+		log.Println("1: " + err.Error())
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
@@ -534,6 +538,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			Position:  int32(key + 1),
 		})
 		if err != nil {
+			log.Println("2: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
@@ -552,6 +557,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
+			log.Println("3: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
@@ -562,10 +568,12 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				VariantID: variant.ID,
 				Name:      params.Variants[key].VariantPricing[key_price].Name,
 				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_price].Value),
+				Isdefault: params.Variants[key].VariantPricing[key_price].IsDefault,
 				CreatedAt: time.Now().UTC(),
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
+				log.Println("4: " + err.Error())
 				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
@@ -573,16 +581,19 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				ID:        uuid.New(),
 				VariantID: variant.ID,
 				Name:      params.Variants[key].VariantQuantity[key_price].Name,
+				Isdefault: params.Variants[key].VariantQuantity[key_price].IsDefault,
 				Value:     utils.ConvertIntToSQL(params.Variants[key].VariantQuantity[key_price].Value),
 				CreatedAt: time.Now().UTC(),
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
+				log.Println("5: " + err.Error())
 				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
 		}
 		if err != nil {
+			log.Println("6: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
@@ -590,6 +601,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	// TODO is it necessary to respond with the created product data
 	product_added, err := CompileProductData(dbconfig, product.ID, r, false)
 	if err != nil {
+		log.Println("7: " + err.Error())
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 	RespondWithJSON(w, http.StatusCreated, product_added)

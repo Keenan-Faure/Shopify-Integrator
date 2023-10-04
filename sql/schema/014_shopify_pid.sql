@@ -13,4 +13,4 @@ CREATE TABLE shopify_pid(
 );
 
 -- +goose Down
-DROP TABLE shopify_vid;
+DROP TABLE shopify_pid;
