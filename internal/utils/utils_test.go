@@ -123,3 +123,43 @@ func TestConfirmError(t *testing.T) {
 		t.Errorf("Unexpected results, expected 'Invalid database credentials' but found " + results)
 	}
 }
+
+func TestExtractVID(t *testing.T) {
+	fmt.Println("Test Case 1 - Valid VID")
+	variable := ExtractVID("gid://shopify/ProductVariant/40466067357761")
+	if variable != "40466067357761" {
+		t.Errorf("Expected '40466067357761', but found " + variable)
+	}
+
+	fmt.Println("Test Case 2 - Short VID")
+	variable = ExtractVID("gid://shopify/Produc")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+
+	fmt.Println("Test Case 3 - Invalid VID")
+	variable = ExtractVID("")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+}
+
+func TestExtractPID(t *testing.T) {
+	fmt.Println("Test Case 1 - Valid PID")
+	variable := ExtractPID("gid://shopify/Product/6971324465217")
+	if variable != "6971324465217" {
+		t.Errorf("Expected '6971324465217', but found " + variable)
+	}
+
+	fmt.Println("Test Case 2 - Short PID")
+	variable = ExtractPID("gid://shopify/Produ")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+
+	fmt.Println("Test Case 1 - Invalid PID")
+	variable = ExtractPID("")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+}

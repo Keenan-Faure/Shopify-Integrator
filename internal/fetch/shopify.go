@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"objects"
 	"time"
+	"utils"
 
 	"github.com/shurcooL/graphql"
 )
@@ -26,33 +28,32 @@ type ConfigShopify struct {
 
 // TODO log the fetch errors?
 // Adds a product to Shopify
-func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.ShopifyProduct) error {
+func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.ShopifyProduct) (string, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
 	if err != nil {
-		return err
+		return "", err
 	}
 	res, err := configShopify.FetchHelper("products.json", http.MethodPost, &buffer)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if res.StatusCode != 201 {
-		return errors.New("unexpected http status code")
+		return "", errors.New("unexpected http status code")
 	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
-		return err
+		return "", err
 	}
 	products := objects.ShopifyProductResponse{}
 	err = json.Unmarshal(respBody, &products)
 	if err != nil {
 		log.Println(err)
-		return err
+		return "", err
 	}
-	// FIXME add IDs in response to database
-	return nil
+	return fmt.Sprint(products.ID), err
 }
 
 // Updates a product on Shopify
@@ -85,33 +86,32 @@ func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.
 }
 
 // Adds a product variant on Shopify
-func (configShopify *ConfigShopify) AddVariantShopify(variant objects.ShopifyVariant, id string) error {
+func (configShopify *ConfigShopify) AddVariantShopify(variant objects.ShopifyVariant, product_id string) (string, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
 	if err != nil {
-		return err
+		return "", err
 	}
-	res, err := configShopify.FetchHelper("products/"+id+"/variants.json", http.MethodPost, &buffer)
+	res, err := configShopify.FetchHelper("products/"+product_id+"/variants.json", http.MethodPost, &buffer)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if res.StatusCode != 201 {
-		return errors.New("unexpected http status code")
+		return "", errors.New("unexpected http status code")
 	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
-		return err
+		return "", err
 	}
-	products := objects.ShopifyVariantResponse{}
-	err = json.Unmarshal(respBody, &products)
+	variant_data := objects.ShopifyVariantResponse{}
+	err = json.Unmarshal(respBody, &variant_data)
 	if err != nil {
 		log.Println(err)
-		return err
+		return "", err
 	}
-	// FIXME add IDs in response to database
-	return nil
+	return fmt.Sprint(variant_data.Variant.ID), err
 }
 
 // Updates a product variant on Shopify
@@ -149,7 +149,7 @@ func (configShopify *ConfigShopify) AddCollectionShopify(collection string) erro
 }
 
 // Checks if the product SKU exists on the website
-func (configShopify *ConfigShopify) GetProductBySKU(sku string) (bool, error) {
+func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.ResponseIDs, error) {
 	client := graphql.NewClient(configShopify.Url+"/graphql.json", nil)
 	variables := map[string]any{
 		"sku": graphql.String(sku),
@@ -158,22 +158,28 @@ func (configShopify *ConfigShopify) GetProductBySKU(sku string) (bool, error) {
 		ProductVariants struct {
 			Edges []struct {
 				Node struct {
-					Sku string
+					Sku     string
+					Id      string
+					Product struct {
+						Id string
+					}
 				}
 			}
 		} `graphql:"productVariants(query: $sku, first: 1)"`
 	}
-
 	err := client.Query(context.Background(), &respData, variables)
 	if err != nil {
-		return false, err
+		return objects.ResponseIDs{}, err
 	}
 	for _, value := range respData.ProductVariants.Edges {
 		if value.Node.Sku == sku {
-			return true, nil
+			return objects.ResponseIDs{
+				ProductID: utils.ExtractPID(respData.ProductVariants.Edges[0].Node.Id),
+				VariantID: utils.ExtractVID(respData.ProductVariants.Edges[0].Node.Product.Id),
+			}, nil
 		}
 	}
-	return false, nil
+	return objects.ResponseIDs{}, nil
 }
 
 // Initiates the connection string for shopify

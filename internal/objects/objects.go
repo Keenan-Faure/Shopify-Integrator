@@ -8,6 +8,11 @@ import (
 
 // shopify_push.go
 
+type ResponseIDs struct {
+	ProductID string `json:"id"`
+	VariantID string `json:"variant_id"`
+}
+
 type ShopifyProductResponse struct {
 	BodyHTML  string `json:"body_html"`
 	CreatedAt string `json:"created_at"`

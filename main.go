@@ -41,7 +41,7 @@ func main() {
 		// go shopify.LoopJSONShopify()
 	}
 	fmt.Println("Starting API")
-	shopifyConfig.GetProductBySKU("GenImp-r-ec")
+	fmt.Println(shopifyConfig.GetProductBySKU("GenImp-R-EC"))
 	setupAPI(dbCon)
 }
 

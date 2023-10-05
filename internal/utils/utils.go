@@ -98,3 +98,25 @@ func IssetInt(variable string) int {
 	}
 	return 0
 }
+
+// Extracts the PID from the Shopify Response
+func ExtractPID(id string) string {
+	if id == "" || len(id) == 0 {
+		return ""
+	}
+	if len(id) > 22 {
+		return id[22:]
+	}
+	return ""
+}
+
+// Extracts the VID from the Shopify Response
+func ExtractVID(id string) string {
+	if id == "" || len(id) == 0 {
+		return ""
+	}
+	if len(id) > 29 {
+		return id[29:]
+	}
+	return ""
+}
