@@ -37,6 +37,7 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 	err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
 		ID:               uuid.New(),
 		ProductCode:      product.ProductCode,
+		ProductID:        product.ID,
 		ShopifyProductID: product_id,
 		CreatedAt:        time.Now().UTC(),
 		UpdatedAt:        time.Now().UTC(),
@@ -46,15 +47,17 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		return
 	}
 	for _, variant := range product.Variants {
-		dbconfig.PushVariant(configShopify, variant)
+		dbconfig.PushVariant(configShopify, variant, product_id)
 	}
-	// Add variants to website as well (save IDs)
 	// Add Collection to website
 	// done
 }
 
 // Pushes a variant to Shopify
-func (dbconfig *DbConfig) PushVariant(configShopify *shopify.ConfigShopify, variant objects.ProductVariant) {
+func (dbconfig *DbConfig) PushVariant(
+	configShopify *shopify.ConfigShopify,
+	variant objects.ProductVariant,
+	product_id string) {
 	variant_id, err := GetVariantID(dbconfig, variant.Sku)
 	if err != nil {
 		// TODO log error to something
@@ -82,7 +85,7 @@ func (dbconfig *DbConfig) PushVariant(configShopify *shopify.ConfigShopify, vari
 		// TODO should we add Ids to the DB when updating?
 	} else {
 		// create new variant
-		variant_id, err = configShopify.AddVariantShopify(ConvertVariantToShopify(variant), ids.ProductID)
+		variant_id, err = configShopify.AddVariantShopify(ConvertVariantToShopify(variant), product_id)
 		if err != nil {
 			log.Println(err)
 			return
@@ -91,6 +94,7 @@ func (dbconfig *DbConfig) PushVariant(configShopify *shopify.ConfigShopify, vari
 			ID:               uuid.New(),
 			Sku:              variant.Sku,
 			ShopifyVariantID: variant_id,
+			VariantID:        variant.ID,
 			CreatedAt:        time.Now().UTC(),
 			UpdatedAt:        time.Now().UTC(),
 		})
@@ -114,6 +118,9 @@ func Syncronize() {
 func GetProductID(dbconfig *DbConfig, product_code string) (string, error) {
 	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product_code)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return "", nil
+		}
 		return "", err
 	}
 	if product_id.ProductCode == product_code &&
@@ -129,6 +136,9 @@ func GetProductID(dbconfig *DbConfig, product_code string) (string, error) {
 func GetVariantID(dbconfig *DbConfig, sku string) (string, error) {
 	variant_id, err := dbconfig.DB.GetVIDBySKU(context.Background(), sku)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return "", nil
+		}
 		return "", err
 	}
 	if variant_id.Sku == sku &&

@@ -1,35 +1,44 @@
 package main
 
 import (
+	"context"
 	"integrator/internal/database"
-	"net/http"
 	"objects"
 
 	"github.com/google/uuid"
 )
 
+// Converts ShopifyProduct into ShopifyProducts
+func ConvertShopifyToShopifyProducts(product []objects.ShopifyProduct) {
+
+}
+
 // Convert objects.Product into objects.ShopifyProduct
 func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
 	return objects.ShopifyProduct{
-		Title:    product.Title,
-		BodyHTML: product.BodyHTML,
-		Vendor:   product.Vendor,
-		Type:     product.ProductType,
-		Status:   "active", // TODO add status as a general setting
-		Options:  CompileShopifyOptions(product),
+		ShopifyProd: objects.ShopifyProd{
+			Title:    product.Title,
+			BodyHTML: product.BodyHTML,
+			Vendor:   product.Vendor,
+			Type:     product.ProductType,
+			Status:   "active", // TODO add status as a general setting
+			Options:  CompileShopifyOptions(product),
+		},
 	}
 }
 
 // Convert objects.Variant into objects.ShopifyVariant
 func ConvertVariantToShopify(variant objects.ProductVariant) objects.ShopifyVariant {
 	return objects.ShopifyVariant{
-		Sku:            variant.Sku,
-		Price:          "", // TODO have a setting to set the default price
-		CompareAtPrice: "",
-		Option1:        variant.Option1,
-		Option2:        variant.Option2,
-		Option3:        variant.Option3,
-		Barcode:        variant.Barcode,
+		ShopifyVar: objects.ShopifyVar{
+			Sku:            variant.Sku,
+			Price:          "0", // TODO have a setting to set the default price
+			CompareAtPrice: "0",
+			Option1:        variant.Option1,
+			Option2:        variant.Option2,
+			Option3:        variant.Option3,
+			Barcode:        variant.Barcode,
+		},
 	}
 }
 
@@ -37,14 +46,11 @@ func ConvertVariantToShopify(variant objects.ProductVariant) objects.ShopifyVari
 func CompileShopifyOptions(product objects.Product) []objects.ShopifyOptions {
 	shopify_options := []objects.ShopifyOptions{}
 	options_map := CreateOptionMap(product.ProductOptions, product.Variants)
-	i := 1
 	for key, value := range options_map {
 		shopify_options = append(shopify_options, objects.ShopifyOptions{
-			Name:     key,
-			Values:   value,
-			Position: i,
+			Name:   key,
+			Values: value,
 		})
-		i++
 	}
 	return shopify_options
 }
@@ -73,9 +79,9 @@ func CompileCustomerSearchData(
 func CompileCustomerData(
 	dbconfig *DbConfig,
 	customer_id uuid.UUID,
-	r *http.Request,
+	ctx context.Context,
 	ignore_address bool) (objects.Customer, error) {
-	customer, err := dbconfig.DB.GetCustomerByID(r.Context(), customer_id)
+	customer, err := dbconfig.DB.GetCustomerByID(ctx, customer_id)
 	if err != nil {
 		return objects.Customer{}, err
 	}
@@ -90,7 +96,7 @@ func CompileCustomerData(
 			UpdatedAt: customer.UpdatedAt,
 		}, nil
 	}
-	customer_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), customer_id)
+	customer_address, err := dbconfig.DB.GetAddressByCustomer(ctx, customer_id)
 	if err != nil {
 		return objects.Customer{}, err
 	}
@@ -152,9 +158,9 @@ func CompileOrderSearchResult(
 func CompileOrderData(
 	dbconfig *DbConfig,
 	order_id uuid.UUID,
-	r *http.Request,
+	ctx context.Context,
 	ignore_ship_cust bool) (objects.Order, error) {
-	order, err := dbconfig.DB.GetOrderByID(r.Context(), order_id)
+	order, err := dbconfig.DB.GetOrderByID(ctx, order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
@@ -175,19 +181,19 @@ func CompileOrderData(
 		}
 		return Order, nil
 	}
-	customer_id, err := dbconfig.DB.GetCustomerByOrderID(r.Context(), order_id)
+	customer_id, err := dbconfig.DB.GetCustomerByOrderID(ctx, order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_customer, err := dbconfig.DB.GetCustomerByID(r.Context(), customer_id)
+	order_customer, err := dbconfig.DB.GetCustomerByID(ctx, customer_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(r.Context(), customer_id)
+	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(ctx, customer_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_line_items, err := dbconfig.DB.GetOrderLinesByOrder(r.Context(), order_id)
+	order_line_items, err := dbconfig.DB.GetOrderLinesByOrder(ctx, order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
@@ -203,7 +209,7 @@ func CompileOrderData(
 		})
 
 	}
-	order_shipping_lines, err := dbconfig.DB.GetShippingLinesByOrder(r.Context(), order_id)
+	order_shipping_lines, err := dbconfig.DB.GetShippingLinesByOrder(ctx, order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
@@ -256,14 +262,14 @@ func CompileOrderData(
 // Compiles the filter results into one object
 func CompileFilterSearch(
 	dbconfig *DbConfig,
-	r *http.Request,
+	ctx context.Context,
 	page int,
 	product_type,
 	category,
 	vendor string) ([]objects.SearchProduct, error) {
 	response := []objects.SearchProduct{}
 	if product_type != "" {
-		prod_type, err := dbconfig.DB.GetProductsByType(r.Context(), database.GetProductsByTypeParams{
+		prod_type, err := dbconfig.DB.GetProductsByType(ctx, database.GetProductsByTypeParams{
 			Lower:  product_type,
 			Limit:  10,
 			Offset: int32((page - 1) * 10),
@@ -282,7 +288,7 @@ func CompileFilterSearch(
 		}
 	}
 	if category != "" {
-		prod_category, err := dbconfig.DB.GetProductsByCategory(r.Context(), database.GetProductsByCategoryParams{
+		prod_category, err := dbconfig.DB.GetProductsByCategory(ctx, database.GetProductsByCategoryParams{
 			Lower:  category,
 			Limit:  10,
 			Offset: int32((page - 1) * 10),
@@ -301,7 +307,7 @@ func CompileFilterSearch(
 		}
 	}
 	if vendor != "" {
-		prod_vendor, err := dbconfig.DB.GetProductsByVendor(r.Context(), database.GetProductsByVendorParams{
+		prod_vendor, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
 			Lower:  vendor,
 			Limit:  10,
 			Offset: int32((page - 1) * 10),
@@ -352,20 +358,21 @@ func CompileSearchResult(
 func CompileProductData(
 	dbconfig *DbConfig,
 	product_id uuid.UUID,
-	r *http.Request,
+	ctx context.Context,
 	ignore_variant bool) (objects.Product, error) {
-	product, err := dbconfig.DB.GetProductByID(r.Context(), product_id)
+	product, err := dbconfig.DB.GetProductByID(ctx, product_id)
 	if err != nil {
 		return objects.Product{}, err
 	}
-	product_options, err := dbconfig.DB.GetProductOptions(r.Context(), product_id)
+	product_options, err := dbconfig.DB.GetProductOptions(ctx, product_id)
 	if err != nil {
 		return objects.Product{}, err
 	}
 	options := []objects.ProductOptions{}
 	for _, value := range product_options {
 		options = append(options, objects.ProductOptions{
-			Value: value.Name,
+			Value:    value.Name,
+			Position: int(value.Position),
 		})
 	}
 	if ignore_variant {
@@ -383,11 +390,11 @@ func CompileProductData(
 		}
 		return product_data, nil
 	}
-	variants, err := dbconfig.DB.GetProductVariants(r.Context(), product_id)
+	variants, err := dbconfig.DB.GetProductVariants(ctx, product_id)
 	if err != nil {
 		return objects.Product{}, err
 	}
-	variant_data, err := CompileVariantData(dbconfig, variants, r)
+	variant_data, err := CompileVariantData(dbconfig, variants, ctx)
 	if err != nil {
 		return objects.Product{}, err
 	}
@@ -411,10 +418,10 @@ func CompileProductData(
 func CompileVariantData(
 	dbconfig *DbConfig,
 	variants []database.GetProductVariantsRow,
-	r *http.Request) ([]objects.ProductVariant, error) {
+	ctx context.Context) ([]objects.ProductVariant, error) {
 	variantsArray := []objects.ProductVariant{}
 	for _, value := range variants {
-		qty, err := dbconfig.DB.GetVariantQty(r.Context(), value.ID)
+		qty, err := dbconfig.DB.GetVariantQty(ctx, value.ID)
 		if err != nil {
 			return variantsArray, err
 		}
@@ -426,7 +433,7 @@ func CompileVariantData(
 				Value:     int(sub_value_qty.Value.Int32),
 			})
 		}
-		pricing, err := dbconfig.DB.GetVariantPricing(r.Context(), value.ID)
+		pricing, err := dbconfig.DB.GetVariantPricing(ctx, value.ID)
 		if err != nil {
 			return variantsArray, err
 		}
@@ -439,6 +446,7 @@ func CompileVariantData(
 			})
 		}
 		variantsArray = append(variantsArray, objects.ProductVariant{
+			ID:              value.ID,
 			Sku:             value.Sku,
 			Option1:         value.Option1.String,
 			Option2:         value.Option2.String,

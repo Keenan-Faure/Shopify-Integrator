@@ -3,10 +3,11 @@ INSERT INTO shopify_vid(
     id,
     sku,
     shopify_variant_id,
+    variant_id,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 );
 
 -- name: UpdateVID :exec

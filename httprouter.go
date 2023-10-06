@@ -28,7 +28,7 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 	}
 	products := []objects.Product{}
 	for _, product_id := range product_ids {
-		product, err := CompileProductData(dbconfig, product_id, r, false)
+		product, err := CompileProductData(dbconfig, product_id, r.Context(), false)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -599,7 +599,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		}
 	}
 	// TODO is it necessary to respond with the created product data
-	product_added, err := CompileProductData(dbconfig, product.ID, r, false)
+	product_added, err := CompileProductData(dbconfig, product.ID, r.Context(), false)
 	if err != nil {
 		log.Println("7: " + err.Error())
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -634,7 +634,7 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+customer_id)
 		return
 	}
-	customer, err := CompileCustomerData(dbconfig, customer_uuid, r, false)
+	customer, err := CompileCustomerData(dbconfig, customer_uuid, r.Context(), false)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			RespondWithError(w, http.StatusNotFound, "not found")
@@ -663,7 +663,7 @@ func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request
 	}
 	customers := []objects.Customer{}
 	for _, value := range dbCustomers {
-		cust, err := CompileCustomerData(dbconfig, value.ID, r, true)
+		cust, err := CompileCustomerData(dbconfig, value.ID, r.Context(), true)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
@@ -704,7 +704,7 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+order_id)
 		return
 	}
-	order_data, err := CompileOrderData(dbconfig, order_uuid, r, false)
+	order_data, err := CompileOrderData(dbconfig, order_uuid, r.Context(), false)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			RespondWithError(w, http.StatusNotFound, "not found")
@@ -733,7 +733,7 @@ func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, d
 	}
 	orders := []objects.Order{}
 	for _, value := range dbOrders {
-		ord, err := CompileOrderData(dbconfig, value.ID, r, true)
+		ord, err := CompileOrderData(dbconfig, value.ID, r.Context(), true)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
@@ -753,7 +753,7 @@ func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Req
 	query_param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
 	query_param_category := utils.ConfirmFilters(r.URL.Query().Get("category"))
 	query_param_vendor := utils.ConfirmFilters(r.URL.Query().Get("vendor"))
-	response, err := CompileFilterSearch(dbconfig, r, page, query_param_type, query_param_category, query_param_vendor)
+	response, err := CompileFilterSearch(dbconfig, r.Context(), page, query_param_type, query_param_category, query_param_vendor)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -794,7 +794,7 @@ func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, 
 		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+product_id)
 		return
 	}
-	product_data, err := CompileProductData(dbconfig, product_uuid, r, false)
+	product_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			RespondWithError(w, http.StatusNotFound, "not found")
@@ -823,7 +823,7 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 	}
 	products := []objects.Product{}
 	for _, value := range dbProducts {
-		prod, err := CompileProductData(dbconfig, value.ID, r, true)
+		prod, err := CompileProductData(dbconfig, value.ID, r.Context(), true)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return

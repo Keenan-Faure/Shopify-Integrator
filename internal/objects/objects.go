@@ -14,61 +14,63 @@ type ResponseIDs struct {
 }
 
 type ShopifyProductResponse struct {
-	BodyHTML  string `json:"body_html"`
-	CreatedAt string `json:"created_at"`
-	Handle    string `json:"handle"`
-	ID        int    `json:"id"`
-	Images    []struct {
-		ID         int    `json:"id"`
-		ProductID  int    `json:"product_id"`
-		Position   int    `json:"position"`
-		CreatedAt  string `json:"created_at"`
-		UpdatedAt  string `json:"updated_at"`
-		Width      int    `json:"width"`
-		Height     int    `json:"height"`
-		Src        string `json:"src"`
-		VariantIds []struct {
-		} `json:"variant_ids"`
-	} `json:"images"`
-	Options []struct {
-		ID        int      `json:"id"`
-		ProductID int      `json:"product_id"`
-		Name      string   `json:"name"`
-		Position  int      `json:"position"`
-		Values    []string `json:"values"`
-	} `json:"options"`
-	ProductType    string `json:"product_type"`
-	PublishedAt    string `json:"published_at"`
-	PublishedScope string `json:"published_scope"`
-	Status         string `json:"status"`
-	Tags           string `json:"tags"`
-	TemplateSuffix string `json:"template_suffix"`
-	Title          string `json:"title"`
-	UpdatedAt      string `json:"updated_at"`
-	Variants       []struct {
-		Barcode             string  `json:"barcode"`
-		CompareAtPrice      any     `json:"compare_at_price"`
-		CreatedAt           string  `json:"created_at"`
-		FulfillmentService  string  `json:"fulfillment_service"`
-		Grams               int     `json:"grams"`
-		Weight              float64 `json:"weight"`
-		WeightUnit          string  `json:"weight_unit"`
-		ID                  int     `json:"id"`
-		InventoryItemID     int     `json:"inventory_item_id"`
-		InventoryManagement string  `json:"inventory_management"`
-		InventoryPolicy     string  `json:"inventory_policy"`
-		InventoryQuantity   int     `json:"inventory_quantity"`
-		Option1             string  `json:"option1"`
-		Position            int     `json:"position"`
-		Price               float64 `json:"price"`
-		ProductID           int     `json:"product_id"`
-		RequiresShipping    bool    `json:"requires_shipping"`
-		Sku                 string  `json:"sku"`
-		Taxable             bool    `json:"taxable"`
-		Title               string  `json:"title"`
-		UpdatedAt           string  `json:"updated_at"`
-	} `json:"variants"`
-	Vendor string `json:"vendor"`
+	Product struct {
+		BodyHTML  string `json:"body_html"`
+		CreatedAt string `json:"created_at"`
+		Handle    string `json:"handle"`
+		ID        int    `json:"id"`
+		Images    []struct {
+			ID         int    `json:"id"`
+			ProductID  int    `json:"product_id"`
+			Position   int    `json:"position"`
+			CreatedAt  string `json:"created_at"`
+			UpdatedAt  string `json:"updated_at"`
+			Width      int    `json:"width"`
+			Height     int    `json:"height"`
+			Src        string `json:"src"`
+			VariantIds []struct {
+			} `json:"variant_ids"`
+		} `json:"images"`
+		Options []struct {
+			ID        int      `json:"id"`
+			ProductID int      `json:"product_id"`
+			Name      string   `json:"name"`
+			Position  int      `json:"position"`
+			Values    []string `json:"values"`
+		} `json:"options"`
+		ProductType    string `json:"product_type"`
+		PublishedAt    string `json:"published_at"`
+		PublishedScope string `json:"published_scope"`
+		Status         string `json:"status"`
+		Tags           string `json:"tags"`
+		TemplateSuffix string `json:"template_suffix"`
+		Title          string `json:"title"`
+		UpdatedAt      string `json:"updated_at"`
+		Variants       []struct {
+			Barcode             string  `json:"barcode"`
+			CompareAtPrice      any     `json:"compare_at_price"`
+			CreatedAt           string  `json:"created_at"`
+			FulfillmentService  string  `json:"fulfillment_service"`
+			Grams               int     `json:"grams"`
+			Weight              float64 `json:"weight"`
+			WeightUnit          string  `json:"weight_unit"`
+			ID                  int     `json:"id"`
+			InventoryItemID     int     `json:"inventory_item_id"`
+			InventoryManagement string  `json:"inventory_management"`
+			InventoryPolicy     string  `json:"inventory_policy"`
+			InventoryQuantity   int     `json:"inventory_quantity"`
+			Option1             string  `json:"option1"`
+			Position            int     `json:"position"`
+			Price               string  `json:"price"`
+			ProductID           int     `json:"product_id"`
+			RequiresShipping    bool    `json:"requires_shipping"`
+			Sku                 string  `json:"sku"`
+			Taxable             bool    `json:"taxable"`
+			Title               string  `json:"title"`
+			UpdatedAt           string  `json:"updated_at"`
+		} `json:"variants"`
+		Vendor string `json:"vendor"`
+	} `json:"product"`
 }
 
 type ShopifyVariantResponse struct {
@@ -183,14 +185,25 @@ type RequestBodyUser struct {
 	Token string `json:"token"`
 }
 type RequestBodyProduct struct {
-	ProductCode    string           `json:"product_code"`
-	Title          string           `json:"title"`
-	BodyHTML       string           `json:"body_html"`
-	Category       string           `json:"category"`
-	Vendor         string           `json:"vendor"`
-	ProductType    string           `json:"product_type"`
-	Variants       []ProductVariant `json:"variants"`
-	ProductOptions []ProductOptions `json:"options"`
+	ProductCode    string               `json:"product_code"`
+	Title          string               `json:"title"`
+	BodyHTML       string               `json:"body_html"`
+	Category       string               `json:"category"`
+	Vendor         string               `json:"vendor"`
+	ProductType    string               `json:"product_type"`
+	Variants       []RequestBodyVariant `json:"variants"`
+	ProductOptions []ProductOptions     `json:"options"`
+}
+
+type RequestBodyVariant struct {
+	Sku             string         `json:"sku"`
+	Option1         string         `json:"option1"`
+	Option2         string         `json:"option2"`
+	Option3         string         `json:"option3"`
+	Barcode         string         `json:"barcode"`
+	VariantPricing  []VariantPrice `json:"variant_price_tiers"`
+	VariantQuantity []VariantQty   `json:"variant_quantities"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 type RequestBodyCustomer struct {
@@ -311,6 +324,7 @@ type ProductOptions struct {
 	Position int    `json:"position"`
 }
 type ProductVariant struct {
+	ID              uuid.UUID      `json:"id"`
 	Sku             string         `json:"sku"`
 	Option1         string         `json:"option1"`
 	Option2         string         `json:"option2"`
@@ -363,6 +377,10 @@ type ShopifyProducts struct {
 }
 
 type ShopifyProduct struct {
+	ShopifyProd `json:"product"`
+}
+
+type ShopifyProd struct {
 	Title    string           `json:"title"`
 	BodyHTML string           `json:"body_html"`
 	Vendor   string           `json:"vendor"`
@@ -373,6 +391,10 @@ type ShopifyProduct struct {
 }
 
 type ShopifyVariant struct {
+	ShopifyVar `json:"variant"`
+}
+
+type ShopifyVar struct {
 	Sku            string `json:"sku"`
 	Price          string `json:"price"`
 	CompareAtPrice string `json:"compare_at_price"`
@@ -383,7 +405,6 @@ type ShopifyVariant struct {
 }
 
 type ShopifyOptions struct {
-	Name     string   `json:"name"`
-	Values   []string `json:"values"`
-	Position int      `json:"position"`
+	Name   string   `json:"name"`
+	Values []string `json:"values"`
 }

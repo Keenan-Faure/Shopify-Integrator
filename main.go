@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -41,12 +43,14 @@ func main() {
 		// go shopify.LoopJSONShopify()
 	}
 	fmt.Println("Starting API")
-	fmt.Println(shopifyConfig.GetProductBySKU("GenImp-R-EC"))
-	setupAPI(dbCon)
+	id, _ := uuid.Parse("064778f5-a8c6-4877-bdad-79e14560f537")
+	push_product, _ := CompileProductData(&dbCon, id, context.Background(), false)
+	dbCon.PushProduct(&shopifyConfig, push_product)
+	setupAPI(dbCon, shopifyConfig)
 }
 
 // starts up the API
-func setupAPI(dbconfig DbConfig) {
+func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	r := chi.NewRouter()
 	r.Use(cors.Handler(MiddleWare()))
 	api := chi.NewRouter()
@@ -71,6 +75,9 @@ func setupAPI(dbconfig DbConfig) {
 	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
 	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
+
+	// Shopify Endpoints
+	// api.Post("/shopify/push", dbconfig.shopifyAuth())
 
 	r.Mount("/api", api)
 

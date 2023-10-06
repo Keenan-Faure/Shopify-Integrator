@@ -29,6 +29,7 @@ type ConfigShopify struct {
 // TODO log the fetch errors?
 // Adds a product to Shopify
 func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.ShopifyProduct) (string, error) {
+	fmt.Println(shopifyProduct)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
 	if err != nil {
@@ -38,22 +39,20 @@ func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.Sho
 	if err != nil {
 		return "", err
 	}
-	if res.StatusCode != 201 {
-		return "", errors.New("unexpected http status code")
-	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return "", err
+	}
+	if res.StatusCode != 201 {
+		return "", errors.New(string(respBody))
 	}
 	products := objects.ShopifyProductResponse{}
 	err = json.Unmarshal(respBody, &products)
 	if err != nil {
-		log.Println(err)
 		return "", err
 	}
-	return fmt.Sprint(products.ID), err
+	return fmt.Sprint(products.Product.ID), err
 }
 
 // Updates a product on Shopify
@@ -67,14 +66,14 @@ func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.
 	if err != nil {
 		return err
 	}
-	if res.StatusCode != 200 {
-		return errors.New("unexpected http status code")
-	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
 		return err
+	}
+	if res.StatusCode != 200 {
+		return errors.New(string(respBody))
 	}
 	products := objects.ShopifyProductResponse{}
 	err = json.Unmarshal(respBody, &products)
@@ -92,19 +91,22 @@ func (configShopify *ConfigShopify) AddVariantShopify(variant objects.ShopifyVar
 	if err != nil {
 		return "", err
 	}
+	fmt.Println(product_id)
 	res, err := configShopify.FetchHelper("products/"+product_id+"/variants.json", http.MethodPost, &buffer)
 	if err != nil {
 		return "", err
 	}
-	if res.StatusCode != 201 {
-		return "", errors.New("unexpected http status code")
-	}
+	fmt.Println(res)
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
 		return "", err
 	}
+	if res.StatusCode != 201 {
+		return "", errors.New(string(respBody))
+	}
+	fmt.Println(string(respBody))
 	variant_data := objects.ShopifyVariantResponse{}
 	err = json.Unmarshal(respBody, &variant_data)
 	if err != nil {
@@ -125,14 +127,14 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(variant objects.Shopify
 	if err != nil {
 		return err
 	}
-	if res.StatusCode != 200 {
-		return errors.New("unexpected http status code")
-	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
 		return err
+	}
+	if res.StatusCode != 200 {
+		return errors.New(string(respBody))
 	}
 	products := objects.ShopifyVariantResponse{}
 	err = json.Unmarshal(respBody, &products)
@@ -174,8 +176,8 @@ func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.Respons
 	for _, value := range respData.ProductVariants.Edges {
 		if value.Node.Sku == sku {
 			return objects.ResponseIDs{
-				ProductID: utils.ExtractPID(respData.ProductVariants.Edges[0].Node.Id),
-				VariantID: utils.ExtractVID(respData.ProductVariants.Edges[0].Node.Product.Id),
+				ProductID: utils.ExtractVID(respData.ProductVariants.Edges[0].Node.Id),
+				VariantID: utils.ExtractPID(respData.ProductVariants.Edges[0].Node.Product.Id),
 			}, nil
 		}
 	}
@@ -202,10 +204,10 @@ func validateConfigShopify(store_name, api_key, api_password string) bool {
 	if store_name == "" {
 		return false
 	}
-	if api_key == "" || api_key[0:3] != "ck_" {
+	if api_key == "" {
 		return false
 	}
-	if api_password == "" || api_password[0:3] != "cs_" {
+	if api_password == "" || api_password[0:6] != "shpat_" {
 		return false
 	}
 	return true
@@ -236,13 +238,13 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 		Timeout: time.Second * 20,
 	}
 	req, err := http.NewRequest(method, shopifyConfig.Url+"/"+endpoint, body)
+	fmt.Println(shopifyConfig.Url + "/" + endpoint)
 	if err != nil {
-		log.Println(err)
 		return &http.Response{}, err
 	}
+	req.Header.Add("Content-Type", "application/json")
 	res, err := httpClient.Do(req)
 	if err != nil {
-		log.Println(err)
 		return &http.Response{}, err
 	}
 	return res, nil
