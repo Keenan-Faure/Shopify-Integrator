@@ -6,7 +6,9 @@ import (
 	"log"
 	"objects"
 	"shopify"
+	"strconv"
 	"time"
+	"utils"
 
 	"github.com/google/uuid"
 )
@@ -21,36 +23,107 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 	}
 	shopifyProduct := ConvertProductToShopify(product)
 	if product_id != "" {
-		// If yes, then update (UpdateProductShopify)
-		// done
 		configShopify.UpdateProductShopify(shopifyProduct, product_id)
 		return
 	}
-	// If product does not exist
-	// Create the product on website (save IDs)
-	product_id, err = configShopify.AddProductShopify(shopifyProduct)
+	product_response, err := configShopify.AddProductShopify(shopifyProduct)
 	if err != nil {
 		// TODO log error to something
 		log.Println(err)
 		return
 	}
-	err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
-		ID:               uuid.New(),
-		ProductCode:      product.ProductCode,
-		ProductID:        product.ID,
-		ShopifyProductID: product_id,
-		CreatedAt:        time.Now().UTC(),
-		UpdatedAt:        time.Now().UTC(),
-	})
+	ids := ConvertToShopifyIDs(product_response)
+	if ids.ProductID != "" && len(ids.ProductID) > 0 {
+		err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
+			ID:               uuid.New(),
+			ProductCode:      product.ProductCode,
+			ProductID:        product.ID,
+			ShopifyProductID: ids.ProductID,
+			CreatedAt:        time.Now().UTC(),
+			UpdatedAt:        time.Now().UTC(),
+		})
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}
+	for key := range ids.Variants {
+		if ids.Variants[key].VariantID != "" && len(ids.Variants[key].VariantID) > 0 {
+			err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
+				ID:               uuid.New(),
+				Sku:              product.Variants[key].Sku,
+				ShopifyVariantID: ids.Variants[key].VariantID,
+				VariantID:        product.Variants[key].ID,
+				CreatedAt:        time.Now().UTC(),
+				UpdatedAt:        time.Now().UTC(),
+			})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		}
+	}
+	str_int, err := strconv.Atoi(ids.ProductID)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	for _, variant := range product.Variants {
-		dbconfig.PushVariant(configShopify, variant, product_id)
+	dbconfig.CollectionShopfy(configShopify, product, str_int)
+}
+
+func (dbconfig *DbConfig) CollectionShopfy(
+	configShopify *shopify.ConfigShopify,
+	product objects.Product,
+	shopify_product_id int) error {
+	db_category, err := dbconfig.DB.GetShopifyCollection(context.Background(), utils.ConvertStringToSQL(product.Category))
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			return err
+		}
 	}
-	// Add Collection to website
-	// done
+	if db_category.ShopifyCollectionID != 0 || db_category.ProductCollection.String != "" {
+		shopify_categories, err := configShopify.GetShopifyCategories()
+		if err != nil {
+			return err
+		}
+		exists, collection_id := configShopify.CategoryExists(product, shopify_categories)
+		if exists {
+			err = dbconfig.DB.CreateShopifyCollection(context.Background(), database.CreateShopifyCollectionParams{
+				ID:                  uuid.New(),
+				ProductCollection:   utils.ConvertStringToSQL(product.Category),
+				ShopifyCollectionID: int32(collection_id),
+				CreatedAt:           time.Now().UTC(),
+				UpdatedAt:           time.Now().UTC(),
+			})
+			if err != nil {
+				return err
+			}
+			// TODO might need the response here?
+			_, err = configShopify.AddProductToCollectionShopify(shopify_product_id, collection_id)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		custom_collection_id, err := configShopify.AddCustomCollectionShopify(product.Category)
+		if err != nil {
+			return err
+		}
+		if err != nil {
+			return err
+		}
+		err = dbconfig.DB.CreateShopifyCollection(context.Background(), database.CreateShopifyCollectionParams{
+			ID:                  uuid.New(),
+			ProductCollection:   utils.ConvertStringToSQL(product.Category),
+			ShopifyCollectionID: int32(custom_collection_id),
+			CreatedAt:           time.Now().UTC(),
+			UpdatedAt:           time.Now().UTC(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Pushes a variant to Shopify
@@ -69,7 +142,6 @@ func (dbconfig *DbConfig) PushVariant(
 		// done
 		configShopify.UpdateVariantShopify(ConvertVariantToShopify(variant), variant_id)
 	}
-
 	ids, err := configShopify.GetProductBySKU(variant.Sku)
 	if err != nil {
 		log.Println(err)
@@ -82,7 +154,6 @@ func (dbconfig *DbConfig) PushVariant(
 			log.Println(err)
 			return
 		}
-		// TODO should we add Ids to the DB when updating?
 	} else {
 		// create new variant
 		variant_id, err = configShopify.AddVariantShopify(ConvertVariantToShopify(variant), product_id)

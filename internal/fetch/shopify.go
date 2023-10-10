@@ -28,31 +28,31 @@ type ConfigShopify struct {
 
 // TODO log the fetch errors?
 // Adds a product to Shopify
-func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.ShopifyProduct) (string, error) {
+func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.ShopifyProduct) (objects.ShopifyProductResponse, error) {
 	fmt.Println(shopifyProduct)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
 	if err != nil {
-		return "", err
+		return objects.ShopifyProductResponse{}, err
 	}
 	res, err := configShopify.FetchHelper("products.json", http.MethodPost, &buffer)
 	if err != nil {
-		return "", err
+		return objects.ShopifyProductResponse{}, err
 	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return "", err
+		return objects.ShopifyProductResponse{}, err
 	}
 	if res.StatusCode != 201 {
-		return "", errors.New(string(respBody))
+		return objects.ShopifyProductResponse{}, errors.New(string(respBody))
 	}
 	products := objects.ShopifyProductResponse{}
 	err = json.Unmarshal(respBody, &products)
 	if err != nil {
-		return "", err
+		return objects.ShopifyProductResponse{}, err
 	}
-	return fmt.Sprint(products.Product.ID), err
+	return products, err
 }
 
 // Updates a product on Shopify
@@ -145,9 +145,115 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(variant objects.Shopify
 	return nil
 }
 
-// Adds a product collection to Shopify
-func (configShopify *ConfigShopify) AddCollectionShopify(collection string) error {
-	return nil
+// Adds a product to an existing collection in Shopify. Requires the Shopify product_id and the collection_id
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/collect#post-collects
+func (configShopify *ConfigShopify) AddProductToCollectionShopify(
+	product_id,
+	collection_id int) (objects.ResponseAddProductToShopifyCollection, error) {
+	collection := objects.AddProducToShopifyCollection{
+		Collect: struct {
+			ProductID    int
+			CollectionID int
+		}{
+			ProductID:    product_id,
+			CollectionID: collection_id,
+		},
+	}
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(collection)
+	if err != nil {
+		return objects.ResponseAddProductToShopifyCollection{}, err
+	}
+	res, err := configShopify.FetchHelper("collects.json", http.MethodPost, &buffer)
+	if err != nil {
+		return objects.ResponseAddProductToShopifyCollection{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return objects.ResponseAddProductToShopifyCollection{}, err
+	}
+	if res.StatusCode != 201 {
+		return objects.ResponseAddProductToShopifyCollection{}, errors.New(string(respBody))
+	}
+	response := objects.ResponseAddProductToShopifyCollection{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		log.Println(err)
+		return objects.ResponseAddProductToShopifyCollection{}, err
+	}
+	return response, nil
+}
+
+// Adds a custom collection to Shopify
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#post-custom-collections
+func (configShopify *ConfigShopify) AddCustomCollectionShopify(collection string) (int, error) {
+	shopify_collection := objects.AddShopifyCustomCollection{
+		CustomCollection: struct{ Title string }{
+			Title: collection,
+		},
+	}
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(shopify_collection)
+	if err != nil {
+		return 0, err
+	}
+	res, err := configShopify.FetchHelper("custom_collections.json", http.MethodPost, &buffer)
+	if err != nil {
+		return 0, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+	if res.StatusCode != 201 {
+		return 0, errors.New(string(respBody))
+	}
+	response := objects.ResponseShopifyCustomCollection{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+	return response.CustomCollection.ID, nil
+}
+
+// Retreives all custom categories from Shopify
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#get-custom-collections
+func (configShopify *ConfigShopify) GetShopifyCategories() (objects.ResponseGetCustomCollections, error) {
+	res, err := configShopify.FetchHelper("custom_collections.json?fields=title,id", http.MethodGet, nil)
+	if err != nil {
+		return objects.ResponseGetCustomCollections{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return objects.ResponseGetCustomCollections{}, err
+	}
+	if res.StatusCode != 201 {
+		return objects.ResponseGetCustomCollections{}, errors.New(string(respBody))
+	}
+	response := objects.ResponseGetCustomCollections{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		log.Println(err)
+		return objects.ResponseGetCustomCollections{}, err
+	}
+	return response, nil
+}
+
+// Determines if a product's category already exists on Shopify
+func (configShopify *ConfigShopify) CategoryExists(product objects.Product, categories objects.ResponseGetCustomCollections) (bool, int) {
+	for _, value := range categories.CustomCollections {
+		if product.Category == value.Title {
+			return true, int(value.ID)
+		}
+	}
+	return false, 0
 }
 
 // Checks if the product SKU exists on the website

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"integrator/internal/database"
 	"objects"
 
@@ -21,10 +22,42 @@ func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
 			BodyHTML: product.BodyHTML,
 			Vendor:   product.Vendor,
 			Type:     product.ProductType,
-			Status:   "active", // TODO add status as a general setting
+			Status:   "active",
+			Variants: ConvertVariantToShopifyProdVariant(product),
 			Options:  CompileShopifyOptions(product),
 		},
 	}
+}
+
+// Convert objects.Product into objects.ShopifyProduct
+func ConvertVariantToShopifyProdVariant(product objects.Product) []objects.ShopifyProdVariant {
+	variants := []objects.ShopifyProdVariant{}
+	for _, value := range product.Variants {
+		variants = append(variants, objects.ShopifyProdVariant{
+			Sku:            value.Sku,
+			Price:          "0",
+			CompareAtPrice: "0",
+			Option1:        value.Option1,
+			Option2:        value.Option2,
+			Option3:        value.Option3,
+			Barcode:        value.Barcode,
+		})
+	}
+	return variants
+}
+
+// Converts a objects.ShopifyProductResponse to a objects.ShopifyPID struct
+func ConvertToShopifyIDs(product objects.ShopifyProductResponse) objects.ShopifyIDs {
+	ids := objects.ShopifyIDs{}
+	ids.ProductID = fmt.Sprint(product.Product.ID)
+	variants := []objects.ShopifyVIDs{}
+	for _, value := range product.Product.Variants {
+		variants = append(variants, objects.ShopifyVIDs{
+			VariantID: fmt.Sprint(value.ID),
+		})
+	}
+	ids.Variants = variants
+	return ids
 }
 
 // Convert objects.Variant into objects.ShopifyVariant

@@ -73,6 +73,15 @@ type ShopifyProductResponse struct {
 	} `json:"product"`
 }
 
+type ShopifyIDs struct {
+	ProductID string        `json:"product_id"`
+	Variants  []ShopifyVIDs `json:"variants"`
+}
+
+type ShopifyVIDs struct {
+	VariantID string `json:"variant_id"`
+}
+
 type ShopifyVariantResponse struct {
 	Variant struct {
 		ID                   int    `json:"id"`
@@ -109,6 +118,53 @@ type ShopifyVariantResponse struct {
 		RequiresShipping  bool   `json:"requires_shipping"`
 		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
 	} `json:"variant"`
+}
+
+type AddProducToShopifyCollection struct {
+	Collect struct {
+		ProductID    int
+		CollectionID int
+	}
+}
+
+type ResponseAddProductToShopifyCollection struct {
+	Collect struct {
+		ID           int    `json:"id"`
+		CollectionID int    `json:"collection_id"`
+		ProductID    int    `json:"product_id"`
+		CreatedAt    string `json:"created_at"`
+		UpdatedAt    string `json:"updated_at"`
+		Position     int    `json:"position"`
+		SortValue    string `json:"sort_value"`
+	} `json:"collect"`
+}
+
+type AddShopifyCustomCollection struct {
+	CustomCollection struct {
+		Title string
+	}
+}
+
+type ResponseShopifyCustomCollection struct {
+	CustomCollection struct {
+		ID                int    `json:"id"`
+		Handle            string `json:"handle"`
+		Title             string `json:"title"`
+		UpdatedAt         string `json:"updated_at"`
+		BodyHTML          any    `json:"body_html"`
+		PublishedAt       string `json:"published_at"`
+		SortOrder         string `json:"sort_order"`
+		TemplateSuffix    any    `json:"template_suffix"`
+		PublishedScope    string `json:"published_scope"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"custom_collection"`
+}
+
+type ResponseGetCustomCollections struct {
+	CustomCollections []struct {
+		ID    int64  `json:"id"`
+		Title string `json:"title"`
+	} `json:"custom_collections"`
 }
 
 // iocsv.go
@@ -381,13 +437,23 @@ type ShopifyProduct struct {
 }
 
 type ShopifyProd struct {
-	Title    string           `json:"title"`
-	BodyHTML string           `json:"body_html"`
-	Vendor   string           `json:"vendor"`
-	Type     string           `json:"product_type"`
-	Status   string           `json:"status"`
-	Variants []ShopifyVariant `json:"variants"`
-	Options  []ShopifyOptions `json:"options"`
+	Title    string               `json:"title"`
+	BodyHTML string               `json:"body_html"`
+	Vendor   string               `json:"vendor"`
+	Type     string               `json:"product_type"`
+	Status   string               `json:"status"`
+	Variants []ShopifyProdVariant `json:"variants"`
+	Options  []ShopifyOptions     `json:"options"`
+}
+
+type ShopifyProdVariant struct {
+	Sku            string `json:"sku"`
+	Price          string `json:"price"`
+	CompareAtPrice string `json:"compare_at_price"`
+	Option1        string `json:"option1"`
+	Option2        string `json:"option2"`
+	Option3        string `json:"option3"`
+	Barcode        string `json:"barcode"`
 }
 
 type ShopifyVariant struct {

@@ -43,7 +43,7 @@ func main() {
 		// go shopify.LoopJSONShopify()
 	}
 	fmt.Println("Starting API")
-	id, _ := uuid.Parse("064778f5-a8c6-4877-bdad-79e14560f537")
+	id, _ := uuid.Parse("8dcdc046-c159-4687-82b6-43a7818c4044")
 	push_product, _ := CompileProductData(&dbCon, id, context.Background(), false)
 	dbCon.PushProduct(&shopifyConfig, push_product)
 	setupAPI(dbCon, shopifyConfig)
