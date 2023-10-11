@@ -17,21 +17,23 @@ INSERT INTO shopify_vid(
     id,
     sku,
     shopify_variant_id,
+    shopify_inventory_id,
     variant_id,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 `
 
 type CreateVIDParams struct {
-	ID               uuid.UUID `json:"id"`
-	Sku              string    `json:"sku"`
-	ShopifyVariantID string    `json:"shopify_variant_id"`
-	VariantID        uuid.UUID `json:"variant_id"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ID                 uuid.UUID `json:"id"`
+	Sku                string    `json:"sku"`
+	ShopifyVariantID   string    `json:"shopify_variant_id"`
+	ShopifyInventoryID string    `json:"shopify_inventory_id"`
+	VariantID          uuid.UUID `json:"variant_id"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 func (q *Queries) CreateVID(ctx context.Context, arg CreateVIDParams) error {
@@ -39,11 +41,35 @@ func (q *Queries) CreateVID(ctx context.Context, arg CreateVIDParams) error {
 		arg.ID,
 		arg.Sku,
 		arg.ShopifyVariantID,
+		arg.ShopifyInventoryID,
 		arg.VariantID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
 	return err
+}
+
+const getInventoryIDBySKU = `-- name: GetInventoryIDBySKU :one
+select
+    sku,
+    shopify_inventory_id,
+    updated_at
+from shopify_vid
+where sku = $1
+LIMIT 1
+`
+
+type GetInventoryIDBySKURow struct {
+	Sku                string    `json:"sku"`
+	ShopifyInventoryID string    `json:"shopify_inventory_id"`
+	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+func (q *Queries) GetInventoryIDBySKU(ctx context.Context, sku string) (GetInventoryIDBySKURow, error) {
+	row := q.db.QueryRowContext(ctx, getInventoryIDBySKU, sku)
+	var i GetInventoryIDBySKURow
+	err := row.Scan(&i.Sku, &i.ShopifyInventoryID, &i.UpdatedAt)
+	return i, err
 }
 
 const getVIDBySKU = `-- name: GetVIDBySKU :one
@@ -73,17 +99,24 @@ const updateVID = `-- name: UpdateVID :exec
 UPDATE shopify_vid
 SET
     shopify_variant_id = $1,
-    updated_at = $2
-WHERE sku = $3
+    shopify_inventory_id = $2,
+    updated_at = $3
+WHERE sku = $4
 `
 
 type UpdateVIDParams struct {
-	ShopifyVariantID string    `json:"shopify_variant_id"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	Sku              string    `json:"sku"`
+	ShopifyVariantID   string    `json:"shopify_variant_id"`
+	ShopifyInventoryID string    `json:"shopify_inventory_id"`
+	UpdatedAt          time.Time `json:"updated_at"`
+	Sku                string    `json:"sku"`
 }
 
 func (q *Queries) UpdateVID(ctx context.Context, arg UpdateVIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateVID, arg.ShopifyVariantID, arg.UpdatedAt, arg.Sku)
+	_, err := q.db.ExecContext(ctx, updateVID,
+		arg.ShopifyVariantID,
+		arg.ShopifyInventoryID,
+		arg.UpdatedAt,
+		arg.Sku,
+	)
 	return err
 }

@@ -1,0 +1,12 @@
+-- +goose Up
+CREATE TABLE shopify_location(
+    id UUID PRIMARY KEY UNIQUE,
+    shopify_warehouse_name VARCHAR(16) NOT NULL,
+    shopify_location_id VARCHAR(16) NOT NULL,
+    warehouse_name VARCHAR(16) UNIQUE NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+-- +goose Down
+DROP TABLe shopify_location;

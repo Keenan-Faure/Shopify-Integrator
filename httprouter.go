@@ -87,7 +87,6 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			UpdatedAt:   time.Now().UTC(),
 		})
 		if err != nil {
-			fmt.Println("1: " + err.Error())
 			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
 				product_exists = true
 				err := dbconfig.DB.UpdateProduct(r.Context(), database.UpdateProductParams{

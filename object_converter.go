@@ -9,11 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Converts ShopifyProduct into ShopifyProducts
-func ConvertShopifyToShopifyProducts(product []objects.ShopifyProduct) {
-
-}
-
 // Convert objects.Product into objects.ShopifyProduct
 func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
 	return objects.ShopifyProduct{

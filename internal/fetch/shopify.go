@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -26,10 +25,101 @@ type ConfigShopify struct {
 	Valid       bool
 }
 
+// Fetches all locations from Shopify:
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location#get-locations
+func (configShopify *ConfigShopify) GetLocationsShopify(shopifyProduct objects.ShopifyProduct) (objects.ResponseShopifyGetLocations, error) {
+	res, err := configShopify.FetchHelper("locations.json", http.MethodGet, nil)
+	if err != nil {
+		return objects.ResponseShopifyGetLocations{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ResponseShopifyGetLocations{}, err
+	}
+	if res.StatusCode != 200 {
+		return objects.ResponseShopifyGetLocations{}, errors.New(string(respBody))
+	}
+	locations := objects.ResponseShopifyGetLocations{}
+	err = json.Unmarshal(respBody, &locations)
+	if err != nil {
+		return objects.ResponseShopifyGetLocations{}, err
+	}
+	return locations, err
+}
+
+// Adjusts the inventory level of an inventory item at a location
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#post-inventory-levels-adjust
+func (configShopify *ConfigShopify) AddLocationQtyShopify(
+	location_id, inventory_item_id, qty int) (objects.ResponseAddInventoryItem, error) {
+	inventory_adjustment := objects.AddInventoryItem{
+		LocationID:          location_id,
+		InventoryItemID:     inventory_item_id,
+		AvailableAdjustment: qty,
+	}
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(inventory_adjustment)
+	if err != nil {
+		return objects.ResponseAddInventoryItem{}, err
+	}
+	res, err := configShopify.FetchHelper("inventory_levels/adjust.json", http.MethodPost, &buffer)
+	if err != nil {
+		return objects.ResponseAddInventoryItem{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ResponseAddInventoryItem{}, err
+	}
+	if res.StatusCode != 200 {
+		return objects.ResponseAddInventoryItem{}, errors.New(string(respBody))
+	}
+	response := objects.ResponseAddInventoryItem{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.ResponseAddInventoryItem{}, err
+	}
+	return response, err
+}
+
+// Connects an inventory item to a location:
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#post-inventory-levels-connect
+func (configShopify *ConfigShopify) AddInventoryItemToLocation(
+	location_id, inventory_item_id int) (objects.ResponseAddInventoryItemLocation, error) {
+	inventory_level := objects.AddInventoryItemToLocation{
+		LocationID:      location_id,
+		InventoryItemID: inventory_item_id,
+	}
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(inventory_level)
+	if err != nil {
+		return objects.ResponseAddInventoryItemLocation{}, err
+	}
+	res, err := configShopify.FetchHelper("inventory_levels/connect.json", http.MethodPost, &buffer)
+	if err != nil {
+		return objects.ResponseAddInventoryItemLocation{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ResponseAddInventoryItemLocation{}, err
+	}
+	if res.StatusCode != 201 {
+		return objects.ResponseAddInventoryItemLocation{}, errors.New(string(respBody))
+	}
+	response := objects.ResponseAddInventoryItemLocation{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.ResponseAddInventoryItemLocation{}, err
+	}
+	return response, err
+}
+
 // TODO log the fetch errors?
-// Adds a product to Shopify
+
+// Adds a product to Shopify:
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/product#post-products
 func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.ShopifyProduct) (objects.ShopifyProductResponse, error) {
-	fmt.Println(shopifyProduct)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
 	if err != nil {
@@ -55,7 +145,8 @@ func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.Sho
 	return products, err
 }
 
-// Updates a product on Shopify
+// Updates a product on Shopify:
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/product#put-products-product-id
 func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.ShopifyProduct, id string) error {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
@@ -84,39 +175,40 @@ func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.
 	return nil
 }
 
-// Adds a product variant on Shopify
-func (configShopify *ConfigShopify) AddVariantShopify(variant objects.ShopifyVariant, product_id string) (string, error) {
+// Adds a product variant on Shopify:
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#post-products-product-id-variants
+func (configShopify *ConfigShopify) AddVariantShopify(
+	variant objects.ShopifyVariant,
+	product_id string) (objects.ShopifyVariantResponse, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
 	if err != nil {
-		return "", err
+		return objects.ShopifyVariantResponse{}, err
 	}
-	fmt.Println(product_id)
 	res, err := configShopify.FetchHelper("products/"+product_id+"/variants.json", http.MethodPost, &buffer)
 	if err != nil {
-		return "", err
+		return objects.ShopifyVariantResponse{}, err
 	}
-	fmt.Println(res)
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return objects.ShopifyVariantResponse{}, err
 	}
 	if res.StatusCode != 201 {
-		return "", errors.New(string(respBody))
+		return objects.ShopifyVariantResponse{}, errors.New(string(respBody))
 	}
-	fmt.Println(string(respBody))
 	variant_data := objects.ShopifyVariantResponse{}
 	err = json.Unmarshal(respBody, &variant_data)
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return objects.ShopifyVariantResponse{}, err
 	}
-	return fmt.Sprint(variant_data.Variant.ID), err
+	return variant_data, err
 }
 
-// Updates a product variant on Shopify
+// Updates a product variant on Shopify:
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#put-variants-variant-id
 func (configShopify *ConfigShopify) UpdateVariantShopify(variant objects.ShopifyVariant, variant_id string) error {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
@@ -152,8 +244,8 @@ func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 	collection_id int) (objects.ResponseAddProductToShopifyCollection, error) {
 	collection := objects.AddProducToShopifyCollection{
 		Collect: struct {
-			ProductID    int
-			CollectionID int
+			ProductID    int "json:\"product_id\""
+			CollectionID int "json:\"collection_id\""
 		}{
 			ProductID:    product_id,
 			CollectionID: collection_id,
@@ -190,7 +282,9 @@ func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#post-custom-collections
 func (configShopify *ConfigShopify) AddCustomCollectionShopify(collection string) (int, error) {
 	shopify_collection := objects.AddShopifyCustomCollection{
-		CustomCollection: struct{ Title string }{
+		CustomCollection: struct {
+			Title string "json:\"title\""
+		}{
 			Title: collection,
 		},
 	}
@@ -234,7 +328,7 @@ func (configShopify *ConfigShopify) GetShopifyCategories() (objects.ResponseGetC
 		log.Println(err)
 		return objects.ResponseGetCustomCollections{}, err
 	}
-	if res.StatusCode != 201 {
+	if res.StatusCode != 200 {
 		return objects.ResponseGetCustomCollections{}, errors.New(string(respBody))
 	}
 	response := objects.ResponseGetCustomCollections{}
@@ -344,7 +438,6 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 		Timeout: time.Second * 20,
 	}
 	req, err := http.NewRequest(method, shopifyConfig.Url+"/"+endpoint, body)
-	fmt.Println(shopifyConfig.Url + "/" + endpoint)
 	if err != nil {
 		return &http.Response{}, err
 	}

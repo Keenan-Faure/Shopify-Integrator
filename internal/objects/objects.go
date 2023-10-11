@@ -122,9 +122,40 @@ type ShopifyVariantResponse struct {
 
 type AddProducToShopifyCollection struct {
 	Collect struct {
-		ProductID    int
-		CollectionID int
-	}
+		ProductID    int `json:"product_id"`
+		CollectionID int `json:"collection_id"`
+	} `json:"collect"`
+}
+
+type AddInventoryItem struct {
+	LocationID          int `json:"location_id"`
+	InventoryItemID     int `json:"inventory_item_id"`
+	AvailableAdjustment int `json:"available_adjustment"`
+}
+
+type ResponseAddInventoryItem struct {
+	InventoryLevel struct {
+		InventoryItemID   int    `json:"inventory_item_id"`
+		LocationID        int    `json:"location_id"`
+		Available         int    `json:"available"`
+		UpdatedAt         string `json:"updated_at"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"inventory_level"`
+}
+
+type AddInventoryItemToLocation struct {
+	LocationID      int `json:"location_id"`
+	InventoryItemID int `json:"inventory_item_id"`
+}
+
+type ResponseAddInventoryItemLocation struct {
+	InventoryLevel struct {
+		InventoryItemID   int    `json:"inventory_item_id"`
+		LocationID        int    `json:"location_id"`
+		Available         int    `json:"available"`
+		UpdatedAt         string `json:"updated_at"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"inventory_level"`
 }
 
 type ResponseAddProductToShopifyCollection struct {
@@ -141,8 +172,8 @@ type ResponseAddProductToShopifyCollection struct {
 
 type AddShopifyCustomCollection struct {
 	CustomCollection struct {
-		Title string
-	}
+		Title string `json:"title"`
+	} `json:"custom_collection"`
 }
 
 type ResponseShopifyCustomCollection struct {
@@ -165,6 +196,30 @@ type ResponseGetCustomCollections struct {
 		ID    int64  `json:"id"`
 		Title string `json:"title"`
 	} `json:"custom_collections"`
+}
+
+type ResponseShopifyGetLocations struct {
+	Locations []struct {
+		ID                    int64     `json:"id"`
+		Name                  string    `json:"name"`
+		Address1              string    `json:"address1"`
+		Address2              string    `json:"address2"`
+		City                  string    `json:"city"`
+		Zip                   string    `json:"zip"`
+		Province              string    `json:"province"`
+		Country               string    `json:"country"`
+		Phone                 string    `json:"phone"`
+		CreatedAt             time.Time `json:"created_at"`
+		UpdatedAt             time.Time `json:"updated_at"`
+		CountryCode           string    `json:"country_code"`
+		CountryName           string    `json:"country_name"`
+		ProvinceCode          string    `json:"province_code"`
+		Legacy                bool      `json:"legacy"`
+		Active                bool      `json:"active"`
+		AdminGraphqlAPIID     string    `json:"admin_graphql_api_id"`
+		LocalizedCountryName  string    `json:"localized_country_name"`
+		LocalizedProvinceName string    `json:"localized_province_name"`
+	} `json:"locations"`
 }
 
 // iocsv.go
