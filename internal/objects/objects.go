@@ -290,6 +290,11 @@ type RequestString struct {
 
 // request_validation.go
 
+type RequestWarehouseLocation struct {
+	LocationID           string `json:"location_id"`
+	WarehouseName        string `json:"warehouse_name"`
+	ShopifyWarehouseName string `json:"shopify_warehouse_name"`
+}
 type RequestBodyUser struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`

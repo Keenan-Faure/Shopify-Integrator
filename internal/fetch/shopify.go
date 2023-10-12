@@ -27,7 +27,7 @@ type ConfigShopify struct {
 
 // Fetches all locations from Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/location#get-locations
-func (configShopify *ConfigShopify) GetLocationsShopify(shopifyProduct objects.ShopifyProduct) (objects.ResponseShopifyGetLocations, error) {
+func (configShopify *ConfigShopify) GetLocationsShopify() (objects.ResponseShopifyGetLocations, error) {
 	res, err := configShopify.FetchHelper("locations.json", http.MethodGet, nil)
 	if err != nil {
 		return objects.ResponseShopifyGetLocations{}, err

@@ -24,3 +24,7 @@ SELECT
     created_at
 FROM shopify_location
 WHERE warehouse_name = $1;
+
+-- name: RemoveShopifyLocationMap :exec
+DELETE FROM shopify_location
+WHERE id = $1;

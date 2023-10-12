@@ -11,6 +11,25 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validation: Inventory Map
+func InventoryMapValidation(location_map objects.RequestWarehouseLocation) error {
+	if location_map.LocationID == "" || location_map.WarehouseName == "" {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// Decode: Inventory Map
+func DecodeInventoryMap(r *http.Request) (objects.RequestWarehouseLocation, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestWarehouseLocation{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
 // Validation: Product Import
 func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
 	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)

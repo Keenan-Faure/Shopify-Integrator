@@ -79,6 +79,9 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	// Shopify Endpoints
 	// api.Post("/shopify/push", dbconfig.shopifyAuth())
 
+	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
+	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
+
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))

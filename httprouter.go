@@ -19,6 +19,57 @@ import (
 	"github.com/google/uuid"
 )
 
+// DELETE /api/inventory
+func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	id := chi.URLParam(r, "id")
+	err := IDValidation(id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	delete_id, err := uuid.Parse(id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+id)
+		return
+	}
+	err = dbconfig.DB.RemoveShopifyLocationMap(r.Context(), delete_id)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "Deleted",
+	})
+}
+
+// POST /api/inventory
+func (dbconfig *DbConfig) AddWarehouseLocationMap(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	location_map, err := DecodeInventoryMap(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	if InventoryMapValidation(location_map) != nil {
+		RespondWithError(w, http.StatusBadRequest, "data validation error")
+		return
+	}
+	err = dbconfig.DB.CreateShopifyLocation(r.Context(), database.CreateShopifyLocationParams{
+		ID:                   uuid.New(),
+		ShopifyWarehouseName: location_map.ShopifyWarehouseName,
+		ShopifyLocationID:    location_map.LocationID,
+		WarehouseName:        location_map.WarehouseName,
+		CreatedAt:            time.Now().UTC(),
+		UpdatedAt:            time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+		Message: "Success",
+	})
+}
+
 // GET /api/products/export
 func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	product_ids, err := dbconfig.DB.GetProductIDs(r.Context())

@@ -46,6 +46,15 @@ type Customerorder struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+type InventoryLocation struct {
+	ID                uuid.UUID `json:"id"`
+	ShopifyLocationID string    `json:"shopify_location_id"`
+	InventoryItemID   string    `json:"inventory_item_id"`
+	WarehouseName     string    `json:"warehouse_name"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
 type Order struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`

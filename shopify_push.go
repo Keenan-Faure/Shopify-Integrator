@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"integrator/internal/database"
 	"log"
 	"objects"
 	"shopify"
+	"strconv"
 	"time"
 	"utils"
 
@@ -16,41 +18,119 @@ import (
 // TODO create a feed that fetches all locations from shopify
 // pops up a list of locations and it asks the user which will be used, and which warehouse should be
 // mapped to the respective location
-func (dbconfig *DbConfig) FetchShopifyLocations(configShopify *shopify.ConfigShopify, product objects.Product) {
+func (dbconfig *DbConfig) FetchShopifyLocations(configShopify *shopify.ConfigShopify) {
 	// call GetLocationsShopify() functiion to retrieve all of them
 	// respond with that on the API
 	// let javascript create the respective element after fetching
 	// once the user has been taken through the form post it to an endpoint TBC which one
 	// done
+	response, err := configShopify.GetLocationsShopify()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println(response)
+}
+
+// Removes mapping between Location and warehouses
+func (dbconfig *DbConfig) RemoveLocationMap(id string) error {
+	err := IDValidation(id)
+	if err != nil {
+		return err
+	}
+	delete_id, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	err = dbconfig.DB.RemoveShopifyLocationMap(context.Background(), delete_id)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 // Pushes an Inventory update to Shopify for a specific SKU
 func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShopify, product objects.Product) {
-	// field that links warehouse to location id should be added to the variant_qty table
 	for _, variant := range product.Variants {
+		shopify_inventory, err := dbconfig.DB.GetInventoryIDBySKU(context.Background(), variant.Sku)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		int_inventory_id, err := strconv.Atoi(shopify_inventory.ShopifyInventoryID)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		for _, variant_qty := range variant.VariantQuantity {
+			// checks if the location -> warehouse map has been completed
 			data, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), variant_qty.Name)
 			if err != nil {
 				log.Println(err)
 				return
 			}
-			if data.ShopifyLocationID != "" && len(data.ShopifyLocationID) > 0 {
-				// create the link between the item and the respective location
-
+			int_location_id, err := strconv.Atoi(data.ShopifyLocationID)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			// if invalid map
+			if int_location_id == 0 {
+				// reconfigure the location_id map inside settings
+				log.Println(errors.New("invalid location_id, please reconfigure map"))
+				return
+			}
+			// valid map
+			// checks if a variant (inventory_item_id) is linked to a location already
+			link, err := dbconfig.DB.GetInventoryLocationLink(context.Background(), database.GetInventoryLocationLinkParams{
+				InventoryItemID: shopify_inventory.ShopifyInventoryID,
+				WarehouseName:   variant_qty.Name,
+			})
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			// check if an item is linked to a Location already
+			// if it's not linked
+			if link.ShopifyLocationID == "" || len(link.ShopifyLocationID) == 0 {
+				// item is not linked to warehouse
+				// link it
+				linked_location_id, err := strconv.Atoi(data.ShopifyLocationID)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				_, err = configShopify.AddInventoryItemToLocation(linked_location_id, int_inventory_id)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				err = dbconfig.DB.CreateShopifyLocation(context.Background(), database.CreateShopifyLocationParams{
+					ID:                   uuid.New(),
+					ShopifyWarehouseName: data.ShopifyWarehouseName,
+					ShopifyLocationID:    data.ShopifyLocationID,
+					WarehouseName:        variant_qty.Name,
+					CreatedAt:            time.Now().UTC(),
+					UpdatedAt:            time.Now().UTC(),
+				})
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, variant_qty.Value)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+			} else {
+				_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, variant_qty.Value)
+				if err != nil {
+					log.Println(err)
+					return
+				}
 			}
 		}
 	}
-
-	// loop through all variants of the product
-	// get the location_id for the respective variant from the database variants_qty table
-	// dbconfig.DB.GetShopifyLocationByWarehouse()
-	// if the location_id exists and is non-zero
-	// create the link between the item and the respective location
-	// this will use the
-	// if its a valid location_id, then proceed with adjusting the qty of the item
-	// otherwise if its invalid then error message should pop up (404)
-	// advise user to reconfigure the location_id map
-
 }
 
 // Pushes a product to Shopify

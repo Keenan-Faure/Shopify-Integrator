@@ -218,6 +218,22 @@ func createRoutes() map[string]objects.Route {
 			Format:        objects.RequestBodyCustomer{},
 			Authorization: "Authorization: ApiKey <key>",
 		},
+		"POST /api/inventory": {
+			Description:   "Adds location-warehouse map",
+			Supports:      []string{"POST"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   true,
+			Format:        objects.RequestWarehouseLocation{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"DELETE /api/inventory/{id}": {
+			Description:   "Removes a location-warehouse map",
+			Supports:      []string{"DELETE"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   true,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
 	}
 	return routes
 }
