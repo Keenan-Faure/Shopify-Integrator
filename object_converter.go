@@ -29,13 +29,14 @@ func ConvertVariantToShopifyProdVariant(product objects.Product) []objects.Shopi
 	variants := []objects.ShopifyProdVariant{}
 	for _, value := range product.Variants {
 		variants = append(variants, objects.ShopifyProdVariant{
-			Sku:            value.Sku,
-			Price:          "0",
-			CompareAtPrice: "0",
-			Option1:        value.Option1,
-			Option2:        value.Option2,
-			Option3:        value.Option3,
-			Barcode:        value.Barcode,
+			Sku:                 value.Sku,
+			Price:               "0",
+			CompareAtPrice:      "0",
+			Option1:             value.Option1,
+			Option2:             value.Option2,
+			Option3:             value.Option3,
+			Barcode:             value.Barcode,
+			InventoryManagement: "shopify",
 		})
 	}
 	return variants
@@ -59,13 +60,14 @@ func ConvertToShopifyIDs(product objects.ShopifyProductResponse) objects.Shopify
 func ConvertVariantToShopify(variant objects.ProductVariant) objects.ShopifyVariant {
 	return objects.ShopifyVariant{
 		ShopifyVar: objects.ShopifyVar{
-			Sku:            variant.Sku,
-			Price:          "0", // TODO have a setting to set the default price
-			CompareAtPrice: "0",
-			Option1:        variant.Option1,
-			Option2:        variant.Option2,
-			Option3:        variant.Option3,
-			Barcode:        variant.Barcode,
+			Sku:                 variant.Sku,
+			Price:               "0",
+			CompareAtPrice:      "0",
+			Option1:             variant.Option1,
+			Option2:             variant.Option2,
+			Option3:             variant.Option3,
+			Barcode:             variant.Barcode,
+			InventoryManagement: "shopify", // TODO create a product field for this?
 		},
 	}
 }

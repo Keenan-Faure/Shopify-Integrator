@@ -18,6 +18,7 @@ WHERE warehouse_name = $4;
 
 -- name: GetShopifyLocationByWarehouse :one
 SELECT
+    id,
     shopify_warehouse_name,
     shopify_location_id,
     warehouse_name,

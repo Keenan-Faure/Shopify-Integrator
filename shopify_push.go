@@ -54,24 +54,36 @@ func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShop
 	for _, variant := range product.Variants {
 		shopify_inventory, err := dbconfig.DB.GetInventoryIDBySKU(context.Background(), variant.Sku)
 		if err != nil {
-			log.Println(err)
+			log.Println("1 | " + err.Error())
 			return
 		}
 		int_inventory_id, err := strconv.Atoi(shopify_inventory.ShopifyInventoryID)
 		if err != nil {
-			log.Println(err)
+			log.Println("2 | " + err.Error())
+			return
+		}
+		if int_inventory_id == 0 {
+			// TODO will the ShopifyInventoryID ever be blank?
+			log.Println(errors.New("invalid variant inventory id"))
 			return
 		}
 		for _, variant_qty := range variant.VariantQuantity {
 			// checks if the location -> warehouse map has been completed
+			fmt.Println("Warehouse Name -- " + variant_qty.Name)
 			data, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), variant_qty.Name)
 			if err != nil {
-				log.Println(err)
-				return
+				if err.Error() == "sql: no rows in result set" {
+					log.Println(errors.New("invalid location_id, please reconfigure map"))
+					return
+				} else {
+					log.Println("3 | " + err.Error())
+					return
+				}
 			}
 			int_location_id, err := strconv.Atoi(data.ShopifyLocationID)
+			fmt.Println("Location_id -- " + fmt.Sprint(int_location_id))
 			if err != nil {
-				log.Println(err)
+				log.Println("4 | " + err.Error())
 				return
 			}
 			// if invalid map
@@ -87,8 +99,10 @@ func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShop
 				WarehouseName:   variant_qty.Name,
 			})
 			if err != nil {
-				log.Println(err)
-				return
+				if err.Error() != "sql: no rows in result set" {
+					log.Println("5 | " + err.Error())
+					return
+				}
 			}
 			// check if an item is linked to a Location already
 			// if it's not linked
@@ -97,35 +111,24 @@ func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShop
 				// link it
 				linked_location_id, err := strconv.Atoi(data.ShopifyLocationID)
 				if err != nil {
-					log.Println(err)
+					log.Println("6 | " + err.Error())
 					return
 				}
+				fmt.Println("Link | Location id -- " + fmt.Sprint(linked_location_id) + " --- inventory id -- " + fmt.Sprint(int_inventory_id))
 				_, err = configShopify.AddInventoryItemToLocation(linked_location_id, int_inventory_id)
 				if err != nil {
-					log.Println(err)
-					return
-				}
-				err = dbconfig.DB.CreateShopifyLocation(context.Background(), database.CreateShopifyLocationParams{
-					ID:                   uuid.New(),
-					ShopifyWarehouseName: data.ShopifyWarehouseName,
-					ShopifyLocationID:    data.ShopifyLocationID,
-					WarehouseName:        variant_qty.Name,
-					CreatedAt:            time.Now().UTC(),
-					UpdatedAt:            time.Now().UTC(),
-				})
-				if err != nil {
-					log.Println(err)
+					log.Println("7 | " + err.Error())
 					return
 				}
 				_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, variant_qty.Value)
 				if err != nil {
-					log.Println(err)
+					log.Println("8 | " + err.Error())
 					return
 				}
 			} else {
 				_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, variant_qty.Value)
 				if err != nil {
-					log.Println(err)
+					log.Println("9 | " + err.Error())
 					return
 				}
 			}
@@ -190,6 +193,7 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 			return
 		}
 	}
+	dbconfig.PushProductInventory(configShopify, product)
 }
 
 func (dbconfig *DbConfig) CollectionShopfy(

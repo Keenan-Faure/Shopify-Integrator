@@ -507,13 +507,14 @@ type ShopifyProd struct {
 }
 
 type ShopifyProdVariant struct {
-	Sku            string `json:"sku"`
-	Price          string `json:"price"`
-	CompareAtPrice string `json:"compare_at_price"`
-	Option1        string `json:"option1"`
-	Option2        string `json:"option2"`
-	Option3        string `json:"option3"`
-	Barcode        string `json:"barcode"`
+	Sku                 string `json:"sku"`
+	Price               string `json:"price"`
+	CompareAtPrice      string `json:"compare_at_price"`
+	Option1             string `json:"option1"`
+	Option2             string `json:"option2"`
+	Option3             string `json:"option3"`
+	Barcode             string `json:"barcode"`
+	InventoryManagement string `json:"inventory_management"`
 }
 
 type ShopifyVariant struct {
@@ -521,13 +522,14 @@ type ShopifyVariant struct {
 }
 
 type ShopifyVar struct {
-	Sku            string `json:"sku"`
-	Price          string `json:"price"`
-	CompareAtPrice string `json:"compare_at_price"`
-	Option1        string `json:"option1"`
-	Option2        string `json:"option2"`
-	Option3        string `json:"option3"`
-	Barcode        string `json:"barcode"`
+	Sku                 string `json:"sku"`
+	Price               string `json:"price"`
+	CompareAtPrice      string `json:"compare_at_price"`
+	Option1             string `json:"option1"`
+	Option2             string `json:"option2"`
+	Option3             string `json:"option3"`
+	Barcode             string `json:"barcode"`
+	InventoryManagement string `json:"inventory_management"`
 }
 
 type ShopifyOptions struct {
