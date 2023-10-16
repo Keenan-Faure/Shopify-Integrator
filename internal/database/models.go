@@ -118,6 +118,15 @@ type ShopifyCollection struct {
 	UpdatedAt           time.Time      `json:"updated_at"`
 }
 
+type ShopifyInventory struct {
+	ID                uuid.UUID `json:"id"`
+	ShopifyLocationID string    `json:"shopify_location_id"`
+	InventoryItemID   string    `json:"inventory_item_id"`
+	Available         int32     `json:"available"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
 type ShopifyLocation struct {
 	ID                   uuid.UUID `json:"id"`
 	ShopifyWarehouseName string    `json:"shopify_warehouse_name"`
@@ -134,6 +143,14 @@ type ShopifyPid struct {
 	ShopifyProductID string    `json:"shopify_product_id"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type ShopifySetting struct {
+	ID        uuid.UUID `json:"id"`
+	Key       string    `json:"key"`
+	Value     string    `json:"value"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ShopifyVid struct {

@@ -15,6 +15,58 @@ import (
 	"github.com/google/uuid"
 )
 
+// Calculate stock to send as the available_adjustment
+func (dbconfig *DbConfig) CalculateAvailableQuantity(
+	configShopify *shopify.ConfigShopify,
+	db_quantity int32,
+	location_id,
+	inventory_item_id string) int32 {
+	db_inventory_level, err := dbconfig.DB.GetShopifyInventory(context.Background(), database.GetShopifyInventoryParams{
+		InventoryItemID:   inventory_item_id,
+		ShopifyLocationID: location_id,
+	})
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return 0
+		}
+	}
+	if db_inventory_level.CreatedAt.IsZero() {
+		shopify_inventory_level, err := configShopify.GetShopifyInventoryLevel(location_id, inventory_item_id)
+		if err != nil {
+			log.Println(err)
+			return 0
+		}
+		available := int32(db_quantity) - (int32(shopify_inventory_level.Available) - db_inventory_level.Available)
+		err = dbconfig.DB.CreateShopifyInventoryRecord(context.Background(), database.CreateShopifyInventoryRecordParams{
+			ID:                uuid.New(),
+			ShopifyLocationID: fmt.Sprint(location_id),
+			InventoryItemID:   fmt.Sprint(inventory_item_id),
+			Available:         available,
+			CreatedAt:         time.Now().UTC(),
+			UpdatedAt:         time.Now().UTC(),
+		})
+		if err != nil {
+			log.Println(err)
+			return 0
+		}
+		return available
+	} else {
+		available := int32(db_quantity) - db_inventory_level.Available
+		err = dbconfig.DB.UpdateShopifyInventoryRecord(context.Background(), database.UpdateShopifyInventoryRecordParams{
+			Available:         available,
+			UpdatedAt:         time.Now().UTC(),
+			ShopifyLocationID: fmt.Sprint(location_id),
+			InventoryItemID:   fmt.Sprint(inventory_item_id),
+		})
+		if err != nil {
+			log.Println(err)
+			return 0
+		}
+		return available
+	}
+}
+
 // TODO create a feed that fetches all locations from shopify
 // pops up a list of locations and it asks the user which will be used, and which warehouse should be
 // mapped to the respective location
@@ -50,87 +102,84 @@ func (dbconfig *DbConfig) RemoveLocationMap(id string) error {
 }
 
 // Pushes an Inventory update to Shopify for a specific SKU
-func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShopify, product objects.Product) {
-	for _, variant := range product.Variants {
-		shopify_inventory, err := dbconfig.DB.GetInventoryIDBySKU(context.Background(), variant.Sku)
+func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShopify, variant objects.ProductVariant) {
+	shopify_inventory, err := dbconfig.DB.GetInventoryIDBySKU(context.Background(), variant.Sku)
+	if err != nil {
+		log.Println("1 | " + err.Error())
+		return
+	}
+	int_inventory_id, err := strconv.Atoi(shopify_inventory.ShopifyInventoryID)
+	if err != nil {
+		log.Println("2 | " + err.Error())
+		return
+	}
+	if int_inventory_id == 0 {
+		log.Println(errors.New("invalid variant inventory id"))
+		return
+	}
+	for _, variant_qty := range variant.VariantQuantity {
+		data, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), variant_qty.Name)
 		if err != nil {
-			log.Println("1 | " + err.Error())
-			return
-		}
-		int_inventory_id, err := strconv.Atoi(shopify_inventory.ShopifyInventoryID)
-		if err != nil {
-			log.Println("2 | " + err.Error())
-			return
-		}
-		if int_inventory_id == 0 {
-			// TODO will the ShopifyInventoryID ever be blank?
-			log.Println(errors.New("invalid variant inventory id"))
-			return
-		}
-		for _, variant_qty := range variant.VariantQuantity {
-			// checks if the location -> warehouse map has been completed
-			fmt.Println("Warehouse Name -- " + variant_qty.Name)
-			data, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), variant_qty.Name)
-			if err != nil {
-				if err.Error() == "sql: no rows in result set" {
-					log.Println(errors.New("invalid location_id, please reconfigure map"))
-					return
-				} else {
-					log.Println("3 | " + err.Error())
-					return
-				}
-			}
-			int_location_id, err := strconv.Atoi(data.ShopifyLocationID)
-			fmt.Println("Location_id -- " + fmt.Sprint(int_location_id))
-			if err != nil {
-				log.Println("4 | " + err.Error())
-				return
-			}
-			// if invalid map
-			if int_location_id == 0 {
-				// reconfigure the location_id map inside settings
+			if err.Error() == "sql: no rows in result set" {
 				log.Println(errors.New("invalid location_id, please reconfigure map"))
 				return
-			}
-			// valid map
-			// checks if a variant (inventory_item_id) is linked to a location already
-			link, err := dbconfig.DB.GetInventoryLocationLink(context.Background(), database.GetInventoryLocationLinkParams{
-				InventoryItemID: shopify_inventory.ShopifyInventoryID,
-				WarehouseName:   variant_qty.Name,
-			})
-			if err != nil {
-				if err.Error() != "sql: no rows in result set" {
-					log.Println("5 | " + err.Error())
-					return
-				}
-			}
-			// check if an item is linked to a Location already
-			// if it's not linked
-			if link.ShopifyLocationID == "" || len(link.ShopifyLocationID) == 0 {
-				// item is not linked to warehouse
-				// link it
-				linked_location_id, err := strconv.Atoi(data.ShopifyLocationID)
-				if err != nil {
-					log.Println("6 | " + err.Error())
-					return
-				}
-				fmt.Println("Link | Location id -- " + fmt.Sprint(linked_location_id) + " --- inventory id -- " + fmt.Sprint(int_inventory_id))
-				_, err = configShopify.AddInventoryItemToLocation(linked_location_id, int_inventory_id)
-				if err != nil {
-					log.Println("7 | " + err.Error())
-					return
-				}
-				_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, variant_qty.Value)
-				if err != nil {
-					log.Println("8 | " + err.Error())
-					return
-				}
 			} else {
-				_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, variant_qty.Value)
-				if err != nil {
-					log.Println("9 | " + err.Error())
-					return
-				}
+				log.Println("3 | " + err.Error())
+				return
+			}
+		}
+		int_location_id, err := strconv.Atoi(data.ShopifyLocationID)
+		if err != nil {
+			log.Println("4 | " + err.Error())
+			return
+		}
+		if int_location_id == 0 {
+			log.Println(errors.New("invalid location_id, please reconfigure map"))
+			return
+		}
+		link, err := dbconfig.DB.GetInventoryLocationLink(context.Background(), database.GetInventoryLocationLinkParams{
+			InventoryItemID: shopify_inventory.ShopifyInventoryID,
+			WarehouseName:   variant_qty.Name,
+		})
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				log.Println("5 | " + err.Error())
+				return
+			}
+		}
+		if link.ShopifyLocationID == "" || len(link.ShopifyLocationID) == 0 {
+			linked_location_id, err := strconv.Atoi(data.ShopifyLocationID)
+			if err != nil {
+				log.Println("6 | " + err.Error())
+				return
+			}
+			_, err = configShopify.AddInventoryItemToLocation(linked_location_id, int_inventory_id)
+			if err != nil {
+				log.Println("7 | " + err.Error())
+				return
+			}
+			available := dbconfig.CalculateAvailableQuantity(
+				configShopify,
+				int32(variant_qty.Value),
+				fmt.Sprint(linked_location_id),
+				fmt.Sprint(int_inventory_id),
+			)
+			_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, int(available))
+			if err != nil {
+				log.Println("8 | " + err.Error())
+				return
+			}
+		} else {
+			available := dbconfig.CalculateAvailableQuantity(
+				configShopify,
+				int32(variant_qty.Value),
+				fmt.Sprint(int_location_id),
+				fmt.Sprint(int_inventory_id),
+			)
+			_, err = configShopify.AddLocationQtyShopify(int_location_id, int_inventory_id, int(available))
+			if err != nil {
+				log.Println("10 | " + err.Error())
+				return
 			}
 		}
 	}
@@ -145,55 +194,80 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		return
 	}
 	shopifyProduct := ConvertProductToShopify(product)
-	if product_id != "" {
+	if product_id != "" && len(product_id) > 0 {
 		configShopify.UpdateProductShopify(shopifyProduct, product_id)
 		return
 	}
-	product_response, err := configShopify.AddProductShopify(shopifyProduct)
+	// TODO should it look until it finds a variant?
+	// Make this a setting
+	ids, err := configShopify.GetProductBySKU(product.Variants[0].Sku)
 	if err != nil {
-		// TODO log error to something
-		log.Println(err)
+		log.Println("1 -" + err.Error())
 		return
 	}
-	if product_response.Product.ID != 0 {
+	if ids.ProductID != "" && len(ids.ProductID) > 0 {
+		// update existing product on the website
+		product_data, err := configShopify.UpdateProductShopify(shopifyProduct, ids.ProductID)
+		if err != nil {
+			log.Println("2 -" + err.Error())
+			return
+		}
 		err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
 			ID:               uuid.New(),
 			ProductCode:      product.ProductCode,
 			ProductID:        product.ID,
-			ShopifyProductID: fmt.Sprint(product_response.Product.ID),
+			ShopifyProductID: fmt.Sprint(product_data.Product.ID),
 			CreatedAt:        time.Now().UTC(),
 			UpdatedAt:        time.Now().UTC(),
 		})
 		if err != nil {
+			log.Println("3 -" + err.Error())
+			return
+		}
+		for key := range product.Variants {
+			dbconfig.PushVariant(
+				configShopify,
+				product.Variants[key],
+				fmt.Sprint(product_data.Product.ID),
+				fmt.Sprint(product_data.Product.Variants[key].ID))
+		}
+	} else {
+		// add new product to website
+		product_data, err := configShopify.AddProductShopify(shopifyProduct)
+		if err != nil {
+			// TODO log error to something
 			log.Println(err)
 			return
 		}
-	}
-	for key := range product_response.Product.Variants {
-		if product_response.Product.Variants[key].ID != 0 {
-			err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
-				ID:                 uuid.New(),
-				Sku:                product.Variants[key].Sku,
-				ShopifyVariantID:   fmt.Sprint(product_response.Product.Variants[key].ID),
-				ShopifyInventoryID: fmt.Sprint(product_response.Product.Variants[key].InventoryItemID),
-				VariantID:          product.Variants[key].ID,
-				CreatedAt:          time.Now().UTC(),
-				UpdatedAt:          time.Now().UTC(),
+		if product_data.Product.ID != 0 {
+			err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
+				ID:               uuid.New(),
+				ProductCode:      product.ProductCode,
+				ProductID:        product.ID,
+				ShopifyProductID: fmt.Sprint(product_data.Product.ID),
+				CreatedAt:        time.Now().UTC(),
+				UpdatedAt:        time.Now().UTC(),
 			})
 			if err != nil {
 				log.Println(err)
 				return
 			}
 		}
-	}
-	if product_response.Product.ID != 0 {
-		err = dbconfig.CollectionShopfy(configShopify, product, product_response.Product.ID)
-		if err != nil {
-			log.Println(err)
-			return
+		if product_data.Product.ID != 0 {
+			err = dbconfig.CollectionShopfy(configShopify, product, product_data.Product.ID)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+		}
+		for key := range product.Variants {
+			dbconfig.PushVariant(
+				configShopify,
+				product.Variants[key],
+				fmt.Sprint(product_data.Product.ID),
+				fmt.Sprint(product_data.Product.Variants[key].ID))
 		}
 	}
-	dbconfig.PushProductInventory(configShopify, product)
 }
 
 func (dbconfig *DbConfig) CollectionShopfy(
@@ -255,17 +329,41 @@ func (dbconfig *DbConfig) CollectionShopfy(
 func (dbconfig *DbConfig) PushVariant(
 	configShopify *shopify.ConfigShopify,
 	variant objects.ProductVariant,
-	product_id string) {
+	product_id string,
+	product_variant_id string) {
+	shopifyVariant := ConvertVariantToShopify(variant)
+	if product_variant_id != "" && len(product_variant_id) > 0 {
+		variant_data, err := configShopify.UpdateVariantShopify(shopifyVariant, product_variant_id)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
+			ID:                 uuid.New(),
+			Sku:                variant.Sku,
+			ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
+			ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
+			VariantID:          variant.ID,
+			CreatedAt:          time.Now().UTC(),
+			UpdatedAt:          time.Now().UTC(),
+		})
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		dbconfig.PushProductInventory(configShopify, variant)
+		return
+	}
 	variant_id, err := GetVariantID(dbconfig, variant.Sku)
 	if err != nil {
 		// TODO log error to something
 		log.Println(err)
 		return
 	}
-	if variant_id != "" {
-		// If yes, then update (UpdateProductShopify)
-		// done
-		configShopify.UpdateVariantShopify(ConvertVariantToShopify(variant), variant_id)
+	if variant_id != "" && len(variant_id) > 0 {
+		configShopify.UpdateVariantShopify(shopifyVariant, variant_id)
+		dbconfig.PushProductInventory(configShopify, variant)
+		return
 	}
 	ids, err := configShopify.GetProductBySKU(variant.Sku)
 	if err != nil {
@@ -273,17 +371,29 @@ func (dbconfig *DbConfig) PushVariant(
 		return
 	}
 	if ids.VariantID != "" && len(ids.VariantID) > 0 {
-		// update existing variant.
-		err = configShopify.UpdateVariantShopify(ConvertVariantToShopify(variant), ids.VariantID)
+		variant_data, err := configShopify.UpdateVariantShopify(shopifyVariant, ids.VariantID)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-	} else {
-		// create new variant
-		variant_data, err := configShopify.AddVariantShopify(ConvertVariantToShopify(variant), product_id)
+		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
+			ID:                 uuid.New(),
+			Sku:                variant.Sku,
+			ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
+			ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
+			VariantID:          variant.ID,
+			CreatedAt:          time.Now().UTC(),
+			UpdatedAt:          time.Now().UTC(),
+		})
 		if err != nil {
 			log.Println(err)
+			return
+		}
+		dbconfig.PushProductInventory(configShopify, variant)
+	} else {
+		variant_data, err := configShopify.AddVariantShopify(shopifyVariant, product_id)
+		if err != nil {
+			log.Println("variant_error: " + err.Error())
 			return
 		}
 		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
@@ -303,6 +413,7 @@ func (dbconfig *DbConfig) PushVariant(
 }
 
 // Pushes all products in database to Shopify
+// make this a go routine
 func Syncronize() {
 	// Retrieve all products from database in batches and process them
 	// by (loop) products -> (loop) variants

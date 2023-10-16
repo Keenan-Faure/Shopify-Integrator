@@ -7,10 +7,118 @@ import (
 )
 
 // shopify_push.go
+type ShopifyIDs struct {
+	ProductID string        `json:"product_id"`
+	Variants  []ShopifyVIDs `json:"variants"`
+}
+
+type ShopifyVIDs struct {
+	VariantID string `json:"variant_id"`
+}
+
+type AddShopifyCustomCollection struct {
+	CustomCollection struct {
+		Title string `json:"title"`
+	} `json:"custom_collection"`
+}
+
+type AddProducToShopifyCollection struct {
+	Collect struct {
+		ProductID    int `json:"product_id"`
+		CollectionID int `json:"collection_id"`
+	} `json:"collect"`
+}
+
+type AddInventoryItem struct {
+	LocationID          int `json:"location_id"`
+	InventoryItemID     int `json:"inventory_item_id"`
+	AvailableAdjustment int `json:"available_adjustment"`
+}
+
+type AddInventoryItemToLocation struct {
+	LocationID      int `json:"location_id"`
+	InventoryItemID int `json:"inventory_item_id"`
+}
+
+type GetShopifyInventoryLevels struct {
+	InventoryItemID string `json:"inventory_item_id"`
+	Available       int    `json:"available"`
+	LocationID      string `json:"location_id"`
+}
 
 type ResponseIDs struct {
 	ProductID string `json:"id"`
 	VariantID string `json:"variant_id"`
+}
+
+type ResponseAddInventoryItem struct {
+	InventoryLevel struct {
+		InventoryItemID   int    `json:"inventory_item_id"`
+		LocationID        int    `json:"location_id"`
+		Available         int    `json:"available"`
+		UpdatedAt         string `json:"updated_at"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"inventory_level"`
+}
+
+type ResponseAddInventoryItemLocation struct {
+	InventoryLevel struct {
+		InventoryItemID   int    `json:"inventory_item_id"`
+		LocationID        int    `json:"location_id"`
+		Available         int    `json:"available"`
+		UpdatedAt         string `json:"updated_at"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"inventory_level"`
+}
+
+type ResponseAddProductToShopifyCollection struct {
+	Collect struct {
+		ID           int    `json:"id"`
+		CollectionID int    `json:"collection_id"`
+		ProductID    int    `json:"product_id"`
+		CreatedAt    string `json:"created_at"`
+		UpdatedAt    string `json:"updated_at"`
+		Position     int    `json:"position"`
+		SortValue    string `json:"sort_value"`
+	} `json:"collect"`
+}
+
+type ShopifyVariantResponse struct {
+	Variant struct {
+		ID                   int     `json:"id"`
+		ProductID            int     `json:"product_id"`
+		Title                string  `json:"title"`
+		Price                string  `json:"price"`
+		Sku                  string  `json:"sku"`
+		Position             int     `json:"position"`
+		InventoryPolicy      string  `json:"inventory_policy"`
+		CompareAtPrice       any     `json:"compare_at_price"`
+		FulfillmentService   string  `json:"fulfillment_service"`
+		InventoryManagement  string  `json:"inventory_management"`
+		Option1              string  `json:"option1"`
+		Option2              any     `json:"option2"`
+		Option3              any     `json:"option3"`
+		CreatedAt            string  `json:"created_at"`
+		UpdatedAt            string  `json:"updated_at"`
+		Taxable              bool    `json:"taxable"`
+		Barcode              any     `json:"barcode"`
+		Grams                int     `json:"grams"`
+		ImageID              any     `json:"image_id"`
+		Weight               float64 `json:"weight"`
+		WeightUnit           string  `json:"weight_unit"`
+		InventoryItemID      int     `json:"inventory_item_id"`
+		InventoryQuantity    int     `json:"inventory_quantity"`
+		OldInventoryQuantity int     `json:"old_inventory_quantity"`
+		PresentmentPrices    []struct {
+			Price struct {
+				Amount       string `json:"amount"`
+				CurrencyCode string `json:"currency_code"`
+			} `json:"price"`
+			CompareAtPrice any `json:"compare_at_price"`
+		} `json:"presentment_prices"`
+		RequiresShipping  bool   `json:"requires_shipping"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"variant"`
 }
 
 type ShopifyProductResponse struct {
@@ -72,110 +180,6 @@ type ShopifyProductResponse struct {
 		Vendor string `json:"vendor"`
 	} `json:"product"`
 }
-
-type ShopifyIDs struct {
-	ProductID string        `json:"product_id"`
-	Variants  []ShopifyVIDs `json:"variants"`
-}
-
-type ShopifyVIDs struct {
-	VariantID string `json:"variant_id"`
-}
-
-type ShopifyVariantResponse struct {
-	Variant struct {
-		ID                   int    `json:"id"`
-		ProductID            int    `json:"product_id"`
-		Title                string `json:"title"`
-		Price                string `json:"price"`
-		Sku                  string `json:"sku"`
-		Position             int    `json:"position"`
-		InventoryPolicy      string `json:"inventory_policy"`
-		CompareAtPrice       any    `json:"compare_at_price"`
-		FulfillmentService   string `json:"fulfillment_service"`
-		InventoryManagement  string `json:"inventory_management"`
-		Option1              string `json:"option1"`
-		Option2              any    `json:"option2"`
-		Option3              any    `json:"option3"`
-		CreatedAt            string `json:"created_at"`
-		UpdatedAt            string `json:"updated_at"`
-		Taxable              bool   `json:"taxable"`
-		Barcode              any    `json:"barcode"`
-		Grams                int    `json:"grams"`
-		ImageID              any    `json:"image_id"`
-		Weight               int    `json:"weight"`
-		WeightUnit           string `json:"weight_unit"`
-		InventoryItemID      int    `json:"inventory_item_id"`
-		InventoryQuantity    int    `json:"inventory_quantity"`
-		OldInventoryQuantity int    `json:"old_inventory_quantity"`
-		PresentmentPrices    []struct {
-			Price struct {
-				Amount       string `json:"amount"`
-				CurrencyCode string `json:"currency_code"`
-			} `json:"price"`
-			CompareAtPrice any `json:"compare_at_price"`
-		} `json:"presentment_prices"`
-		RequiresShipping  bool   `json:"requires_shipping"`
-		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
-	} `json:"variant"`
-}
-
-type AddProducToShopifyCollection struct {
-	Collect struct {
-		ProductID    int `json:"product_id"`
-		CollectionID int `json:"collection_id"`
-	} `json:"collect"`
-}
-
-type AddInventoryItem struct {
-	LocationID          int `json:"location_id"`
-	InventoryItemID     int `json:"inventory_item_id"`
-	AvailableAdjustment int `json:"available_adjustment"`
-}
-
-type ResponseAddInventoryItem struct {
-	InventoryLevel struct {
-		InventoryItemID   int    `json:"inventory_item_id"`
-		LocationID        int    `json:"location_id"`
-		Available         int    `json:"available"`
-		UpdatedAt         string `json:"updated_at"`
-		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
-	} `json:"inventory_level"`
-}
-
-type AddInventoryItemToLocation struct {
-	LocationID      int `json:"location_id"`
-	InventoryItemID int `json:"inventory_item_id"`
-}
-
-type ResponseAddInventoryItemLocation struct {
-	InventoryLevel struct {
-		InventoryItemID   int    `json:"inventory_item_id"`
-		LocationID        int    `json:"location_id"`
-		Available         int    `json:"available"`
-		UpdatedAt         string `json:"updated_at"`
-		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
-	} `json:"inventory_level"`
-}
-
-type ResponseAddProductToShopifyCollection struct {
-	Collect struct {
-		ID           int    `json:"id"`
-		CollectionID int    `json:"collection_id"`
-		ProductID    int    `json:"product_id"`
-		CreatedAt    string `json:"created_at"`
-		UpdatedAt    string `json:"updated_at"`
-		Position     int    `json:"position"`
-		SortValue    string `json:"sort_value"`
-	} `json:"collect"`
-}
-
-type AddShopifyCustomCollection struct {
-	CustomCollection struct {
-		Title string `json:"title"`
-	} `json:"custom_collection"`
-}
-
 type ResponseShopifyCustomCollection struct {
 	CustomCollection struct {
 		ID                int    `json:"id"`
@@ -220,6 +224,15 @@ type ResponseShopifyGetLocations struct {
 		LocalizedCountryName  string    `json:"localized_country_name"`
 		LocalizedProvinceName string    `json:"localized_province_name"`
 	} `json:"locations"`
+}
+type ResponseShopifyInventoryLevels struct {
+	InventoryLevels []struct {
+		InventoryItemID   int    `json:"inventory_item_id"`
+		LocationID        int    `json:"location_id"`
+		Available         int    `json:"available"`
+		UpdatedAt         string `json:"updated_at"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"inventory_levels"`
 }
 
 // iocsv.go
@@ -505,7 +518,6 @@ type ShopifyProd struct {
 	Variants []ShopifyProdVariant `json:"variants"`
 	Options  []ShopifyOptions     `json:"options"`
 }
-
 type ShopifyProdVariant struct {
 	Sku                 string `json:"sku"`
 	Price               string `json:"price"`
@@ -516,11 +528,9 @@ type ShopifyProdVariant struct {
 	Barcode             string `json:"barcode"`
 	InventoryManagement string `json:"inventory_management"`
 }
-
 type ShopifyVariant struct {
 	ShopifyVar `json:"variant"`
 }
-
 type ShopifyVar struct {
 	Sku                 string `json:"sku"`
 	Price               string `json:"price"`
@@ -531,8 +541,18 @@ type ShopifyVar struct {
 	Barcode             string `json:"barcode"`
 	InventoryManagement string `json:"inventory_management"`
 }
-
 type ShopifyOptions struct {
 	Name   string   `json:"name"`
 	Values []string `json:"values"`
+}
+
+// shopify_settings.go
+
+type ShopifySettings struct {
+	Key string `json:"key"`
+}
+
+type RequestShopifySettings struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }

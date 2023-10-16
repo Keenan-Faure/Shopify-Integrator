@@ -11,6 +11,32 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validate: ShopifySettings
+func ShopifySettingsValidation(
+	shopify_settings_map []objects.RequestShopifySettings,
+	setting_keys []objects.ShopifySettings) error {
+	for _, map_value := range shopify_settings_map {
+		if value.Key == "" {
+			return errors.New("data validation error")
+		}
+		for _, settings_value := range setting_keys {
+			if(value.Key == )
+		}
+	}
+	return nil
+}
+
+// Decode: ShopifySettings
+func DecodeShopifySettings(r *http.Request) (objects.RequestShopifySettings, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestShopifySettings{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return objects.RequestShopifySettings{}, err
+	}
+	return params, nil
+}
+
 // Validation: Inventory Map
 func InventoryMapValidation(location_map objects.RequestWarehouseLocation) error {
 	if location_map.LocationID == "" || location_map.WarehouseName == "" {
