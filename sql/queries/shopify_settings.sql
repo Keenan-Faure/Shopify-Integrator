@@ -18,3 +18,10 @@ WHERE key = $2;
 -- name: RemoveShopifySetting :exec
 DELETE FROM shopify_settings
 WHERE key = $1;
+
+-- name: GetShopifySettingByKey :one
+SELECT
+    value,
+    updated_at
+FROM shopify_settings
+WHERE key = $1;

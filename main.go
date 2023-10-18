@@ -82,6 +82,10 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
 	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
 
+	// shopify settings
+	api.Post("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
+	api.Delete("/shopify/settings", dbconfig.middlewareAuth(dbconfig.RemoveShopifySettings))
+
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))

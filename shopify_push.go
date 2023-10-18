@@ -15,6 +15,24 @@ import (
 	"github.com/google/uuid"
 )
 
+// Return the price of the product for a specific tier
+func (dbconfig *DbConfig) ShopifyVariantPricing(
+	variant objects.ProductVariant,
+	price_tier string) string {
+	price_name, err := dbconfig.GetSettingValue(price_tier)
+	// get the price of the product here
+	if err != nil {
+		log.Println(err)
+		return "0"
+	}
+	for _, price := range variant.VariantPricing {
+		if price.Name == price_name {
+			return price.Value
+		}
+	}
+	return "0"
+}
+
 // Calculate stock to send as the available_adjustment
 func (dbconfig *DbConfig) CalculateAvailableQuantity(
 	configShopify *shopify.ConfigShopify,
@@ -32,7 +50,7 @@ func (dbconfig *DbConfig) CalculateAvailableQuantity(
 		}
 	}
 	if db_inventory_level.CreatedAt.IsZero() {
-		shopify_inventory_level, err := configShopify.GetShopifyInventoryLevel(location_id, inventory_item_id)
+		shopify_inventory_level, err := configShopify.GetShopifyInventoryLevels(location_id, inventory_item_id)
 		if err != nil {
 			log.Println(err)
 			return 0
@@ -332,6 +350,10 @@ func (dbconfig *DbConfig) PushVariant(
 	product_id string,
 	product_variant_id string) {
 	shopifyVariant := ConvertVariantToShopify(variant)
+
+	// Sets the price for the variant here
+	shopifyVariant.Price = dbconfig.ShopifyVariantPricing(variant, "default_price_tier")
+	shopifyVariant.CompareAtPrice = dbconfig.ShopifyVariantPricing(variant, "default_compare_at_price")
 	if product_variant_id != "" && len(product_variant_id) > 0 {
 		variant_data, err := configShopify.UpdateVariantShopify(shopifyVariant, product_variant_id)
 		if err != nil {

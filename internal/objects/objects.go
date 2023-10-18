@@ -40,10 +40,14 @@ type AddInventoryItemToLocation struct {
 	InventoryItemID int `json:"inventory_item_id"`
 }
 
+type GetShopifyInventoryLevelsList struct {
+	InventoryLevels []GetShopifyInventoryLevels `json:"inventory_levels"`
+}
+
 type GetShopifyInventoryLevels struct {
-	InventoryItemID string `json:"inventory_item_id"`
-	Available       int    `json:"available"`
-	LocationID      string `json:"location_id"`
+	InventoryItemID int `json:"inventory_item_id"`
+	Available       int `json:"available"`
+	LocationID      int `json:"location_id"`
 }
 
 type ResponseIDs struct {

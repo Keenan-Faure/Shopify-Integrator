@@ -27,7 +27,7 @@ type ConfigShopify struct {
 
 // Retrieves a list of inventory levels
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#get-inventory-levels
-func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
+func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevels, error) {
 	res, err := configShopify.FetchHelper(
@@ -46,12 +46,12 @@ func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 	if res.StatusCode != 200 {
 		return objects.GetShopifyInventoryLevels{}, errors.New(string(respBody))
 	}
-	response := objects.GetShopifyInventoryLevels{}
+	response := objects.GetShopifyInventoryLevelsList{}
 	err = json.Unmarshal(respBody, &response)
 	if err != nil {
 		return objects.GetShopifyInventoryLevels{}, err
 	}
-	return response, nil
+	return response.InventoryLevels[0], nil
 }
 
 // Fetches all locations from Shopify:

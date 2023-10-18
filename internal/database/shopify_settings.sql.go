@@ -43,6 +43,26 @@ func (q *Queries) AddShopifySetting(ctx context.Context, arg AddShopifySettingPa
 	return err
 }
 
+const getShopifySettingByKey = `-- name: GetShopifySettingByKey :one
+SELECT
+    value,
+    updated_at
+FROM shopify_settings
+WHERE key = $1
+`
+
+type GetShopifySettingByKeyRow struct {
+	Value     string    `json:"value"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (q *Queries) GetShopifySettingByKey(ctx context.Context, key string) (GetShopifySettingByKeyRow, error) {
+	row := q.db.QueryRowContext(ctx, getShopifySettingByKey, key)
+	var i GetShopifySettingByKeyRow
+	err := row.Scan(&i.Value, &i.UpdatedAt)
+	return i, err
+}
+
 const removeShopifySetting = `-- name: RemoveShopifySetting :exec
 DELETE FROM shopify_settings
 WHERE key = $1

@@ -13,21 +13,57 @@ import (
 
 // Validate: ShopifySettings
 func ShopifySettingsValidation(
-	shopify_settings_map []objects.RequestShopifySettings,
+	request_settings_map []objects.RequestShopifySettings,
 	setting_keys []objects.ShopifySettings) error {
-	for _, map_value := range shopify_settings_map {
-		if value.Key == "" {
-			return errors.New("data validation error")
+	for _, map_value := range request_settings_map {
+		found := false
+		if map_value.Key == "" {
+			return errors.New("settings key cannot be blank")
 		}
 		for _, settings_value := range setting_keys {
-			if(value.Key == )
+			if map_value.Key == settings_value.Key {
+				found = true
+			}
+		}
+		if !found {
+			return errors.New("setting " + map_value.Key + " not allowed")
 		}
 	}
 	return nil
 }
 
+// Validate: ShopifySetting
+func ShopifySettingValidation(
+	shopify_settings_map objects.RequestShopifySettings,
+	setting_keys []objects.ShopifySettings) error {
+	found := false
+	if shopify_settings_map.Key == "" {
+		return errors.New("settings key cannot be blank")
+	}
+	for _, settings_value := range setting_keys {
+		if shopify_settings_map.Key == settings_value.Key {
+			found = true
+		}
+	}
+	if !found {
+		return errors.New("setting " + shopify_settings_map.Key + " not allowed")
+	}
+	return nil
+}
+
 // Decode: ShopifySettings
-func DecodeShopifySettings(r *http.Request) (objects.RequestShopifySettings, error) {
+func DecodeShopifySettings(r *http.Request) ([]objects.RequestShopifySettings, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := []objects.RequestShopifySettings{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return []objects.RequestShopifySettings{}, err
+	}
+	return params, nil
+}
+
+// Decode: ShopifySetting
+func DecodeShopifySetting(r *http.Request) (objects.RequestShopifySettings, error) {
 	decoder := json.NewDecoder(r.Body)
 	params := objects.RequestShopifySettings{}
 	err := decoder.Decode(&params)
