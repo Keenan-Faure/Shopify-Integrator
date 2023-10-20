@@ -101,6 +101,16 @@ type ProductOption struct {
 	Position  int32     `json:"position"`
 }
 
+type QueueItem struct {
+	ID          uuid.UUID `json:"id"`
+	ObjectID    uuid.UUID `json:"object_id"`
+	Type        string    `json:"type"`
+	Instruction string    `json:"instruction"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
 type RegisterToken struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`

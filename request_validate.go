@@ -11,6 +11,53 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validate: QueueItem
+func QueueItemValidation(
+	request objects.RequestQueueItem) error {
+	requests_allowed := []string{
+		"product",
+		"product_variant",
+		"order",
+	}
+	instructions_allowed := []string{
+		"add_product",
+		"add_variant",
+		"add_order",
+		"update_product",
+		"update_variant",
+		"update_order",
+	}
+	if request.Type == "" {
+		return errors.New("invalid request type")
+	}
+	for _, requests := range requests_allowed {
+		if requests == request.Type {
+			break
+		}
+	}
+	for _, instructions := range instructions_allowed {
+		if instructions == request.Instruction {
+			break
+		}
+	}
+	_, err := uuid.Parse(request.ObjectID.String())
+	if err != nil {
+		return errors.New("could not decode feed_id: " + request.ObjectID.String())
+	}
+	return errors.New("invalid request type")
+}
+
+// Decode: QueueItem
+func DecodeQueueItem(r *http.Request) (objects.RequestQueueItem, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestQueueItem{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return objects.RequestQueueItem{}, err
+	}
+	return params, nil
+}
+
 // Validate: ShopifySettings
 func ShopifySettingsValidation(
 	request_settings_map []objects.RequestShopifySettings,

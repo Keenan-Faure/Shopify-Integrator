@@ -86,6 +86,11 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Post("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
 	api.Delete("/shopify/settings", dbconfig.middlewareAuth(dbconfig.RemoveShopifySettings))
 
+	// queue
+	api.Post("/queue", dbconfig.middlewareAuth(dbconfig.QueuePush))
+	api.Post("/queue/worker", dbconfig.middlewareAuth(dbconfig.QueuePopAndProcess))
+	api.Get("/queue", dbconfig.middlewareAuth(dbconfig.QueueViewNextItem))
+
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))

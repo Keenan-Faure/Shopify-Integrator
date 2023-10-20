@@ -873,7 +873,7 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 	}
 	products := []objects.Product{}
 	for _, value := range dbProducts {
-		prod, err := CompileProductData(dbconfig, value.ID, r.Context(), true)
+		prod, err := CompileProductData(dbconfig, value.ID, r.Context(), false)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return

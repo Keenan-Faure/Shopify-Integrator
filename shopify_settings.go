@@ -12,7 +12,7 @@ import (
 
 // POST /api/shopify/settings
 func (dbconfig *DbConfig) AddShopifySetting(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// TODO make a better way of storing these keys (struct in objects?)
+	// TODO store these settings inside the database
 	setting_keys := []objects.ShopifySettings{
 		{
 			Key: "default_price_tier",

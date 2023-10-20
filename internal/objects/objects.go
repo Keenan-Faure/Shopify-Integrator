@@ -6,6 +6,32 @@ import (
 	"github.com/google/uuid"
 )
 
+// queue.go
+
+type ResponseQueueItem struct {
+	ID       uuid.UUID `json:"queue_id"`
+	ObjectID string    `json:"object_id"`
+}
+
+type RequestQueueItem struct {
+	Type        string    `json:"type"`
+	Status      string    `json:"status"`
+	Instruction string    `json:"instruction"`
+	ObjectID    uuid.UUID `json:"object_id"`
+}
+
+type QueueItemProduct struct {
+	Status      string  `json:"status"`
+	Instruction string  `json:"instruction"`
+	Product     Product `json:"object"`
+}
+
+type QueueItemOrder struct {
+	Status      string `json:"status"`
+	Instruction string `json:"instruction"`
+	Order       Order  `json:"object"`
+}
+
 // shopify_push.go
 type ShopifyIDs struct {
 	ProductID string        `json:"product_id"`
