@@ -409,14 +409,14 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			Endpoint:    "queue",
 			ApiKey:      dbUser.ApiKey,
 			Method:      http.MethodPost,
-		}, &buffer)
+			Object:      order_body,
+		}, nil)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, response_payload)
 	} else {
-		fmt.Println("I am inside else")
 		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
 			Type:        "order",
 			Status:      "in-queue",
@@ -424,6 +424,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			Endpoint:    "queue",
 			ApiKey:      dbUser.ApiKey,
 			Method:      http.MethodPost,
+			Object:      order_body,
 		}, &buffer)
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))

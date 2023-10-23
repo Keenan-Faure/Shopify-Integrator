@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"integrator/internal/database"
 	"io"
 	"net/http"
@@ -23,20 +23,17 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	fmt.Println("I am at 1")
 	err = QueueItemValidation(body)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	// converts the data to rawJSON
-	fmt.Println("I am at 2")
 	raw, err := json.Marshal(&body.Object)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	fmt.Println("I am at 3")
 	queue_id, err := dbconfig.DB.CreateQueueItem(r.Context(), database.CreateQueueItemParams{
 		ID:          uuid.New(),
 		Object:      raw,
@@ -50,7 +47,6 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	fmt.Println("I am at 4")
 	RespondWithJSON(w, http.StatusOK, objects.ResponseQueueItem{
 		ID:     queue_id,
 		Object: body,
@@ -181,10 +177,15 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, b
 	httpClient := http.Client{
 		Timeout: time.Second * 10,
 	}
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(request_data)
+	if err != nil {
+		return objects.ResponseQueueItem{}, err
+	}
 	req, err := http.NewRequest(
 		request_data.Method,
 		"http://localhost:"+utils.LoadEnv("port")+"/api/"+request_data.Endpoint,
-		body,
+		&buffer,
 	)
 	if request_data.ApiKey != "" {
 		req.Header.Add("Authorization", "ApiKey "+request_data.ApiKey)
@@ -201,7 +202,6 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, b
 	if err != nil {
 		return objects.ResponseQueueItem{}, err
 	}
-	fmt.Println(res.StatusCode)
 	if res.StatusCode != 200 {
 		return objects.ResponseQueueItem{}, err
 	}
