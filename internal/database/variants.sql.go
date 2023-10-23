@@ -158,6 +158,30 @@ func (q *Queries) GetVariantBySKU(ctx context.Context, sku string) (GetVariantBy
 	return i, err
 }
 
+const getVariantByVariantID = `-- name: GetVariantByVariantID :one
+SELECT
+    id, product_id, sku, option1, option2, option3, barcode, created_at, updated_at
+FROM variants
+WHERE id = $1
+`
+
+func (q *Queries) GetVariantByVariantID(ctx context.Context, id uuid.UUID) (Variant, error) {
+	row := q.db.QueryRowContext(ctx, getVariantByVariantID, id)
+	var i Variant
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Sku,
+		&i.Option1,
+		&i.Option2,
+		&i.Option3,
+		&i.Barcode,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getVariantIDByCode = `-- name: GetVariantIDByCode :one
 SELECT
     id

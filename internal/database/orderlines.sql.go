@@ -191,7 +191,7 @@ func (q *Queries) GetShippingLinesByOrder(ctx context.Context, orderID uuid.UUID
 	return items, nil
 }
 
-const updateOrderLine = `-- name: UpdateOrderLine :one
+const updateOrderLine = `-- name: UpdateOrderLine :exec
 UPDATE order_lines
 SET
     order_id = $1,
@@ -202,10 +202,8 @@ SET
     qty = $6,
     tax_rate = $7,
     tax_total = $8,
-    created_at = $9,
-    updated_at = $10
-WHERE id = $11
-RETURNING id, order_id, line_type, sku, price, barcode, qty, tax_total, tax_rate, created_at, updated_at
+    updated_at = $9
+WHERE id = $10
 `
 
 type UpdateOrderLineParams struct {
@@ -217,13 +215,12 @@ type UpdateOrderLineParams struct {
 	Qty       sql.NullInt32  `json:"qty"`
 	TaxRate   sql.NullString `json:"tax_rate"`
 	TaxTotal  sql.NullString `json:"tax_total"`
-	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	ID        uuid.UUID      `json:"id"`
 }
 
-func (q *Queries) UpdateOrderLine(ctx context.Context, arg UpdateOrderLineParams) (OrderLine, error) {
-	row := q.db.QueryRowContext(ctx, updateOrderLine,
+func (q *Queries) UpdateOrderLine(ctx context.Context, arg UpdateOrderLineParams) error {
+	_, err := q.db.ExecContext(ctx, updateOrderLine,
 		arg.OrderID,
 		arg.LineType,
 		arg.Sku,
@@ -232,23 +229,52 @@ func (q *Queries) UpdateOrderLine(ctx context.Context, arg UpdateOrderLineParams
 		arg.Qty,
 		arg.TaxRate,
 		arg.TaxTotal,
-		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.ID,
 	)
-	var i OrderLine
-	err := row.Scan(
-		&i.ID,
-		&i.OrderID,
-		&i.LineType,
-		&i.Sku,
-		&i.Price,
-		&i.Barcode,
-		&i.Qty,
-		&i.TaxTotal,
-		&i.TaxRate,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+	return err
+}
+
+const updateOrderLineByOrderAndSKU = `-- name: UpdateOrderLineByOrderAndSKU :exec
+UPDATE order_lines
+SET
+    line_type = $1,
+    sku = $2,
+    price = $3,
+    barcode = $4,
+    qty = $5,
+    tax_rate = $6,
+    tax_total = $7,
+    updated_at = $8
+WHERE order_id = $9
+AND sku = $10
+`
+
+type UpdateOrderLineByOrderAndSKUParams struct {
+	LineType  sql.NullString `json:"line_type"`
+	Sku       string         `json:"sku"`
+	Price     sql.NullString `json:"price"`
+	Barcode   sql.NullInt32  `json:"barcode"`
+	Qty       sql.NullInt32  `json:"qty"`
+	TaxRate   sql.NullString `json:"tax_rate"`
+	TaxTotal  sql.NullString `json:"tax_total"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	OrderID   uuid.UUID      `json:"order_id"`
+	Sku_2     string         `json:"sku_2"`
+}
+
+func (q *Queries) UpdateOrderLineByOrderAndSKU(ctx context.Context, arg UpdateOrderLineByOrderAndSKUParams) error {
+	_, err := q.db.ExecContext(ctx, updateOrderLineByOrderAndSKU,
+		arg.LineType,
+		arg.Sku,
+		arg.Price,
+		arg.Barcode,
+		arg.Qty,
+		arg.TaxRate,
+		arg.TaxTotal,
+		arg.UpdatedAt,
+		arg.OrderID,
+		arg.Sku_2,
 	)
-	return i, err
+	return err
 }

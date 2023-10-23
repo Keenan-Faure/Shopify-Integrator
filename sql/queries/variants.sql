@@ -47,12 +47,18 @@ SELECT
 FROM variants
 WHERE sku = $1;
 
--- name: RemoveVariant :exec
-DELETE FROM variants
-WHERE id = $1;
-
 -- name: GetVariantIDByCode :one
 SELECT
     id
 FROM variants
 WHERE sku = $1;
+
+-- name: GetVariantByVariantID :one
+SELECT
+    *
+FROM variants
+WHERE id = $1;
+
+-- name: RemoveVariant :exec
+DELETE FROM variants
+WHERE id = $1;

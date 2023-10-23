@@ -8,28 +8,35 @@ import (
 
 // queue.go
 
+type RequestQueueHelper struct {
+	Type        string      `json:"type"`
+	Status      string      `json:"status"`
+	Instruction string      `json:"instruction"`
+	Endpoint    string      `json:"endpoint"`
+	ApiKey      string      `json:"api_key"`
+	Method      string      `json:"method"`
+	Object      interface{} `json:"object"`
+}
+
 type ResponseQueueItem struct {
-	ID       uuid.UUID `json:"queue_id"`
-	ObjectID string    `json:"object_id"`
+	ID     uuid.UUID   `json:"queue_id"`
+	Object interface{} `json:"object"`
 }
 
 type RequestQueueItem struct {
-	Type        string    `json:"type"`
-	Status      string    `json:"status"`
-	Instruction string    `json:"instruction"`
-	ObjectID    uuid.UUID `json:"object_id"`
+	Type        string      `json:"type"`
+	Status      string      `json:"status"`
+	Instruction string      `json:"instruction"`
+	Object      interface{} `json:"object"`
 }
 
-type QueueItemProduct struct {
-	Status      string  `json:"status"`
-	Instruction string  `json:"instruction"`
-	Product     Product `json:"object"`
-}
-
-type QueueItemOrder struct {
-	Status      string `json:"status"`
-	Instruction string `json:"instruction"`
-	Order       Order  `json:"object"`
+type RequestQueueItemProducts struct {
+	SystemProductID string `json:"system_product_id"`
+	SystemVariantID string `json:"system_variant_id"`
+	Shopify         struct {
+		ProductID string `json:"product_id"`
+		VariantID string `json:"variant_id"`
+	} `json:"shopify"`
 }
 
 // shopify_push.go

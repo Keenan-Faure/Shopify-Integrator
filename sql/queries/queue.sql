@@ -1,7 +1,7 @@
 -- name: CreateQueueItem :one
 INSERT INTO queue_items(
     id,
-    object_id,
+    object,
     type,
     instruction,
     status,

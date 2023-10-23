@@ -16,7 +16,7 @@ INSERT INTO order_lines(
 )
 RETURNING *;
 
--- name: UpdateOrderLine :one
+-- name: UpdateOrderLine :exec
 UPDATE order_lines
 SET
     order_id = $1,
@@ -27,10 +27,22 @@ SET
     qty = $6,
     tax_rate = $7,
     tax_total = $8,
-    created_at = $9,
-    updated_at = $10
-WHERE id = $11
-RETURNING *;
+    updated_at = $9
+WHERE id = $10;
+
+-- name: UpdateOrderLineByOrderAndSKU :exec
+UPDATE order_lines
+SET
+    line_type = $1,
+    sku = $2,
+    price = $3,
+    barcode = $4,
+    qty = $5,
+    tax_rate = $6,
+    tax_total = $7,
+    updated_at = $8
+WHERE order_id = $9
+AND sku = $10;
 
 -- name: GetShippingLinesByOrder :many
 SELECT

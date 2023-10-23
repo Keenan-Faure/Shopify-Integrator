@@ -421,11 +421,7 @@ func CompileProductData(
 		}
 		return product_data, nil
 	}
-	variants, err := dbconfig.DB.GetProductVariants(ctx, product_id)
-	if err != nil {
-		return objects.Product{}, err
-	}
-	variant_data, err := CompileVariantData(dbconfig, variants, ctx)
+	variant_data, err := CompileVariantsData(dbconfig, product_id, ctx)
 	if err != nil {
 		return objects.Product{}, err
 	}
@@ -445,11 +441,15 @@ func CompileProductData(
 	return product_data, nil
 }
 
-// Compiles all variant data for a product into a single variable
-func CompileVariantData(
+// Compiles all variant data for a product
+func CompileVariantsData(
 	dbconfig *DbConfig,
-	variants []database.GetProductVariantsRow,
+	product_id uuid.UUID,
 	ctx context.Context) ([]objects.ProductVariant, error) {
+	variants, err := dbconfig.DB.GetProductVariants(ctx, product_id)
+	if err != nil {
+		return []objects.ProductVariant{}, err
+	}
 	variantsArray := []objects.ProductVariant{}
 	for _, value := range variants {
 		qty, err := dbconfig.DB.GetVariantQty(ctx, value.ID)
@@ -489,4 +489,52 @@ func CompileVariantData(
 		})
 	}
 	return variantsArray, nil
+}
+
+// Compiles a variant data of a single product
+func CompileVariantData(
+	dbconfig *DbConfig,
+	variant_id uuid.UUID,
+	ctx context.Context) (objects.ProductVariant, error) {
+	variant, err := dbconfig.DB.GetVariantByVariantID(ctx, variant_id)
+	if err != nil {
+		return objects.ProductVariant{}, err
+	}
+	variant_data := objects.ProductVariant{}
+	qty, err := dbconfig.DB.GetVariantQty(ctx, variant.ID)
+	if err != nil {
+		return variant_data, err
+	}
+	variant_qty := []objects.VariantQty{}
+	for _, sub_value_qty := range qty {
+		variant_qty = append(variant_qty, objects.VariantQty{
+			IsDefault: sub_value_qty.Isdefault,
+			Name:      sub_value_qty.Name,
+			Value:     int(sub_value_qty.Value.Int32),
+		})
+	}
+	pricing, err := dbconfig.DB.GetVariantPricing(ctx, variant.ID)
+	if err != nil {
+		return variant_data, err
+	}
+	variant_pricing := []objects.VariantPrice{}
+	for _, sub_value_price := range pricing {
+		variant_pricing = append(variant_pricing, objects.VariantPrice{
+			IsDefault: sub_value_price.Isdefault,
+			Name:      sub_value_price.Name,
+			Value:     sub_value_price.Value.String,
+		})
+	}
+	variant_data = objects.ProductVariant{
+		ID:              variant.ID,
+		Sku:             variant.Sku,
+		Option1:         variant.Option1.String,
+		Option2:         variant.Option2.String,
+		Option3:         variant.Option3.String,
+		Barcode:         variant.Barcode.String,
+		VariantPricing:  variant_pricing,
+		VariantQuantity: variant_qty,
+		UpdatedAt:       variant.UpdatedAt,
+	}
+	return variant_data, nil
 }

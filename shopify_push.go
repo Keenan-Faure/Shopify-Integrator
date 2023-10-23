@@ -347,15 +347,14 @@ func (dbconfig *DbConfig) CollectionShopfy(
 func (dbconfig *DbConfig) PushVariant(
 	configShopify *shopify.ConfigShopify,
 	variant objects.ProductVariant,
-	product_id string,
-	product_variant_id string) {
+	shopify_product_id string,
+	shopufy_variant_id string) {
 	shopifyVariant := ConvertVariantToShopify(variant)
-
 	// Sets the price for the variant here
 	shopifyVariant.Price = dbconfig.ShopifyVariantPricing(variant, "default_price_tier")
 	shopifyVariant.CompareAtPrice = dbconfig.ShopifyVariantPricing(variant, "default_compare_at_price")
-	if product_variant_id != "" && len(product_variant_id) > 0 {
-		variant_data, err := configShopify.UpdateVariantShopify(shopifyVariant, product_variant_id)
+	if shopufy_variant_id != "" && len(shopufy_variant_id) > 0 {
+		variant_data, err := configShopify.UpdateVariantShopify(shopifyVariant, shopufy_variant_id)
 		if err != nil {
 			log.Println(err)
 			return
@@ -413,7 +412,7 @@ func (dbconfig *DbConfig) PushVariant(
 		}
 		dbconfig.PushProductInventory(configShopify, variant)
 	} else {
-		variant_data, err := configShopify.AddVariantShopify(shopifyVariant, product_id)
+		variant_data, err := configShopify.AddVariantShopify(shopifyVariant, shopify_product_id)
 		if err != nil {
 			log.Println("variant_error: " + err.Error())
 			return

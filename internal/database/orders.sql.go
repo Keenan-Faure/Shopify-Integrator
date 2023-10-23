@@ -173,6 +173,47 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (GetOrderByIDR
 	return i, err
 }
 
+const getOrderByWebCode = `-- name: GetOrderByWebCode :one
+SELECT
+    id,
+    notes,
+    web_code,
+    tax_total,
+    order_total,
+    shipping_total,
+    discount_total,
+    updated_at
+FROM orders
+WHERE web_code = $1
+`
+
+type GetOrderByWebCodeRow struct {
+	ID            uuid.UUID      `json:"id"`
+	Notes         sql.NullString `json:"notes"`
+	WebCode       sql.NullString `json:"web_code"`
+	TaxTotal      sql.NullString `json:"tax_total"`
+	OrderTotal    sql.NullString `json:"order_total"`
+	ShippingTotal sql.NullString `json:"shipping_total"`
+	DiscountTotal sql.NullString `json:"discount_total"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode sql.NullString) (GetOrderByWebCodeRow, error) {
+	row := q.db.QueryRowContext(ctx, getOrderByWebCode, webCode)
+	var i GetOrderByWebCodeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Notes,
+		&i.WebCode,
+		&i.TaxTotal,
+		&i.OrderTotal,
+		&i.ShippingTotal,
+		&i.DiscountTotal,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getOrders = `-- name: GetOrders :many
 SELECT
     id,

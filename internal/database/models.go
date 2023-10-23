@@ -6,6 +6,7 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -102,13 +103,13 @@ type ProductOption struct {
 }
 
 type QueueItem struct {
-	ID          uuid.UUID `json:"id"`
-	ObjectID    uuid.UUID `json:"object_id"`
-	Type        string    `json:"type"`
-	Instruction string    `json:"instruction"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uuid.UUID       `json:"id"`
+	Object      json.RawMessage `json:"object"`
+	Type        string          `json:"type"`
+	Instruction string          `json:"instruction"`
+	Status      string          `json:"status"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
 type RegisterToken struct {

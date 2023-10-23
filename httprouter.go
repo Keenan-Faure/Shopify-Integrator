@@ -2,7 +2,8 @@ package main
 
 import (
 	"api"
-	"database/sql"
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"integrator/internal/database"
@@ -386,145 +387,50 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	if OrderValidation(order_body) != nil {
-		RespondWithError(w, http.StatusBadRequest, "data validation error")
-		return
-	}
-	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
-		ID:        uuid.New(),
-		FirstName: order_body.Customer.FirstName,
-		LastName:  order_body.Customer.FirstName,
-		Email:     utils.ConvertStringToSQL(order_body.Customer.Email),
-		Phone:     utils.ConvertStringToSQL(order_body.Customer.Phone),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
+	var buffer bytes.Buffer
+	err = json.NewEncoder(&buffer).Encode(order_body)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateDefaultAddress(order_body, customer.ID))
+	// determine if the order exists inside the db already
+	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.OrderNumber)))
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateShippingAddress(order_body, customer.ID))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	_, err = dbconfig.DB.CreateAddress(r.Context(), CreateBillingAddress(order_body, customer.ID))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	order, err := dbconfig.DB.CreateOrder(r.Context(), database.CreateOrderParams{
-		ID:            uuid.New(),
-		Notes:         utils.ConvertStringToSQL(""),
-		WebCode:       utils.ConvertStringToSQL(order_body.Name),
-		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
-		OrderTotal:    utils.ConvertStringToSQL(order_body.TotalPrice),
-		ShippingTotal: utils.ConvertStringToSQL(order_body.TotalShippingPriceSet.ShopMoney.Amount),
-		DiscountTotal: utils.ConvertStringToSQL(order_body.TotalDiscounts),
-		CreatedAt:     time.Now().UTC(),
-		UpdatedAt:     time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	for _, value := range order_body.LineItems {
-		if len(value.TaxLines) > 0 {
-			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("product"),
-				Sku:       value.Sku,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(value.Quantity),
-				TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
-				TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-				return
-			}
-		} else {
-			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("product"),
-				Sku:       value.Sku,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(value.Quantity),
-				TaxRate:   sql.NullString{},
-				TaxTotal:  sql.NullString{},
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-				return
-			}
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return
 		}
 	}
-	for _, value := range order_body.ShippingLines {
-		if len(value.TaxLines) > 0 {
-			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("shipping"),
-				Sku:       value.Code,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(1),
-				TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
-				TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-				return
-			}
-		} else {
-			_, err := dbconfig.DB.CreateOrderLine(r.Context(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("shipping"),
-				Sku:       value.Code,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(1),
-				TaxRate:   sql.NullString{},
-				TaxTotal:  sql.NullString{},
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-				return
-			}
+	if db_order.WebCode.String == fmt.Sprint(order_body.OrderNumber) {
+		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
+			Type:        "order",
+			Status:      "in-queue",
+			Instruction: "update_order",
+			Endpoint:    "queue",
+			ApiKey:      dbUser.ApiKey,
+			Method:      http.MethodPost,
+		}, &buffer)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+			return
 		}
+		RespondWithJSON(w, http.StatusOK, response_payload)
+	} else {
+		fmt.Println("I am inside else")
+		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
+			Type:        "order",
+			Status:      "in-queue",
+			Instruction: "add_order",
+			Endpoint:    "queue",
+			ApiKey:      dbUser.ApiKey,
+			Method:      http.MethodPost,
+		}, &buffer)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, response_payload)
 	}
-	err = dbconfig.DB.CreateCustomerOrder(r.Context(), database.CreateCustomerOrderParams{
-		ID:         uuid.New(),
-		CustomerID: customer.ID,
-		OrderID:    order.ID,
-		UpdatedAt:  time.Now().UTC(),
-		CreatedAt:  time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-		Message: order.ID.String(),
-	})
 }
 
 // POST /api/products/

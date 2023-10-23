@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"objects"
@@ -11,9 +12,44 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Decode: QueueItem - Order
+func DecodeQueueItemOrder(rawJSON json.RawMessage) (objects.RequestBodyOrder, error) {
+	var params objects.RequestBodyOrder
+	err := json.Unmarshal(rawJSON, &params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Decode: QueueItem - Product
+func DecodeQueueItemProduct(rawJSON json.RawMessage) (objects.RequestQueueItemProducts, error) {
+	var params objects.RequestQueueItemProducts
+	err := json.Unmarshal(rawJSON, &params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Validate: QueueItem - Product
+// Validate the UUID's of the object
+func QueueItemProductValidation(queue_item_product objects.RequestQueueItemProducts) error {
+	_, err := uuid.Parse(queue_item_product.SystemProductID)
+	if err != nil {
+		return errors.New("could not decode feed_id: " + queue_item_product.SystemProductID)
+	}
+	_, err = uuid.Parse(queue_item_product.SystemVariantID)
+	if err != nil {
+		return errors.New("could not decode feed_id: " + queue_item_product.SystemVariantID)
+	}
+	return nil
+}
+
 // Validate: QueueItem
 func QueueItemValidation(
 	request objects.RequestQueueItem) error {
+	fmt.Println(request)
 	requests_allowed := []string{
 		"product",
 		"product_variant",
@@ -40,11 +76,7 @@ func QueueItemValidation(
 			break
 		}
 	}
-	_, err := uuid.Parse(request.ObjectID.String())
-	if err != nil {
-		return errors.New("could not decode feed_id: " + request.ObjectID.String())
-	}
-	return errors.New("invalid request type")
+	return nil
 }
 
 // Decode: QueueItem

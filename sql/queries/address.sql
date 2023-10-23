@@ -19,7 +19,7 @@ INSERT INTO address(
 )
 RETURNING *;
 
--- name: UpdateAddress :one
+-- name: UpdateAddress :exec
 UPDATE address
 SET
     customer_id = $1,
@@ -33,8 +33,24 @@ SET
     postal_code = $9,
     company = $10,
     updated_at = $11
-WHERE id = $12
-RETURNING *;
+WHERE id = $12;
+
+-- name: UpdateAddressByNameAndCustomer :exec
+UPDATE address
+SET
+    customer_id = $1,
+    first_name = $2,
+    last_name = $3,
+    address1 = $4,
+    address2 = $5,
+    suburb = $6,
+    city = $7,
+    province = $8,
+    postal_code = $9,
+    company = $10,
+    updated_at = $11
+WHERE name = $12 AND
+customer_id = $13;
 
 -- name: GetAddressByCustomer :many
 SELECT

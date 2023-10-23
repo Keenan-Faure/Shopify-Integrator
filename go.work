@@ -1,10 +1,10 @@
-go 1.20
+go 1.21.2
 
 use (
 	.
 	./api
-	./internal/fetch
 	./internal/iocsv
 	./internal/objects
+	./internal/shopify
 	./internal/utils
 )

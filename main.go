@@ -31,12 +31,7 @@ func main() {
 	flags := flag.Bool("test", false, "Enable server for tests only")
 	flag.Parse()
 
-	shopifyConfig := shopify.InitConfigShopify(
-		utils.LoadEnv("store_name"),
-		utils.LoadEnv("api_key"),
-		utils.LoadEnv("api_password"),
-		utils.LoadEnv("api_version"),
-	)
+	shopifyConfig := shopify.InitConfigShopify()
 	if !*flags {
 		fmt.Println("Starting Workers")
 		// go iocsv.LoopRemoveCSV()

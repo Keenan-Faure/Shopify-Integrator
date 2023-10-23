@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 const createQueueItem = `-- name: CreateQueueItem :one
 INSERT INTO queue_items(
     id,
-    object_id,
+    object,
     type,
     instruction,
     status,
@@ -28,19 +29,19 @@ RETURNING id
 `
 
 type CreateQueueItemParams struct {
-	ID          uuid.UUID `json:"id"`
-	ObjectID    uuid.UUID `json:"object_id"`
-	Type        string    `json:"type"`
-	Instruction string    `json:"instruction"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uuid.UUID       `json:"id"`
+	Object      json.RawMessage `json:"object"`
+	Type        string          `json:"type"`
+	Instruction string          `json:"instruction"`
+	Status      string          `json:"status"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
 func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createQueueItem,
 		arg.ID,
-		arg.ObjectID,
+		arg.Object,
 		arg.Type,
 		arg.Instruction,
 		arg.Status,
@@ -53,8 +54,8 @@ func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams
 }
 
 const getNextQueueItem = `-- name: GetNextQueueItem :one
-SELECT id, object_id, type, instruction, status, created_at, updated_at FROM queue_items
-ORDER BY updated_at
+SELECT id, object, type, instruction, status, created_at, updated_at FROM queue_items
+ORDER BY created_at
 LIMIT 1
 `
 
@@ -63,7 +64,7 @@ func (q *Queries) GetNextQueueItem(ctx context.Context) (QueueItem, error) {
 	var i QueueItem
 	err := row.Scan(
 		&i.ID,
-		&i.ObjectID,
+		&i.Object,
 		&i.Type,
 		&i.Instruction,
 		&i.Status,
@@ -74,7 +75,7 @@ func (q *Queries) GetNextQueueItem(ctx context.Context) (QueueItem, error) {
 }
 
 const getQueueItemByID = `-- name: GetQueueItemByID :one
-SELECT id, object_id, type, instruction, status, created_at, updated_at FROM queue_items
+SELECT id, object, type, instruction, status, created_at, updated_at FROM queue_items
 WHERE ID = $1
 LIMIT 1
 `
@@ -84,7 +85,7 @@ func (q *Queries) GetQueueItemByID(ctx context.Context, id uuid.UUID) (QueueItem
 	var i QueueItem
 	err := row.Scan(
 		&i.ID,
-		&i.ObjectID,
+		&i.Object,
 		&i.Type,
 		&i.Instruction,
 		&i.Status,
@@ -95,7 +96,7 @@ func (q *Queries) GetQueueItemByID(ctx context.Context, id uuid.UUID) (QueueItem
 }
 
 const getQueueItemsByDate = `-- name: GetQueueItemsByDate :many
-SELECT id, object_id, type, instruction, status, created_at, updated_at FROM queue_items
+SELECT id, object, type, instruction, status, created_at, updated_at FROM queue_items
 ORDER BY updated_at DESC
 LIMIT $1 OFFSET $2
 `
@@ -116,7 +117,7 @@ func (q *Queries) GetQueueItemsByDate(ctx context.Context, arg GetQueueItemsByDa
 		var i QueueItem
 		if err := rows.Scan(
 			&i.ID,
-			&i.ObjectID,
+			&i.Object,
 			&i.Type,
 			&i.Instruction,
 			&i.Status,
