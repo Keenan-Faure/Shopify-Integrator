@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"objects"
 	"shopify"
+	"strconv"
 	"time"
 	"utils"
 
@@ -28,7 +29,6 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	// converts the data to rawJSON
 	raw, err := json.Marshal(&body.Object)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -55,19 +55,16 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 
 // POST /api/queue/worker
 func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Request, user database.User) {
-	// fetch the next item from the database table queue_items based on the time it was added into the queue
 	queue_item, err := dbconfig.DB.GetNextQueueItem(r.Context())
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	// remove the queue item from the database...
 	err = dbconfig.DB.RemoveQueueItemByID(r.Context(), queue_item.ID)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	// change the status inside the database to Processing
 	err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
 		Status:    "processing",
 		UpdatedAt: time.Now().UTC(),
@@ -77,30 +74,79 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	// process the queue item
+	err = ProcessQueueItem(dbconfig, queue_item)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
+		Status:    "completed",
+		UpdatedAt: time.Now().UTC(),
+		ID:        queue_item.ID,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
 
-	// read the type, object_id, and instruction and run the respective function.
-	// return the appropriate response
+// field can be:
+// - status: processing, completed, in-queue
+// - instruction: add_order, update_order, add_product, update_product, add_variant, update_variant
+// - type: product, order
+// GET /api/queue/filter?key=value
+func (dbconfig *DbConfig) FilterQueueItems(w http.ResponseWriter, r *http.Request, user database.User) {
+	// get the specific parameters, then filter by the parameters
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+	}
+	param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
+	param_instruction := utils.ConfirmFilters(r.URL.Query().Get("instruction"))
+	param_status := utils.ConfirmFilters(r.URL.Query().Get("status"))
+	result, err := CompileQueueFilterSearch(dbconfig, r.Context(), page, param_type, param_status, param_instruction)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, result)
 }
 
 // GET /api/queue?position=0
-func (dbconfig *DbConfig) QueueViewNextItem(w http.ResponseWriter, r *http.Request, user database.User) {
-	// fetch a collection of the next queue items
-	// queue items should be grouped with their count inside a map[string]int
-	// map is returned as response
+func (dbconfig *DbConfig) QueueViewCurrentItem(w http.ResponseWriter, r *http.Request, user database.User) {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+	}
+	queue_items, err := dbconfig.DB.GetQueueItemsByDate(r.Context(), database.GetQueueItemsByDateParams{
+		Status: "in-queue",
+		Limit:  10,
+		Offset: int32((page - 1) * 10),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, queue_items)
 }
 
 // GET /api/queue?page=1
-func (dbconfig *DbConfig) QueueViewCurrent(w http.ResponseWriter, r *http.Request, user database.User) {
-	// fetch a collection of the next queue items
-	// queue items should be grouped with their count inside a map[string]int
-	// map is returned as response
+func (dbconfig *DbConfig) QueueViewNextItems(w http.ResponseWriter, r *http.Request, user database.User) {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+	}
+	queue_items, err := dbconfig.DB.GetQueueItemsByDate(r.Context(), database.GetQueueItemsByDateParams{
+		Status: "in-queue",
+		Limit:  10,
+		Offset: int32((page - 1) * 10),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, queue_items)
 }
 
-// add rules for processing queue items (like which instructions should be prioritized above the rest etc...)
-// should be another function that sorts the queue, but needs to fetch all rows...
-
-// Process the queue item
+// Process a queue item
 func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	if queue_item.Type == "product" {
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
@@ -117,7 +163,6 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			return err
 		}
 		if queue_item.Instruction == "add_product" {
-			// get new instance of shopifyConfig for each new instruction
 			dbconfig.PushProduct(&shopifyConfig, product)
 		} else if queue_item.Instruction == "update_product" {
 			dbconfig.PushProduct(&shopifyConfig, product)
@@ -132,9 +177,11 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			}
 			dbconfig.AddOrder(queue_object)
 		} else if queue_item.Instruction == "update_order" {
-			// update the existing order
-			// needs to check if its exists
-			// should check here...
+			queue_object, err := DecodeQueueItemOrder(queue_item.Object)
+			if err != nil {
+				return err
+			}
+			dbconfig.UpdateOrder(queue_object)
 		} else {
 			return errors.New("invalid order instruction")
 		}
@@ -173,6 +220,13 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	return nil
 }
 
+// Helper function: sorts the queue in a predefined order
+// TODO make this a setting?
+
+// fetch all queue items from database (by type?)
+// sort and process them in order
+
+// Helper function: Posts internal requests to the queue endpoint
 func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, body io.Reader) (objects.ResponseQueueItem, error) {
 	httpClient := http.Client{
 		Timeout: time.Second * 10,

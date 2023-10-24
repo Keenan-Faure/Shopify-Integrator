@@ -66,6 +66,19 @@ FROM products
 WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT $2 OFFSET $3;
 
+-- name: GetProductsByVendor :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(vendor) LIKE CONCAT('%',LOWER($1),'%')
+LIMIT $2 OFFSET $3;
+
 -- name: GetProductsByType :many
 SELECT
     id,
@@ -79,7 +92,35 @@ FROM products
 WHERE LOWER(product_type) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT $2 OFFSET $3;
 
--- name: GetProductsByVendor :many
+-- name: GetProductByCategoryAndType :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(product_type) LIKE CONCAT('%',LOWER($2),'%')
+LIMIT $3 OFFSET $4;
+
+-- name: GetProductsByTypeAndVendor :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(product_type) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(vendor) LIKE CONCAT('%',LOWER($2),'%')
+LIMIT $3 OFFSET $4;
+
+-- name: GetProductsByVendorAndCategory :many
 SELECT
     id,
     product_code,
@@ -90,7 +131,23 @@ SELECT
     product_type
 FROM products
 WHERE LOWER(vendor) LIKE CONCAT('%',LOWER($1),'%')
-LIMIT $2 OFFSET $3;
+AND LOWER(category) LIKE CONCAT('%',LOWER($2),'%')
+LIMIT $3 OFFSET $4;
+
+-- name: GetProductsFilter :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(product_type) LIKE CONCAT('%',LOWER($2),'%')
+AND LOWER(vendor) LIKE CONCAT('%',LOWER($3),'%')
+LIMIT $4 OFFSET $5;
 
 -- name: GetProductsSearchSKU :many
 SELECT

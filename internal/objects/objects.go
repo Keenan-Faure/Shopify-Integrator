@@ -8,6 +8,14 @@ import (
 
 // queue.go
 
+type ResponseQueueItemFilter struct {
+	ID          uuid.UUID   `json:"id"`
+	Type        string      `json:"type"`
+	Status      string      `json:"status"`
+	Instruction string      `json:"instruction"`
+	Object      interface{} `json:"object"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+}
 type RequestQueueHelper struct {
 	Type        string      `json:"type"`
 	Status      string      `json:"status"`
@@ -17,7 +25,6 @@ type RequestQueueHelper struct {
 	Method      string      `json:"method"`
 	Object      interface{} `json:"object"`
 }
-
 type ResponseQueueItem struct {
 	ID     uuid.UUID   `json:"queue_id"`
 	Object interface{} `json:"object"`

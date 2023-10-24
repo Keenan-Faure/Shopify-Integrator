@@ -73,6 +73,74 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const getProductByCategoryAndType = `-- name: GetProductByCategoryAndType :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(product_type) LIKE CONCAT('%',LOWER($2),'%')
+LIMIT $3 OFFSET $4
+`
+
+type GetProductByCategoryAndTypeParams struct {
+	Lower   string `json:"lower"`
+	Lower_2 string `json:"lower_2"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+type GetProductByCategoryAndTypeRow struct {
+	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+}
+
+func (q *Queries) GetProductByCategoryAndType(ctx context.Context, arg GetProductByCategoryAndTypeParams) ([]GetProductByCategoryAndTypeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductByCategoryAndType,
+		arg.Lower,
+		arg.Lower_2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductByCategoryAndTypeRow
+	for rows.Next() {
+		var i GetProductByCategoryAndTypeRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductCode,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductByID = `-- name: GetProductByID :one
 SELECT
     active,
@@ -383,6 +451,74 @@ func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypePa
 	return items, nil
 }
 
+const getProductsByTypeAndVendor = `-- name: GetProductsByTypeAndVendor :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(product_type) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(vendor) LIKE CONCAT('%',LOWER($2),'%')
+LIMIT $3 OFFSET $4
+`
+
+type GetProductsByTypeAndVendorParams struct {
+	Lower   string `json:"lower"`
+	Lower_2 string `json:"lower_2"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+type GetProductsByTypeAndVendorRow struct {
+	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+}
+
+func (q *Queries) GetProductsByTypeAndVendor(ctx context.Context, arg GetProductsByTypeAndVendorParams) ([]GetProductsByTypeAndVendorRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByTypeAndVendor,
+		arg.Lower,
+		arg.Lower_2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsByTypeAndVendorRow
+	for rows.Next() {
+		var i GetProductsByTypeAndVendorRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductCode,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductsByVendor = `-- name: GetProductsByVendor :many
 SELECT
     id,
@@ -422,6 +558,145 @@ func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVend
 	var items []GetProductsByVendorRow
 	for rows.Next() {
 		var i GetProductsByVendorRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductCode,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsByVendorAndCategory = `-- name: GetProductsByVendorAndCategory :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(vendor) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(category) LIKE CONCAT('%',LOWER($2),'%')
+LIMIT $3 OFFSET $4
+`
+
+type GetProductsByVendorAndCategoryParams struct {
+	Lower   string `json:"lower"`
+	Lower_2 string `json:"lower_2"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+type GetProductsByVendorAndCategoryRow struct {
+	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+}
+
+func (q *Queries) GetProductsByVendorAndCategory(ctx context.Context, arg GetProductsByVendorAndCategoryParams) ([]GetProductsByVendorAndCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByVendorAndCategory,
+		arg.Lower,
+		arg.Lower_2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsByVendorAndCategoryRow
+	for rows.Next() {
+		var i GetProductsByVendorAndCategoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductCode,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductsFilter = `-- name: GetProductsFilter :many
+SELECT
+    id,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type
+FROM products
+WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
+AND LOWER(product_type) LIKE CONCAT('%',LOWER($2),'%')
+AND LOWER(vendor) LIKE CONCAT('%',LOWER($3),'%')
+LIMIT $4 OFFSET $5
+`
+
+type GetProductsFilterParams struct {
+	Lower   string `json:"lower"`
+	Lower_2 string `json:"lower_2"`
+	Lower_3 string `json:"lower_3"`
+	Limit   int32  `json:"limit"`
+	Offset  int32  `json:"offset"`
+}
+
+type GetProductsFilterRow struct {
+	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+}
+
+func (q *Queries) GetProductsFilter(ctx context.Context, arg GetProductsFilterParams) ([]GetProductsFilterRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsFilter,
+		arg.Lower,
+		arg.Lower_2,
+		arg.Lower_3,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsFilterRow
+	for rows.Next() {
+		var i GetProductsFilterRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProductCode,

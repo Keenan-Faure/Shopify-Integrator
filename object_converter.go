@@ -9,6 +9,185 @@ import (
 	"github.com/google/uuid"
 )
 
+// Compile Queue Filter Search into a single object (variable)
+func CompileQueueFilterSearch(
+	dbconfig *DbConfig,
+	ctx context.Context,
+	page int,
+	queue_type,
+	status,
+	instruction string) ([]objects.ResponseQueueItemFilter, error) {
+	response := []objects.ResponseQueueItemFilter{}
+	if queue_type == "" {
+		if status == "" {
+			// only the instruction should be queued
+			queue_items, err := dbconfig.DB.GetQueueItemsByInstruction(
+				ctx,
+				database.GetQueueItemsByInstructionParams{
+					Instruction: instruction,
+					Limit:       10,
+					Offset:      int32((page - 1) * 10),
+				})
+			if err != nil {
+				return []objects.ResponseQueueItemFilter{}, err
+			}
+			for _, value := range queue_items {
+				response = append(response, objects.ResponseQueueItemFilter{
+					ID:          value.ID,
+					Type:        value.Type,
+					Status:      value.Status,
+					Instruction: value.Instruction,
+					Object:      value.Object,
+					UpdatedAt:   value.UpdatedAt,
+				})
+			}
+			return response, nil
+		} else {
+			queue_items, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(
+				ctx,
+				database.GetQueueItemsByInstructionAndStatusParams{
+					Instruction: instruction,
+					Status:      status,
+					Limit:       10,
+					Offset:      int32((page - 1) * 10),
+				})
+			if err != nil {
+				return []objects.ResponseQueueItemFilter{}, err
+			}
+			for _, value := range queue_items {
+				response = append(response, objects.ResponseQueueItemFilter{
+					ID:          value.ID,
+					Type:        value.Type,
+					Status:      value.Status,
+					Instruction: value.Instruction,
+					Object:      value.Object,
+					UpdatedAt:   value.UpdatedAt,
+				})
+			}
+			return response, nil
+		}
+	}
+	if status == "" {
+		if queue_type == "" {
+			queue_items, err := dbconfig.DB.GetQueueItemsByInstruction(
+				ctx,
+				database.GetQueueItemsByInstructionParams{
+					Instruction: instruction,
+					Limit:       10,
+					Offset:      int32((page - 1) * 10),
+				})
+			if err != nil {
+				return []objects.ResponseQueueItemFilter{}, err
+			}
+			for _, value := range queue_items {
+				response = append(response, objects.ResponseQueueItemFilter{
+					ID:          value.ID,
+					Type:        value.Type,
+					Status:      value.Status,
+					Instruction: value.Instruction,
+					Object:      value.Object,
+					UpdatedAt:   value.UpdatedAt,
+				})
+			}
+			return response, nil
+		} else {
+			queue_items, err := dbconfig.DB.GetQueueItemsByInstructionAndType(
+				ctx,
+				database.GetQueueItemsByInstructionAndTypeParams{
+					Instruction: instruction,
+					Type:        queue_type,
+					Limit:       10,
+					Offset:      int32((page - 1) * 10),
+				})
+			if err != nil {
+				return []objects.ResponseQueueItemFilter{}, err
+			}
+			for _, value := range queue_items {
+				response = append(response, objects.ResponseQueueItemFilter{
+					ID:          value.ID,
+					Type:        value.Type,
+					Status:      value.Status,
+					Instruction: value.Instruction,
+					Object:      value.Object,
+					UpdatedAt:   value.UpdatedAt,
+				})
+			}
+			return response, nil
+		}
+	}
+	if instruction == "" {
+		if queue_type == "" {
+			queue_items, err := dbconfig.DB.GetQueueItemsByStatus(
+				ctx,
+				database.GetQueueItemsByStatusParams{
+					Status: status,
+					Limit:  10,
+					Offset: int32((page - 1) * 10),
+				})
+			if err != nil {
+				return []objects.ResponseQueueItemFilter{}, err
+			}
+			for _, value := range queue_items {
+				response = append(response, objects.ResponseQueueItemFilter{
+					ID:          value.ID,
+					Type:        value.Type,
+					Status:      value.Status,
+					Instruction: value.Instruction,
+					Object:      value.Object,
+					UpdatedAt:   value.UpdatedAt,
+				})
+			}
+			return response, nil
+		} else {
+			queue_items, err := dbconfig.DB.GetQueueItemsByStatusAndType(
+				ctx,
+				database.GetQueueItemsByStatusAndTypeParams{
+					Status: status,
+					Type:   queue_type,
+					Limit:  10,
+					Offset: int32((page - 1) * 10),
+				})
+			if err != nil {
+				return []objects.ResponseQueueItemFilter{}, err
+			}
+			for _, value := range queue_items {
+				response = append(response, objects.ResponseQueueItemFilter{
+					ID:          value.ID,
+					Type:        value.Type,
+					Status:      value.Status,
+					Instruction: value.Instruction,
+					Object:      value.Object,
+					UpdatedAt:   value.UpdatedAt,
+				})
+			}
+			return response, nil
+		}
+	}
+	queue_items, err := dbconfig.DB.GetQueueItemsByFilter(
+		ctx,
+		database.GetQueueItemsByFilterParams{
+			Status:      status,
+			Type:        queue_type,
+			Instruction: instruction,
+			Limit:       10,
+			Offset:      int32((page - 1) * 10),
+		})
+	if err != nil {
+		return []objects.ResponseQueueItemFilter{}, err
+	}
+	for _, value := range queue_items {
+		response = append(response, objects.ResponseQueueItemFilter{
+			ID:          value.ID,
+			Type:        value.Type,
+			Status:      value.Status,
+			Instruction: value.Instruction,
+			Object:      value.Object,
+			UpdatedAt:   value.UpdatedAt,
+		})
+	}
+	return response, nil
+}
+
 // Convert objects.Product into objects.ShopifyProduct
 func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
 	return objects.ShopifyProduct{
@@ -299,34 +478,80 @@ func CompileFilterSearch(
 	vendor string) ([]objects.SearchProduct, error) {
 	response := []objects.SearchProduct{}
 	if product_type != "" {
-		prod_type, err := dbconfig.DB.GetProductsByType(ctx, database.GetProductsByTypeParams{
-			Lower:  product_type,
-			Limit:  10,
-			Offset: int32((page - 1) * 10),
-		})
-		if err != nil {
-			return response, err
-		}
-		for _, value := range prod_type {
-			response = append(response, objects.SearchProduct{
-				ID:          value.ID,
-				Title:       value.Title.String,
-				Category:    value.Category.String,
-				ProductType: value.ProductType.String,
-				Vendor:      value.Vendor.String,
+		if category == "" {
+			// vendor
+			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
+				Lower:  vendor,
+				Limit:  10,
+				Offset: int32((page - 1) * 10),
 			})
+			if err != nil {
+				return response, err
+			}
+			for _, value := range results {
+				response = append(response, objects.SearchProduct{
+					ID:          value.ID,
+					Title:       value.Title.String,
+					Category:    value.Category.String,
+					ProductType: value.ProductType.String,
+					Vendor:      value.Vendor.String,
+				})
+			}
+			return response, nil
+		} else {
+			// category & vendor
+			results, err := dbconfig.DB.GetProductsByVendorAndCategory(ctx, database.GetProductsByVendorAndCategoryParams{
+				Lower:   vendor,
+				Lower_2: category,
+				Limit:   10,
+				Offset:  int32((page - 1) * 10),
+			})
+			if err != nil {
+				return response, err
+			}
+			for _, value := range results {
+				response = append(response, objects.SearchProduct{
+					ID:          value.ID,
+					Title:       value.Title.String,
+					Category:    value.Category.String,
+					ProductType: value.ProductType.String,
+					Vendor:      value.Vendor.String,
+				})
+			}
+			return response, nil
 		}
 	}
 	if category != "" {
-		prod_category, err := dbconfig.DB.GetProductsByCategory(ctx, database.GetProductsByCategoryParams{
-			Lower:  category,
-			Limit:  10,
-			Offset: int32((page - 1) * 10),
+		if product_type != "" {
+			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
+				Lower:  vendor,
+				Limit:  10,
+				Offset: int32((page - 1) * 10),
+			})
+			if err != nil {
+				return response, err
+			}
+			for _, value := range results {
+				response = append(response, objects.SearchProduct{
+					ID:          value.ID,
+					Title:       value.Title.String,
+					Category:    value.Category.String,
+					ProductType: value.ProductType.String,
+					Vendor:      value.Vendor.String,
+				})
+			}
+			return response, nil
+		}
+		results, err := dbconfig.DB.GetProductsByTypeAndVendor(ctx, database.GetProductsByTypeAndVendorParams{
+			Lower:   vendor,
+			Lower_2: category,
+			Limit:   10,
+			Offset:  int32((page - 1) * 10),
 		})
 		if err != nil {
 			return response, err
 		}
-		for _, value := range prod_category {
+		for _, value := range results {
 			response = append(response, objects.SearchProduct{
 				ID:          value.ID,
 				Title:       value.Title.String,
@@ -335,25 +560,68 @@ func CompileFilterSearch(
 				Vendor:      value.Vendor.String,
 			})
 		}
+		return response, nil
 	}
 	if vendor != "" {
-		prod_vendor, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
-			Lower:  vendor,
-			Limit:  10,
-			Offset: int32((page - 1) * 10),
-		})
-		if err != nil {
-			return response, err
-		}
-		for _, value := range prod_vendor {
-			response = append(response, objects.SearchProduct{
-				ID:          value.ID,
-				Title:       value.Title.String,
-				Category:    value.Category.String,
-				ProductType: value.ProductType.String,
-				Vendor:      value.Vendor.String,
+		if product_type == "" {
+			results, err := dbconfig.DB.GetProductsByCategory(ctx, database.GetProductsByCategoryParams{
+				Lower:  category,
+				Limit:  10,
+				Offset: int32((page - 1) * 10),
 			})
+			if err != nil {
+				return response, err
+			}
+			for _, value := range results {
+				response = append(response, objects.SearchProduct{
+					ID:          value.ID,
+					Title:       value.Title.String,
+					Category:    value.Category.String,
+					ProductType: value.ProductType.String,
+					Vendor:      value.Vendor.String,
+				})
+			}
+			return response, nil
+		} else {
+			results, err := dbconfig.DB.GetProductsByTypeAndVendor(ctx, database.GetProductsByTypeAndVendorParams{
+				Lower:   product_type,
+				Lower_2: vendor,
+				Limit:   10,
+				Offset:  int32((page - 1) * 10),
+			})
+			if err != nil {
+				return response, err
+			}
+			for _, value := range results {
+				response = append(response, objects.SearchProduct{
+					ID:          value.ID,
+					Title:       value.Title.String,
+					Category:    value.Category.String,
+					ProductType: value.ProductType.String,
+					Vendor:      value.Vendor.String,
+				})
+			}
+			return response, nil
 		}
+	}
+	results, err := dbconfig.DB.GetProductsFilter(ctx, database.GetProductsFilterParams{
+		Lower:   category,
+		Lower_2: product_type,
+		Lower_3: vendor,
+		Limit:   10,
+		Offset:  int32((page - 1) * 10),
+	})
+	if err != nil {
+		return response, err
+	}
+	for _, value := range results {
+		response = append(response, objects.SearchProduct{
+			ID:          value.ID,
+			Title:       value.Title.String,
+			Category:    value.Category.String,
+			ProductType: value.ProductType.String,
+			Vendor:      value.Vendor.String,
+		})
 	}
 	return response, nil
 }

@@ -393,7 +393,6 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	// determine if the order exists inside the db already
 	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.OrderNumber)))
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
@@ -608,7 +607,6 @@ func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
-		log.Println("Error decoding page param:", err)
 	}
 	dbCustomers, err := dbconfig.DB.GetCustomers(r.Context(), database.GetCustomersParams{
 		Limit:  10,
@@ -678,7 +676,6 @@ func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, d
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
-		log.Println("Error decoding page param:", err)
 	}
 	dbOrders, err := dbconfig.DB.GetOrders(r.Context(), database.GetOrdersParams{
 		Limit:  10,
@@ -700,12 +697,11 @@ func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, d
 	RespondWithJSON(w, http.StatusOK, orders)
 }
 
-// GET /api/products/filter?data=value&page=1
+// GET /api/products/filter?key=value&page=1
 func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
-		log.Println("Error decoding page param:", err)
 	}
 	query_param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
 	query_param_category := utils.ConfirmFilters(r.URL.Query().Get("category"))
@@ -768,7 +764,6 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
-		log.Println("Error decoding page param:", err)
 	}
 	dbProducts, err := dbconfig.DB.GetProducts(r.Context(), database.GetProductsParams{
 		Limit:  10,

@@ -31,8 +31,106 @@ LIMIT 1;
 
 -- name: GetQueueItemsByDate :many
 SELECT * FROM queue_items
+WHERE status = $1
 ORDER BY updated_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT $2 OFFSET $3;
+
+-- name: GetQueueItemsByType :many
+SELECT 
+    id,
+    object,
+    type,
+    instruction,
+    status,
+    updated_at
+FROM queue_items
+WHERE type = $1
+ORDER BY updated_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: GetQueueItemsByStatus :many
+SELECT 
+    id,
+    object,
+    type,
+    instruction,
+    status,
+    updated_at
+FROM queue_items
+WHERE status = $1
+ORDER BY updated_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: GetQueueItemsByInstruction :many
+SELECT 
+    id,
+    object,
+    type,
+    instruction,
+    status,
+    updated_at
+FROM queue_items
+WHERE instruction = $1
+ORDER BY updated_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: GetQueueItemsByInstructionAndStatus :many
+SELECT 
+    id,
+    object,
+    type,
+    instruction,
+    status,
+    updated_at
+FROM queue_items
+WHERE instruction = $1
+AND status = $2
+ORDER BY updated_at DESC
+LIMIT $3 OFFSET $4;
+
+-- name: GetQueueItemsByInstructionAndType :many
+SELECT 
+    id,
+    object,
+    type,
+    instruction,
+    status,
+    updated_at
+FROM queue_items
+WHERE instruction = $1
+AND type = $2
+ORDER BY updated_at DESC
+LIMIT $3 OFFSET $4;
+
+-- name: GetQueueItemsByStatusAndType :many
+SELECT 
+    id,
+    object,
+    type,
+    instruction,
+    status,
+    updated_at
+FROM queue_items
+WHERE status = $1
+AND type = $2
+ORDER BY updated_at DESC
+LIMIT $3 OFFSET $4;
+
+-- name: GetQueueItemsByFilter :many
+SELECT 
+    id,
+    object,
+    type,
+    instruction,
+    status,
+    updated_at
+FROM queue_items
+WHERE status = $1
+AND type = $2
+AND instruction = $3
+ORDER BY updated_at DESC
+LIMIT $4 OFFSET $5;
+
 
 -- name: RemoveQueueItemByID :exec
 DELETE FROM queue_items
