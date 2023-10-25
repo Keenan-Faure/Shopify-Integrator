@@ -101,14 +101,20 @@ func (dbconfig *DbConfig) RemoveShopifySettings(w http.ResponseWriter, r *http.R
 	RespondWithJSON(w, http.StatusOK, []string{"success"})
 }
 
-// Returns the value of the setting respective to the Key
-func (dbconfig *DbConfig) GetSettingValue(key string) (string, error) {
+// GET /api/shopify/settings
+func (dbconfig *DbConfig) GetSettingValue(
+	w http.ResponseWriter,
+	r *http.Request,
+	user database.User) {
+	key := r.URL.Query().Get("page")
 	setting_value, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), key)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return "", nil
+			RespondWithError(w, http.StatusInternalServerError, "no setting value found")
+			return
 		}
-		return "", err
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
-	return setting_value.Value, nil
+	RespondWithJSON(w, http.StatusOK, setting_value)
 }

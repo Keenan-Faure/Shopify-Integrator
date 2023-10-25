@@ -104,10 +104,10 @@ type ProductOption struct {
 
 type QueueItem struct {
 	ID          uuid.UUID       `json:"id"`
-	Object      json.RawMessage `json:"object"`
 	Type        string          `json:"type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Object      json.RawMessage `json:"object"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }

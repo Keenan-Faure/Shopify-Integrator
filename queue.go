@@ -14,6 +14,7 @@ import (
 	"time"
 	"utils"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -74,12 +75,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	err = dbconfig.DB.RemoveQueueItemByID(r.Context(), queue_item.ID)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
+	_, err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
 		Status:    "processing",
 		UpdatedAt: time.Now().UTC(),
 		ID:        queue_item.ID,
@@ -93,7 +89,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
+	updated_queue_item, err := dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
 		Status:    "completed",
 		UpdatedAt: time.Now().UTC(),
 		ID:        queue_item.ID,
@@ -102,6 +98,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	RespondWithJSON(w, http.StatusOK, updated_queue_item)
 }
 
 // field can be:
@@ -157,7 +154,60 @@ func (dbconfig *DbConfig) QueueViewNextItems(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	RespondWithJSON(w, http.StatusOK, queue_items)
+	if queue_items == nil {
+		RespondWithJSON(w, http.StatusOK, []string{})
+		return
+	} else {
+		RespondWithJSON(w, http.StatusOK, queue_items)
+	}
+}
+
+// GET /api/queue/view
+func (dbconfig *DbConfig) QueueView(
+	w http.ResponseWriter,
+	r *http.Request,
+	user database.User) {
+	response, err := dbconfig.DisplayQueueCount()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, response)
+}
+
+// DELETE /api/queue/{id}
+func (dbconfig *DbConfig) ClearQueueByID(
+	w http.ResponseWriter,
+	r *http.Request,
+	user database.User) {
+	id := chi.URLParam(r, "id")
+	id_uuid, err := uuid.Parse(id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = dbconfig.DB.RemoveQueueItemByID(r.Context(), id_uuid)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, []string{"success"})
+}
+
+// DELETE /api/queue?key=value
+func (dbconfig *DbConfig) ClearQueueByFilter(
+	w http.ResponseWriter,
+	r *http.Request,
+	user database.User) {
+	param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
+	param_instruction := utils.ConfirmFilters(r.URL.Query().Get("instruction"))
+	param_status := utils.ConfirmFilters(r.URL.Query().Get("status"))
+	response, err := CompileRemoveQueueFilter(dbconfig, r.Context(), param_type, param_status, param_instruction)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, response)
 }
 
 // Process a queue item
@@ -189,13 +239,13 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			if err != nil {
 				return err
 			}
-			dbconfig.AddOrder(queue_object)
+			return dbconfig.AddOrder(queue_object)
 		} else if queue_item.Instruction == "update_order" {
 			queue_object, err := DecodeQueueItemOrder(queue_item.Object)
 			if err != nil {
 				return err
 			}
-			dbconfig.UpdateOrder(queue_object)
+			return dbconfig.UpdateOrder(queue_object)
 		} else {
 			return errors.New("invalid order instruction")
 		}
@@ -231,8 +281,12 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			return errors.New("invalid product_variant instruction")
 		}
 	}
-	return nil
+	return errors.New("invalid queue item type")
 }
+
+// Helper function: sorts the queue in a predefined order
+// should run each time a new queue_item is inserted
+// TODO make this a setting?
 
 // helper function: Displays count of different instructions
 func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error) {
@@ -268,6 +322,108 @@ func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error
 		UpdateProduct: int(update_product),
 		UpdateVariant: int(update_variant),
 	}, nil
+}
+
+// Helper function: removes queue items by filters
+// Compile Queue Filter Search into a single object (variable)
+func CompileRemoveQueueFilter(
+	dbconfig *DbConfig,
+	ctx context.Context,
+	queue_type,
+	status,
+	instruction string) ([]string, error) {
+	if queue_type == "" {
+		if status == "" {
+			err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
+			if err != nil {
+				return []string{"error"}, err
+			}
+			return []string{"success"}, nil
+		} else {
+			if instruction == "" {
+				err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
+				if err != nil {
+					return []string{"error"}, err
+				}
+				return []string{"success"}, nil
+			}
+			err := dbconfig.DB.RemoveQueueItemsByStatusAndInstruction(
+				ctx,
+				database.RemoveQueueItemsByStatusAndInstructionParams{
+					Instruction: instruction,
+					Status:      status,
+				})
+			if err != nil {
+				return []string{"error"}, err
+			}
+			return []string{"success"}, nil
+		}
+	}
+	if status == "" {
+		if instruction == "" {
+			// err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
+			// if err != nil {
+			// 	return []string{"error"}, err
+			// }
+			return []string{"endpoint not working"}, nil
+		} else {
+			if queue_type == "" {
+				err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
+				if err != nil {
+					return []string{"error"}, err
+				}
+				return []string{"success"}, nil
+			}
+			err := dbconfig.DB.RemoveQueueItemsByTypeAndInstruction(
+				ctx,
+				database.RemoveQueueItemsByTypeAndInstructionParams{
+					Instruction: instruction,
+					Type:        queue_type,
+				})
+			if err != nil {
+				return []string{"error"}, err
+			}
+			return []string{"success"}, nil
+		}
+	}
+	if instruction == "" {
+		if queue_type == "" {
+			err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
+			if err != nil {
+				return []string{"error"}, err
+			}
+			return []string{"success"}, nil
+		} else {
+			if status == "" {
+				// err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
+				// if err != nil {
+				// 	return []string{"error"}, err
+				// }
+				return []string{"endpoint not working"}, nil
+			}
+			err := dbconfig.DB.RemoveQueueItemsByStatusAndType(
+				ctx,
+				database.RemoveQueueItemsByStatusAndTypeParams{
+					Status: status,
+					Type:   queue_type,
+				})
+			if err != nil {
+				return []string{"error"}, err
+			}
+			return []string{"success"}, nil
+		}
+	}
+	err := dbconfig.DB.RemoveQueueItemsFilter(
+		ctx,
+		database.RemoveQueueItemsFilterParams{
+			Status:      status,
+			Type:        queue_type,
+			Instruction: instruction,
+		})
+	if err != nil {
+		return []string{"error"}, err
+	}
+	return []string{"success"}, nil
 }
 
 // Helper function: Posts internal requests to the queue endpoint

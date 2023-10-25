@@ -19,14 +19,14 @@ import (
 func (dbconfig *DbConfig) ShopifyVariantPricing(
 	variant objects.ProductVariant,
 	price_tier string) string {
-	price_name, err := dbconfig.GetSettingValue(price_tier)
+	price_name, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), price_tier)
 	// get the price of the product here
 	if err != nil {
 		log.Println(err)
 		return "0"
 	}
 	for _, price := range variant.VariantPricing {
-		if price.Name == price_name {
+		if price.Name == price_name.Value {
 			return price.Value
 		}
 	}

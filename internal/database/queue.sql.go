@@ -16,10 +16,10 @@ import (
 const createQueueItem = `-- name: CreateQueueItem :one
 INSERT INTO queue_items(
     id,
-    object,
     type,
     instruction,
     status,
+    object,
     created_at,
     updated_at
 ) VALUES (
@@ -30,10 +30,10 @@ RETURNING id
 
 type CreateQueueItemParams struct {
 	ID          uuid.UUID       `json:"id"`
-	Object      json.RawMessage `json:"object"`
 	Type        string          `json:"type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Object      json.RawMessage `json:"object"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
@@ -41,10 +41,10 @@ type CreateQueueItemParams struct {
 func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createQueueItem,
 		arg.ID,
-		arg.Object,
 		arg.Type,
 		arg.Instruction,
 		arg.Status,
+		arg.Object,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -54,7 +54,7 @@ func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams
 }
 
 const getNextQueueItem = `-- name: GetNextQueueItem :one
-SELECT id, object, type, instruction, status, created_at, updated_at FROM queue_items
+SELECT id, type, instruction, status, object, created_at, updated_at FROM queue_items
 ORDER BY created_at, instruction desc
 LIMIT 1
 `
@@ -64,10 +64,10 @@ func (q *Queries) GetNextQueueItem(ctx context.Context) (QueueItem, error) {
 	var i QueueItem
 	err := row.Scan(
 		&i.ID,
-		&i.Object,
 		&i.Type,
 		&i.Instruction,
 		&i.Status,
+		&i.Object,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -75,7 +75,7 @@ func (q *Queries) GetNextQueueItem(ctx context.Context) (QueueItem, error) {
 }
 
 const getQueueItemByID = `-- name: GetQueueItemByID :one
-SELECT id, object, type, instruction, status, created_at, updated_at FROM queue_items
+SELECT id, type, instruction, status, object, created_at, updated_at FROM queue_items
 WHERE ID = $1
 LIMIT 1
 `
@@ -85,10 +85,10 @@ func (q *Queries) GetQueueItemByID(ctx context.Context, id uuid.UUID) (QueueItem
 	var i QueueItem
 	err := row.Scan(
 		&i.ID,
-		&i.Object,
 		&i.Type,
 		&i.Instruction,
 		&i.Status,
+		&i.Object,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -96,7 +96,7 @@ func (q *Queries) GetQueueItemByID(ctx context.Context, id uuid.UUID) (QueueItem
 }
 
 const getQueueItemsByDate = `-- name: GetQueueItemsByDate :many
-SELECT id, object, type, instruction, status, created_at, updated_at FROM queue_items
+SELECT id, type, instruction, status, object, created_at, updated_at FROM queue_items
 WHERE status = $1
 ORDER BY updated_at DESC
 LIMIT $2 OFFSET $3
@@ -119,10 +119,10 @@ func (q *Queries) GetQueueItemsByDate(ctx context.Context, arg GetQueueItemsByDa
 		var i QueueItem
 		if err := rows.Scan(
 			&i.ID,
-			&i.Object,
 			&i.Type,
 			&i.Instruction,
 			&i.Status,
+			&i.Object,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -587,7 +587,8 @@ const getQueueItemsCount = `-- name: GetQueueItemsCount :one
 SELECT
     COUNT(*)
 FROM queue_items
-WHERE instruction = $1
+WHERE instruction = $1 AND
+status != 'completed'
 `
 
 func (q *Queries) GetQueueItemsCount(ctx context.Context, instruction string) (int64, error) {
@@ -619,8 +620,8 @@ func (q *Queries) RemoveQueueItemByID(ctx context.Context, id uuid.UUID) error {
 }
 
 const removeQueueItemsByInstruction = `-- name: RemoveQueueItemsByInstruction :exec
-DELETE FROM queue_items
-WHERE instruction IN ($1)
+DELETE FROM queue_items WHERE
+instruction = $1
 `
 
 func (q *Queries) RemoveQueueItemsByInstruction(ctx context.Context, instruction string) error {
@@ -629,8 +630,8 @@ func (q *Queries) RemoveQueueItemsByInstruction(ctx context.Context, instruction
 }
 
 const removeQueueItemsByStatus = `-- name: RemoveQueueItemsByStatus :exec
-DELETE FROM queue_items
-WHERE status IN ($1)
+DELETE FROM queue_items WHERE
+"status" = $1
 `
 
 func (q *Queries) RemoveQueueItemsByStatus(ctx context.Context, status string) error {
@@ -638,12 +639,79 @@ func (q *Queries) RemoveQueueItemsByStatus(ctx context.Context, status string) e
 	return err
 }
 
-const updateQueueItem = `-- name: UpdateQueueItem :exec
+const removeQueueItemsByStatusAndInstruction = `-- name: RemoveQueueItemsByStatusAndInstruction :exec
+DELETE FROM queue_items WHERE
+"status" = $1 AND
+instruction = $2
+`
+
+type RemoveQueueItemsByStatusAndInstructionParams struct {
+	Status      string `json:"status"`
+	Instruction string `json:"instruction"`
+}
+
+func (q *Queries) RemoveQueueItemsByStatusAndInstruction(ctx context.Context, arg RemoveQueueItemsByStatusAndInstructionParams) error {
+	_, err := q.db.ExecContext(ctx, removeQueueItemsByStatusAndInstruction, arg.Status, arg.Instruction)
+	return err
+}
+
+const removeQueueItemsByStatusAndType = `-- name: RemoveQueueItemsByStatusAndType :exec
+DELETE FROM queue_items WHERE
+"status" = $1 AND
+"type" = $2
+`
+
+type RemoveQueueItemsByStatusAndTypeParams struct {
+	Status string `json:"status"`
+	Type   string `json:"type"`
+}
+
+func (q *Queries) RemoveQueueItemsByStatusAndType(ctx context.Context, arg RemoveQueueItemsByStatusAndTypeParams) error {
+	_, err := q.db.ExecContext(ctx, removeQueueItemsByStatusAndType, arg.Status, arg.Type)
+	return err
+}
+
+const removeQueueItemsByTypeAndInstruction = `-- name: RemoveQueueItemsByTypeAndInstruction :exec
+DELETE FROM queue_items WHERE
+"type" = $1 AND
+instruction = $2
+`
+
+type RemoveQueueItemsByTypeAndInstructionParams struct {
+	Type        string `json:"type"`
+	Instruction string `json:"instruction"`
+}
+
+func (q *Queries) RemoveQueueItemsByTypeAndInstruction(ctx context.Context, arg RemoveQueueItemsByTypeAndInstructionParams) error {
+	_, err := q.db.ExecContext(ctx, removeQueueItemsByTypeAndInstruction, arg.Type, arg.Instruction)
+	return err
+}
+
+const removeQueueItemsFilter = `-- name: RemoveQueueItemsFilter :exec
+DELETE FROM queue_items WHERE
+"status" = $1 AND
+"type" = $2 AND
+instruction = $3
+`
+
+type RemoveQueueItemsFilterParams struct {
+	Status      string `json:"status"`
+	Type        string `json:"type"`
+	Instruction string `json:"instruction"`
+}
+
+func (q *Queries) RemoveQueueItemsFilter(ctx context.Context, arg RemoveQueueItemsFilterParams) error {
+	_, err := q.db.ExecContext(ctx, removeQueueItemsFilter, arg.Status, arg.Type, arg.Instruction)
+	return err
+}
+
+const updateQueueItem = `-- name: UpdateQueueItem :one
 UPDATE queue_items
 SET
     status = $1,
     updated_at = $2
 WHERE id = $3
+RETURNING id, type, instruction, status, object, created_at, updated_at
 `
 
 type UpdateQueueItemParams struct {
@@ -652,7 +720,17 @@ type UpdateQueueItemParams struct {
 	ID        uuid.UUID `json:"id"`
 }
 
-func (q *Queries) UpdateQueueItem(ctx context.Context, arg UpdateQueueItemParams) error {
-	_, err := q.db.ExecContext(ctx, updateQueueItem, arg.Status, arg.UpdatedAt, arg.ID)
-	return err
+func (q *Queries) UpdateQueueItem(ctx context.Context, arg UpdateQueueItemParams) (QueueItem, error) {
+	row := q.db.QueryRowContext(ctx, updateQueueItem, arg.Status, arg.UpdatedAt, arg.ID)
+	var i QueueItem
+	err := row.Scan(
+		&i.ID,
+		&i.Type,
+		&i.Instruction,
+		&i.Status,
+		&i.Object,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

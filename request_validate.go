@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"objects"
@@ -37,10 +36,12 @@ func DecodeQueueItemProduct(rawJSON json.RawMessage) (objects.RequestQueueItemPr
 func QueueItemProductValidation(queue_item_product objects.RequestQueueItemProducts) error {
 	_, err := uuid.Parse(queue_item_product.SystemProductID)
 	if err != nil {
+		log.Println(err)
 		return errors.New("could not decode feed_id: " + queue_item_product.SystemProductID)
 	}
 	_, err = uuid.Parse(queue_item_product.SystemVariantID)
 	if err != nil {
+		log.Println(err)
 		return errors.New("could not decode feed_id: " + queue_item_product.SystemVariantID)
 	}
 	return nil
@@ -49,7 +50,6 @@ func QueueItemProductValidation(queue_item_product objects.RequestQueueItemProdu
 // Validate: QueueItem
 func QueueItemValidation(
 	request objects.RequestQueueItem) error {
-	fmt.Println(request)
 	requests_allowed := []string{
 		"product",
 		"product_variant",

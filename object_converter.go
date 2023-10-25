@@ -452,6 +452,7 @@ func CompileOrderData(
 		Address:   OrderCustomerAddress,
 	}
 	Order := objects.Order{
+		ID:                order_id,
 		Notes:             order.Notes.String,
 		WebCode:           order.WebCode.String,
 		TaxTotal:          order.TaxTotal.String,

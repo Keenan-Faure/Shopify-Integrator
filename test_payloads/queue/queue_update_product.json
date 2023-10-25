@@ -1,0 +1,11 @@
+{
+    "type": "product_variant",
+    "status": "in-queue",
+    "instruction": "update_product",
+    "object": {
+        "system_product_id": "f6b1c96b-6079-41d5-9ec5-1203fb157206",
+        "shopify": {
+            "product_id": "7127845371965"
+        }
+    }
+}

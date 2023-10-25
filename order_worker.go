@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"integrator/internal/database"
 	"log"
@@ -13,11 +14,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
+func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
 	err := OrderValidation(order_body)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 	customer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
 		ID:        uuid.New(),
@@ -29,23 +30,19 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateDefaultAddress(order_body, customer.ID))
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateShippingAddress(order_body, customer.ID))
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateBillingAddress(order_body, customer.ID))
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	order, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
 		ID:            uuid.New(),
@@ -59,8 +56,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
 		UpdatedAt:     time.Now().UTC(),
 	})
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 	for _, value := range order_body.LineItems {
 		if len(value.TaxLines) > 0 {
@@ -78,8 +74,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				log.Println(err)
-				return
+				return err
 			}
 		} else {
 			_, err := dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
@@ -96,8 +91,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				log.Println(err)
-				return
+				return err
 			}
 		}
 	}
@@ -117,8 +111,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				log.Println(err)
-				return
+				return err
 			}
 		} else {
 			_, err := dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
@@ -135,8 +128,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				log.Println(err)
-				return
+				return err
 			}
 		}
 	}
@@ -148,29 +140,24 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) {
 		CreatedAt:  time.Now().UTC(),
 	})
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
-	// TODO it should return something
-	// In the parent thread it should update the queue item to completed if there is no error
+	return nil
 }
 
-func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
+func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error {
 	err := OrderValidation(order_body)
 	if err != nil {
-		log.Println(err)
-		return
+		return nil
 	}
 	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.OrderNumber)))
 	if err != nil {
-		log.Println(err)
-		return
+		return nil
 	}
 	if db_order.WebCode.String == fmt.Sprint(order_body.OrderNumber) {
 		customer, err := dbconfig.DB.GetCustomerByOrderID(context.Background(), db_order.ID)
 		if err != nil {
-			log.Println(err)
-			return
+			return nil
 		}
 		err = dbconfig.DB.UpdateCustomer(context.Background(), database.UpdateCustomerParams{
 			FirstName: order_body.Customer.FirstName,
@@ -181,8 +168,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 			ID:        customer,
 		})
 		if err != nil {
-			log.Println(err)
-			return
+			return nil
 		}
 		err = dbconfig.DB.UpdateAddressByNameAndCustomer(context.Background(), database.UpdateAddressByNameAndCustomerParams{
 			CustomerID:   customer,
@@ -198,8 +184,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 			CustomerID_2: customer,
 		})
 		if err != nil {
-			log.Println(err)
-			return
+			return nil
 		}
 		err = dbconfig.DB.UpdateAddressByNameAndCustomer(context.Background(), database.UpdateAddressByNameAndCustomerParams{
 			CustomerID:   customer,
@@ -217,8 +202,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 			CustomerID_2: customer,
 		})
 		if err != nil {
-			log.Println(err)
-			return
+			return nil
 		}
 		err = dbconfig.DB.UpdateAddressByNameAndCustomer(context.Background(), database.UpdateAddressByNameAndCustomerParams{
 			CustomerID:   customer,
@@ -236,8 +220,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 			CustomerID_2: customer,
 		})
 		if err != nil {
-			log.Println(err)
-			return
+			return nil
 		}
 		for _, orderline := range order_body.LineItems {
 			if len(orderline.TaxLines) > 0 {
@@ -254,8 +237,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 					Sku_2:     orderline.Sku,
 				})
 				if err != nil {
-					log.Println(err)
-					return
+					return nil
 				}
 			} else {
 				err := dbconfig.DB.UpdateOrderLineByOrderAndSKU(context.Background(), database.UpdateOrderLineByOrderAndSKUParams{
@@ -271,8 +253,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 					Sku_2:     orderline.Sku,
 				})
 				if err != nil {
-					log.Println(err)
-					return
+					return nil
 				}
 			}
 		}
@@ -291,8 +272,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 					Sku_2:     shipping_line.Code,
 				})
 				if err != nil {
-					log.Println(err)
-					return
+					return nil
 				}
 			} else {
 				err := dbconfig.DB.UpdateOrderLineByOrderAndSKU(context.Background(), database.UpdateOrderLineByOrderAndSKUParams{
@@ -308,144 +288,13 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) {
 					Sku_2:     shipping_line.Code,
 				})
 				if err != nil {
-					log.Println(err)
-					return
+					return nil
 				}
 			}
 		}
+		return nil
+	} else {
+		// the Order web code is not found
+		return errors.New("could not find order to update with code " + db_order.WebCode.String)
 	}
-	customer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
-		ID:        uuid.New(),
-		FirstName: order_body.Customer.FirstName,
-		LastName:  order_body.Customer.FirstName,
-		Email:     utils.ConvertStringToSQL(order_body.Customer.Email),
-		Phone:     utils.ConvertStringToSQL(order_body.Customer.Phone),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateDefaultAddress(order_body, customer.ID))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateShippingAddress(order_body, customer.ID))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateBillingAddress(order_body, customer.ID))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	order, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
-		ID:            uuid.New(),
-		Notes:         utils.ConvertStringToSQL(""),
-		WebCode:       utils.ConvertStringToSQL(order_body.Name),
-		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
-		OrderTotal:    utils.ConvertStringToSQL(order_body.TotalPrice),
-		ShippingTotal: utils.ConvertStringToSQL(order_body.TotalShippingPriceSet.ShopMoney.Amount),
-		DiscountTotal: utils.ConvertStringToSQL(order_body.TotalDiscounts),
-		CreatedAt:     time.Now().UTC(),
-		UpdatedAt:     time.Now().UTC(),
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	for _, value := range order_body.LineItems {
-		if len(value.TaxLines) > 0 {
-			_, err := dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("product"),
-				Sku:       value.Sku,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(value.Quantity),
-				TaxRate:   utils.ConvertStringToSQL(fmt.Sprintf("%v", value.TaxLines[0].Rate)),
-				TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				log.Println(err)
-				return
-			}
-		} else {
-			_, err := dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("product"),
-				Sku:       value.Sku,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(value.Quantity),
-				TaxRate:   sql.NullString{},
-				TaxTotal:  sql.NullString{},
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				log.Println(err)
-				return
-			}
-		}
-	}
-	for _, value := range order_body.ShippingLines {
-		if len(value.TaxLines) > 0 {
-			_, err := dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("shipping"),
-				Sku:       value.Code,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(1),
-				TaxRate:   utils.ConvertStringToSQL(fmt.Sprint(value.TaxLines[0].Rate)),
-				TaxTotal:  utils.ConvertStringToSQL(value.TaxLines[0].Price),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				log.Println(err)
-				return
-			}
-		} else {
-			_, err := dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
-				ID:        uuid.New(),
-				OrderID:   order.ID,
-				LineType:  utils.ConvertStringToSQL("shipping"),
-				Sku:       value.Code,
-				Price:     utils.ConvertStringToSQL(value.Price),
-				Barcode:   utils.ConvertIntToSQL(0),
-				Qty:       utils.ConvertIntToSQL(1),
-				TaxRate:   sql.NullString{},
-				TaxTotal:  sql.NullString{},
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				log.Println(err)
-				return
-			}
-		}
-	}
-	err = dbconfig.DB.CreateCustomerOrder(context.Background(), database.CreateCustomerOrderParams{
-		ID:         uuid.New(),
-		CustomerID: customer.ID,
-		OrderID:    order.ID,
-		UpdatedAt:  time.Now().UTC(),
-		CreatedAt:  time.Now().UTC(),
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	// TODO it should return something
-	// In the parent thread it should update the queue item to completed if there is no error
 }

@@ -1,10 +1,10 @@
 -- name: CreateQueueItem :one
 INSERT INTO queue_items(
     id,
-    object,
     type,
     instruction,
     status,
+    object,
     created_at,
     updated_at
 ) VALUES (
@@ -12,12 +12,13 @@ INSERT INTO queue_items(
 )
 RETURNING id;
 
--- name: UpdateQueueItem :exec
+-- name: UpdateQueueItem :one
 UPDATE queue_items
 SET
     status = $1,
     updated_at = $2
-WHERE id = $3;
+WHERE id = $3
+RETURNING *;
 
 -- name: GetNextQueueItem :one
 SELECT * FROM queue_items
@@ -138,17 +139,38 @@ LIMIT $4 OFFSET $5;
 SELECT
     COUNT(*)
 FROM queue_items
-WHERE instruction = $1;
+WHERE instruction = $1 AND
+status != 'completed';
 
 -- name: RemoveQueueItemByID :exec
 DELETE FROM queue_items
 WHERE id = $1;
 
 -- name: RemoveQueueItemsByStatus :exec
-DELETE FROM queue_items
-WHERE status IN ($1);
+DELETE FROM queue_items WHERE
+"status" = $1;
 
 -- name: RemoveQueueItemsByInstruction :exec
-DELETE FROM queue_items
-WHERE instruction IN ($1);
+DELETE FROM queue_items WHERE
+instruction = $1;
 
+-- name: RemoveQueueItemsByStatusAndInstruction :exec
+DELETE FROM queue_items WHERE
+"status" = $1 AND
+instruction = $2;
+
+-- name: RemoveQueueItemsByTypeAndInstruction :exec
+DELETE FROM queue_items WHERE
+"type" = $1 AND
+instruction = $2;
+
+-- name: RemoveQueueItemsByStatusAndType :exec
+DELETE FROM queue_items WHERE
+"status" = $1 AND
+"type" = $2;
+
+-- name: RemoveQueueItemsFilter :exec
+DELETE FROM queue_items WHERE
+"status" = $1 AND
+"type" = $2 AND
+instruction = $3;

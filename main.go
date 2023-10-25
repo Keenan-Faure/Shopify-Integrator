@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -38,9 +36,6 @@ func main() {
 		// go shopify.LoopJSONShopify()
 	}
 	fmt.Println("Starting API")
-	id, _ := uuid.Parse("f6b1c96b-6079-41d5-9ec5-1203fb157206")
-	push_product, _ := CompileProductData(&dbCon, id, context.Background(), false)
-	dbCon.PushProduct(&shopifyConfig, push_product)
 	setupAPI(dbCon, shopifyConfig)
 }
 
@@ -80,12 +75,16 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	// shopify settings
 	api.Post("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
 	api.Delete("/shopify/settings", dbconfig.middlewareAuth(dbconfig.RemoveShopifySettings))
+	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetSettingValue))
 
 	// queue
 	api.Post("/queue", dbconfig.middlewareAuth(dbconfig.QueuePush))
 	api.Post("/queue/worker", dbconfig.middlewareAuth(dbconfig.QueuePopAndProcess))
 	api.Get("/queue", dbconfig.middlewareAuth(dbconfig.QueueViewNextItems))
 	api.Get("/queue/filter", dbconfig.middlewareAuth(dbconfig.FilterQueueItems))
+	api.Get("/queue/view", dbconfig.middlewareAuth(dbconfig.QueueView))
+	api.Delete("/queue/{id}", dbconfig.middlewareAuth(dbconfig.ClearQueueByID))
+	api.Delete("/queue", dbconfig.middlewareAuth(dbconfig.ClearQueueByFilter))
 
 	r.Mount("/api", api)
 
