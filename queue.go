@@ -17,8 +17,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO make a queue_size setting - would need another table to store app setting
+// how about using the .env file?
+const queue_size = 300
+
 // POST /api/queue
 func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user database.User) {
+	// check if the queue_size has been reached
+	size, err := dbconfig.DB.GetQueueSize(context.Background())
+	if size >= queue_size {
+		RespondWithError(w, http.StatusBadRequest, "queue is full, please wait")
+		return
+	}
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "error checking queue size")
+		return
+	}
 	body, err := DecodeQueueItem(r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -94,9 +108,9 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 // - status: processing, completed, in-queue
 // - instruction: add_order, update_order, add_product, update_product, add_variant, update_variant
 // - type: product, order
+
 // GET /api/queue/filter?key=value
 func (dbconfig *DbConfig) FilterQueueItems(w http.ResponseWriter, r *http.Request, user database.User) {
-	// get the specific parameters, then filter by the parameters
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 1
@@ -220,11 +234,41 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	return nil
 }
 
-// Helper function: sorts the queue in a predefined order
-// TODO make this a setting?
-
-// fetch all queue items from database (by type?)
-// sort and process them in order
+// helper function: Displays count of different instructions
+func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error) {
+	add_order, err := dbconfig.DB.GetQueueItemsCount(context.Background(), "add_order")
+	if err != nil {
+		return objects.ResponseQueueCount{}, err
+	}
+	add_product, err := dbconfig.DB.GetQueueItemsCount(context.Background(), "add_product")
+	if err != nil {
+		return objects.ResponseQueueCount{}, err
+	}
+	add_variant, err := dbconfig.DB.GetQueueItemsCount(context.Background(), "add_variant")
+	if err != nil {
+		return objects.ResponseQueueCount{}, err
+	}
+	update_order, err := dbconfig.DB.GetQueueItemsCount(context.Background(), "update_order")
+	if err != nil {
+		return objects.ResponseQueueCount{}, err
+	}
+	update_product, err := dbconfig.DB.GetQueueItemsCount(context.Background(), "update_product")
+	if err != nil {
+		return objects.ResponseQueueCount{}, err
+	}
+	update_variant, err := dbconfig.DB.GetQueueItemsCount(context.Background(), "update_variant")
+	if err != nil {
+		return objects.ResponseQueueCount{}, err
+	}
+	return objects.ResponseQueueCount{
+		AddOrder:      int(add_order),
+		AddProduct:    int(add_product),
+		AddVariant:    int(add_variant),
+		UpdateOrder:   int(update_order),
+		UpdateProduct: int(update_product),
+		UpdateVariant: int(update_variant),
+	}, nil
+}
 
 // Helper function: Posts internal requests to the queue endpoint
 func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, body io.Reader) (objects.ResponseQueueItem, error) {

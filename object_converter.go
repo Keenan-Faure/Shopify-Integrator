@@ -20,7 +20,6 @@ func CompileQueueFilterSearch(
 	response := []objects.ResponseQueueItemFilter{}
 	if queue_type == "" {
 		if status == "" {
-			// only the instruction should be queued
 			queue_items, err := dbconfig.DB.GetQueueItemsByInstruction(
 				ctx,
 				database.GetQueueItemsByInstructionParams{
@@ -68,13 +67,13 @@ func CompileQueueFilterSearch(
 		}
 	}
 	if status == "" {
-		if queue_type == "" {
-			queue_items, err := dbconfig.DB.GetQueueItemsByInstruction(
+		if instruction == "" {
+			queue_items, err := dbconfig.DB.GetQueueItemsByType(
 				ctx,
-				database.GetQueueItemsByInstructionParams{
-					Instruction: instruction,
-					Limit:       10,
-					Offset:      int32((page - 1) * 10),
+				database.GetQueueItemsByTypeParams{
+					Type:   queue_type,
+					Limit:  10,
+					Offset: int32((page - 1) * 10),
 				})
 			if err != nil {
 				return []objects.ResponseQueueItemFilter{}, err

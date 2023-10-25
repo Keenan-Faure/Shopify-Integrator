@@ -12,17 +12,20 @@ INSERT INTO queue_items(
 )
 RETURNING id;
 
--- name: GetNextQueueItem :one
-SELECT * FROM queue_items
-ORDER BY created_at
-LIMIT 1;
-
 -- name: UpdateQueueItem :exec
 UPDATE queue_items
 SET
     status = $1,
     updated_at = $2
 WHERE id = $3;
+
+-- name: GetNextQueueItem :one
+SELECT * FROM queue_items
+ORDER BY created_at, instruction desc
+LIMIT 1;
+
+-- name: GetQueueSize :one
+SELECT COUNT(*) FROM queue_items;
 
 -- name: GetQueueItemByID :one
 SELECT * FROM queue_items
@@ -131,6 +134,11 @@ AND instruction = $3
 ORDER BY updated_at DESC
 LIMIT $4 OFFSET $5;
 
+-- name: GetQueueItemsCount :one
+SELECT
+    COUNT(*)
+FROM queue_items
+WHERE instruction = $1;
 
 -- name: RemoveQueueItemByID :exec
 DELETE FROM queue_items
@@ -138,7 +146,7 @@ WHERE id = $1;
 
 -- name: RemoveQueueItemsByStatus :exec
 DELETE FROM queue_items
-WHERE "status" IN ($1);
+WHERE status IN ($1);
 
 -- name: RemoveQueueItemsByInstruction :exec
 DELETE FROM queue_items

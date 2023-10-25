@@ -55,7 +55,7 @@ func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams
 
 const getNextQueueItem = `-- name: GetNextQueueItem :one
 SELECT id, object, type, instruction, status, created_at, updated_at FROM queue_items
-ORDER BY created_at
+ORDER BY created_at, instruction desc
 LIMIT 1
 `
 
@@ -583,6 +583,31 @@ func (q *Queries) GetQueueItemsByType(ctx context.Context, arg GetQueueItemsByTy
 	return items, nil
 }
 
+const getQueueItemsCount = `-- name: GetQueueItemsCount :one
+SELECT
+    COUNT(*)
+FROM queue_items
+WHERE instruction = $1
+`
+
+func (q *Queries) GetQueueItemsCount(ctx context.Context, instruction string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getQueueItemsCount, instruction)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getQueueSize = `-- name: GetQueueSize :one
+SELECT COUNT(*) FROM queue_items
+`
+
+func (q *Queries) GetQueueSize(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getQueueSize)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const removeQueueItemByID = `-- name: RemoveQueueItemByID :exec
 DELETE FROM queue_items
 WHERE id = $1
@@ -605,7 +630,7 @@ func (q *Queries) RemoveQueueItemsByInstruction(ctx context.Context, instruction
 
 const removeQueueItemsByStatus = `-- name: RemoveQueueItemsByStatus :exec
 DELETE FROM queue_items
-WHERE "status" IN ($1)
+WHERE status IN ($1)
 `
 
 func (q *Queries) RemoveQueueItemsByStatus(ctx context.Context, status string) error {

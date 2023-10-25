@@ -8,6 +8,15 @@ import (
 
 // queue.go
 
+type ResponseQueueCount struct {
+	AddOrder      int `json:"add_order"`
+	AddProduct    int `json:"add_product"`
+	AddVariant    int `json:"add_variant"`
+	UpdateOrder   int `json:"update_order"`
+	UpdateProduct int `json:"update_product"`
+	UpdateVariant int `json:"update_variant"`
+}
+
 type ResponseQueueItemFilter struct {
 	ID          uuid.UUID   `json:"id"`
 	Type        string      `json:"type"`
