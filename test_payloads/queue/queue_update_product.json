@@ -1,5 +1,5 @@
 {
-    "type": "product_variant",
+    "type": "product",
     "status": "in-queue",
     "instruction": "update_product",
     "object": {

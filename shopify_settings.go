@@ -106,7 +106,7 @@ func (dbconfig *DbConfig) GetSettingValue(
 	w http.ResponseWriter,
 	r *http.Request,
 	user database.User) {
-	key := r.URL.Query().Get("page")
+	key := r.URL.Query().Get("key")
 	setting_value, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), key)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {

@@ -4,7 +4,7 @@
     "instruction": "update_variant",
     "object": {
         "system_product_id": "f6b1c96b-6079-41d5-9ec5-1203fb157206",
-        "system_variant_id": "4e034b86-f6b1-42db-bd9f-324313182e18",
+        "system_variant_id": "8ca56b49-6655-4c98-9fa6-45804f61425d",
         "shopify": {
             "product_id": "7127845371965",
             "variant_id": "40807533772861"

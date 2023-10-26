@@ -73,7 +73,7 @@ func createRoutes() map[string]objects.Route {
 			Supports:    []string{"GET"},
 			Params: map[string]objects.Params{
 				"data": {
-					Key:   "product_type",
+					Key:   "product_type | vendor | category",
 					Value: "value",
 				},
 				"page": {
@@ -146,9 +146,68 @@ func createRoutes() map[string]objects.Route {
 			Params: map[string]objects.Params{
 				"query": {
 					Key:   "q",
-					Value: "value",
+					Value: "query value",
 				},
 			},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"GET /api/shopify/settings": {
+			Description: "Returns the value of the shopify setting",
+			Supports:    []string{"GET"},
+			Params: map[string]objects.Params{
+				"key": {
+					Key:   "key",
+					Value: "shopify setting key",
+				},
+			},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"GET /api/queue": {
+			Description: "Returns the current items in the queue",
+			Supports:    []string{"GET"},
+			Params: map[string]objects.Params{
+				"page": {
+					Key:   "page",
+					Value: "integer number",
+				},
+			},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"GET /api/queue/filter": {
+			Description: "Filter searches through the queue to return specific results",
+			Supports:    []string{"GET"},
+			Params: map[string]objects.Params{
+				"page": {
+					Key:   "page",
+					Value: "integer number",
+				},
+				"type": {
+					Key:   "type",
+					Value: "queue item type",
+				},
+				"instruction": {
+					Key:   "instruction",
+					Value: "queue item instruction",
+				},
+				"status": {
+					Key:   "status",
+					Value: "queue item status",
+				},
+			},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"GET /api/queue/view": {
+			Description:   "Returns the current queue count in a structured map",
+			Supports:      []string{"GET"},
+			Params:        map[string]objects.Params{},
 			AcceptsData:   false,
 			Format:        []string{},
 			Authorization: "Authorization: ApiKey <key>",
@@ -157,7 +216,7 @@ func createRoutes() map[string]objects.Route {
 			Description:   "Login with a new user",
 			Supports:      []string{"POST"},
 			Params:        map[string]objects.Params{},
-			AcceptsData:   true,
+			AcceptsData:   false,
 			Format:        []string{},
 			Authorization: "Authorization: ApiKey <key>",
 		},
@@ -226,11 +285,72 @@ func createRoutes() map[string]objects.Route {
 			Format:        objects.RequestWarehouseLocation{},
 			Authorization: "Authorization: ApiKey <key>",
 		},
+		"POST /api/shopify/settings": {
+			Description:   "Creates a new shopify setting",
+			Supports:      []string{"GET"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   true,
+			Format:        objects.RequestShopifySettings{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"POST /api/queue": {
+			Description:   "Adds a new item to the queue",
+			Supports:      []string{"POST"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   true,
+			Format:        objects.RequestQueueItem{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"POST /api/queue/worker": {
+			Description:   "Pops and processes the next queue item",
+			Supports:      []string{"POST"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
 		"DELETE /api/inventory/{id}": {
 			Description:   "Removes a location-warehouse map",
 			Supports:      []string{"DELETE"},
 			Params:        map[string]objects.Params{},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"DELETE /api/shopify/settings": {
+			Description:   "Removes a shopify setting",
+			Supports:      []string{"DELETE"},
+			Params:        map[string]objects.Params{},
 			AcceptsData:   true,
+			Format:        objects.RequestShopifySettings{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"DELETE /api/queue/{id}": {
+			Description:   "Removes a queue item",
+			Supports:      []string{"DELETE"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"DELETE /api/queue": {
+			Description: "Removes a queue item by filters",
+			Supports:    []string{"DELETE"},
+			Params: map[string]objects.Params{
+				"type": {
+					Key:   "type",
+					Value: "queue item type",
+				},
+				"instruction": {
+					Key:   "instruction",
+					Value: "queue item instruction",
+				},
+				"status": {
+					Key:   "status",
+					Value: "queue item status",
+				},
+			},
+			AcceptsData:   false,
 			Format:        []string{},
 			Authorization: "Authorization: ApiKey <key>",
 		},

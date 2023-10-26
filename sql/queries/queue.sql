@@ -22,7 +22,8 @@ RETURNING *;
 
 -- name: GetNextQueueItem :one
 SELECT * FROM queue_items
-ORDER BY created_at, instruction desc
+WHERE status != 'completed'
+ORDER BY instruction asc, created_at desc
 LIMIT 1;
 
 -- name: GetQueueSize :one

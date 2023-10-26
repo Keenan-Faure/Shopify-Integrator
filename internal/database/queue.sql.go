@@ -55,7 +55,8 @@ func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams
 
 const getNextQueueItem = `-- name: GetNextQueueItem :one
 SELECT id, type, instruction, status, object, created_at, updated_at FROM queue_items
-ORDER BY created_at, instruction desc
+WHERE status != 'completed'
+ORDER BY instruction asc, created_at desc
 LIMIT 1
 `
 

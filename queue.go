@@ -72,6 +72,10 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Request, user database.User) {
 	queue_item, err := dbconfig.DB.GetNextQueueItem(r.Context())
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, "queue is empty.")
+			return
+		}
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -123,6 +127,7 @@ func (dbconfig *DbConfig) FilterQueueItems(w http.ResponseWriter, r *http.Reques
 	RespondWithJSON(w, http.StatusOK, result)
 }
 
+// TODO make a seperate endpoint?
 // GET /api/queue?position=0
 func (dbconfig *DbConfig) QueueViewCurrentItem(w http.ResponseWriter, r *http.Request, user database.User) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
@@ -217,9 +222,9 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return err
 		}
-		product_id, err := uuid.Parse(queue_object.Shopify.ProductID)
+		product_id, err := uuid.Parse(queue_object.SystemProductID)
 		if err != nil {
-			return errors.New("could not decode feed_id: " + queue_object.SystemProductID)
+			return errors.New("could not decode product_id: " + queue_object.SystemProductID)
 		}
 		shopifyConfig := shopify.InitConfigShopify()
 		product, err := CompileProductData(dbconfig, product_id, context.Background(), false)
@@ -227,9 +232,9 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			return err
 		}
 		if queue_item.Instruction == "add_product" {
-			dbconfig.PushProduct(&shopifyConfig, product)
+			return dbconfig.PushProduct(&shopifyConfig, product)
 		} else if queue_item.Instruction == "update_product" {
-			dbconfig.PushProduct(&shopifyConfig, product)
+			return dbconfig.PushProduct(&shopifyConfig, product)
 		} else {
 			return errors.New("invalid product instruction")
 		}
@@ -255,23 +260,24 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return err
 		}
-		variant_id, err := uuid.Parse(queue_object.SystemProductID)
+		variant_id, err := uuid.Parse(queue_object.SystemVariantID)
 		if err != nil {
-			return errors.New("could not decode feed_id: " + queue_object.SystemVariantID)
+			return errors.New("could not decode variant_id: " + queue_object.SystemVariantID)
 		}
 		variant, err := CompileVariantData(dbconfig, variant_id, context.Background())
 		if err != nil {
 			return err
 		}
 		if queue_item.Instruction == "add_variant" {
-			dbconfig.PushVariant(
+			return dbconfig.PushVariant(
 				&shopifyConfig,
 				variant,
 				queue_object.Shopify.ProductID,
 				queue_object.Shopify.VariantID,
 			)
+
 		} else if queue_item.Instruction == "update_variant" {
-			dbconfig.PushVariant(
+			return dbconfig.PushVariant(
 				&shopifyConfig,
 				variant,
 				queue_object.Shopify.ProductID,
@@ -283,10 +289,6 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	}
 	return errors.New("invalid queue item type")
 }
-
-// Helper function: sorts the queue in a predefined order
-// should run each time a new queue_item is inserted
-// TODO make this a setting?
 
 // helper function: Displays count of different instructions
 func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error) {
@@ -325,6 +327,7 @@ func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error
 }
 
 // Helper function: removes queue items by filters
+
 // Compile Queue Filter Search into a single object (variable)
 func CompileRemoveQueueFilter(
 	dbconfig *DbConfig,
@@ -365,6 +368,7 @@ func CompileRemoveQueueFilter(
 			// if err != nil {
 			// 	return []string{"error"}, err
 			// }
+			// TODO FIXME?
 			return []string{"endpoint not working"}, nil
 		} else {
 			if queue_type == "" {
