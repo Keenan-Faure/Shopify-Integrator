@@ -33,7 +33,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.Type,
+					Type:        value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -56,7 +56,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.Type,
+					Type:        value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -71,9 +71,9 @@ func CompileQueueFilterSearch(
 			queue_items, err := dbconfig.DB.GetQueueItemsByType(
 				ctx,
 				database.GetQueueItemsByTypeParams{
-					Type:   queue_type,
-					Limit:  10,
-					Offset: int32((page - 1) * 10),
+					QueueType: queue_type,
+					Limit:     10,
+					Offset:    int32((page - 1) * 10),
 				})
 			if err != nil {
 				return []objects.ResponseQueueItemFilter{}, err
@@ -81,7 +81,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.Type,
+					Type:        value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -94,7 +94,7 @@ func CompileQueueFilterSearch(
 				ctx,
 				database.GetQueueItemsByInstructionAndTypeParams{
 					Instruction: instruction,
-					Type:        queue_type,
+					QueueType:   queue_type,
 					Limit:       10,
 					Offset:      int32((page - 1) * 10),
 				})
@@ -104,7 +104,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.Type,
+					Type:        value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -129,7 +129,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.Type,
+					Type:        value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -141,10 +141,10 @@ func CompileQueueFilterSearch(
 			queue_items, err := dbconfig.DB.GetQueueItemsByStatusAndType(
 				ctx,
 				database.GetQueueItemsByStatusAndTypeParams{
-					Status: status,
-					Type:   queue_type,
-					Limit:  10,
-					Offset: int32((page - 1) * 10),
+					Status:    status,
+					QueueType: queue_type,
+					Limit:     10,
+					Offset:    int32((page - 1) * 10),
 				})
 			if err != nil {
 				return []objects.ResponseQueueItemFilter{}, err
@@ -152,7 +152,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.Type,
+					Type:        value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -166,7 +166,7 @@ func CompileQueueFilterSearch(
 		ctx,
 		database.GetQueueItemsByFilterParams{
 			Status:      status,
-			Type:        queue_type,
+			QueueType:   queue_type,
 			Instruction: instruction,
 			Limit:       10,
 			Offset:      int32((page - 1) * 10),
@@ -177,7 +177,7 @@ func CompileQueueFilterSearch(
 	for _, value := range queue_items {
 		response = append(response, objects.ResponseQueueItemFilter{
 			ID:          value.ID,
-			Type:        value.Type,
+			Type:        value.QueueType,
 			Status:      value.Status,
 			Instruction: value.Instruction,
 			Object:      value.Object,

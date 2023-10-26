@@ -52,7 +52,7 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 	queue_id, err := dbconfig.DB.CreateQueueItem(r.Context(), database.CreateQueueItemParams{
 		ID:          uuid.New(),
 		Object:      raw,
-		Type:        body.Type,
+		QueueType:   body.Type,
 		Instruction: body.Instruction,
 		Status:      body.Status,
 		CreatedAt:   time.Now().UTC(),
@@ -68,7 +68,7 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 	})
 }
 
-// POST /api/queue/worker
+// POST /api/queue/worker?type=orders,products
 func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Request, user database.User) {
 	queue_item, err := dbconfig.DB.GetNextQueueItem(r.Context())
 	if err != nil {
@@ -78,6 +78,41 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		}
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
+	}
+	if queue_item.QueueType == "product" {
+		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
+			Status:    "processing",
+			QueueType: "product",
+			Limit:     1,
+			Offset:    0,
+		})
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				RespondWithError(w, http.StatusInternalServerError, "queue is empty.")
+				return
+			}
+		}
+		if item[0].QueueType == "product" {
+			RespondWithError(w, http.StatusServiceUnavailable, "product queue is currently busy")
+			return
+		}
+	} else {
+		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
+			Status:    "processing",
+			QueueType: "order",
+			Limit:     1,
+			Offset:    0,
+		})
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				RespondWithError(w, http.StatusInternalServerError, "queue is empty.")
+				return
+			}
+		}
+		if item[0].QueueType == "order" {
+			RespondWithError(w, http.StatusServiceUnavailable, "order queue is currently busy")
+			return
+		}
 	}
 	_, err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
 		Status:    "processing",
@@ -217,7 +252,7 @@ func (dbconfig *DbConfig) ClearQueueByFilter(
 
 // Process a queue item
 func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
-	if queue_item.Type == "product" {
+	if queue_item.QueueType == "product" {
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
 		if err != nil {
 			return err
@@ -238,7 +273,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		} else {
 			return errors.New("invalid product instruction")
 		}
-	} else if queue_item.Type == "order" {
+	} else if queue_item.QueueType == "order" {
 		if queue_item.Instruction == "add_order" {
 			queue_object, err := DecodeQueueItemOrder(queue_item.Object)
 			if err != nil {
@@ -254,7 +289,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		} else {
 			return errors.New("invalid order instruction")
 		}
-	} else if queue_item.Type == "product_variant" {
+	} else if queue_item.QueueType == "product_variant" {
 		shopifyConfig := shopify.InitConfigShopify()
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
 		if err != nil {
@@ -364,12 +399,11 @@ func CompileRemoveQueueFilter(
 	}
 	if status == "" {
 		if instruction == "" {
-			// err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
-			// if err != nil {
-			// 	return []string{"error"}, err
-			// }
-			// TODO FIXME?
-			return []string{"endpoint not working"}, nil
+			err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
+			if err != nil {
+				return []string{"error"}, err
+			}
+			return []string{"success"}, nil
 		} else {
 			if queue_type == "" {
 				err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
@@ -382,7 +416,7 @@ func CompileRemoveQueueFilter(
 				ctx,
 				database.RemoveQueueItemsByTypeAndInstructionParams{
 					Instruction: instruction,
-					Type:        queue_type,
+					QueueType:   queue_type,
 				})
 			if err != nil {
 				return []string{"error"}, err
@@ -399,17 +433,17 @@ func CompileRemoveQueueFilter(
 			return []string{"success"}, nil
 		} else {
 			if status == "" {
-				// err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
-				// if err != nil {
-				// 	return []string{"error"}, err
-				// }
-				return []string{"endpoint not working"}, nil
+				err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
+				if err != nil {
+					return []string{"error"}, err
+				}
+				return []string{"success"}, nil
 			}
 			err := dbconfig.DB.RemoveQueueItemsByStatusAndType(
 				ctx,
 				database.RemoveQueueItemsByStatusAndTypeParams{
-					Status: status,
-					Type:   queue_type,
+					Status:    status,
+					QueueType: queue_type,
 				})
 			if err != nil {
 				return []string{"error"}, err
@@ -421,7 +455,7 @@ func CompileRemoveQueueFilter(
 		ctx,
 		database.RemoveQueueItemsFilterParams{
 			Status:      status,
-			Type:        queue_type,
+			QueueType:   queue_type,
 			Instruction: instruction,
 		})
 	if err != nil {

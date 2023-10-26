@@ -1,10 +1,10 @@
 -- name: CreateQueueItem :one
 INSERT INTO queue_items(
     id,
-    type,
+    queue_type,
     instruction,
-    status,
-    object,
+    "status",
+    "object",
     created_at,
     updated_at
 ) VALUES (
@@ -15,14 +15,14 @@ RETURNING id;
 -- name: UpdateQueueItem :one
 UPDATE queue_items
 SET
-    status = $1,
+    "status" = $1,
     updated_at = $2
 WHERE id = $3
 RETURNING *;
 
 -- name: GetNextQueueItem :one
 SELECT * FROM queue_items
-WHERE status != 'completed'
+WHERE "status" != 'completed'
 ORDER BY instruction asc, created_at desc
 LIMIT 1;
 
@@ -36,43 +36,43 @@ LIMIT 1;
 
 -- name: GetQueueItemsByDate :many
 SELECT * FROM queue_items
-WHERE status = $1
+WHERE "status" = $1
 ORDER BY updated_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: GetQueueItemsByType :many
 SELECT 
     id,
-    object,
-    type,
+    "object",
+    queue_type,
     instruction,
-    status,
+    "status",
     updated_at
 FROM queue_items
-WHERE type = $1
+WHERE queue_type = $1
 ORDER BY updated_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: GetQueueItemsByStatus :many
 SELECT 
     id,
-    object,
-    type,
+    "object",
+    queue_type,
     instruction,
-    status,
+    "status",
     updated_at
 FROM queue_items
-WHERE status = $1
+WHERE "status" = $1
 ORDER BY updated_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: GetQueueItemsByInstruction :many
 SELECT 
     id,
-    object,
-    type,
+    "object",
+    queue_type,
     instruction,
-    status,
+    "status",
     updated_at
 FROM queue_items
 WHERE instruction = $1
@@ -82,56 +82,56 @@ LIMIT $2 OFFSET $3;
 -- name: GetQueueItemsByInstructionAndStatus :many
 SELECT 
     id,
-    object,
-    type,
+    "object",
+    queue_type,
     instruction,
-    status,
+    "status",
     updated_at
 FROM queue_items
 WHERE instruction = $1
-AND status = $2
+AND "status" = $2
 ORDER BY updated_at DESC
 LIMIT $3 OFFSET $4;
 
 -- name: GetQueueItemsByInstructionAndType :many
 SELECT 
     id,
-    object,
-    type,
+    "object",
+    queue_type,
     instruction,
-    status,
+    "status",
     updated_at
 FROM queue_items
 WHERE instruction = $1
-AND type = $2
+AND queue_type = $2
 ORDER BY updated_at DESC
 LIMIT $3 OFFSET $4;
 
 -- name: GetQueueItemsByStatusAndType :many
 SELECT 
     id,
-    object,
-    type,
+    "object",
+    queue_type,
     instruction,
-    status,
+    "status",
     updated_at
 FROM queue_items
-WHERE status = $1
-AND type = $2
+WHERE "status" = $1
+AND queue_type = $2
 ORDER BY updated_at DESC
 LIMIT $3 OFFSET $4;
 
 -- name: GetQueueItemsByFilter :many
 SELECT 
     id,
-    object,
-    type,
+    "object",
+    queue_type,
     instruction,
-    status,
+    "status",
     updated_at
 FROM queue_items
-WHERE status = $1
-AND type = $2
+WHERE "status" = $1
+AND queue_type = $2
 AND instruction = $3
 ORDER BY updated_at DESC
 LIMIT $4 OFFSET $5;
@@ -155,6 +155,10 @@ DELETE FROM queue_items WHERE
 DELETE FROM queue_items WHERE
 instruction = $1;
 
+-- name: RemoveQueueItemsByType :exec
+DELETE FROM queue_items WHERE
+queue_type = $1;
+
 -- name: RemoveQueueItemsByStatusAndInstruction :exec
 DELETE FROM queue_items WHERE
 "status" = $1 AND
@@ -162,16 +166,16 @@ instruction = $2;
 
 -- name: RemoveQueueItemsByTypeAndInstruction :exec
 DELETE FROM queue_items WHERE
-"type" = $1 AND
+queue_type = $1 AND
 instruction = $2;
 
 -- name: RemoveQueueItemsByStatusAndType :exec
 DELETE FROM queue_items WHERE
 "status" = $1 AND
-"type" = $2;
+queue_type = $2;
 
 -- name: RemoveQueueItemsFilter :exec
 DELETE FROM queue_items WHERE
 "status" = $1 AND
-"type" = $2 AND
+queue_type = $2 AND
 instruction = $3;
