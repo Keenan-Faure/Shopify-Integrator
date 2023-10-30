@@ -33,7 +33,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.QueueType,
+					QueueType:   value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -56,7 +56,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.QueueType,
+					QueueType:   value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -81,7 +81,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.QueueType,
+					QueueType:   value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -104,7 +104,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.QueueType,
+					QueueType:   value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -129,7 +129,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.QueueType,
+					QueueType:   value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -152,7 +152,7 @@ func CompileQueueFilterSearch(
 			for _, value := range queue_items {
 				response = append(response, objects.ResponseQueueItemFilter{
 					ID:          value.ID,
-					Type:        value.QueueType,
+					QueueType:   value.QueueType,
 					Status:      value.Status,
 					Instruction: value.Instruction,
 					Object:      value.Object,
@@ -177,7 +177,7 @@ func CompileQueueFilterSearch(
 	for _, value := range queue_items {
 		response = append(response, objects.ResponseQueueItemFilter{
 			ID:          value.ID,
-			Type:        value.QueueType,
+			QueueType:   value.QueueType,
 			Status:      value.Status,
 			Instruction: value.Instruction,
 			Object:      value.Object,

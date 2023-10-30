@@ -94,6 +94,24 @@ func CreateTestCSVFile() {
 	iocsv.WriteFile(data, "test_import")
 }
 
+func CreateQueueItem(queue_type string) objects.RequestQueueItem {
+	file, err := os.Open("./test_payloads/queue/queue_" + queue_type + ".json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+	respBody, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	orderData := objects.RequestQueueItem{}
+	err = json.Unmarshal(respBody, &orderData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return orderData
+}
+
 func CreateOrdr() objects.RequestBodyOrder {
 	file, err := os.Open("./test_payloads/order.json")
 	if err != nil {
@@ -427,7 +445,7 @@ func TestCustomerCRUD(t *testing.T) {
 	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
-func TestProductIO(t *testing.T) {
+func TestProductIOCRUD(t *testing.T) {
 	fmt.Println("Test 1 - Importing products")
 	dbconfig := SetUpDatabase()
 	user := CreateDemoUser(&dbconfig)
@@ -487,4 +505,198 @@ func TestProductIO(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
+}
+
+func TestQueueCRUD(t *testing.T) {
+	fmt.Println("Test 1 - Creating new items inside the queue")
+	dbconfig := SetUpDatabase()
+	body := CreateQueueItem("add_order")
+	body2 := CreateQueueItem("add_product")
+	user := CreateDemoUser(&dbconfig)
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	var buffer2 bytes.Buffer
+	err = json.NewEncoder(&buffer2).Encode(body2)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res, err := UFetchHelperPost("queue", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res2, err := UFetchHelperPost("queue", "POST", user.ApiKey, &buffer2)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	defer res2.Body.Close()
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res2.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res2.StatusCode))
+	}
+	fmt.Println("Test 2 - Reading the data of the new queue items")
+	res, err = UFetchHelperPost("queue?page=1", "GET", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	queueDataList := []objects.ResponseQueueItemFilter{}
+	err = json.Unmarshal(respBody, &queueDataList)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if queueDataList[0].Instruction != "add_product" {
+		t.Errorf("expected 'add_product' but found: " + queueDataList[0].Instruction)
+	}
+	if queueDataList[0].Status != "in-queue" {
+		t.Errorf("expected 'in-queue' but found: " + queueDataList[0].Status)
+	}
+	if queueDataList[1].Instruction != "add_order" {
+		t.Errorf("expected 'add_order' but found: " + queueDataList[1].Instruction)
+	}
+	if queueDataList[1].QueueType != "order" {
+		t.Errorf("expected 'order' but found: " + queueDataList[1].QueueType)
+	}
+	// fmt.Println("Test 3 - Updating specific queue items in the queue")
+	fmt.Println("Test 4 - Processing queue item in the queue and check status")
+	res, err = UFetchHelperPost("queue/worker?type=product", "POST", user.ApiKey, nil)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	queueWorkerResponse := objects.ResponseQueueWorker{}
+	err = json.Unmarshal(respBody, &queueWorkerResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if queueWorkerResponse.Status != "completed" {
+		t.Errorf("expected 'completed' but found: " + queueWorkerResponse.Instruction)
+	}
+	res, err = UFetchHelperPost("queue/worker?type=order", "POST", user.ApiKey, nil)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	queueWorkerResponse = objects.ResponseQueueWorker{}
+	err = json.Unmarshal(respBody, &queueWorkerResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if queueWorkerResponse.Status != "completed" {
+		t.Errorf("expected 'completed' but found: " + queueWorkerResponse.Instruction)
+	}
+	// res, err = UFetchHelperPost("queue/worker", "POST", user.ApiKey, &buffer)
+	// if err != nil {
+	// 	t.Errorf("expected 'nil' but found: " + err.Error())
+	// }
+	// defer res.Body.Close()
+	// _, err = io.ReadAll(res.Body)
+	// if err != nil {
+	// 	t.Errorf("expected 'nil' but found: " + err.Error())
+	// }
+	// if res.StatusCode != 500 {
+	// 	t.Errorf("Expected '500' but found: " + strconv.Itoa(res.StatusCode))
+	// }
+	fmt.Println("Test 5 - Delete queue item in the queue")
+	body = CreateQueueItem("add_order")
+	err = json.NewEncoder(&buffer).Encode(body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res, err = UFetchHelperPost("queue", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	res, err = UFetchHelperPost("queue?instruction=add_order", "DELETE", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	res, err = UFetchHelperPost("queue/view", "GET", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	queueCount := objects.ResponseQueueCount{}
+	err = json.Unmarshal(respBody, &queueCount)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if queueCount.AddOrder != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddOrder))
+	}
+	if queueCount.AddProduct != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddProduct))
+	}
+	if queueCount.AddVariant != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddVariant))
+	}
+	if queueCount.UpdateOrder != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateOrder))
+	}
+	if queueCount.UpdateProduct != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateProduct))
+	}
+	if queueCount.UpdateVariant != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateVariant))
+	}
+
+	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
+	UFetchHelperPost("queue?status=completed", "DELETE", user.ApiKey, &buffer)
 }

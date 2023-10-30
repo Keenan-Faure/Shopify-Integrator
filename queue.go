@@ -62,7 +62,7 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseQueueItem{
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseQueueItem{
 		ID:     queue_id,
 		Object: body,
 	})
@@ -70,6 +70,12 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 
 // POST /api/queue/worker?type=orders,products
 func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Request, user database.User) {
+	worker_type := r.URL.Query().Get("type")
+	err := CheckWorkerType(worker_type)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	queue_item, err := dbconfig.DB.GetNextQueueItem(r.Context())
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -79,7 +85,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	if queue_item.QueueType == "product" {
+	if worker_type == "product" {
 		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
 			QueueType: "product",
@@ -88,15 +94,17 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "queue is empty.")
+				RespondWithError(w, http.StatusInternalServerError, "product queue is currently busy")
 				return
 			}
 		}
-		if item[0].QueueType == "product" {
-			RespondWithError(w, http.StatusServiceUnavailable, "product queue is currently busy")
-			return
+		if len(item) != 0 {
+			if item[0].QueueType == "product" {
+				RespondWithError(w, http.StatusServiceUnavailable, "product queue is currently busy")
+				return
+			}
 		}
-	} else {
+	} else if worker_type == "order" {
 		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
 			QueueType: "order",
@@ -105,13 +113,15 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "queue is empty.")
+				RespondWithError(w, http.StatusInternalServerError, "order queue is currently busy")
 				return
 			}
 		}
-		if item[0].QueueType == "order" {
-			RespondWithError(w, http.StatusServiceUnavailable, "order queue is currently busy")
-			return
+		if len(item) != 0 {
+			if item[0].QueueType == "order" {
+				RespondWithError(w, http.StatusServiceUnavailable, "order queue is currently busy")
+				return
+			}
 		}
 	}
 	_, err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
@@ -162,8 +172,7 @@ func (dbconfig *DbConfig) FilterQueueItems(w http.ResponseWriter, r *http.Reques
 	RespondWithJSON(w, http.StatusOK, result)
 }
 
-// TODO make a seperate endpoint?
-// GET /api/queue?position=0
+// GET /api/queue/processing
 func (dbconfig *DbConfig) QueueViewCurrentItem(w http.ResponseWriter, r *http.Request, user database.User) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
@@ -361,8 +370,6 @@ func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error
 	}, nil
 }
 
-// Helper function: removes queue items by filters
-
 // Compile Queue Filter Search into a single object (variable)
 func CompileRemoveQueueFilter(
 	dbconfig *DbConfig,
@@ -462,6 +469,17 @@ func CompileRemoveQueueFilter(
 		return []string{"error"}, err
 	}
 	return []string{"success"}, nil
+}
+
+// Helper function: Checks if the worker type is valid
+func CheckWorkerType(worker_type string) error {
+	worker_types := []string{"product", "order"}
+	for _, value := range worker_types {
+		if value == worker_type {
+			return nil
+		}
+	}
+	return errors.New("invalid worker type")
 }
 
 // Helper function: Posts internal requests to the queue endpoint

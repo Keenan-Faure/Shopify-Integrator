@@ -81,6 +81,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/queue", dbconfig.middlewareAuth(dbconfig.QueueViewNextItems))
 	api.Get("/queue/filter", dbconfig.middlewareAuth(dbconfig.FilterQueueItems))
 	api.Get("/queue/view", dbconfig.middlewareAuth(dbconfig.QueueView))
+	api.Get("/queue/processing", dbconfig.middlewareAuth(dbconfig.QueueViewCurrentItem))
 	api.Post("/queue", dbconfig.middlewareAuth(dbconfig.QueuePush))
 	api.Post("/queue/worker", dbconfig.middlewareAuth(dbconfig.QueuePopAndProcess))
 	api.Delete("/queue/{id}", dbconfig.middlewareAuth(dbconfig.ClearQueueByID))
