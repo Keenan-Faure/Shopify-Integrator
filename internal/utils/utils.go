@@ -120,3 +120,23 @@ func ExtractVID(id string) string {
 	}
 	return ""
 }
+
+// Gets all the available settings and returns them as a map[string]string
+func GetAppSettings(key string) map[string]string {
+	result := make(map[string]string)
+	app_keys := []string{"APP_ENABLE_SHOPIFY_FETCH", "APP_ENABLE_QUEUE_WORKER", "APP_SHOPIFY_FETCH_TIME",
+		"APP_ENABLE_SHOPIFY_PUSH"}
+	shopify_keys := []string{"SHOPIFY_DEFAULT_PRICE_TIER", "SHOPIFY_DEFAULT_COST_PRICE_TIER"}
+	if key == "app" {
+		for iterator, value := range app_keys {
+			result[app_keys[iterator]] = LoadEnv(value)
+		}
+	} else if key == "shopify" {
+		for iterator, value := range shopify_keys {
+			result[shopify_keys[iterator]] = LoadEnv(value)
+		}
+	}
+	return result
+}
+
+// Gets the description

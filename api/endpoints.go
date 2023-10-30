@@ -290,7 +290,7 @@ func createRoutes() map[string]objects.Route {
 			Supports:      []string{"GET"},
 			Params:        map[string]objects.Params{},
 			AcceptsData:   true,
-			Format:        objects.RequestShopifySettings{},
+			Format:        objects.RequestSettings{},
 			Authorization: "Authorization: ApiKey <key>",
 		},
 		"POST /api/queue": {
@@ -322,7 +322,7 @@ func createRoutes() map[string]objects.Route {
 			Supports:      []string{"DELETE"},
 			Params:        map[string]objects.Params{},
 			AcceptsData:   true,
-			Format:        objects.RequestShopifySettings{},
+			Format:        objects.RequestSettings{},
 			Authorization: "Authorization: ApiKey <key>",
 		},
 		"DELETE /api/queue/{id}": {

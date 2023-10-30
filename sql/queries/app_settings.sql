@@ -1,5 +1,5 @@
--- name: AddShopifySetting :exec
-INSERT INTO shopify_settings(
+-- name: AddAppSetting :exec
+INSERT INTO app_settings(
     id,
     key,
     description,
@@ -10,32 +10,31 @@ INSERT INTO shopify_settings(
     $1, $2, $3, $4, $5, $6
 );
 
--- name: UpdateShopifySetting :exec
-UPDATE shopify_settings
+-- name: UpdateAppSetting :exec
+UPDATE app_settings
 SET
     value = $1,
     updated_at = $2
 WHERE key = $3;
 
--- name: GetShopifySettingByKey :one
+-- name: GetAppSettingByKey :one
 SELECT
     id,
     key,
     description,
     value,
     updated_at
-FROM shopify_settings
+FROM app_settings
 WHERE key = $1;
 
--- name: GetShopifySettings :many
+-- name: GetAppSettings :many
 SELECT
     id,
     key,
     description,
     value,
     updated_at
-FROM shopify_settings;
+FROM app_settings;
 
--- name: RemoveShopifySetting :exec
-DELETE FROM shopify_settings
-WHERE key = $1;
+-- name: RemoveAppSetting :exec
+DELETE FROM app_settings WHERE key = $1;

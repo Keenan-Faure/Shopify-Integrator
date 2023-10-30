@@ -612,10 +612,11 @@ type ShopifyOptions struct {
 // shopify_settings.go
 
 type ShopifySettings struct {
-	Key string `json:"key"`
+	Key         string `json:"key"`
+	Description string `json:"description"`
 }
 
-type RequestShopifySettings struct {
+type RequestSettings struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }

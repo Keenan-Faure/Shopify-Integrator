@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"objects"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
@@ -91,16 +92,16 @@ func DecodeQueueItem(r *http.Request) (objects.RequestQueueItem, error) {
 }
 
 // Validate: ShopifySettings
-func ShopifySettingsValidation(
-	request_settings_map []objects.RequestShopifySettings,
-	setting_keys []objects.ShopifySettings) error {
+func SettingsValidation(
+	request_settings_map []objects.RequestSettings,
+	setting_keys map[string]string) error {
 	for _, map_value := range request_settings_map {
 		found := false
 		if map_value.Key == "" {
 			return errors.New("settings key cannot be blank")
 		}
-		for _, settings_value := range setting_keys {
-			if map_value.Key == settings_value.Key {
+		for key := range setting_keys {
+			if map_value.Key == strings.ToLower(key) {
 				found = true
 			}
 		}
@@ -112,15 +113,15 @@ func ShopifySettingsValidation(
 }
 
 // Validate: ShopifySetting
-func ShopifySettingValidation(
-	shopify_settings_map objects.RequestShopifySettings,
-	setting_keys []objects.ShopifySettings) error {
+func SettingValidation(
+	shopify_settings_map objects.RequestSettings,
+	setting_keys map[string]string) error {
 	found := false
 	if shopify_settings_map.Key == "" {
 		return errors.New("settings key cannot be blank")
 	}
-	for _, settings_value := range setting_keys {
-		if shopify_settings_map.Key == settings_value.Key {
+	for key := range setting_keys {
+		if shopify_settings_map.Key == strings.ToLower(key) {
 			found = true
 		}
 	}
@@ -131,23 +132,23 @@ func ShopifySettingValidation(
 }
 
 // Decode: ShopifySettings
-func DecodeShopifySettings(r *http.Request) ([]objects.RequestShopifySettings, error) {
+func DecodeSettings(r *http.Request) ([]objects.RequestSettings, error) {
 	decoder := json.NewDecoder(r.Body)
-	params := []objects.RequestShopifySettings{}
+	params := []objects.RequestSettings{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		return []objects.RequestShopifySettings{}, err
+		return []objects.RequestSettings{}, err
 	}
 	return params, nil
 }
 
 // Decode: ShopifySetting
-func DecodeShopifySetting(r *http.Request) (objects.RequestShopifySettings, error) {
+func DecodeSetting(r *http.Request) (objects.RequestSettings, error) {
 	decoder := json.NewDecoder(r.Body)
-	params := objects.RequestShopifySettings{}
+	params := objects.RequestSettings{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		return objects.RequestShopifySettings{}, err
+		return objects.RequestSettings{}, err
 	}
 	return params, nil
 }

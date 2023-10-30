@@ -163,3 +163,22 @@ func TestExtractPID(t *testing.T) {
 		t.Errorf("Expected '', but found " + variable)
 	}
 }
+
+func TestGetAppSettings(t *testing.T) {
+	fmt.Println("Test Case 1 - Returning All Keys for app settings")
+	settings_map := GetAppSettings("app")
+	if len(settings_map) == 0 {
+		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(settings_map)))
+	}
+	if settings_map["APP_ENABLE_SHOPIFY_FETCH"] == "" {
+		t.Errorf("Expected 'description' value but found " + settings_map["APP_ENABLE_SHOPIFY_FETCH"])
+	}
+	fmt.Println("Test Case 2 - Returning All Keys for shopify settings")
+	shopify_settings_map := GetAppSettings("shopify")
+	if len(shopify_settings_map) == 0 {
+		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(shopify_settings_map)))
+	}
+	if shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"] == "" {
+		t.Errorf("Expected 'description' value but found " + shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"])
+	}
+}

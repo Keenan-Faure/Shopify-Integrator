@@ -7,6 +7,7 @@ import (
 	"errors"
 	"integrator/internal/database"
 	"io"
+	"log"
 	"net/http"
 	"objects"
 	"shopify"
@@ -86,6 +87,19 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if worker_type == "product" {
+		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		is_enabled, err := strconv.ParseBool(push_enabled.Value)
+		if err != nil {
+			log.Println(err)
+		}
+		if !is_enabled {
+			RespondWithError(w, http.StatusInternalServerError, "product push is disabled")
+			return
+		}
 		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
 			QueueType: "product",
@@ -94,7 +108,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "product queue is currently busy")
+				RespondWithError(w, http.StatusInternalServerError, "product queue is currently empty")
 				return
 			}
 		}
@@ -103,6 +117,9 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 				RespondWithError(w, http.StatusServiceUnavailable, "product queue is currently busy")
 				return
 			}
+		} else if len(item) == 0 {
+			RespondWithError(w, http.StatusInternalServerError, "product queue is currently empty")
+			return
 		}
 	} else if worker_type == "order" {
 		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
@@ -113,7 +130,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "order queue is currently busy")
+				RespondWithError(w, http.StatusInternalServerError, "order queue is currently empty")
 				return
 			}
 		}
@@ -122,6 +139,9 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 				RespondWithError(w, http.StatusServiceUnavailable, "order queue is currently busy")
 				return
 			}
+		} else if len(item) == 0 {
+			RespondWithError(w, http.StatusInternalServerError, "order queue is currently empty")
+			return
 		}
 	}
 	_, err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
@@ -240,7 +260,7 @@ func (dbconfig *DbConfig) ClearQueueByID(
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, []string{"success"})
+	RespondWithJSON(w, http.StatusOK, "success")
 }
 
 // DELETE /api/queue?key=value
@@ -376,21 +396,21 @@ func CompileRemoveQueueFilter(
 	ctx context.Context,
 	queue_type,
 	status,
-	instruction string) ([]string, error) {
+	instruction string) (string, error) {
 	if queue_type == "" {
 		if status == "" {
 			err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
 			if err != nil {
-				return []string{"error"}, err
+				return "error", err
 			}
-			return []string{"success"}, nil
+			return "success", nil
 		} else {
 			if instruction == "" {
 				err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
 				if err != nil {
-					return []string{"error"}, err
+					return "error", err
 				}
-				return []string{"success"}, nil
+				return "success", nil
 			}
 			err := dbconfig.DB.RemoveQueueItemsByStatusAndInstruction(
 				ctx,
@@ -399,25 +419,25 @@ func CompileRemoveQueueFilter(
 					Status:      status,
 				})
 			if err != nil {
-				return []string{"error"}, err
+				return "error", err
 			}
-			return []string{"success"}, nil
+			return "success", nil
 		}
 	}
 	if status == "" {
 		if instruction == "" {
 			err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
 			if err != nil {
-				return []string{"error"}, err
+				return "error", err
 			}
-			return []string{"success"}, nil
+			return "success", nil
 		} else {
 			if queue_type == "" {
 				err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
 				if err != nil {
-					return []string{"error"}, err
+					return "error", err
 				}
-				return []string{"success"}, nil
+				return "success", nil
 			}
 			err := dbconfig.DB.RemoveQueueItemsByTypeAndInstruction(
 				ctx,
@@ -426,25 +446,25 @@ func CompileRemoveQueueFilter(
 					QueueType:   queue_type,
 				})
 			if err != nil {
-				return []string{"error"}, err
+				return "error", err
 			}
-			return []string{"success"}, nil
+			return "success", nil
 		}
 	}
 	if instruction == "" {
 		if queue_type == "" {
 			err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
 			if err != nil {
-				return []string{"error"}, err
+				return "error", err
 			}
-			return []string{"success"}, nil
+			return "success", nil
 		} else {
 			if status == "" {
 				err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
 				if err != nil {
-					return []string{"error"}, err
+					return "error", err
 				}
-				return []string{"success"}, nil
+				return "success", nil
 			}
 			err := dbconfig.DB.RemoveQueueItemsByStatusAndType(
 				ctx,
@@ -453,9 +473,9 @@ func CompileRemoveQueueFilter(
 					QueueType: queue_type,
 				})
 			if err != nil {
-				return []string{"error"}, err
+				return "error", err
 			}
-			return []string{"success"}, nil
+			return "success", nil
 		}
 	}
 	err := dbconfig.DB.RemoveQueueItemsFilter(
@@ -466,9 +486,9 @@ func CompileRemoveQueueFilter(
 			Instruction: instruction,
 		})
 	if err != nil {
-		return []string{"error"}, err
+		return "error", err
 	}
-	return []string{"success"}, nil
+	return "success", nil
 }
 
 // Helper function: Checks if the worker type is valid

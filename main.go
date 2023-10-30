@@ -33,7 +33,7 @@ func main() {
 	if !*flags {
 		fmt.Println("Starting Workers")
 		// go iocsv.LoopRemoveCSV()
-		// go shopify.LoopJSONShopify()
+		// go LoopJSONShopify(&dbCon, shopifyConfig)
 	}
 	fmt.Println("Starting API")
 	setupAPI(dbCon, shopifyConfig)
@@ -66,16 +66,18 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 
-	// Shopify Endpoints
-	// api.Post("/shopify/push", dbconfig.shopifyAuth())
-
 	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
 	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
 
 	// shopify settings
-	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetSettingValue))
+	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetShopifySettingValue))
 	api.Post("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
 	api.Delete("/shopify/settings", dbconfig.middlewareAuth(dbconfig.RemoveShopifySettings))
+
+	// app settings
+	api.Get("/settings", dbconfig.middlewareAuth(dbconfig.GetAppSettingValue))
+	api.Post("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
+	api.Delete("/settings", dbconfig.middlewareAuth(dbconfig.RemoveAppSettings))
 
 	// queue
 	api.Get("/queue", dbconfig.middlewareAuth(dbconfig.QueueViewNextItems))

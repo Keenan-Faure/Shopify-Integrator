@@ -1,28 +1,45 @@
 package main
 
 import (
+	"context"
 	"log"
 	"objects"
 	"shopify"
+	"strconv"
 	"time"
 )
-
-const fetch_time_shopify = 120 * time.Second // 120 seconds
 
 // loop function that uses Goroutine to run
 // a function each interval
 func LoopJSONShopify(
 	dbconfig *DbConfig,
-	shopifyConfig shopify.ConfigShopify,
-	interval time.Duration) {
-	ticker := time.NewTicker(interval)
+	shopifyConfig shopify.ConfigShopify) {
+	fetch_time, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_shopify_fetch_time")
+	if err != nil {
+		log.Println(err)
+	}
+	timer, err := strconv.Atoi(fetch_time.Value)
+	if err != nil {
+		log.Println(err)
+	}
+	ticker := time.NewTicker(time.Duration(timer) * time.Second)
 	for ; ; <-ticker.C {
-		shopifyProds, err := shopifyConfig.FetchProducts()
+		fetch_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_fetch")
 		if err != nil {
-			log.Println("Shopify > Error fetching next products to process:", err)
-			continue
+			log.Println(err)
 		}
-		ProcessShopifyProducts(dbconfig, shopifyProds)
+		is_enabled, err := strconv.ParseBool(fetch_enabled.Value)
+		if err != nil {
+			log.Println(err)
+		}
+		if is_enabled {
+			shopifyProds, err := shopifyConfig.FetchProducts()
+			if err != nil {
+				log.Println("Shopify > Error fetching next products to process:", err)
+				continue
+			}
+			ProcessShopifyProducts(dbconfig, shopifyProds)
+		}
 	}
 }
 

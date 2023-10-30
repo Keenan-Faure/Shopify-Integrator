@@ -29,6 +29,15 @@ type Address struct {
 	UpdatedAt  time.Time      `json:"updated_at"`
 }
 
+type AppSetting struct {
+	ID          uuid.UUID `json:"id"`
+	Key         string    `json:"key"`
+	Description string    `json:"description"`
+	Value       string    `json:"value"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
 type Customer struct {
 	ID        uuid.UUID      `json:"id"`
 	FirstName string         `json:"first_name"`
@@ -157,11 +166,12 @@ type ShopifyPid struct {
 }
 
 type ShopifySetting struct {
-	ID        uuid.UUID `json:"id"`
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          uuid.UUID `json:"id"`
+	Key         string    `json:"key"`
+	Value       string    `json:"value"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Description string    `json:"description"`
 }
 
 type ShopifyVid struct {
