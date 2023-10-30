@@ -154,7 +154,7 @@ func createRoutes() map[string]objects.Route {
 			Authorization: "Authorization: ApiKey <key>",
 		},
 		"GET /api/shopify/settings": {
-			Description: "Returns the value of the shopify setting",
+			Description: "Returns the value of the shopify setting, or the entire list if the key is blank",
 			Supports:    []string{"GET"},
 			Params: map[string]objects.Params{
 				"key": {
@@ -208,6 +208,19 @@ func createRoutes() map[string]objects.Route {
 			Description:   "Returns the current queue count in a structured map",
 			Supports:      []string{"GET"},
 			Params:        map[string]objects.Params{},
+			AcceptsData:   false,
+			Format:        []string{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"GET /api/settings": {
+			Description: "Returns the value of the app setting, or all of them if the key is blank",
+			Supports:    []string{"GET"},
+			Params: map[string]objects.Params{
+				"key": {
+					Key:   "key",
+					Value: "app setting key",
+				},
+			},
 			AcceptsData:   false,
 			Format:        []string{},
 			Authorization: "Authorization: ApiKey <key>",
@@ -293,6 +306,14 @@ func createRoutes() map[string]objects.Route {
 			Format:        objects.RequestSettings{},
 			Authorization: "Authorization: ApiKey <key>",
 		},
+		"POST /api/settings": {
+			Description:   "Creates a new app setting",
+			Supports:      []string{"GET"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   true,
+			Format:        objects.RequestSettings{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
 		"POST /api/queue": {
 			Description:   "Adds a new item to the queue",
 			Supports:      []string{"POST"},
@@ -319,6 +340,14 @@ func createRoutes() map[string]objects.Route {
 		},
 		"DELETE /api/shopify/settings": {
 			Description:   "Removes a shopify setting",
+			Supports:      []string{"DELETE"},
+			Params:        map[string]objects.Params{},
+			AcceptsData:   true,
+			Format:        objects.RequestSettings{},
+			Authorization: "Authorization: ApiKey <key>",
+		},
+		"DELETE /api/settings": {
+			Description:   "Removes an app setting",
 			Supports:      []string{"DELETE"},
 			Params:        map[string]objects.Params{},
 			AcceptsData:   true,

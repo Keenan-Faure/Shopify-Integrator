@@ -910,15 +910,27 @@ func (dbconfig *DbConfig) ReadyHandle(w http.ResponseWriter, r *http.Request) {
 
 // JSON helper functions
 func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) error {
-	response, err := json.Marshal(payload)
-	if err != nil {
-		return err
+	if payload == nil {
+		response, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(code)
+		w.Write(response)
+		return nil
+	} else {
+		response, err := json.Marshal(payload)
+		if err != nil {
+			return err
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(code)
+		w.Write(response)
+		return nil
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(code)
-	w.Write(response)
-	return nil
 }
 
 func RespondWithError(w http.ResponseWriter, code int, msg string) error {
