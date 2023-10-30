@@ -34,6 +34,7 @@ func main() {
 		fmt.Println("Starting Workers")
 		// go iocsv.LoopRemoveCSV()
 		// go LoopJSONShopify(&dbCon, shopifyConfig)
+		QueueWorker(&dbCon)
 	}
 	fmt.Println("Starting API")
 	setupAPI(dbCon, shopifyConfig)
@@ -85,7 +86,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/queue/view", dbconfig.middlewareAuth(dbconfig.QueueView))
 	api.Get("/queue/processing", dbconfig.middlewareAuth(dbconfig.QueueViewCurrentItem))
 	api.Post("/queue", dbconfig.middlewareAuth(dbconfig.QueuePush))
-	api.Post("/queue/worker", dbconfig.middlewareAuth(dbconfig.QueuePopAndProcess))
+	// api.Post("/queue/worker", dbconfig.middlewareAuth(dbconfig.QueuePopAndProcess))
 	api.Delete("/queue/{id}", dbconfig.middlewareAuth(dbconfig.ClearQueueByID))
 	api.Delete("/queue", dbconfig.middlewareAuth(dbconfig.ClearQueueByFilter))
 

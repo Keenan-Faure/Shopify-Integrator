@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"integrator/internal/database"
 	"io"
 	"log"
@@ -12,6 +13,7 @@ import (
 	"objects"
 	"shopify"
 	"strconv"
+	"sync"
 	"time"
 	"utils"
 
@@ -19,15 +21,89 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO make a queue_size setting - would need another table to store app setting
-// how about using the .env file?
-const queue_size = 300
+// TODO where are queue errors inside the queue worker logged?
+// are they logged as part of the error message for the queue_item?
+// retryable?  - no dont want to make this a function, but it should return the status if it failed...
+
+func QueueWorker(dbconfig *DbConfig) {
+	if dbconfig.Valid {
+		go LoopQueueWorker(dbconfig)
+	}
+}
+
+func LoopQueueWorker(dbconfig *DbConfig) {
+	interval := 5
+	db_interval, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_cron_time")
+	if err != nil {
+		interval = 5
+	}
+	interval, err = strconv.Atoi(db_interval.Value)
+	if err != nil {
+		interval = 5
+	}
+	timer := time.Duration(interval * int(time.Second))
+	ticker := time.NewTicker(timer)
+	for ; ; <-ticker.C {
+		QueueWaitGroup(dbconfig)
+	}
+}
+
+func QueueWaitGroup(dbconfig *DbConfig) {
+	fmt.Println("inside gorountine")
+	waitgroup := &sync.WaitGroup{}
+	process_limit := 0
+	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")
+	if err != nil {
+		process_limit = 20
+	}
+	process_limit, err = strconv.Atoi(process_limit_db.Value)
+	if err != nil {
+		process_limit = 20
+	}
+	queue_items, err := dbconfig.DB.GetQueueItemsByDate(context.Background(), database.GetQueueItemsByDateParams{
+		Status: "in-queue",
+		Limit:  int32(process_limit),
+		Offset: 0,
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	for _, queue_item := range queue_items {
+		waitgroup.Add(1)
+		go dbconfig.QueuePopAndProcess(queue_item.QueueType)
+	}
+	waitgroup.Wait()
+}
+
+// program starts
+// items are added to the queue inside the database
+// worker will then pick up the items in the queue that has been newly added
+// should run whenever there is a new item added to the queue
+// until the queue is empty
+// worker will process them and mark them completed
 
 // POST /api/queue
 func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user database.User) {
-	// check if the queue_size has been reached
+	queue_size_int := 0
+	queue_size_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_size")
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		queue_size_int = 100
+	}
+	queue_size_int, err = strconv.Atoi(queue_size_db.Value)
+	if err != nil {
+		queue_size_int = 100
+	}
 	size, err := dbconfig.DB.GetQueueSize(context.Background())
-	if size >= queue_size {
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if size >= int64(queue_size_int) {
 		RespondWithError(w, http.StatusBadRequest, "queue is full, please wait")
 		return
 	}
@@ -69,38 +145,33 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 	})
 }
 
+// Not an endpoint anymore, it's processes automatically in the background each 5 seconds
 // POST /api/queue/worker?type=orders,products
-func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Request, user database.User) {
-	worker_type := r.URL.Query().Get("type")
+func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string) (database.QueueItem, error) {
 	err := CheckWorkerType(worker_type)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
+		return database.QueueItem{}, err
 	}
-	queue_item, err := dbconfig.DB.GetNextQueueItem(r.Context())
+	queue_item, err := dbconfig.DB.GetNextQueueItem(context.Background())
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, "queue is empty.")
-			return
+			return database.QueueItem{}, errors.New("queue is empty")
 		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		return database.QueueItem{}, err
 	}
 	if worker_type == "product" {
 		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
+			return database.QueueItem{}, err
 		}
 		is_enabled, err := strconv.ParseBool(push_enabled.Value)
 		if err != nil {
-			log.Println(err)
+			return database.QueueItem{}, err
 		}
 		if !is_enabled {
-			RespondWithError(w, http.StatusInternalServerError, "product push is disabled")
-			return
+			return database.QueueItem{}, errors.New("product push is disabled")
 		}
-		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
+		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(context.Background(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
 			QueueType: "product",
 			Limit:     1,
@@ -108,21 +179,16 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "product queue is currently empty")
-				return
+				return database.QueueItem{}, errors.New("product queue is currently empty")
 			}
 		}
 		if len(item) != 0 {
 			if item[0].QueueType == "product" {
-				RespondWithError(w, http.StatusServiceUnavailable, "product queue is currently busy")
-				return
+				return database.QueueItem{}, errors.New("product queue is currently busy")
 			}
-		} else if len(item) == 0 {
-			RespondWithError(w, http.StatusInternalServerError, "product queue is currently empty")
-			return
 		}
 	} else if worker_type == "order" {
-		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(r.Context(), database.GetQueueItemsByStatusAndTypeParams{
+		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(context.Background(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
 			QueueType: "order",
 			Limit:     1,
@@ -130,44 +196,36 @@ func (dbconfig *DbConfig) QueuePopAndProcess(w http.ResponseWriter, r *http.Requ
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "order queue is currently empty")
-				return
+				return database.QueueItem{}, errors.New("order queue is currently empty")
 			}
 		}
 		if len(item) != 0 {
 			if item[0].QueueType == "order" {
-				RespondWithError(w, http.StatusServiceUnavailable, "order queue is currently busy")
-				return
+				return database.QueueItem{}, errors.New("order queue is currently busy")
 			}
-		} else if len(item) == 0 {
-			RespondWithError(w, http.StatusInternalServerError, "order queue is currently empty")
-			return
 		}
 	}
-	_, err = dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
+	_, err = dbconfig.DB.UpdateQueueItem(context.Background(), database.UpdateQueueItemParams{
 		Status:    "processing",
 		UpdatedAt: time.Now().UTC(),
 		ID:        queue_item.ID,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		return database.QueueItem{}, err
 	}
 	err = ProcessQueueItem(dbconfig, queue_item)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		return database.QueueItem{}, err
 	}
-	updated_queue_item, err := dbconfig.DB.UpdateQueueItem(r.Context(), database.UpdateQueueItemParams{
+	updated_queue_item, err := dbconfig.DB.UpdateQueueItem(context.Background(), database.UpdateQueueItemParams{
 		Status:    "completed",
 		UpdatedAt: time.Now().UTC(),
 		ID:        queue_item.ID,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		return database.QueueItem{}, err
 	}
-	RespondWithJSON(w, http.StatusOK, updated_queue_item)
+	return updated_queue_item, nil
 }
 
 // field can be:

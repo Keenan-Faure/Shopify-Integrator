@@ -6,12 +6,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/joho/godotenv"
 )
-
-const time_format = time.RFC1123Z
 
 // Returns the value of the environment variable
 func LoadEnv(key string) string {
@@ -125,7 +122,7 @@ func ExtractVID(id string) string {
 func GetAppSettings(key string) map[string]string {
 	result := make(map[string]string)
 	app_keys := []string{"APP_ENABLE_SHOPIFY_FETCH", "APP_ENABLE_QUEUE_WORKER", "APP_SHOPIFY_FETCH_TIME",
-		"APP_ENABLE_SHOPIFY_PUSH"}
+		"APP_ENABLE_SHOPIFY_PUSH", "APP_QUEUE_SIZE", "APP_QUEUE_PROCESS_LIMIT", "APP_QUEUE_CRON_TIME"}
 	shopify_keys := []string{"SHOPIFY_DEFAULT_PRICE_TIER", "SHOPIFY_DEFAULT_COST_PRICE_TIER"}
 	if key == "app" {
 		for iterator, value := range app_keys {
