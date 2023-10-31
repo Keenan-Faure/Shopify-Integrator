@@ -204,12 +204,44 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		_, err := configShopify.UpdateProductShopify(shopifyProduct, product_id)
 		return err
 	}
-	// TODO should it look until it finds a variant?
-	// Make this a setting
-	ids, err := configShopify.GetProductBySKU(product.Variants[0].Sku)
+	dynamic_search_disabled, err := dbconfig.DB.GetAppSettingByKey(
+		context.Background(),
+		"shopify_disable_dynamic_sku_search",
+	)
 	if err != nil {
 		return err
 	}
+	if dynamic_search_disabled.Value == "true" {
+		ids, err := configShopify.GetProductBySKU(product.Variants[0].Sku)
+		if err != nil {
+			return err
+		}
+		err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		for _, variant := range product.Variants {
+			ids, err := configShopify.GetProductBySKU(variant.Sku)
+			if err != nil {
+				return err
+			}
+			err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func PushAddShopify(
+	configShopify *shopify.ConfigShopify,
+	dbconfig *DbConfig,
+	ids objects.ResponseIDs,
+	product objects.Product,
+	shopifyProduct objects.ShopifyProduct) error {
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
 		product_data, err := configShopify.UpdateProductShopify(shopifyProduct, ids.ProductID)
