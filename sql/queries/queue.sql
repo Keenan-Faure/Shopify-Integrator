@@ -5,10 +5,11 @@ INSERT INTO queue_items(
     instruction,
     "status",
     "object",
+    "description",
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 )
 RETURNING id;
 
@@ -16,13 +17,14 @@ RETURNING id;
 UPDATE queue_items
 SET
     "status" = $1,
-    updated_at = $2
-WHERE id = $3
+    updated_at = $2,
+    "description" = $3
+WHERE id = $4
 RETURNING *;
 
 -- name: GetNextQueueItem :one
 SELECT * FROM queue_items
-WHERE "status" != 'completed'
+WHERE "status" NOT IN ('completed', 'failed')
 ORDER BY instruction asc, created_at desc
 LIMIT 1;
 
@@ -47,6 +49,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE queue_type = $1
@@ -60,6 +63,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE "status" = $1
@@ -73,6 +77,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE instruction = $1
@@ -86,6 +91,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE instruction = $1
@@ -100,6 +106,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE instruction = $1
@@ -114,6 +121,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE "status" = $1
@@ -128,6 +136,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE "status" = $1
@@ -141,7 +150,7 @@ SELECT
     COUNT(*)
 FROM queue_items
 WHERE instruction = $1 AND
-status != 'completed';
+status NOT IN ('completed', 'failed');
 
 -- name: RemoveQueueItemByID :exec
 DELETE FROM queue_items

@@ -49,7 +49,7 @@ func LoopQueueWorker(dbconfig *DbConfig) {
 }
 
 func QueueWaitGroup(dbconfig *DbConfig) {
-	fmt.Println("inside gorountine")
+	defer fmt.Println("inside gorountine")
 	waitgroup := &sync.WaitGroup{}
 	process_limit := 0
 	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")
@@ -71,7 +71,7 @@ func QueueWaitGroup(dbconfig *DbConfig) {
 	}
 	for _, queue_item := range queue_items {
 		waitgroup.Add(1)
-		go dbconfig.QueuePopAndProcess(queue_item.QueueType)
+		go dbconfig.QueuePopAndProcess(queue_item.QueueType, waitgroup)
 	}
 	waitgroup.Wait()
 }
@@ -147,29 +147,32 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 
 // Not an endpoint anymore, it's processes automatically in the background each 5 seconds
 // POST /api/queue/worker?type=orders,products
-func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string) (database.QueueItem, error) {
-	err := CheckWorkerType(worker_type)
-	if err != nil {
-		return database.QueueItem{}, err
-	}
+func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *sync.WaitGroup) {
+	defer wait_group.Done()
 	queue_item, err := dbconfig.DB.GetNextQueueItem(context.Background())
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return database.QueueItem{}, errors.New("queue is empty")
-		}
-		return database.QueueItem{}, err
+		FailedQueueItem(dbconfig, queue_item, err)
+		return
+	}
+	err = CheckWorkerType(worker_type)
+	if err != nil {
+		FailedQueueItem(dbconfig, queue_item, err)
+		return
 	}
 	if worker_type == "product" {
 		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
 		if err != nil {
-			return database.QueueItem{}, err
+			FailedQueueItem(dbconfig, queue_item, err)
+			return
 		}
 		is_enabled, err := strconv.ParseBool(push_enabled.Value)
 		if err != nil {
-			return database.QueueItem{}, err
+			FailedQueueItem(dbconfig, queue_item, err)
+			return
 		}
 		if !is_enabled {
-			return database.QueueItem{}, errors.New("product push is disabled")
+			FailedQueueItem(dbconfig, queue_item, errors.New("product push is disabled"))
+			return
 		}
 		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(context.Background(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
@@ -179,12 +182,13 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string) (database.Queue
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				return database.QueueItem{}, errors.New("product queue is currently empty")
+				return
 			}
 		}
 		if len(item) != 0 {
 			if item[0].QueueType == "product" {
-				return database.QueueItem{}, errors.New("product queue is currently busy")
+				FailedQueueItem(dbconfig, queue_item, errors.New("product queue is currently busy"))
+				return
 			}
 		}
 	} else if worker_type == "order" {
@@ -196,12 +200,13 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string) (database.Queue
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				return database.QueueItem{}, errors.New("order queue is currently empty")
+				return
 			}
 		}
 		if len(item) != 0 {
 			if item[0].QueueType == "order" {
-				return database.QueueItem{}, errors.New("order queue is currently busy")
+				FailedQueueItem(dbconfig, queue_item, errors.New("order queue is currently busy"))
+				return
 			}
 		}
 	}
@@ -211,25 +216,27 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string) (database.Queue
 		ID:        queue_item.ID,
 	})
 	if err != nil {
-		return database.QueueItem{}, err
+		FailedQueueItem(dbconfig, queue_item, err)
+		return
 	}
 	err = ProcessQueueItem(dbconfig, queue_item)
 	if err != nil {
-		return database.QueueItem{}, err
+		FailedQueueItem(dbconfig, queue_item, err)
+		return
 	}
-	updated_queue_item, err := dbconfig.DB.UpdateQueueItem(context.Background(), database.UpdateQueueItemParams{
+	_, err = dbconfig.DB.UpdateQueueItem(context.Background(), database.UpdateQueueItemParams{
 		Status:    "completed",
 		UpdatedAt: time.Now().UTC(),
 		ID:        queue_item.ID,
 	})
 	if err != nil {
-		return database.QueueItem{}, err
+		FailedQueueItem(dbconfig, queue_item, err)
+		return
 	}
-	return updated_queue_item, nil
 }
 
 // field can be:
-// - status: processing, completed, in-queue
+// - status: processing, completed, in-queue, failed
 // - instruction: add_order, update_order, add_product, update_product, add_variant, update_variant
 // - type: product, order
 
@@ -558,6 +565,20 @@ func CheckWorkerType(worker_type string) error {
 		}
 	}
 	return errors.New("invalid worker type")
+}
+
+// Updates the queue item if there is an error
+func FailedQueueItem(dbconfig *DbConfig, queue_item database.QueueItem, err_r error) {
+	_, err := dbconfig.DB.UpdateQueueItem(context.Background(), database.UpdateQueueItemParams{
+		Status:      "failed",
+		UpdatedAt:   time.Now().UTC(),
+		Description: err_r.Error(),
+		ID:          queue_item.ID,
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 // Helper function: Posts internal requests to the queue endpoint

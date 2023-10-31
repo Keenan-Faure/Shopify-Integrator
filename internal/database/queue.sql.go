@@ -20,10 +20,11 @@ INSERT INTO queue_items(
     instruction,
     "status",
     "object",
+    "description",
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 )
 RETURNING id
 `
@@ -34,6 +35,7 @@ type CreateQueueItemParams struct {
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
 	Object      json.RawMessage `json:"object"`
+	Description string          `json:"description"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
@@ -45,6 +47,7 @@ func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams
 		arg.Instruction,
 		arg.Status,
 		arg.Object,
+		arg.Description,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -54,8 +57,8 @@ func (q *Queries) CreateQueueItem(ctx context.Context, arg CreateQueueItemParams
 }
 
 const getNextQueueItem = `-- name: GetNextQueueItem :one
-SELECT id, queue_type, instruction, status, object, created_at, updated_at FROM queue_items
-WHERE "status" != 'completed'
+SELECT id, queue_type, instruction, status, object, created_at, updated_at, description FROM queue_items
+WHERE "status" NOT IN ('completed', 'failed')
 ORDER BY instruction asc, created_at desc
 LIMIT 1
 `
@@ -71,12 +74,13 @@ func (q *Queries) GetNextQueueItem(ctx context.Context) (QueueItem, error) {
 		&i.Object,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Description,
 	)
 	return i, err
 }
 
 const getQueueItemByID = `-- name: GetQueueItemByID :one
-SELECT id, queue_type, instruction, status, object, created_at, updated_at FROM queue_items
+SELECT id, queue_type, instruction, status, object, created_at, updated_at, description FROM queue_items
 WHERE ID = $1
 LIMIT 1
 `
@@ -92,12 +96,13 @@ func (q *Queries) GetQueueItemByID(ctx context.Context, id uuid.UUID) (QueueItem
 		&i.Object,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Description,
 	)
 	return i, err
 }
 
 const getQueueItemsByDate = `-- name: GetQueueItemsByDate :many
-SELECT id, queue_type, instruction, status, object, created_at, updated_at FROM queue_items
+SELECT id, queue_type, instruction, status, object, created_at, updated_at, description FROM queue_items
 WHERE "status" = $1
 ORDER BY updated_at DESC
 LIMIT $2 OFFSET $3
@@ -126,6 +131,7 @@ func (q *Queries) GetQueueItemsByDate(ctx context.Context, arg GetQueueItemsByDa
 			&i.Object,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Description,
 		); err != nil {
 			return nil, err
 		}
@@ -147,6 +153,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE "status" = $1
@@ -170,6 +177,7 @@ type GetQueueItemsByFilterRow struct {
 	QueueType   string          `json:"queue_type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Description string          `json:"description"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
@@ -194,6 +202,7 @@ func (q *Queries) GetQueueItemsByFilter(ctx context.Context, arg GetQueueItemsBy
 			&i.QueueType,
 			&i.Instruction,
 			&i.Status,
+			&i.Description,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -216,6 +225,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE instruction = $1
@@ -235,6 +245,7 @@ type GetQueueItemsByInstructionRow struct {
 	QueueType   string          `json:"queue_type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Description string          `json:"description"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
@@ -253,6 +264,7 @@ func (q *Queries) GetQueueItemsByInstruction(ctx context.Context, arg GetQueueIt
 			&i.QueueType,
 			&i.Instruction,
 			&i.Status,
+			&i.Description,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -275,6 +287,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE instruction = $1
@@ -296,6 +309,7 @@ type GetQueueItemsByInstructionAndStatusRow struct {
 	QueueType   string          `json:"queue_type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Description string          `json:"description"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
@@ -319,6 +333,7 @@ func (q *Queries) GetQueueItemsByInstructionAndStatus(ctx context.Context, arg G
 			&i.QueueType,
 			&i.Instruction,
 			&i.Status,
+			&i.Description,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -341,6 +356,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE instruction = $1
@@ -362,6 +378,7 @@ type GetQueueItemsByInstructionAndTypeRow struct {
 	QueueType   string          `json:"queue_type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Description string          `json:"description"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
@@ -385,6 +402,7 @@ func (q *Queries) GetQueueItemsByInstructionAndType(ctx context.Context, arg Get
 			&i.QueueType,
 			&i.Instruction,
 			&i.Status,
+			&i.Description,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -407,6 +425,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE "status" = $1
@@ -426,6 +445,7 @@ type GetQueueItemsByStatusRow struct {
 	QueueType   string          `json:"queue_type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Description string          `json:"description"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
@@ -444,6 +464,7 @@ func (q *Queries) GetQueueItemsByStatus(ctx context.Context, arg GetQueueItemsBy
 			&i.QueueType,
 			&i.Instruction,
 			&i.Status,
+			&i.Description,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -466,6 +487,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE "status" = $1
@@ -487,6 +509,7 @@ type GetQueueItemsByStatusAndTypeRow struct {
 	QueueType   string          `json:"queue_type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Description string          `json:"description"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
@@ -510,6 +533,7 @@ func (q *Queries) GetQueueItemsByStatusAndType(ctx context.Context, arg GetQueue
 			&i.QueueType,
 			&i.Instruction,
 			&i.Status,
+			&i.Description,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -532,6 +556,7 @@ SELECT
     queue_type,
     instruction,
     "status",
+    "description",
     updated_at
 FROM queue_items
 WHERE queue_type = $1
@@ -551,6 +576,7 @@ type GetQueueItemsByTypeRow struct {
 	QueueType   string          `json:"queue_type"`
 	Instruction string          `json:"instruction"`
 	Status      string          `json:"status"`
+	Description string          `json:"description"`
 	UpdatedAt   time.Time       `json:"updated_at"`
 }
 
@@ -569,6 +595,7 @@ func (q *Queries) GetQueueItemsByType(ctx context.Context, arg GetQueueItemsByTy
 			&i.QueueType,
 			&i.Instruction,
 			&i.Status,
+			&i.Description,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -589,7 +616,7 @@ SELECT
     COUNT(*)
 FROM queue_items
 WHERE instruction = $1 AND
-status != 'completed'
+status NOT IN ('completed', 'failed')
 `
 
 func (q *Queries) GetQueueItemsCount(ctx context.Context, instruction string) (int64, error) {
@@ -720,19 +747,26 @@ const updateQueueItem = `-- name: UpdateQueueItem :one
 UPDATE queue_items
 SET
     "status" = $1,
-    updated_at = $2
-WHERE id = $3
-RETURNING id, queue_type, instruction, status, object, created_at, updated_at
+    updated_at = $2,
+    "description" = $3
+WHERE id = $4
+RETURNING id, queue_type, instruction, status, object, created_at, updated_at, description
 `
 
 type UpdateQueueItemParams struct {
-	Status    string    `json:"status"`
-	UpdatedAt time.Time `json:"updated_at"`
-	ID        uuid.UUID `json:"id"`
+	Status      string    `json:"status"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Description string    `json:"description"`
+	ID          uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateQueueItem(ctx context.Context, arg UpdateQueueItemParams) (QueueItem, error) {
-	row := q.db.QueryRowContext(ctx, updateQueueItem, arg.Status, arg.UpdatedAt, arg.ID)
+	row := q.db.QueryRowContext(ctx, updateQueueItem,
+		arg.Status,
+		arg.UpdatedAt,
+		arg.Description,
+		arg.ID,
+	)
 	var i QueueItem
 	err := row.Scan(
 		&i.ID,
@@ -742,6 +776,7 @@ func (q *Queries) UpdateQueueItem(ctx context.Context, arg UpdateQueueItemParams
 		&i.Object,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Description,
 	)
 	return i, err
 }

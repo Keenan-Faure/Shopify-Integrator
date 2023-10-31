@@ -119,6 +119,7 @@ type QueueItem struct {
 	Object      json.RawMessage `json:"object"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
+	Description string          `json:"description"`
 }
 
 type RegisterToken struct {
