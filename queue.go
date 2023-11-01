@@ -21,10 +21,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO where are queue errors inside the queue worker logged?
-// are they logged as part of the error message for the queue_item?
-// retryable?  - no dont want to make this a function, but it should return the status if it failed...
-
 func QueueWorker(dbconfig *DbConfig) {
 	if dbconfig.Valid {
 		go LoopQueueWorker(dbconfig)
@@ -49,7 +45,7 @@ func LoopQueueWorker(dbconfig *DbConfig) {
 }
 
 func QueueWaitGroup(dbconfig *DbConfig) {
-	defer fmt.Println("inside gorountine")
+	fmt.Println("running worker...")
 	waitgroup := &sync.WaitGroup{}
 	process_limit := 0
 	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")
@@ -76,12 +72,94 @@ func QueueWaitGroup(dbconfig *DbConfig) {
 	waitgroup.Wait()
 }
 
-// program starts
-// items are added to the queue inside the database
-// worker will then pick up the items in the queue that has been newly added
-// should run whenever there is a new item added to the queue
-// until the queue is empty
-// worker will process them and mark them completed
+// Pushes all products in database to Shopify
+func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	// check if the syncro queue item exists in the queue already
+	item, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(r.Context(), database.GetQueueItemsByInstructionAndStatusParams{
+		Instruction: "zsync_channel",
+		Status:      "in-queue",
+		Limit:       1,
+		Offset:      0,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if len(item) != 0 {
+		RespondWithError(w, http.StatusInternalServerError, "sync in progress")
+		return
+	}
+	page := 0
+	for {
+		page += 1
+		// fetch all products paginated
+		queue_items, err := dbconfig.DB.GetProducts(context.Background(), database.GetProductsParams{
+			Limit:  50,
+			Offset: (int32(page) * 10),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if len(queue_items) == 0 {
+			break
+		}
+		for _, queue_item := range queue_items {
+			product, err := CompileProductData(dbconfig, queue_item.ID, r.Context(), false)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			// add product queue_items to the queue
+			err = CompileInstructionProduct(dbconfig, product, dbUser)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+			for _, variant := range product.Variants {
+				// add variant queue_items to queue
+				err = CompileInstructionVariant(dbconfig, variant, product, dbUser)
+				if err != nil {
+					RespondWithError(w, http.StatusInternalServerError, err.Error())
+					return
+				}
+			}
+		}
+	}
+	_, err = dbconfig.QueueHelper(objects.RequestQueueHelper{
+		Type:        "product",
+		Status:      "in-queue",
+		Instruction: "zsync_channel",
+		Endpoint:    "queue",
+		ApiKey:      dbUser.ApiKey,
+		Method:      http.MethodPost,
+		Object:      nil,
+	}, nil)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, "synconizing started")
+}
+
+// GET /api/queue/{id}
+func (dbconfig *DbConfig) GetQueueItemByID(
+	w http.ResponseWriter,
+	r *http.Request,
+	user database.User) {
+	id := chi.URLParam(r, "id")
+	id_uuid, err := uuid.Parse(id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	queue_item, err := dbconfig.DB.GetQueueItemByID(r.Context(), id_uuid)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, queue_item)
+}
 
 // POST /api/queue
 func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user database.User) {
@@ -145,8 +223,7 @@ func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user
 	})
 }
 
-// Not an endpoint anymore, it's processes automatically in the background each 5 seconds
-// POST /api/queue/worker?type=orders,products
+// Not an endpoint anymore, it's processes automatically in the background
 func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *sync.WaitGroup) {
 	defer wait_group.Done()
 	queue_item, err := dbconfig.DB.GetNextQueueItem(context.Background())
@@ -347,6 +424,9 @@ func (dbconfig *DbConfig) ClearQueueByFilter(
 // Process a queue item
 func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	if queue_item.QueueType == "product" {
+		if queue_item.Instruction == "zsync_channel" {
+			return nil
+		}
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
 		if err != nil {
 			return err
@@ -611,7 +691,7 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, b
 	if err != nil {
 		return objects.ResponseQueueItem{}, err
 	}
-	if res.StatusCode != 200 {
+	if res.StatusCode != 201 {
 		return objects.ResponseQueueItem{}, err
 	}
 	queue_response := objects.ResponseQueueItem{}

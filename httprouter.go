@@ -429,7 +429,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 			return
 		}
-		RespondWithJSON(w, http.StatusOK, response_payload)
+		RespondWithJSON(w, http.StatusCreated, response_payload)
 	}
 }
 

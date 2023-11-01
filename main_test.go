@@ -299,13 +299,13 @@ func TestOrderCRUD(t *testing.T) {
 	if res.StatusCode != 201 {
 		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	orderData := objects.RequestString{}
-	err = json.Unmarshal(respBody, &orderData)
+	queueData := objects.ResponseQueueItem{}
+	err = json.Unmarshal(respBody, &queueData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	fmt.Println("Test 2 - Fetching order")
-	res, err = UFetchHelper("orders/"+orderData.Message, "GET", user.ApiKey)
+	res, err = UFetchHelper("queue/"+queueData.ID.String(), "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -317,28 +317,24 @@ func TestOrderCRUD(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	order_id, err := uuid.Parse(orderData.Message)
+	_, err = uuid.Parse(queueData.ID.String())
 	if err != nil {
 		t.Errorf("Unexpected error: " + err.Error())
 	}
-	orderData_fetched, err := CompileOrderData(&dbconfig, order_id, context.Background(), true)
-	if err != nil {
-		t.Errorf("Unexpected error: " + err.Error())
-	}
-	err = json.Unmarshal(respBody, &orderData)
+	queueOrder_fetched := objects.ResponseQueueWorker{}
+	err = json.Unmarshal(respBody, &queueOrder_fetched)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	if orderData_fetched.ID.String() != orderData.Message {
-		t.Errorf("Expected '" + orderData_fetched.ID.String() + "' but found: " + orderData.Message)
+	if queueOrder_fetched.ID != queueData.ID.String() {
+		t.Errorf("Expected '" + queueOrder_fetched.ID + "' but found: " + queueData.ID.String())
 	}
-
 	fmt.Println("Test 3 - Deleting order & recheck")
-	dbconfig.DB.RemoveOrder(context.Background(), orderData_fetched.ID)
+	dbconfig.DB.RemoveOrder(context.Background(), queueData.ID)
 	type ErrorStruct struct {
 		Error string `json:"error"`
 	}
-	res, err = UFetchHelper("orders/"+orderData.Message, "GET", user.ApiKey)
+	res, err = UFetchHelper("orders/"+queueData.ID.String(), "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -579,58 +575,9 @@ func TestQueueCRUD(t *testing.T) {
 	}
 	// fmt.Println("Test 3 - Updating specific queue items in the queue")
 	fmt.Println("Test 4 - Processing queue item in the queue and check status")
-	res, err = UFetchHelperPost("queue/worker?type=product", "POST", user.ApiKey, nil)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	defer res.Body.Close()
-	respBody, err = io.ReadAll(res.Body)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	if res.StatusCode != 200 {
-		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
-	}
-	queueWorkerResponse := objects.ResponseQueueWorker{}
-	err = json.Unmarshal(respBody, &queueWorkerResponse)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	if queueWorkerResponse.Status != "completed" {
-		t.Errorf("expected 'completed' but found: " + queueWorkerResponse.Instruction)
-	}
-	res, err = UFetchHelperPost("queue/worker?type=order", "POST", user.ApiKey, nil)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	defer res.Body.Close()
-	respBody, err = io.ReadAll(res.Body)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	if res.StatusCode != 200 {
-		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
-	}
-	queueWorkerResponse = objects.ResponseQueueWorker{}
-	err = json.Unmarshal(respBody, &queueWorkerResponse)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	if queueWorkerResponse.Status != "completed" {
-		t.Errorf("expected 'completed' but found: " + queueWorkerResponse.Instruction)
-	}
-	// res, err = UFetchHelperPost("queue/worker", "POST", user.ApiKey, &buffer)
-	// if err != nil {
-	// 	t.Errorf("expected 'nil' but found: " + err.Error())
-	// }
-	// defer res.Body.Close()
-	// _, err = io.ReadAll(res.Body)
-	// if err != nil {
-	// 	t.Errorf("expected 'nil' but found: " + err.Error())
-	// }
-	// if res.StatusCode != 500 {
-	// 	t.Errorf("Expected '500' but found: " + strconv.Itoa(res.StatusCode))
-	// }
+	// depends on how often the worker runs
+	// by default I set time for 10 seconds
+	time.Sleep(10 * time.Second)
 	fmt.Println("Test 5 - Delete queue item in the queue")
 	body = CreateQueueItem("add_order")
 	err = json.NewEncoder(&buffer).Encode(body)
@@ -696,7 +643,6 @@ func TestQueueCRUD(t *testing.T) {
 	if queueCount.UpdateVariant != 0 {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateVariant))
 	}
-
 	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	UFetchHelperPost("queue?status=completed", "DELETE", user.ApiKey, &buffer)
 }

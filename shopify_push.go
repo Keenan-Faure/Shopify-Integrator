@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"integrator/internal/database"
 	"log"
+	"net/http"
 	"objects"
 	"shopify"
 	"strconv"
@@ -344,7 +345,6 @@ func (dbconfig *DbConfig) CollectionShopfy(
 			if err != nil {
 				return err
 			}
-			// TODO might need the response here?
 			_, err = configShopify.AddProductToCollectionShopify(shopify_product_id, collection_id)
 			if err != nil {
 				return err
@@ -493,13 +493,95 @@ func (dbconfig *DbConfig) PushVariant(
 	return nil
 }
 
-// Pushes all products in database to Shopify
-// make this a go routine
-func Syncronize() {
-	// Retrieve all products from database in batches and process them
-	// by (loop) products -> (loop) variants
+func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUser database.User) error {
+	queue_item := objects.RequestQueueHelper{
+		Type:        "product",
+		Status:      "in-queue",
+		Instruction: "add_product",
+		Endpoint:    "queue",
+		ApiKey:      dbUser.ApiKey,
+		Method:      http.MethodPost,
+		Object:      nil,
+	}
+	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product.ProductCode)
+	if err != nil {
+		return err
+	}
+	queue_item_object := objects.RequestQueueItemProducts{
+		SystemProductID: product.ID.String(),
+		SystemVariantID: "",
+		Shopify: struct {
+			ProductID string "json:\"product_id\""
+			VariantID string "json:\"variant_id\""
+		}{
+			ProductID: product_id.ShopifyProductID,
+			VariantID: "",
+		},
+	}
+	queue_item.Object = queue_item_object
+	if product_id.ShopifyProductID == "" {
+		// add product
+		_, err := dbconfig.QueueHelper(queue_item, nil)
+		if err != nil {
+			return err
+		}
+	} else {
+		// update product
+		queue_item.Instruction = "update_product"
+		_, err := dbconfig.QueueHelper(queue_item, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-	// TODO errors are logged?
+func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVariant, product objects.Product, dbUser database.User) error {
+	queue_item := objects.RequestQueueHelper{
+		Type:        "product_variant",
+		Status:      "in-queue",
+		Instruction: "add_variant",
+		Endpoint:    "queue",
+		ApiKey:      dbUser.ApiKey,
+		Method:      http.MethodPost,
+		Object:      nil,
+	}
+	variant_id, err := dbconfig.DB.GetVIDBySKU(context.Background(), variant.Sku)
+	if err != nil {
+		return err
+	}
+	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product.ProductCode)
+	if err != nil {
+		return err
+	}
+	queue_item_object := objects.RequestQueueItemProducts{
+		SystemProductID: product.ID.String(),
+		SystemVariantID: variant.ID.String(),
+		Shopify: struct {
+			ProductID string "json:\"product_id\""
+			VariantID string "json:\"variant_id\""
+		}{
+			ProductID: product_id.ShopifyProductID,
+			VariantID: variant_id.ShopifyVariantID,
+		},
+	}
+	queue_item.Object = queue_item_object
+	if variant_id.ShopifyVariantID == "" {
+		// since its blank we should do an add instruction
+		_, err := dbconfig.QueueHelper(queue_item, nil)
+		if err != nil {
+			return err
+		}
+	} else {
+		// update instruction
+		// get the object body
+		queue_item.Instruction = "update_variant"
+		_, err := dbconfig.QueueHelper(queue_item, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Returns a product id if found in the database

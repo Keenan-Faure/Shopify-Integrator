@@ -16,7 +16,7 @@ func (dbconfig *DbConfig) GetAppSettingValue(
 	w http.ResponseWriter,
 	r *http.Request,
 	user database.User) {
-	key := r.URL.Query().Get("key")
+	key := strings.ToLower(r.URL.Query().Get("key"))
 	if key != "" {
 		setting_value, err := dbconfig.DB.GetAppSettingByKey(context.Background(), key)
 		if err != nil {

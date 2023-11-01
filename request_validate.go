@@ -63,6 +63,7 @@ func QueueItemValidation(
 		"update_product",
 		"update_variant",
 		"update_order",
+		"zsync_channel",
 	}
 	if request.Type == "" {
 		return errors.New("invalid request type")
