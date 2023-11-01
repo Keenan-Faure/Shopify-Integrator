@@ -202,6 +202,7 @@ func TestProductCRUD(t *testing.T) {
 	dbconfig := SetUpDatabase()
 	body := CreateProd()
 	user := CreateDemoUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -274,7 +275,6 @@ func TestProductCRUD(t *testing.T) {
 	if data.Error != "not found" {
 		t.Errorf("Expected 'not found' but found: " + data.Error)
 	}
-	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
 func TestOrderCRUD(t *testing.T) {
@@ -282,6 +282,7 @@ func TestOrderCRUD(t *testing.T) {
 	dbconfig := SetUpDatabase()
 	body := CreateOrdr()
 	user := CreateDemoUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -354,7 +355,6 @@ func TestOrderCRUD(t *testing.T) {
 	if data.Error != "not found" {
 		t.Errorf("Expected 'not found' but found: " + data.Error)
 	}
-	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
 func TestCustomerCRUD(t *testing.T) {
@@ -362,6 +362,7 @@ func TestCustomerCRUD(t *testing.T) {
 	dbconfig := SetUpDatabase()
 	body := CreateCustmr()
 	user := CreateDemoUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -438,7 +439,6 @@ func TestCustomerCRUD(t *testing.T) {
 	if data.Error != "not found" {
 		t.Errorf("Expected 'not found' but found: " + data.Error)
 	}
-	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
 func TestProductIOCRUD(t *testing.T) {
@@ -509,6 +509,7 @@ func TestQueueCRUD(t *testing.T) {
 	body := CreateQueueItem("add_order")
 	body2 := CreateQueueItem("add_product")
 	user := CreateDemoUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -643,6 +644,5 @@ func TestQueueCRUD(t *testing.T) {
 	if queueCount.UpdateVariant != 0 {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateVariant))
 	}
-	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
-	UFetchHelperPost("queue?status=completed", "DELETE", user.ApiKey, &buffer)
+	defer UFetchHelperPost("queue?status=completed", "DELETE", user.ApiKey, &buffer)
 }

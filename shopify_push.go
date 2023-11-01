@@ -20,19 +20,19 @@ import (
 func (dbconfig *DbConfig) ShopifyVariantPricing(
 	variant objects.ProductVariant,
 	price_tier string) (string, error) {
-	price_name, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), price_tier)
+	price_name, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), "shopify_"+price_tier)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return "0", nil
+			return "0.00", nil
 		}
-		return "0", err
+		return "0.00", err
 	}
 	for _, price := range variant.VariantPricing {
 		if price.Name == price_name.Value {
 			return price.Value, nil
 		}
 	}
-	return "0", nil
+	return "0.00", nil
 }
 
 // Calculate stock to send as the available_adjustment
@@ -87,15 +87,10 @@ func (dbconfig *DbConfig) CalculateAvailableQuantity(
 	}
 }
 
-// TODO create a feed that fetches all locations from shopify
-// pops up a list of locations and it asks the user which will be used, and which warehouse should be
+// Retrieves a list of locations and it asks the user which will be used, and which warehouse should be
 // mapped to the respective location
+// TODO how to make it an endpoint on the app
 func (dbconfig *DbConfig) FetchShopifyLocations(configShopify *shopify.ConfigShopify) {
-	// call GetLocationsShopify() functiion to retrieve all of them
-	// respond with that on the API
-	// let javascript create the respective element after fetching
-	// once the user has been taken through the form post it to an endpoint TBC which one
-	// done
 	response, err := configShopify.GetLocationsShopify()
 	if err != nil {
 		log.Println(err)
