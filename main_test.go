@@ -94,8 +94,51 @@ func CreateTestCSVFile() {
 	iocsv.WriteFile(data, "test_import")
 }
 
-func CreateQueueItem(queue_type string) objects.RequestQueueItem {
-	file, err := os.Open("./test_payloads/queue/queue_" + queue_type + ".json")
+func CreateQueueItemProduct(dbconfig *DbConfig, user database.User, product objects.RequestBodyProduct) objects.RequestQueueItem {
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(product)
+	if err != nil {
+		fmt.Println(err)
+	}
+	res, err := UFetchHelperPost("products", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if res.StatusCode != 201 {
+		fmt.Println("invalid response code")
+	}
+	productData := objects.Product{}
+	err = json.Unmarshal(respBody, &productData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	dbconfig.DB.RemoveProduct(context.Background(), productData.ID)
+	queue_item := objects.RequestQueueItem{
+		Type:        "product",
+		Status:      "in-queue",
+		Instruction: "add_product",
+		Object: objects.RequestQueueItemProducts{
+			SystemProductID: productData.ID.String(),
+			SystemVariantID: "",
+			Shopify: struct {
+				ProductID string "json:\"product_id\""
+				VariantID string "json:\"variant_id\""
+			}{
+				ProductID: "",
+				VariantID: "",
+			},
+		},
+	}
+	return queue_item
+}
+
+func CreateQueueItemOrder(queue_type string) objects.RequestQueueItem {
+	file, err := os.Open("./test_payloads//queue/queue_" + queue_type + ".json")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -506,9 +549,9 @@ func TestProductIOCRUD(t *testing.T) {
 func TestQueueCRUD(t *testing.T) {
 	fmt.Println("Test 1 - Creating new items inside the queue")
 	dbconfig := SetUpDatabase()
-	body := CreateQueueItem("add_order")
-	body2 := CreateQueueItem("add_product")
 	user := CreateDemoUser(&dbconfig)
+	body := CreateQueueItemOrder("add_order")
+	body2 := CreateQueueItemProduct(&dbconfig, user, CreateProd())
 	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
@@ -580,7 +623,7 @@ func TestQueueCRUD(t *testing.T) {
 	// by default I set time for 10 seconds
 	time.Sleep(10 * time.Second)
 	fmt.Println("Test 5 - Delete queue item in the queue")
-	body = CreateQueueItem("add_order")
+	body = CreateQueueItemOrder("add_order")
 	err = json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
