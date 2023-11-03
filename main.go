@@ -22,7 +22,7 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
-	dbCon, err := InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("database") + "?sslmode=disable")
+	dbCon, err := InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("db_name") + "?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}
@@ -67,6 +67,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 
+	api.Get("/inventory", dbconfig.middlewareAuth(dbconfig.GetWarehouseLocations))
 	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
 	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
 

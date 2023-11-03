@@ -20,6 +20,23 @@ import (
 	"github.com/google/uuid"
 )
 
+// GET /api/inventory
+func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil {
+		page = 1
+	}
+	shopify_locations, err := dbconfig.DB.GetShopifyLocations(r.Context(), database.GetShopifyLocationsParams{
+		Limit:  10,
+		Offset: int32((page - 1) * 10),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, shopify_locations)
+}
+
 // DELETE /api/inventory
 func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	id := chi.URLParam(r, "id")
@@ -54,7 +71,7 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap(w http.ResponseWriter, r *http
 		RespondWithError(w, http.StatusBadRequest, "data validation error")
 		return
 	}
-	err = dbconfig.DB.CreateShopifyLocation(r.Context(), database.CreateShopifyLocationParams{
+	result, err := dbconfig.DB.CreateShopifyLocation(r.Context(), database.CreateShopifyLocationParams{
 		ID:                   uuid.New(),
 		ShopifyWarehouseName: location_map.ShopifyWarehouseName,
 		ShopifyLocationID:    location_map.LocationID,
@@ -66,9 +83,7 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap(w http.ResponseWriter, r *http
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-		Message: "Success",
-	})
+	RespondWithJSON(w, http.StatusCreated, result)
 }
 
 // GET /api/products/export

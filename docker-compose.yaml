@@ -1,9 +1,9 @@
 version: "2"
 services:
-  app:
-    volumes:
-      - ./app/:/keenan/app
-    build: .
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile-server
     depends_on:
       - postgres
     ports:
@@ -11,6 +11,15 @@ services:
     container_name: ${CONTAINER_NAME}
     env_file:
       - .env
+    networks:
+      - integrator_net
+  
+  app:
+    volumes:
+      - ./app/:/keenan/app
+    build:
+      context: .
+      dockerfile: Dockerfile-app
     networks:
       - integrator_net
 
@@ -25,6 +34,7 @@ services:
         environment:
             - POSTGRES_USER=${DB_USER}
             - POSTGRES_PASSWORD=${DB_PSW}
+            - POSTGRES_DB=${DB_NAME}
         networks:
             - integrator_net
 

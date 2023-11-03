@@ -421,7 +421,7 @@ func InitConfigShopify() ConfigShopify {
 	api_key := utils.LoadEnv("api_key")
 	api_password := utils.LoadEnv("api_password")
 	version := utils.LoadEnv("api_version")
-	validation := validateConfigShopify(store_name, api_key, api_password)
+	validation := ValidateConfigShopify(store_name, api_key, api_password)
 	if !validation {
 		log.Println("Error setting up connection string for Shopify")
 	}
@@ -435,7 +435,7 @@ func InitConfigShopify() ConfigShopify {
 }
 
 // Validates the config settings for Shopify
-func validateConfigShopify(store_name, api_key, api_password string) bool {
+func ValidateConfigShopify(store_name, api_key, api_password string) bool {
 	if store_name == "" {
 		return false
 	}

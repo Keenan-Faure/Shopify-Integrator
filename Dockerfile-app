@@ -1,0 +1,17 @@
+FROM debian:stable-slim
+
+RUN mkdir keenan && cd keenan
+WORKDIR /keenan/app/
+
+COPY /app/ /keenan/app/
+RUN cd /keenan/app/
+
+RUN apt update
+RUN apt-get install curl -y
+SHELL ["/bin/bash", "--login", "-c"]
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+RUN nvm install --lts
+
+RUN cd /keenan/app && npm install
+
+CMD [ "npm start" ]
