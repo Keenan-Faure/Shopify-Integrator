@@ -160,9 +160,7 @@ function Login()
                 </div>
             </div>
 
-
-
-            <form className = 'modal-content'  method = 'post' onSubmit={(event) => Login(event)} autoComplete='off' id = 'form1'>
+            <form className = 'modal-content' method = 'post' onSubmit={(event) => Login(event)} autoComplete='off' id = 'form1'>
                 <div className = 'modal-container'>
 
                     <label style = {{fontSize: '18px'}}><b>Welcome. Please login to proceed</b></label>

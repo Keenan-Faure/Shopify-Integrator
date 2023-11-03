@@ -209,10 +209,11 @@ input.search-area
 }
 .pan-price
 {
-    position: relative;
+    position: fixed;
+    right: 10px;
     float: left;
-    height: 100%;
-    width: 32%;
+    height: auto;
+    width: 20%;
     font-size: 14px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
@@ -263,7 +264,7 @@ input.search-area
 {
     text-align: center;
     position: relative;
-    top: -20px;
+    top: -30px;
     display: none;
 }
 .hidden 

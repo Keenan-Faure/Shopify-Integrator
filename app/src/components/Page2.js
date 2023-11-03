@@ -25,51 +25,37 @@ function Page2(props)
             <div className = "component1">
                 <div className = "main-container">
                     <div className = "settings">
-
-                        <div className = "settings-section 1">
-                            <div className = "settings-title">Setting 1</div>
-                            <div className = "settings-description">Description goes here of this setting</div>
-
-                            <button className = "settings-button on">On</button>
-                            <button className = "settings-button off">Off</button>
-                        </div>
-
-                        <div className = "settings-section 2">
-                            <div className = "settings-title">Setting 1</div>
-                            <div className = "settings-description">Description goes here of this setting</div>
-
-                            <button className = "settings-button on">On</button>
-                            <button className = "settings-button off">Off</button>
-                        </div>
-
-                        <div className = "settings-section 3">
-                            <div className = "settings-title">Setting 1</div>
-                            <div className = "settings-description">Description goes here of this setting</div>
-
-                            <button className = "settings-button on">On</button>
-                            <button className = "settings-button off">Off</button>
-                        </div>
-
-                        <div className = "settings-section 3">
-                            <div className = "settings-title">Setting 1</div>
-                            <div className = "settings-description">Description goes here of this setting</div>
-
-                            <button className = "settings-button on">On</button>
-                            <button className = "settings-button off">Off</button>
-                        </div>
-                        
-                         <div className = "center">
-                            <div className = "pagination">
-                                <a href = "#">&laquo;</a>
-                                <a href = "#" className = "activee">1</a>
-                                <a href = "#">2</a>
-                                <a href = "#">3</a>
-                                <a href = "#">4</a>
-                                <a href = "#">5</a>
-                                <a href = "#">6</a>
-                                <a href = "#">&raquo;</a>
+                        <div className = "app-settings">
+                            <div className = "title">{props.Title1}</div>
+                            <div className = "setting">
+                                <div className = "setting-title">{props.subTitle1}</div>
+                                <div className = "setting-details description">{props.Description1}</div>
+                                <div className = "setting-details value">{props.Value1}</div>
+                                <div className = "button-on-off">Turn on </div>
                             </div>
-                         </div>
+                        </div>
+                        <div className = "shopify-settings">
+                            <div className = "title">{props.Title2}</div>
+                            <div className = "setting">
+                                <div className = "setting-title">{props.subTitle1}</div>
+                                <div className = "setting-details description">{props.Description1}</div>
+                                <div className = "setting-details value">{props.Value1}</div>
+                                <div className = "button-on-off">Turn on </div>
+                            </div>
+                        </div>
+                    </div>    
+                </div>
+                <div className = "side-container">
+                    <div className = "settings-2">
+                        <div className = "application"><i className = "a"/>Application Settings:</div>
+                        <div className = "mini-setting">Setting1</div>
+                        <div className = "mini-setting">Setting2</div>
+
+                    </div>
+                    <div className = "settings-2">
+                        <div className = "application"><i className = "b"/>Spotify Settings:</div>
+                        <div className = "mini-setting">Setting1</div>
+                        <div className = "mini-setting">Setting2</div>
                     </div>
                 </div>
                 
@@ -79,5 +65,13 @@ function Page2(props)
     );    
 
 }    
+Page2.defaultProps = 
+{
+    Title1: 'App Settings', 
+    Title2: 'Shopify Settings',
+    subTitle1: 'Sub Title of setting',
+    Description1: 'Description of product goes here, as well as any additional information',
+    Value1: 'Value of setting currently in the api',
 
+}
 export default Page2;

@@ -1,118 +1,194 @@
 .main-container
 {
-    position: fixed;
+    position: absolute;
     display: block;
-    left: 50%;
-    top: 20%;
-    transform: translate(-50%, -20%);
     height: 100%;
-    width: 100%;
-    background-color:rgb(119, 136, 153, 0.5);
+    left: 25%;
+    width: 75%;
+    background-color:rgba(0, 0, 0, 0.5);
     overflow: auto;
+    transition-duration: 0.4s;
+}
+.main-container:hover
+{
+    background-color: rgba(71, 73, 75, 0.6);
+}
+.side-container
+{
+    position: absolute;
+    display: block;
+    left: 0;
+    height: 100%;
+    width: 25%;
+    background-color:rgba(0, 0, 0, 0.5);
+    overflow: auto;
+    transition-duration: 0.4s;
+}
+.side-container:hover 
+{
+    background-color: rgba(71, 73, 75, 0.6);
 }
 .settings
 {
-    position: relative;
-    height: auto;
-    width: 60%;
-    left: 50%;
-    top: 10%;
-    transform: translate(-50%, 0%);
-    margin-bottom: 5%;
-    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin-bottom: 10%;
+    position: absolute;
+    display: block;
+    left: 0;
+    text-align: center;
+    padding: 20px;
+    height: 100%;
+    width: 100%;
+    overflow: auto;
 }
-.settings-section
+.app-settings, .shopify-settings
+{
+    overflow: auto;
+}
+.title 
 {
     position: relative;
-    height: 15%;
-    width: 60%;
-    background-color: rgb(105, 105, 105, 0.7);
-    font-size: 15px;
-    font-family: monospace;
-    margin-top: 30px; 
-    margin-bottom: 30px;
+    text-align: left;
+    padding: 10px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 20px;
+    border-bottom: 1px solid aliceblue; 
+}
+.setting 
+{
+    position: relative;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    display: block;
+    width: 70%;
+    height: 160px;
+    left: 50%;
+    transform: translate(-50%);
+    background-color:rgb(240, 248, 255, 0.6);
+    border-radius: 40px;
     transition-duration: 0.4s;
-    left: 50%;
-    transform: translate(-50%);
-    padding: 10px;
-    text-align: center;
+    padding: 15px;
 }
-.settings-section:hover 
+.setting:hover 
 {
-    background-color: rgb(105, 105, 105, 0.9);
+    box-shadow: 5px 10px rgb(0, 5, 5, 0.1);
+    background-color:rgb(240, 248, 255, 0.8);
 }
-.settings-title 
-{
-    padding: 5px;
-}
-.settings-description 
-{
-    font-size: 12px;
-    padding: 5px;
-}
-.settings-bottom
+.setting-title
 {
     position: relative;
-    bottom: 10px;
-    height: 10%;
+    text-align: center;
+    width: 100%;
+    height: auto;
+    padding: 5px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 15px;
+    border-bottom: 1px solid black;
+}
+.setting-details 
+{
+    position: relative;
+    text-align: left;
     width: 80%;
-    background-color: rgb(100, 149, 237, 0.3);
+    height: auto;
+    padding: 5px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+}
+.description
+{
+    word-wrap: break-word;
+    overflow: auto;
+}
+.value 
+{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.button-on-off 
+{
+    position: absolute;
+    width: 70px;
+    height: 30px;
+    padding: 8px;
+    right: 15px;
+    top: 55%;
+    transition-duration: 0.4s;
+    color: rgb(0, 0, 0);
+    font-size: 12px;
+    background-color: aliceblue;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 5px;
+    transform: translate(0%, -45%);
+}
+.button-on-off:hover
+{
+    background-color: rgba(11, 121, 7, 0.5);
+}
+.settings-2
+{
+    overflow: auto;
+    padding: 30px;
+    text-align: center;
+}
+.application
+{
+    position: relative;
+    display: block;
     left: 50%;
     transform: translate(-50%);
-    padding: 10px;
-    text-align: center;
-    margin-bottom: 20px;
-}
-.settings-button 
-{
-	text-align: center;
-	text-decoration: none;
-	font-size: 12px;
-	cursor: pointer;
-	width: 100px;
-	height: 30px;
-	position: relative;
-	color: black;
-	border: 1px solid #000000;
-	border-radius: 4px;
-	transition-duration: 0.4s;
-    margin: 10px;
-}
-.settings-button:hover
-{
-	color: rgb(0, 0, 0);
-	border: 1px solid rgb(0, 0, 0);
-	background-position: center;
-}
-
-.center 
-{
-    text-align: center;
-    position: relative;
-    top: -20px;
-}
-.pagination 
-{
-    display: inline-block;
-}
-.pagination a 
-{
+    font-size: 16px;
     color: black;
-    float: left;
-    padding: 8px 16px;
-    text-decoration: none;
-    transition: background-color .3s;
-    border: 1px solid #ddd;
-    margin: 0 4px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-bottom: 1px solid rgb(0, 0, 0);
+    padding: 10px;
+    user-select: none;
 }
-.pagination a.active 
+.shopify 
 {
-    background-color: #4CAF50;
-    color: white;
-    border: 1px solid #4CAF50;
+    position: relative;
+    display: block;
+    left: 50%;
+    transform: translate(-50%);
+    font-size: 16px;
+    color: black;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border-bottom: 1px solid rgb(0, 0, 0);
+    padding: 10px;
+    user-select: none;
 }
-.pagination a:hover:not(.active) 
+.a
 {
-    background-color: #ddd;
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 47px;
+    display: block;
+    background-size: cover;
+    background-image: url(../media/icons8-settings-50.png);
+}
+.b 
+{
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 60px;
+    display: block;
+    background-size: cover;
+    background-image: url(../media/icons8-shopify-50.png);
+}
+.mini-setting 
+{
+    position: relative;
+    left: 50%;
+    transform: translate(-50%);
+    font-size: 13px;
+    background-color: white;
+    color: black;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 5px;
+    border-radius: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    width: 50%;
+    height: auto;
+    cursor: pointer;
 }
