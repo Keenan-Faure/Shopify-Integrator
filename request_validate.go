@@ -6,12 +6,172 @@ import (
 	"log"
 	"net/http"
 	"objects"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 )
 
-// Validation: Product (not import)
+// Decode: QueueItem - Order
+func DecodeQueueItemOrder(rawJSON json.RawMessage) (objects.RequestBodyOrder, error) {
+	var params objects.RequestBodyOrder
+	err := json.Unmarshal(rawJSON, &params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Decode: QueueItem - Product
+func DecodeQueueItemProduct(rawJSON json.RawMessage) (objects.RequestQueueItemProducts, error) {
+	var params objects.RequestQueueItemProducts
+	err := json.Unmarshal(rawJSON, &params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
+
+// Validate: QueueItem - Product
+// Validate the UUID's of the object
+func QueueItemProductValidation(queue_item_product objects.RequestQueueItemProducts) error {
+	_, err := uuid.Parse(queue_item_product.SystemProductID)
+	if err != nil {
+		log.Println(err)
+		return errors.New("could not decode feed_id: " + queue_item_product.SystemProductID)
+	}
+	_, err = uuid.Parse(queue_item_product.SystemVariantID)
+	if err != nil {
+		log.Println(err)
+		return errors.New("could not decode feed_id: " + queue_item_product.SystemVariantID)
+	}
+	return nil
+}
+
+// Validate: QueueItem
+func QueueItemValidation(
+	request objects.RequestQueueItem) error {
+	requests_allowed := []string{
+		"product",
+		"product_variant",
+		"order",
+	}
+	instructions_allowed := []string{
+		"add_product",
+		"add_variant",
+		"add_order",
+		"update_product",
+		"update_variant",
+		"update_order",
+		"zsync_channel",
+	}
+	if request.Type == "" {
+		return errors.New("invalid request type")
+	}
+	for _, requests := range requests_allowed {
+		if requests == request.Type {
+			break
+		}
+	}
+	for _, instructions := range instructions_allowed {
+		if instructions == request.Instruction {
+			break
+		}
+	}
+	return nil
+}
+
+// Decode: QueueItem
+func DecodeQueueItem(r *http.Request) (objects.RequestQueueItem, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestQueueItem{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return objects.RequestQueueItem{}, err
+	}
+	return params, nil
+}
+
+// Validate: ShopifySettings
+func SettingsValidation(
+	request_settings_map []objects.RequestSettings,
+	setting_keys map[string]string) error {
+	for _, map_value := range request_settings_map {
+		found := false
+		if map_value.Key == "" {
+			return errors.New("settings key cannot be blank")
+		}
+		for key := range setting_keys {
+			if map_value.Key == strings.ToLower(key) {
+				found = true
+			}
+		}
+		if !found {
+			return errors.New("setting " + map_value.Key + " not allowed")
+		}
+	}
+	return nil
+}
+
+// Validate: ShopifySetting
+func SettingValidation(
+	shopify_settings_map objects.RequestSettings,
+	setting_keys map[string]string) error {
+	found := false
+	if shopify_settings_map.Key == "" {
+		return errors.New("settings key cannot be blank")
+	}
+	for key := range setting_keys {
+		if shopify_settings_map.Key == strings.ToLower(key) {
+			found = true
+		}
+	}
+	if !found {
+		return errors.New("setting " + shopify_settings_map.Key + " not allowed")
+	}
+	return nil
+}
+
+// Decode: ShopifySettings
+func DecodeSettings(r *http.Request) ([]objects.RequestSettings, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := []objects.RequestSettings{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return []objects.RequestSettings{}, err
+	}
+	return params, nil
+}
+
+// Decode: ShopifySetting
+func DecodeSetting(r *http.Request) (objects.RequestSettings, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestSettings{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return objects.RequestSettings{}, err
+	}
+	return params, nil
+}
+
+// Validation: Inventory Map
+func InventoryMapValidation(location_map objects.RequestWarehouseLocation) error {
+	if location_map.LocationID == "" || location_map.WarehouseName == "" {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
+// Decode: Inventory Map
+func DecodeInventoryMap(r *http.Request) (objects.RequestWarehouseLocation, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestWarehouseLocation{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		return params, err
+	}
+	return params, nil
+}
 
 // Validation: Product Import
 func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
@@ -64,18 +224,30 @@ func ProductOptionValueValidation(
 	if option_value == "" || option_name == "" {
 		return nil
 	}
-	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
+	option_names_db, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
 	if err != nil {
 		return err
 	}
-	variants, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
+	option_names := []objects.ProductOptions{}
+	for _, option_name := range option_names_db {
+		option_names = append(option_names, objects.ProductOptions{
+			Value:    option_name.Name,
+			Position: int(option_name.Position),
+		})
+	}
+	variants_db, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
 	if err != nil {
 		return err
+	}
+	variants := []objects.ProductVariant{}
+	for _, variant := range variants_db {
+		variants = append(variants, objects.ProductVariant{
+			Option1: variant.Option1.String,
+			Option2: variant.Option2.String,
+			Option3: variant.Option3.String,
+		})
 	}
 	mapp := CreateOptionMap(option_names, variants)
-	// Validate option values
-	// check if the option_name exist in the current map
-	// if it does not raise an error
 	for _, value := range mapp[option_name] {
 		if value == option_value {
 			return errors.New("duplicate option values not allowed")
@@ -101,7 +273,10 @@ func ProductOptionNameValidation(
 		return errors.New("cannot exceed 3 option names")
 	}
 	for _, value := range option_names {
-		if value == option_name {
+		if value.Position > 3 || value.Position < 0 {
+			return errors.New("invalid option name position for product " + product_code)
+		}
+		if value.Name == option_name {
 			log.Println(errors.New("option name already exists, skipping"))
 		}
 	}

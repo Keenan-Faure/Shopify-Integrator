@@ -25,11 +25,11 @@
             "variant_quantities": [
                 {
                     "name": "CapeTown",
-                    "value": "22"
+                    "value": 22
                 },
                 {
                     "name": "Nippon",
-                    "value": "1"
+                    "value": 1
                 }
             ]
         }

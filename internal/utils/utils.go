@@ -6,12 +6,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/joho/godotenv"
 )
-
-const time_format = time.RFC1123Z
 
 // Returns the value of the environment variable
 func LoadEnv(key string) string {
@@ -98,3 +95,46 @@ func IssetInt(variable string) int {
 	}
 	return 0
 }
+
+// Extracts the PID from the Shopify Response
+func ExtractPID(id string) string {
+	if id == "" || len(id) == 0 {
+		return ""
+	}
+	if len(id) > 22 {
+		return id[22:]
+	}
+	return ""
+}
+
+// Extracts the VID from the Shopify Response
+func ExtractVID(id string) string {
+	if id == "" || len(id) == 0 {
+		return ""
+	}
+	if len(id) > 29 {
+		return id[29:]
+	}
+	return ""
+}
+
+// Gets all the available settings and returns them as a map[string]string
+func GetAppSettings(key string) map[string]string {
+	result := make(map[string]string)
+	app_keys := []string{"APP_ENABLE_SHOPIFY_FETCH", "APP_ENABLE_QUEUE_WORKER", "APP_SHOPIFY_FETCH_TIME",
+		"APP_ENABLE_SHOPIFY_PUSH", "APP_QUEUE_SIZE", "APP_QUEUE_PROCESS_LIMIT", "APP_QUEUE_CRON_TIME"}
+	shopify_keys := []string{"SHOPIFY_DEFAULT_PRICE_TIER", "SHOPIFY_DEFAULT_COMPARE_AT_PRICE_TIER",
+		"SHOPIFY_DISABLE_DYNAMIC_SKU_SEARCH"}
+	if key == "app" {
+		for iterator, value := range app_keys {
+			result[app_keys[iterator]] = LoadEnv(value)
+		}
+	} else if key == "shopify" {
+		for iterator, value := range shopify_keys {
+			result[shopify_keys[iterator]] = LoadEnv(value)
+		}
+	}
+	return result
+}
+
+// Gets the description

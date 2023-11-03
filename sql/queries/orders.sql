@@ -70,6 +70,19 @@ SELECT
 FROM orders
 LIMIT $1 OFFSET $2;
 
+-- name: GetOrderByWebCode :one
+SELECT
+    id,
+    notes,
+    web_code,
+    tax_total,
+    order_total,
+    shipping_total,
+    discount_total,
+    updated_at
+FROM orders
+WHERE web_code = $1;
+
 -- name: GetOrdersSearchWebCode :many
 SELECT
     id,

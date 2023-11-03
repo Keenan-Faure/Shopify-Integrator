@@ -123,3 +123,62 @@ func TestConfirmError(t *testing.T) {
 		t.Errorf("Unexpected results, expected 'Invalid database credentials' but found " + results)
 	}
 }
+
+func TestExtractVID(t *testing.T) {
+	fmt.Println("Test Case 1 - Valid VID")
+	variable := ExtractVID("gid://shopify/ProductVariant/40466067357761")
+	if variable != "40466067357761" {
+		t.Errorf("Expected '40466067357761', but found " + variable)
+	}
+
+	fmt.Println("Test Case 2 - Short VID")
+	variable = ExtractVID("gid://shopify/Produc")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+
+	fmt.Println("Test Case 3 - Invalid VID")
+	variable = ExtractVID("")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+}
+
+func TestExtractPID(t *testing.T) {
+	fmt.Println("Test Case 1 - Valid PID")
+	variable := ExtractPID("gid://shopify/Product/6971324465217")
+	if variable != "6971324465217" {
+		t.Errorf("Expected '6971324465217', but found " + variable)
+	}
+
+	fmt.Println("Test Case 2 - Short PID")
+	variable = ExtractPID("gid://shopify/Produ")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+
+	fmt.Println("Test Case 1 - Invalid PID")
+	variable = ExtractPID("")
+	if variable != "" {
+		t.Errorf("Expected '', but found " + variable)
+	}
+}
+
+func TestGetAppSettings(t *testing.T) {
+	fmt.Println("Test Case 1 - Returning All Keys for app settings")
+	settings_map := GetAppSettings("app")
+	if len(settings_map) == 0 {
+		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(settings_map)))
+	}
+	if settings_map["APP_ENABLE_SHOPIFY_FETCH"] == "" {
+		t.Errorf("Expected 'description' value but found " + settings_map["APP_ENABLE_SHOPIFY_FETCH"])
+	}
+	fmt.Println("Test Case 2 - Returning All Keys for shopify settings")
+	shopify_settings_map := GetAppSettings("shopify")
+	if len(shopify_settings_map) == 0 {
+		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(shopify_settings_map)))
+	}
+	if shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"] == "" {
+		t.Errorf("Expected 'description' value but found " + shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"])
+	}
+}

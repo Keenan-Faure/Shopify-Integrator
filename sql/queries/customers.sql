@@ -12,7 +12,7 @@ INSERT INTO customers(
 )
 RETURNING *;
 
--- name: UpdateCustomer :one
+-- name: UpdateCustomer :exec
 UPDATE customers
 SET
     first_name = $1,
@@ -20,8 +20,7 @@ SET
     email = $3,
     phone = $4,
     updated_at = $5
-WHERE id = $6
-RETURNING *;
+WHERE id = $6;
 
 -- name: GetCustomers :many
 SELECT

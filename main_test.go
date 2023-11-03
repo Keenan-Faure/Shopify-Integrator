@@ -94,6 +94,67 @@ func CreateTestCSVFile() {
 	iocsv.WriteFile(data, "test_import")
 }
 
+func CreateQueueItemProduct(dbconfig *DbConfig, user database.User, product objects.RequestBodyProduct) objects.RequestQueueItem {
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(product)
+	if err != nil {
+		fmt.Println(err)
+	}
+	res, err := UFetchHelperPost("products", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if res.StatusCode != 201 {
+		fmt.Println("invalid response code")
+	}
+	productData := objects.Product{}
+	err = json.Unmarshal(respBody, &productData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	dbconfig.DB.RemoveProduct(context.Background(), productData.ID)
+	queue_item := objects.RequestQueueItem{
+		Type:        "product",
+		Status:      "in-queue",
+		Instruction: "add_product",
+		Object: objects.RequestQueueItemProducts{
+			SystemProductID: productData.ID.String(),
+			SystemVariantID: "",
+			Shopify: struct {
+				ProductID string "json:\"product_id\""
+				VariantID string "json:\"variant_id\""
+			}{
+				ProductID: "",
+				VariantID: "",
+			},
+		},
+	}
+	return queue_item
+}
+
+func CreateQueueItemOrder(queue_type string) objects.RequestQueueItem {
+	file, err := os.Open("./test_payloads//queue/queue_" + queue_type + ".json")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+	respBody, err := io.ReadAll(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+	orderData := objects.RequestQueueItem{}
+	err = json.Unmarshal(respBody, &orderData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return orderData
+}
+
 func CreateOrdr() objects.RequestBodyOrder {
 	file, err := os.Open("./test_payloads/order.json")
 	if err != nil {
@@ -120,7 +181,7 @@ func CreateProd() objects.RequestBodyProduct {
 		Category:       "",
 		Vendor:         "",
 		ProductType:    "",
-		Variants:       []objects.ProductVariant{{Sku: "Test", Option1: "", Option2: "", Option3: "", Barcode: "", VariantPricing: []objects.VariantPrice{{Name: "Test", Value: "0.00"}}, VariantQuantity: []objects.VariantQty{{Name: "Test", Value: 0}}, UpdatedAt: time.Time{}}},
+		Variants:       []objects.RequestBodyVariant{{Sku: "Test", Option1: "", Option2: "", Option3: "", Barcode: "", VariantPricing: []objects.VariantPrice{{Name: "Test", Value: "0.00"}}, VariantQuantity: []objects.VariantQty{{Name: "Test", Value: 0, IsDefault: false}}, UpdatedAt: time.Time{}}},
 		ProductOptions: []objects.ProductOptions{{Value: ""}},
 	}
 }
@@ -184,6 +245,7 @@ func TestProductCRUD(t *testing.T) {
 	dbconfig := SetUpDatabase()
 	body := CreateProd()
 	user := CreateDemoUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -256,7 +318,6 @@ func TestProductCRUD(t *testing.T) {
 	if data.Error != "not found" {
 		t.Errorf("Expected 'not found' but found: " + data.Error)
 	}
-	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
 func TestOrderCRUD(t *testing.T) {
@@ -264,6 +325,7 @@ func TestOrderCRUD(t *testing.T) {
 	dbconfig := SetUpDatabase()
 	body := CreateOrdr()
 	user := CreateDemoUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -281,13 +343,13 @@ func TestOrderCRUD(t *testing.T) {
 	if res.StatusCode != 201 {
 		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	orderData := objects.RequestString{}
-	err = json.Unmarshal(respBody, &orderData)
+	queueData := objects.ResponseQueueItem{}
+	err = json.Unmarshal(respBody, &queueData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	fmt.Println("Test 2 - Fetching order")
-	res, err = UFetchHelper("orders/"+orderData.Message, "GET", user.ApiKey)
+	res, err = UFetchHelper("queue/"+queueData.ID.String(), "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -299,28 +361,24 @@ func TestOrderCRUD(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	order_id, err := uuid.Parse(orderData.Message)
+	_, err = uuid.Parse(queueData.ID.String())
 	if err != nil {
 		t.Errorf("Unexpected error: " + err.Error())
 	}
-	orderData_fetched, err := CompileOrderData(&dbconfig, order_id, res.Request, true)
-	if err != nil {
-		t.Errorf("Unexpected error: " + err.Error())
-	}
-	err = json.Unmarshal(respBody, &orderData)
+	queueOrder_fetched := objects.ResponseQueueWorker{}
+	err = json.Unmarshal(respBody, &queueOrder_fetched)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	if orderData_fetched.ID.String() != orderData.Message {
-		t.Errorf("Expected '" + orderData_fetched.ID.String() + "' but found: " + orderData.Message)
+	if queueOrder_fetched.ID != queueData.ID.String() {
+		t.Errorf("Expected '" + queueOrder_fetched.ID + "' but found: " + queueData.ID.String())
 	}
-
 	fmt.Println("Test 3 - Deleting order & recheck")
-	dbconfig.DB.RemoveOrder(context.Background(), orderData_fetched.ID)
+	dbconfig.DB.RemoveOrder(context.Background(), queueData.ID)
 	type ErrorStruct struct {
 		Error string `json:"error"`
 	}
-	res, err = UFetchHelper("orders/"+orderData.Message, "GET", user.ApiKey)
+	res, err = UFetchHelper("orders/"+queueData.ID.String(), "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -340,7 +398,6 @@ func TestOrderCRUD(t *testing.T) {
 	if data.Error != "not found" {
 		t.Errorf("Expected 'not found' but found: " + data.Error)
 	}
-	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
 func TestCustomerCRUD(t *testing.T) {
@@ -348,6 +405,7 @@ func TestCustomerCRUD(t *testing.T) {
 	dbconfig := SetUpDatabase()
 	body := CreateCustmr()
 	user := CreateDemoUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -387,7 +445,7 @@ func TestCustomerCRUD(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error: " + err.Error())
 	}
-	customerData_fetched, err := CompileCustomerData(&dbconfig, customer_id, res.Request, true)
+	customerData_fetched, err := CompileCustomerData(&dbconfig, customer_id, context.Background(), true)
 	if err != nil {
 		t.Errorf("Unexpected error: " + err.Error())
 	}
@@ -424,10 +482,9 @@ func TestCustomerCRUD(t *testing.T) {
 	if data.Error != "not found" {
 		t.Errorf("Expected 'not found' but found: " + data.Error)
 	}
-	dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
 }
 
-func TestProductIO(t *testing.T) {
+func TestProductIOCRUD(t *testing.T) {
 	fmt.Println("Test 1 - Importing products")
 	dbconfig := SetUpDatabase()
 	user := CreateDemoUser(&dbconfig)
@@ -487,4 +544,148 @@ func TestProductIO(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
+}
+
+func TestQueueCRUD(t *testing.T) {
+	fmt.Println("Test 1 - Creating new items inside the queue")
+	dbconfig := SetUpDatabase()
+	user := CreateDemoUser(&dbconfig)
+	body := CreateQueueItemOrder("add_order")
+	body2 := CreateQueueItemProduct(&dbconfig, user, CreateProd())
+	defer dbconfig.DB.RemoveUser(context.Background(), user.ApiKey)
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	var buffer2 bytes.Buffer
+	err = json.NewEncoder(&buffer2).Encode(body2)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res, err := UFetchHelperPost("queue", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res2, err := UFetchHelperPost("queue", "POST", user.ApiKey, &buffer2)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	defer res2.Body.Close()
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res2.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res2.StatusCode))
+	}
+	fmt.Println("Test 2 - Reading the data of the new queue items")
+	res, err = UFetchHelperPost("queue?page=1", "GET", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	queueDataList := []objects.ResponseQueueItemFilter{}
+	err = json.Unmarshal(respBody, &queueDataList)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if queueDataList[0].Instruction != "add_product" {
+		t.Errorf("expected 'add_product' but found: " + queueDataList[0].Instruction)
+	}
+	if queueDataList[0].Status != "in-queue" {
+		t.Errorf("expected 'in-queue' but found: " + queueDataList[0].Status)
+	}
+	if queueDataList[1].Instruction != "add_order" {
+		t.Errorf("expected 'add_order' but found: " + queueDataList[1].Instruction)
+	}
+	if queueDataList[1].QueueType != "order" {
+		t.Errorf("expected 'order' but found: " + queueDataList[1].QueueType)
+	}
+	// fmt.Println("Test 3 - Updating specific queue items in the queue")
+	fmt.Println("Test 4 - Processing queue item in the queue and check status")
+	// depends on how often the worker runs
+	// by default I set time for 10 seconds
+	time.Sleep(10 * time.Second)
+	fmt.Println("Test 5 - Delete queue item in the queue")
+	body = CreateQueueItemOrder("add_order")
+	err = json.NewEncoder(&buffer).Encode(body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res, err = UFetchHelperPost("queue", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	res, err = UFetchHelperPost("queue?instruction=add_order", "DELETE", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	res, err = UFetchHelperPost("queue/view", "GET", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	queueCount := objects.ResponseQueueCount{}
+	err = json.Unmarshal(respBody, &queueCount)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if queueCount.AddOrder != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddOrder))
+	}
+	if queueCount.AddProduct != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddProduct))
+	}
+	if queueCount.AddVariant != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddVariant))
+	}
+	if queueCount.UpdateOrder != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateOrder))
+	}
+	if queueCount.UpdateProduct != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateProduct))
+	}
+	if queueCount.UpdateVariant != 0 {
+		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateVariant))
+	}
+	defer UFetchHelperPost("queue?status=completed", "DELETE", user.ApiKey, &buffer)
 }

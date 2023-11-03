@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fetch"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
 	"log"
 	"net/http"
+	"shopify"
 	"utils"
 
 	"github.com/go-chi/chi/v5"
@@ -29,24 +29,19 @@ func main() {
 	flags := flag.Bool("test", false, "Enable server for tests only")
 	flag.Parse()
 
-	shopifyConfig := fetch.InitConfigShopify(
-		utils.LoadEnv("store_name"),
-		utils.LoadEnv("api_key"),
-		utils.LoadEnv("api_password"),
-		utils.LoadEnv("api_version"),
-	)
+	shopifyConfig := shopify.InitConfigShopify()
 	if !*flags {
 		fmt.Println("Starting Workers")
 		// go iocsv.LoopRemoveCSV()
-		// go fetch.LoopJSONShopify()
+		// go LoopJSONShopify(&dbCon, shopifyConfig)
+		QueueWorker(&dbCon)
 	}
 	fmt.Println("Starting API")
-	shopifyConfig.GetProductBySKU("GenImp-r-ec")
-	setupAPI(dbCon)
+	setupAPI(dbCon, shopifyConfig)
 }
 
 // starts up the API
-func setupAPI(dbconfig DbConfig) {
+func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	r := chi.NewRouter()
 	r.Use(cors.Handler(MiddleWare()))
 	api := chi.NewRouter()
@@ -71,6 +66,31 @@ func setupAPI(dbconfig DbConfig) {
 	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
 	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
+
+	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
+	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
+
+	// shopify settings
+	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetShopifySettingValue))
+	api.Post("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
+	api.Delete("/shopify/settings", dbconfig.middlewareAuth(dbconfig.RemoveShopifySettings))
+
+	// app settings
+	api.Get("/settings", dbconfig.middlewareAuth(dbconfig.GetAppSettingValue))
+	api.Post("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
+	api.Delete("/settings", dbconfig.middlewareAuth(dbconfig.RemoveAppSettings))
+
+	// queue
+	api.Get("/queue/{id}", dbconfig.middlewareAuth(dbconfig.GetQueueItemByID))
+	api.Get("/queue", dbconfig.middlewareAuth(dbconfig.QueueViewNextItems))
+	api.Get("/queue/filter", dbconfig.middlewareAuth(dbconfig.FilterQueueItems))
+	api.Get("/queue/view", dbconfig.middlewareAuth(dbconfig.QueueView))
+	api.Get("/queue/processing", dbconfig.middlewareAuth(dbconfig.QueueViewCurrentItem))
+	api.Post("/queue", dbconfig.middlewareAuth(dbconfig.QueuePush))
+	api.Post("/shopify/sync", dbconfig.middlewareAuth(dbconfig.Synchronize))
+	// api.Post("/queue/worker", dbconfig.middlewareAuth(dbconfig.QueuePopAndProcess))
+	api.Delete("/queue/{id}", dbconfig.middlewareAuth(dbconfig.ClearQueueByID))
+	api.Delete("/queue", dbconfig.middlewareAuth(dbconfig.ClearQueueByFilter))
 
 	r.Mount("/api", api)
 
