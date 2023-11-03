@@ -8,7 +8,13 @@ function Page1(props)
 {
     useEffect(()=> 
     {
+        /* Ensure the model is shown */
+        let model = document.getElementById("model");
+        let navbar = document.getElementById("navbar");
+        navbar.style.display = "block";
+        model.style.display = "none";
 
+        model.style.display = "none";
         /* animation for the search bar */
         let search = document.querySelector(".search-area");
         setTimeout(() =>

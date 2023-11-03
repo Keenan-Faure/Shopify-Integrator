@@ -17,10 +17,10 @@ function Dashboard(props)
             navigation.style.width = "100%";
             
             navigation.style.display = "block";
-            logout.style.display = "block";
-            //model.style.animation = "FadeIn ease-in 1s";
+            logout.style.display = "block"; 
+
+            model.style.animation = "Fadeout ease-in 1s";
             model.style.display = "none";
-            
         }
 
         /* On form submit re-shape elements 
@@ -46,7 +46,10 @@ function Dashboard(props)
             logout.style.display = "none";
             model.style.animation = "FadeIn ease-in 1s";
             model.style.display = "block";
+            navigation.style.display = "none";
+
             /* Session Destroy */
+            window.location.href = '/';
         });
         
     }, []);

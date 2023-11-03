@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Login from './JS/Login';
-import Navigation_Bar from './components/Navigation-bar';
+import NavigationBar from './components/Navigation-bar';
 import './CSS/index.css';
 
 
@@ -9,8 +8,7 @@ export default function Main()
 {
     return (    
         <div>
-            <Login />
-            <Navigation_Bar Display = "block"/>
+            <NavigationBar Display = "block"/>
         </div>
     );
 }

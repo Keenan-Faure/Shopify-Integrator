@@ -182,13 +182,12 @@ input.search-area
     position: relative;
     top: 50%;
     left: 0;
-    height: 125px;
-    width: 125px;
+    height: 110px;
+    width: 110px;
     float: left;
     margin-right: 15px;
     border-radius: 10px;
     transform: translate(0%, -50%);
-    background-image: url();
     background-size: cover;
     background-position: center;
     background-color: darkcyan;
@@ -266,6 +265,7 @@ input.search-area
     position: relative;
     top: -30px;
     display: none;
+    left: 47%;
 }
 .hidden 
 {

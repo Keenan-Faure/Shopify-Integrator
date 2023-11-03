@@ -4,13 +4,13 @@ import {useEffect} from 'react';
 
 /* Import links below ↓ */
 import Layout from '../JS/Layout';
-import Home from '../JS/DashBoard';
+import DashBoard from '../JS/DashBoard';
 import NoPage from '../JS/Layout';
-import Dashboard from "../JS/DashBoard";
 import Products from '../JS/Products';
 import Orders from '../JS/Orders';
 import Settings from '../JS/Settings';
 import Customers from '../JS/Customers';
+import Home from '../JS/Login';
 
 // Import Style sheet below
 import '../CSS/navigation-bar.css'
@@ -74,7 +74,7 @@ function Navigation_Bar(props)
                 <Routes>
                     <Route path = "/" element = {<Layout />}>
                         <Route index element = {<Home />}></Route>
-                        <Route path = "dashboard" element = {<Dashboard />}></Route>
+                        <Route path = "dashboard" element = {<DashBoard />}></Route>
                         <Route path = "products" element = {<Products />}></Route>
                         <Route path = "orders" element = {<Orders />}></Route>
                         <Route path = "customers" element = {<Customers />}></Route>

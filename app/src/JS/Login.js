@@ -20,17 +20,30 @@ function Login()
     const Login = (event) =>
     {
         event.preventDefault();
-        
     }
 
     const Register = (event) =>
     {
         event.preventDefault();
-        
     }
+
+    function handleClick() 
+    {
+        console.log("X");
+        window.location.href = '/dashboard';
+
+    }
+
+
     useEffect(()=> 
     {
 
+        /* Ensure the model is shown */
+        let model = document.getElementById("model");
+        let navbar = document.getElementById("navbar");
+        navbar.style.display = "none";
+        model.style.display = "block";
+        
         /* The swapping of forms */
         let register_button = document.getElementById("reg");
         let return_button = document.querySelector(".return-button");
@@ -151,7 +164,7 @@ function Login()
     <>
     <Background />
     <div>
-        <div className = 'modal1' id = "model">
+        <div className = 'modal1' id = "model" style = {{display: 'block'}}>
             <div className = "back-row-toggle splat-toggle">
                 <div className = "rain front-row"></div>
                 <div className = "rain back-row"></div>
@@ -173,7 +186,7 @@ function Login()
                     <br />
                     <span><input type = 'password' placeholder = "Api-Key" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
                     <br /><br />
-                    <button className = 'button' type = 'submit'>Proceed</button> <div id = "reg" className = 'text'>Or Register</div>
+                    <button className = 'button' type = 'submit' onClick = {handleClick}>Proceed</button> <div id = "reg" className = 'text'>Or Register</div>
                 </div>
             </form>
 
