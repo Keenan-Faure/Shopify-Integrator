@@ -1,29 +1,29 @@
 version: "2"
 services:
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile-server
-    depends_on:
-      - postgres
-    ports:
-      - "${PORT}:${PORT}"
-    container_name: ${CONTAINER_NAME}
-    env_file:
-      - .env
-    networks:
-      - integrator_net
-  
-  app:
-    volumes:
-      - ./app/:/keenan/app
-    build:
-      context: .
-      dockerfile: Dockerfile-app
-    networks:
-      - integrator_net
+    server:
+        build:
+            context: ./
+            dockerfile: ./setup/server/Dockerfile
+        depends_on:
+            - postgres
+        ports:
+            - "${PORT}:${PORT}"
+        container_name: ${CONTAINER_NAME}
+        env_file:
+            - .env
+        networks:
+            - integrator_net
 
-  postgres:
+    app:
+        volumes:
+            - ./app/:/keenan/app
+        build:
+            context: ./
+            dockerfile: setup/app/Dockerfile
+        networks:
+            - integrator_net
+
+    postgres:
         restart: always
         container_name: ${DB_NAME}
         image: postgres
