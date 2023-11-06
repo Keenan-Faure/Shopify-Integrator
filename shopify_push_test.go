@@ -6,16 +6,34 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"objects"
 	"shopify"
 	"strconv"
 	"testing"
 	"time"
+	"utils"
 )
 
+// TODO need to fix these
+
 func SetUpShopify() shopify.ConfigShopify {
-	return shopify.InitConfigShopify()
+	store_name := utils.LoadEnv("int_store_name")
+	api_key := utils.LoadEnv("int_api_key")
+	api_password := utils.LoadEnv("int_api_password")
+	version := utils.LoadEnv("int_api_version")
+	validation := shopify.ValidateConfigShopify(store_name, api_key, api_password)
+	if !validation {
+		log.Println("Error setting up connection string for Shopify")
+	}
+	return shopify.ConfigShopify{
+		APIKey:      api_key,
+		APIPassword: api_password,
+		Version:     version,
+		Url:         "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + version,
+		Valid:       validation,
+	}
 }
 
 func TestPushProduct(t *testing.T) {
@@ -229,6 +247,35 @@ func TestPushVariant(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
+
+	// add warehouse-location map
+	shopify_location_map := objects.RequestWarehouseLocation{
+		LocationID:           utils.LoadEnv("int_location_id"),
+		WarehouseName:        productData.Variants[0].VariantQuantity[0].Name,
+		ShopifyWarehouseName: "Test-N/A",
+	}
+	err = json.NewEncoder(&buffer).Encode(shopify_location_map)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	res, err = UFetchHelperPost("inventory", "POST", user.ApiKey, &buffer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 201 {
+		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	warehouse_location_response := objects.ResponseShopifyWarehouseLocation{}
+	err = json.Unmarshal(respBody, &warehouse_location_response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer dbconfig.DB.RemoveShopifyLocationMap(context.Background(), warehouse_location_response.ID)
 	defer dbconfig.DB.RemoveProduct(context.Background(), productData.ID)
 	// create queue item
 	queue_item := objects.RequestQueueItem{
@@ -424,9 +471,10 @@ func TestPushVariant(t *testing.T) {
 	fmt.Println("Test Case 2 - Push variant that does not exist on the website")
 }
 
-func TestCalculateAvailableQuantity(t *testing.T) {
+// TODO implement this test
+// func TestCalculateAvailableQuantity(t *testing.T) {
 
-}
+// }
 
 func TestShopifyVariantPricing(t *testing.T) {
 	fmt.Println("Test 1 - Creating product and fetching existing price for Shopify, price tier not set")

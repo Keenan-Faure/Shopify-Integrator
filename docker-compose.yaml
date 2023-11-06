@@ -1,20 +1,29 @@
 version: "2"
 services:
-  app:
-    volumes:
-      - ./app/:/keenan/app
-    build: .
-    depends_on:
-      - postgres
-    ports:
-      - "${PORT}:${PORT}"
-    container_name: ${CONTAINER_NAME}
-    env_file:
-      - .env
-    networks:
-      - integrator_net
+    server:
+        build:
+            context: ./
+            dockerfile: ./setup/server/Dockerfile
+        depends_on:
+            - postgres
+        ports:
+            - "${PORT}:${PORT}"
+        container_name: ${CONTAINER_NAME}
+        env_file:
+            - .env
+        networks:
+            - integrator_net
 
-  postgres:
+    app:
+        volumes:
+            - ./app/:/keenan/app
+        build:
+            context: ./
+            dockerfile: setup/app/Dockerfile
+        networks:
+            - integrator_net
+
+    postgres:
         restart: always
         container_name: ${DB_NAME}
         image: postgres
@@ -25,6 +34,7 @@ services:
         environment:
             - POSTGRES_USER=${DB_USER}
             - POSTGRES_PASSWORD=${DB_PSW}
+            - POSTGRES_DB=${DB_NAME}
         networks:
             - integrator_net
 

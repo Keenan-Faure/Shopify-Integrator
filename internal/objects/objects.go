@@ -109,6 +109,13 @@ type GetShopifyInventoryLevels struct {
 	LocationID      int `json:"location_id"`
 }
 
+type ResponseShopifyWarehouseLocation struct {
+	ID                   uuid.UUID `json:"id"`
+	LocationID           string    `json:"location_id"`
+	WarehouseName        string    `json:"warehouse_name"`
+	ShopifyWarehouseName string    `json:"shopify_warehouse_name"`
+}
+
 type ResponseIDs struct {
 	ProductID string `json:"id"`
 	VariantID string `json:"variant_id"`

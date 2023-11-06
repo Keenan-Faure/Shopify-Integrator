@@ -237,12 +237,18 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 		return
 	}
 	if worker_type == "product" {
+		is_enabled := false
 		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
 		if err != nil {
-			FailedQueueItem(dbconfig, queue_item, err)
-			return
+			if err.Error() != "sql: no rows in result set" {
+				FailedQueueItem(dbconfig, queue_item, err)
+				return
+			}
 		}
-		is_enabled, err := strconv.ParseBool(push_enabled.Value)
+		if push_enabled.Value == "" {
+			push_enabled.Value = "false"
+		}
+		is_enabled, err = strconv.ParseBool(push_enabled.Value)
 		if err != nil {
 			FailedQueueItem(dbconfig, queue_item, err)
 			return
