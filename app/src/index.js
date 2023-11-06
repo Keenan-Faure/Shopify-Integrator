@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import NavigationBar from './components/Navigation-bar';
 import './CSS/index.css';
 
-
 export default function Main()  
 {
     return (    
