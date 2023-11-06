@@ -1,4 +1,7 @@
 #!/bin/bash
+
+echo "---running migrations on server container---"
+
 cd /keenan/sql/schema
 source .env
 

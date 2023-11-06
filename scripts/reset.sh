@@ -4,22 +4,39 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/reset.sh
 
-echo "Restarting Docker containers"
+echo "---reset containers---"
 
 source .env
 
-docker stop $CONTAINER_NAME
+echo "stopping containers"
+echo "---"
+
+docker stop $APP_CONTAINER_NAME
+docker stop $SERVER_CONTAINER_NAME
 docker stop $DB_NAME
 
-docker rm $CONTAINER_NAME
+echo "removing containers"
+echo "---"
+
+docker rm $SERVER_CONTAINER_NAME
+docker rm $APP_CONTAINER_NAME
 docker rm $DB_NAME
 
 #removes images
+
+echo "removing images containers"
+echo "---"
+
 if docker image inspect $IMAGE_NAME >/dev/null 2>&1; then
   docker rmi $(docker images $IMAGE_NAME -a -q) -f
 else
   echo "'$IMAGE_NAME' does not exist."
 fi
 
-echo "---Re-run setup---"
-./scripts/run.sh
+if docker image inspect $APP_IMAGE_NAME >/dev/null 2>&1; then
+  docker rmi $(docker images $APP_IMAGE_NAME -a -q) -f
+else
+  echo "'$APP_IMAGE_NAME' does not exist."
+fi
+
+echo "Please re-run './scripts/run.sh'"

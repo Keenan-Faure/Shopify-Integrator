@@ -4,9 +4,10 @@
 # If you are unable to run this file then run
 # chmod +x ./stop.sh
 
-echo "Removing docker container"
+echo "---stopping containers---"
 
 source .env
 
-docker stop $CONTAINER_NAME
+docker stop $APP_CONTAINER_NAME
+docker stop $SERVER_CONTAINER_NAME
 docker stop $DB_NAME

@@ -4,11 +4,16 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/reset_migrations.sh
 
-echo "---Reset database migrations---"
+echo "---reset database migrations---"
 
 cd ./sql/schema
 
 SSL_MODE="?sslmode=disable"
 DB_STRING="${DOCKER_DB_URL}${DATABASE}${SSL_MODE}"
 
-goose postgres "$DB_STRING" reset
+if ! goose postgres "$DB_STRING" reset ; then
+
+else
+    echo "re-run migrations"
+    goose postgres "$DB_STRING" up
+fi

@@ -6,4 +6,6 @@ WORKDIR /keenan/app/
 COPY /app/ /keenan/app/
 RUN cd /keenan/app/
 
-CMD ["npm", "run", "start"]
+RUN npm install
+
+CMD ["npm", "start"]
