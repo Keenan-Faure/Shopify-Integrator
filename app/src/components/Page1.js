@@ -191,13 +191,13 @@ function Page1(props)
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            <a className = "p-d-title">Product Title</a>
+                            <a href = "#" className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            <a className = "p-d-code">Product code</a>
+                            <a href = "#" className = "p-d-code">Product code</a>
                             <br/><br/>
 
-                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
                             R1200 - R1400
@@ -206,13 +206,13 @@ function Page1(props)
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            <a className = "p-d-title">Product Title</a>
+                            <a href = "#" className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            <a className = "p-d-code">Product code</a>
+                            <a href = "#" className = "p-d-code">Product code</a>
                             <br/><br/>
 
-                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
                             R1200 - R1400
@@ -221,13 +221,13 @@ function Page1(props)
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            <a className = "p-d-title">Product Title</a>
+                            <a href = "#" className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            <a className = "p-d-code">Product code</a>
+                            <a href = "#" className = "p-d-code">Product code</a>
                             <br/><br/>
 
-                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
                             R1200 - R1400
@@ -236,29 +236,13 @@ function Page1(props)
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            <a className = "p-d-title">Product Title</a>
+                            <a href = "#" className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            <a className = "p-d-code">Product code</a>
+                            <a href = "#"  className = "p-d-code">Product code</a>
                             <br/><br/>
 
-                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
-
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                            <a href = "#"  className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
                             R1200 - R1400
@@ -268,13 +252,13 @@ function Page1(props)
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            <a className = "p-d-title">Product Title</a>
+                            <a href = "#" className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            <a className = "p-d-code">Product code</a>
+                            <a href = "#"  className = "p-d-code">Product code</a>
                             <br/><br/>
 
-                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                            <a href = "#"  className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
                             R1200 - R1400
@@ -284,13 +268,29 @@ function Page1(props)
                     <div className = "pan">
                         <div className = "pan-img"></div>
                         <div className = "pan-details">
-                            <a className = "p-d-title">Product Title</a>
+                            <a href = "#" className = "p-d-title">Product Title</a>
                             <br/><br/>
 
-                            <a className = "p-d-code">Product code</a>
+                            <a href = "#"  className = "p-d-code">Product code</a>
                             <br/><br/>
 
-                            <a className = "p-d-options">Options</a> | <a className = "p-d-category">Category</a> | <a className = "p-d-type">Type</a> | <a className = "p-d-vendor">Vendor</a>
+                            <a href = "#"  className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
+                        </div>
+                        <div className = "pan-price">
+                            R1200 - R1400
+                        </div>
+                    </div>
+
+                    <div className = "pan">
+                        <div className = "pan-img"></div>
+                        <div className = "pan-details">
+                            <a href = "#" className = "p-d-title">Product Title</a>
+                            <br/><br/>
+
+                            <a href = "#" className = "p-d-code">Product code</a>
+                            <br/><br/>
+
+                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
                         </div>
                         <div className = "pan-price">
                             R1200 - R1400
