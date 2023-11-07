@@ -67,6 +67,12 @@ Please read this guide [here](https://support.google.com/mail/answer/185833?hl=e
 
 The application consists of settings that needs to be configured, which are, of course, import in the functions of each feature. These are outlined below:
 
+### Instlling Golang
+
+Installing golang is required to compile and build the server script. Follow the setup guide below to install Golang on your machine.
+
+[How to install Golang](https://go.dev/doc/install)
+
 ### Installing Docker
 
 It is required to have a valid docker installation. Please see a guide on how to install [Docker](https://www.docker.com/).
