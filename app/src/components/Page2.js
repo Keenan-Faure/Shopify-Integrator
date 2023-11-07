@@ -9,10 +9,8 @@ function Page2(props)
     useEffect(()=> 
     {
         /* Ensure the model is shown */
-        let model = document.getElementById("model");
         let navbar = document.getElementById("navbar");
         navbar.style.display = "block";
-        model.style.display = "none";
 
         /* Ensures the navbar is set correctly */
         let navigation = document.getElementById("navbar");

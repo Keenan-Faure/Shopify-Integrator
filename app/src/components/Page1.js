@@ -1,5 +1,6 @@
 import {useEffect} from 'react';
 import Background from './Background';
+import Pan_details from './semi-components/pan-detail';
 
 import '../CSS/page1.css';
 
@@ -9,12 +10,9 @@ function Page1(props)
     useEffect(()=> 
     {
         /* Ensure the model is shown */
-        let model = document.getElementById("model");
         let navbar = document.getElementById("navbar");
         navbar.style.display = "block";
-        model.style.display = "none";
-
-        model.style.display = "none";
+        
         /* animation for the search bar */
         let search = document.querySelector(".search-area");
         setTimeout(() =>
@@ -66,39 +64,6 @@ function Page1(props)
                 filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
             });
         }
-
-        /* Hover brightens the color of the pan element details */
-        let pan_details = document.querySelectorAll(".pan-details");
-        let pan_price = document.querySelectorAll(".pan-price");
-
-        for(let i = 0; i < pan.length; i++)
-        {
-            pan[i].onmouseover = function(event)
-            {
-                pan_details[i].style.color = "rgb(240, 248, 255, 0.8)";
-                pan_price[i].style.color = "rgb(240, 248, 255, 0.8)";
-            }
-            pan[i].onmouseout = function(event)
-            {
-                pan_details[i].style.color = "black";
-                pan_price[i].style.color = "black"; 
-            }
-        }
-
-        /* animation for the pagination elements 
-        let num = document.querySelector(".pagination").childNodes;
-        for(let i = 1; i < num.length - 1; i++)
-        {
-            num[i].addEventListener("click", () =>
-            {
-                let prev = document.querySelector(".activee");
-                prev.className = "";
-                num[i].className = "activee";
-            });
-        }
-        */
-
-
 
         /* Script to automatically format the number of elements on each page */
         const content = document.querySelector('.main-elements'); 
@@ -188,114 +153,13 @@ function Page1(props)
                     </form>    
                 </div>
                 <div className = "main-elements">
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a href = "#" className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a href = "#" className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a href = "#" className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a href = "#" className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a href = "#"  className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a href = "#"  className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
-
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a href = "#" className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a href = "#"  className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a href = "#"  className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
-
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a href = "#" className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a href = "#"  className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a href = "#"  className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
-
-                    <div className = "pan">
-                        <div className = "pan-img"></div>
-                        <div className = "pan-details">
-                            <a href = "#" className = "p-d-title">Product Title</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-code">Product code</a>
-                            <br/><br/>
-
-                            <a href = "#" className = "p-d-options">Options</a> | <a href = "#" className = "p-d-category">Category</a> | <a href = "#" className = "p-d-type">Type</a> | <a href = "#" className = "p-d-vendor">Vendor</a>
-                        </div>
-                        <div className = "pan-price">
-                            R1200 - R1400
-                        </div>
-                    </div>
+                    <Pan_details />
+                    <Pan_details />
+                    <Pan_details />
+                    <Pan_details />
+                    <Pan_details />
+                    <Pan_details />
+                    <Pan_details />
                 </div>
                 <div className = "center" id = "pag"></div>
             </div>

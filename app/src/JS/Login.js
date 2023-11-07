@@ -8,7 +8,7 @@ import '../CSS/login.css';
 function Login()
 {
     const[inputs, setInputs] = useState({});
-    const [result, setResult] = useState("");
+    //const [result, setResult] = useState("");
 
     const handleChange = (event) =>
     {
@@ -150,12 +150,13 @@ function Login()
         /* DONT MAKE IT RAIN YET! */
         //makeItRain();
 
-        /* Upon a successful login */
+        /* Upon a successful login 
         function sucessfulLogin()
         {
             let model = document.getElementById("model");
             model.style.zIndex = "0";
         }
+        */
 
     }, []);
 

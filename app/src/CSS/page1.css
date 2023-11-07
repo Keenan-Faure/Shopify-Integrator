@@ -301,4 +301,11 @@ input.search-area
     color: white;
     border: 1px solid #4CAF50;
 }
+a
+{
+    color: black;
+    transition-duration: 0.4s;
+    text-decoration: none;
+}
+
 

@@ -9,14 +9,12 @@ function Orders(props)
     {
         /* Ensures the navbar is set correctly */
         let navigation = document.getElementById("navbar");
-        let model = document.getElementById("model");
         let main = document.querySelector(".main");
         window.onload = function(event)
         {
             navigation.style.left = "0%";
             navigation.style.position = "relative";
             navigation.style.width = "100%";
-            model.style.animation = "none";
             main.style.animation = "SlideUp3 1.2s ease-in";
         }
         

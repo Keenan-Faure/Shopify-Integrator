@@ -1,3 +1,12 @@
+
+.dashboard 
+{
+    background-color: #202020;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
 .logout 
 {
     position: absolute;
@@ -8,4 +17,14 @@
     transform: translate(-50%, -50%);
     background-color:darkslategray;
     cursor: pointer;
+}
+.dashboard .container 
+{
+    position: absolute;
+    display: block;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #202020, #111119);  
+    height: 100%;
+    width: 100%;
+    animation: FadeIn ease-in 1s;
 }

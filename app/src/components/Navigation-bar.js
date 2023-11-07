@@ -22,7 +22,6 @@ function Navigation_Bar(props)
         /* Change the style of navigation bar */
         let navigation = document.getElementById("navbar");
         let navbar = document.querySelectorAll(".dropbtn");
-        let model = document.getElementById("model");
 
         /* The user clicks on 'Products' button */
         navbar[1].onclick = function(event)
@@ -33,7 +32,6 @@ function Navigation_Bar(props)
                 navigation.style.position = "absolute";
                 navigation.style.width = "70%";
                 navigation.style.animation = "MoveLeft 1.2s ease";
-                model.style.animation = "none";
             } 
         }
 
@@ -47,7 +45,6 @@ function Navigation_Bar(props)
                     navigation.style.left = "0%";
                     navigation.style.position = "relative";
                     navigation.style.width = "100%";
-                    model.style.animation = "none";
                 }
             }
         }
@@ -61,8 +58,6 @@ function Navigation_Bar(props)
                 navigation.style.position = "fixed";
                 navigation.style.left = "0%";
                 navigation.style.width = "100%";
-                model.style.animation = "none";
-                model.style.display = "none";
             }
         }
 
