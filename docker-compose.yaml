@@ -23,6 +23,8 @@ services:
         container_name: ${APP_CONTAINER_NAME}
         networks:
             - integrator-net
+        volumes:
+            -  /app/src:/keenan/app/src
 
     postgres:
         restart: always
