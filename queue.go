@@ -45,7 +45,7 @@ func LoopQueueWorker(dbconfig *DbConfig) {
 }
 
 func QueueWaitGroup(dbconfig *DbConfig) {
-	fmt.Println("running worker...")
+	fmt.Println("running queue worker...")
 	waitgroup := &sync.WaitGroup{}
 	process_limit := 0
 	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")

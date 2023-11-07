@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"objects"
 	"shopify"
 	"strconv"
 	"time"
+	"utils"
 )
 
 // loop function that uses Goroutine to run
@@ -14,31 +16,37 @@ import (
 func LoopJSONShopify(
 	dbconfig *DbConfig,
 	shopifyConfig shopify.ConfigShopify) {
-	fetch_time, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_shopify_fetch_time")
+	fetch_url := ""
+	fetch_time := 1
+	fetch_time_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_shopify_fetch_time")
 	if err != nil {
-		log.Println(err)
+		fetch_time = 1
 	}
-	timer, err := strconv.Atoi(fetch_time.Value)
+	fetch_time, err = strconv.Atoi(fetch_time_db.Value)
 	if err != nil {
-		log.Println(err)
+		fetch_time = 1
 	}
-	ticker := time.NewTicker(time.Duration(timer) * time.Second)
+	ticker := time.NewTicker(time.Duration(fetch_time) * time.Minute)
 	for ; ; <-ticker.C {
-		fetch_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_fetch")
+		fmt.Println("running fetch worker...")
+		fetch_enabled := false
+		fetch_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_fetch")
 		if err != nil {
-			log.Println(err)
+			fetch_enabled = false
 		}
-		is_enabled, err := strconv.ParseBool(fetch_enabled.Value)
+		fetch_enabled, err = strconv.ParseBool(fetch_enabled_db.Value)
 		if err != nil {
-			log.Println(err)
+			fetch_enabled = false
 		}
-		if is_enabled {
-			shopifyProds, err := shopifyConfig.FetchProducts()
+		if fetch_enabled {
+			shopifyProds, next, err := shopifyConfig.FetchProducts(fetch_url)
 			if err != nil {
 				log.Println("Shopify > Error fetching next products to process:", err)
 				continue
 			}
-			ProcessShopifyProducts(dbconfig, shopifyProds)
+			log.Printf("From Shopify %d products were collected", len(shopifyProds.Products))
+			log.Println(fetch_url)
+			fetch_url = utils.GetNextURL(next)
 		}
 	}
 }

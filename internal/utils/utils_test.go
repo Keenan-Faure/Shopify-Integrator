@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -180,5 +181,44 @@ func TestGetAppSettings(t *testing.T) {
 	}
 	if shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"] == "" {
 		t.Errorf("Expected 'description' value but found " + shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"])
+	}
+}
+
+func TestGetNextURL(t *testing.T) {
+	fmt.Println("Test Case 1 - String with semicolon and html tags <>")
+	strng_case_1 := "<https://keenan-faure.myshopify.com/admin/api/2023-10/products.json?limit=50&page_info=eyJsYXN0X2lkIjo3MDczNTAwNzI1MzA5LCJsYXN0X3ZhbHVlIjoiU2F2aW9yIEZyb20gQW5vdGhlciBXb3JsZCAtIEFsb3kiLCJkaXJlY3Rpb24iOiJuZXh0In0>; rel='next'"
+	strng_case_2 := "https://keenan-faure.myshopify.com/admin/api/2023-10/products.json?limit=50&page_info=eyJsYXN0X2lkIjo3MDczNTAwNzI1MzA5LCJsYXN0X3ZhbHVlIjoiU2F2aW9yIEZyb20gQW5vdGhlciBXb3JsZCAtIEFsb3kiLCJkaXJlY3Rpb24iOiJuZXh0In0; rel='next'"
+	strng_case_3 := "<https://keenan-faure.myshopify.com/admin/api/2023-10/products.json?limit=50&page_info=eyJsYXN0X2lkIjo3MDczNTAwNzI1MzA5LCJsYXN0X3ZhbHVlIjoiU2F2aW9yIEZyb20gQW5vdGhlciBXb3JsZCAtIEFsb3kiLCJkaXJlY3Rpb24iOiJuZXh0In0>"
+	result := GetNextURL(strng_case_1)
+	if len(result) == len(strng_case_1) {
+		t.Errorf("Expected string length to be reduced, but found same length")
+	}
+	if strings.Contains(result, "rel='next'") {
+		t.Errorf("Expected string rel='next' to be removed from result")
+	}
+	if strings.Contains(result, "<") {
+		t.Errorf("Expected string '<' to be removed from result")
+	}
+	if strings.Contains(result, ">") {
+		t.Errorf("Expected string '>' to be removed from result")
+	}
+	fmt.Println("Test Case 2 - String with semicolon and without html tags")
+	result = GetNextURL(strng_case_2)
+	if len(result) == len(strng_case_2) {
+		t.Errorf("Expected string length to be reduced, but found same length")
+	}
+	if strings.Contains(result, "rel='next'") {
+		t.Errorf("Expected string rel='next' to be removed from result")
+	}
+	fmt.Println("Test Case 3 - String without semicolon and with html tags <>")
+	result = GetNextURL(strng_case_3)
+	if len(result) == len(strng_case_3) {
+		t.Errorf("Expected string length to be reduced, but found same length")
+	}
+	if strings.Contains(result, "<") {
+		t.Errorf("Expected string '<' to be removed from result")
+	}
+	if strings.Contains(result, ">") {
+		t.Errorf("Expected string '>' to be removed from result")
 	}
 }
