@@ -807,6 +807,12 @@ func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, db
 
 // POST /api/preregister
 func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Request) {
+	email := utils.LoadEnv("email")
+	email_psw := utils.LoadEnv("email_psw")
+	if email == "" || email_psw == "" {
+		RespondWithError(w, http.StatusInternalServerError, "invalid email or email password")
+		return
+	}
 	request_body, err := DecodePreRegisterRequestBody(r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
@@ -840,6 +846,7 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 	err = SendEmail(token.Token, request_body.Email, request_body.Name)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
 	}
 	RespondWithJSON(w, http.StatusCreated, []string{"email sent"})
 }

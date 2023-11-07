@@ -137,4 +137,17 @@ func GetAppSettings(key string) map[string]string {
 	return result
 }
 
-// Gets the description
+// Returns the next URL in the Shopify Response header
+func GetNextURL(next string) string {
+	result := strings.Split(next, ";")
+	if len(result) == 0 {
+		return ""
+	}
+	next = strings.TrimSuffix(strings.TrimPrefix(result[0], "<"), ">")
+	result = strings.Split(next, "?")
+	if len(result) > 0 {
+		next = "products.json?" + result[1]
+		return next
+	}
+	return ""
+}

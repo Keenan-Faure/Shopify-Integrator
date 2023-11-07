@@ -448,24 +448,27 @@ func ValidateConfigShopify(store_name, api_key, api_password string) bool {
 	return true
 }
 
-func (configShopify *ConfigShopify) FetchProducts() (objects.ShopifyProducts, error) {
-	res, err := configShopify.FetchHelper("products.json?limit="+PRODUCT_FETCH_LIMIT, http.MethodGet, nil)
+func (configShopify *ConfigShopify) FetchProducts(fetch_url string) (objects.ShopifyProducts, string, error) {
+	if fetch_url == "" {
+		fetch_url = "products.json?limit=" + PRODUCT_FETCH_LIMIT
+	}
+	res, err := configShopify.FetchHelper(fetch_url, http.MethodGet, nil)
 	if err != nil {
-		return objects.ShopifyProducts{}, err
+		return objects.ShopifyProducts{}, "", err
 	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println(err)
-		return objects.ShopifyProducts{}, err
+		return objects.ShopifyProducts{}, "", err
 	}
 	products := objects.ShopifyProducts{}
 	err = json.Unmarshal(respBody, &products)
 	if err != nil {
 		log.Println(err) // TODO Log these errors?
-		return objects.ShopifyProducts{}, err
+		return objects.ShopifyProducts{}, "", err
 	}
-	return products, nil
+	return products, string(res.Header.Get("Link")), nil
 }
 
 func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io.Reader) (*http.Response, error) {

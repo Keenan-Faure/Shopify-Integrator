@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"integrator/internal/database"
+	"iocsv"
 	"log"
 	"net/http"
 	"shopify"
@@ -32,8 +33,8 @@ func main() {
 	shopifyConfig := shopify.InitConfigShopify()
 	if !*flags {
 		fmt.Println("Starting Workers")
-		// go iocsv.LoopRemoveCSV()
-		// go LoopJSONShopify(&dbCon, shopifyConfig)
+		go iocsv.LoopRemoveCSV()
+		go LoopJSONShopify(&dbCon, shopifyConfig)
 		QueueWorker(&dbCon)
 	}
 	fmt.Println("Starting API")

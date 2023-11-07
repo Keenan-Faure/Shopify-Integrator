@@ -37,7 +37,7 @@ With the use of [Docker](https://www.docker.com/) containers, many of the prereq
 
 The environment variable file contains variables that are used by the application. Of course, if one is removed, please do not expect the application to work correctly.
 
-The default `.env` file contains the default values that needs to be changed.
+The default `.env` file contains the default values that needs to be changed and can be found below:
 
 #### Postgresql
 
@@ -98,7 +98,8 @@ A friendly list of features currently supported and available:
 - Adding, updating, and viewing of customer data.
 - Import/export function available for products.
 - Filter search for products, orders and customers.
-- Automatic customer created from orders.
+- Automatic customer creation from orders.
+- RESTful API endpoint and documentation.
 
 ## What is next (inc)
 
