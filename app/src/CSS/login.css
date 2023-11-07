@@ -77,7 +77,7 @@ input[type = text], input[type = password], input[type = email]
 
 .button 
 {
-    padding: 0px;
+    padding: 2px;
 	text-align: center;
 	text-decoration: none;
 	font-size: 12px;
@@ -100,10 +100,9 @@ input[type = text], input[type = password], input[type = email]
 }
 .reg-portion 
 {
-    display: none;
+    display: block;
     opacity: 1;
     position: relative;
-    left: 15%;
 }
 
 @keyframes SlideIn 
@@ -120,7 +119,7 @@ input[type = text], input[type = password], input[type = email]
     }
 }
 
-.return-button 
+.return-button, .return-button2 
 {
     position: absolute;
     display: none;
@@ -133,6 +132,20 @@ input[type = text], input[type = password], input[type = email]
     background-position: center;
     cursor: pointer;
     z-index: 2;
+}
+.result-container
+{
+    display: none;
+    width: 39%;
+	padding: 16px;
+    position: absolute;
+	left: 50%;
+	top: 70%;
+	transform: translate(-50%, -40%);
+    background-color: rgba(0, 0, 0, 0.1);
+    transition-duration: 0.5s;
+    animation: FadeIn ease-in 1s;
+    text-align: center;
 }
 
 /* Rain droplets */

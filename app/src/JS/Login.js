@@ -8,7 +8,9 @@ import '../CSS/login.css';
 function Login()
 {
     const[inputs, setInputs] = useState({});
-    //const [result, setResult] = useState("");
+    const [result, setResult] = useState("");
+    const [result2, setResult2] = useState("");
+    const [result3, setResult3] = useState("");
 
     const handleChange = (event) =>
     {
@@ -20,24 +22,110 @@ function Login()
     const Login = (event) =>
     {
         event.preventDefault();
+        const form = $(event.target);
+        
+        $.ajax
+        ({
+            type: "POST",
+            url: "http://localhost:8000/api/login",
+            data: form.serialize(), // important to maintain the form data output
+            dataType: 'json',
+            success(data) 
+            {
+                setResult3(data);
+                console.log(data);
+            },
+        });
+        
+        
     }
 
     const Register = (event) =>
     {
         event.preventDefault();
+        const form = $(event.target);
+        /* Show the user the information received from the api */
+
+        let re = document.querySelector(".result-container");
+        re.style.display = "block";
+
+        console.log(inputs.authentication);
+        
+        
+        $.ajax
+        ({
+            type: "POST",
+            url: "http://localhost:8080/api/register",
+            data: form.serialize(), // important to maintain the form data output
+            dataType: 'json',
+            success(data) 
+            {
+                setResult2(data);
+                console.log(data);
+            },
+        });
+        
+        
+        /* Upon sucessfully registering, return to the login form to login */
+        /* Information is retrieved via the post request */
     }
 
-    function handleClick() 
+    const Register_auth = (event) =>
     {
-        console.log("X");
-        window.location.href = '/dashboard';
+        event.preventDefault();
 
+        console.log(inputs);
+        /*
+        $.ajax
+        ({
+            type: "POST",
+            url: "http://localhost:8080/api/preregister",
+            data: 
+            {
+                name: inputs.name, 
+                email: inputs.email
+            },
+            dataType: 'json',
+            success(data) 
+            {
+                setResult(data);
+                console.log(data);
+            },
+        });
+        */
+    
+        $.post("http://localhost:8080/api/preregister", JSON.stringify(inputs))
+        .done(function( _data) 
+        {
+            console.log(_data);
+        })
+        .fail( function(xhr, textStatus, errorThrown) 
+        { 
+            console.log(errorThrown.responseText);
+            console.log(xhr.responseText)
+            console.log(textStatus.responseText)
+        });
+        
+        
+
+        /* Adds the proceedings after the user enters his registration info */
+        let form2 = document.getElementById("form2");
+        let form3 = document.getElementById("form3");
+        let return_button2 = document.querySelector(".return-button2");
+
+        form2.style.animation = "Fadeout ease-out 1s";
+        form2.style.display = "none";
+        form3.style.animation = "FadeIn ease-in 1s";
+        form3.style.display = "block";
+        return_button2.style.display = "block";
+        
+        
+        
     }
 
 
     useEffect(()=> 
     {
-
         /* Ensure the model is shown */
         let model = document.getElementById("model");
         let navbar = document.getElementById("navbar");
@@ -47,8 +135,10 @@ function Login()
         /* The swapping of forms */
         let register_button = document.getElementById("reg");
         let return_button = document.querySelector(".return-button");
+        let return_button2 = document.querySelector(".return-button2");
         let form1 = document.getElementById("form1");
         let form2 = document.getElementById("form2");
+        let form3 = document.getElementById("form3");
         register_button.addEventListener("click", () =>
         {
             form1.style.animation = "Fadeout ease-out 1s";
@@ -58,16 +148,6 @@ function Login()
             form2.style.display = "block";
 
             return_button.style.display = "block";
-        });
-
-        /* Adds the additional Register portion After clicking Proceed */
-        let proceed_button = document.getElementById("proceed");
-        let reg_portion = document.getElementById("reg-portion");
-        proceed_button.addEventListener("click", () =>
-        {
-            reg_portion.style.animation = "SlideIn 1s ease-in";
-            reg_portion.style.display = "block";
-            reg_portion.style.left = "0%";
         });
 
         /* return button swapping of forms */
@@ -81,11 +161,20 @@ function Login()
 
             return_button.style.display = "none";
 
-            /* resets the reg_portion to default */
-            reg_portion.style.animation = "none";
-            reg_portion.style.display = "none";
-            reg_portion.style.left = "15%";
-        })
+        });
+
+        /* return button2 swapping of forms */
+        return_button2.addEventListener("click", () =>
+        {
+            form3.style.animation = "Fadeout ease-out 1s";
+            form3.style.display = "none";
+
+            form2.style.animation = "FadeIn ease-in 1s";
+            form2.style.display = "block";
+
+            return_button2.style.display = "none";
+            return_button.style.display = "block";
+        });
 
         /* Rain Functions */
 
@@ -187,37 +276,52 @@ function Login()
                     <br />
                     <span><input type = 'password' placeholder = "Api-Key" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
                     <br /><br />
-                    <button className = 'button' type = 'submit' onClick = {handleClick}>Proceed</button> <div id = "reg" className = 'text'>Or Register</div>
+                    <button className = 'button' type = 'submit'>Proceed</button> <div id = "reg" className = 'text'>Or Register</div>
                 </div>
             </form>
 
-            <form style = {{display: 'none'}} className = 'modal-content'  method = 'post' onSubmit={(event) => Register(event)} autoComplete='off' id = 'form2'>
+            <form style = {{display: 'none'}} className = 'modal-content'  method = 'post' onSubmit={(event) => Register_auth(event)} autoComplete='off' id = 'form2'>
                 <div className = 'modal-container'>
                     
                     <label style = {{fontSize: '18px'}}><b><u>Register a New Account</u></b></label>
                     <br /><br /><br />
                     <label><b>Username</b></label>
                     <br />
-                    <span><input type = 'text' placeholder = "Name" name = "register_username" value = {inputs.register_username || ""}  onChange = {handleChange} required></input></span>
+                    <span><input type = 'text' placeholder = "Name" name = "name" value = {inputs.name || ""}  onChange = {handleChange} required></input></span>
                     <br /><br /><br />
                     <label><b>Email</b></label>
                     <br />
-                    <span><input type = 'email' placeholder = "Email" name = "register_password" value = {inputs.register_password || ""} onChange = {handleChange} required></input></span>
+                    <span><input type = 'email' placeholder = "Email" name = "email" value = {inputs.email || ""} onChange = {handleChange} required></input></span>
                     <br /><br />
-                    <button id = 'proceed' className = 'button' type = 'button'>Send Token</button>
+                    <button id = "proc" className = 'button' type = 'submit'>Send Token</button>
                     <br /><br />
+                </div>
+            </form>
 
+            <form style = {{display: 'none'}} className = 'modal-content'  method = 'post' onSubmit={(event) => Register(event)} autoComplete='off' id = 'form3'>
+                <div className = 'modal-container'>
                     <div className = 'reg-portion' id = "reg-portion">
                         <label><b>Authentication Token</b></label>
-                        <br />
+                        <br /><br /><br />
                         <span><input type = 'password' placeholder = "Enter Token" name = "authentication" value = {inputs.authentication || ""} onChange = {handleChange} required></input></span>
-                        <br /><br />
-                        <button className = 'button' type = 'submit'>Register</button>
+                        <br /><br /><br />
+                        <button className = 'button' id = "reg-auth" type = 'submit'>Register</button>
                     </div>
                 </div>
             </form>
 
+            <div className = 'result-container'>
+                <div className = 'reg-portion'>
+                    <label><b>Information Returned</b></label>
+                    <br /><br /><br />
+                    <span>Api Key</span>
+                    <br /><br /><br />
+                    <button className = 'button'type = 'button'>Copy to Clipboard</button>
+                </div>
+            </div>
+
             <div className = 'return-button'></div>
+            <div className = 'return-button2'></div>
         </div>
 
         
