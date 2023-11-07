@@ -24,7 +24,7 @@ services:
         networks:
             - integrator-net
         volumes:
-            -  /app/src:/keenan/app/src
+            -  ./app/src:/keenan/app/src
 
     postgres:
         restart: always
