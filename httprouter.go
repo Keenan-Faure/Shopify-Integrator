@@ -818,7 +818,8 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	if PreRegisterValidation(request_body) != nil {
+	err = PreRegisterValidation(request_body)
+	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
@@ -864,7 +865,8 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	if ValidateTokenValidation(body) != nil {
+	err = ValidateTokenValidation(body)
+	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
