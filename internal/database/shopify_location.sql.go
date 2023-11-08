@@ -54,6 +54,38 @@ func (q *Queries) CreateShopifyLocation(ctx context.Context, arg CreateShopifyLo
 	return i, err
 }
 
+const getShopifyLocationByLocationID = `-- name: GetShopifyLocationByLocationID :one
+SELECT
+    id,
+    shopify_warehouse_name,
+    shopify_location_id,
+    warehouse_name,
+    created_at
+FROM shopify_location
+WHERE shopify_location_id = $1
+`
+
+type GetShopifyLocationByLocationIDRow struct {
+	ID                   uuid.UUID `json:"id"`
+	ShopifyWarehouseName string    `json:"shopify_warehouse_name"`
+	ShopifyLocationID    string    `json:"shopify_location_id"`
+	WarehouseName        string    `json:"warehouse_name"`
+	CreatedAt            time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetShopifyLocationByLocationID(ctx context.Context, shopifyLocationID string) (GetShopifyLocationByLocationIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getShopifyLocationByLocationID, shopifyLocationID)
+	var i GetShopifyLocationByLocationIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.ShopifyWarehouseName,
+		&i.ShopifyLocationID,
+		&i.WarehouseName,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getShopifyLocationByWarehouse = `-- name: GetShopifyLocationByWarehouse :one
 SELECT
     id,

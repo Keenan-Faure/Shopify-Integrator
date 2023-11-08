@@ -31,6 +31,16 @@ SELECT
 FROM shopify_location
 WHERE warehouse_name = $1;
 
+-- name: GetShopifyLocationByLocationID :one
+SELECT
+    id,
+    shopify_warehouse_name,
+    shopify_location_id,
+    warehouse_name,
+    created_at
+FROM shopify_location
+WHERE shopify_location_id = $1;
+
 -- name: RemoveShopifyLocationMap :exec
 DELETE FROM shopify_location
 WHERE id = $1;

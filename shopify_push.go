@@ -52,7 +52,7 @@ func (dbconfig *DbConfig) CalculateAvailableQuantity(
 		}
 	}
 	if db_inventory_level.CreatedAt.IsZero() {
-		shopify_inventory_level, err := configShopify.GetShopifyInventoryLevels(location_id, inventory_item_id)
+		shopify_inventory_level, err := configShopify.GetShopifyInventoryLevel(location_id, inventory_item_id)
 		if err != nil {
 			log.Println(err)
 			return 0

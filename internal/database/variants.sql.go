@@ -126,6 +126,7 @@ func (q *Queries) GetProductVariants(ctx context.Context, productID uuid.UUID) (
 const getVariantBySKU = `-- name: GetVariantBySKU :one
 SELECT
     id,
+    product_id,
     sku,
     option1,
     option2,
@@ -136,12 +137,13 @@ WHERE sku = $1
 `
 
 type GetVariantBySKURow struct {
-	ID      uuid.UUID      `json:"id"`
-	Sku     string         `json:"sku"`
-	Option1 sql.NullString `json:"option1"`
-	Option2 sql.NullString `json:"option2"`
-	Option3 sql.NullString `json:"option3"`
-	Barcode sql.NullString `json:"barcode"`
+	ID        uuid.UUID      `json:"id"`
+	ProductID uuid.UUID      `json:"product_id"`
+	Sku       string         `json:"sku"`
+	Option1   sql.NullString `json:"option1"`
+	Option2   sql.NullString `json:"option2"`
+	Option3   sql.NullString `json:"option3"`
+	Barcode   sql.NullString `json:"barcode"`
 }
 
 func (q *Queries) GetVariantBySKU(ctx context.Context, sku string) (GetVariantBySKURow, error) {
@@ -149,6 +151,7 @@ func (q *Queries) GetVariantBySKU(ctx context.Context, sku string) (GetVariantBy
 	var i GetVariantBySKURow
 	err := row.Scan(
 		&i.ID,
+		&i.ProductID,
 		&i.Sku,
 		&i.Option1,
 		&i.Option2,

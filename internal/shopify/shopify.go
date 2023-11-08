@@ -27,7 +27,7 @@ type ConfigShopify struct {
 
 // Retrieves a list of inventory levels
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#get-inventory-levels
-func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
+func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevels, error) {
 	res, err := configShopify.FetchHelper(
@@ -52,6 +52,35 @@ func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
 		return objects.GetShopifyInventoryLevels{}, err
 	}
 	return response.InventoryLevels[0], nil
+}
+
+// Retrieves a list of inventory levels
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#get-inventory-levels
+func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
+	location_id,
+	inventory_item_id string) (objects.GetShopifyInventoryLevelsList, error) {
+	res, err := configShopify.FetchHelper(
+		"inventory_levels.json?location_ids="+location_id+"&inventory_item_ids="+inventory_item_id,
+		http.MethodGet,
+		nil,
+	)
+	if err != nil {
+		return objects.GetShopifyInventoryLevelsList{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.GetShopifyInventoryLevelsList{}, err
+	}
+	if res.StatusCode != 200 {
+		return objects.GetShopifyInventoryLevelsList{}, errors.New(string(respBody))
+	}
+	response := objects.GetShopifyInventoryLevelsList{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.GetShopifyInventoryLevelsList{}, err
+	}
+	return response, nil
 }
 
 // Fetches all locations from Shopify:

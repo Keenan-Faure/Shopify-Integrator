@@ -39,6 +39,7 @@ WHERE product_id = $1;
 -- name: GetVariantBySKU :one
 SELECT
     id,
+    product_id,
     sku,
     option1,
     option2,
