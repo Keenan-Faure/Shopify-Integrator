@@ -822,28 +822,32 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	exists, err := dbconfig.CheckTokenExists(request_body, r)
+	token_value := uuid.UUID{}
+	token_value, exists, err := dbconfig.CheckTokenExists(request_body, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	if exists {
-		RespondWithError(w, http.StatusConflict, utils.ConfirmError(err))
-		return
+	if !exists {
+		token, err := dbconfig.DB.CreateToken(r.Context(), database.CreateTokenParams{
+			Token:     uuid.New(),
+			ID:        uuid.New(),
+			Name:      request_body.Name,
+			Email:     request_body.Email,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
+		token_value = token.Token
 	}
-	token, err := dbconfig.DB.CreateToken(r.Context(), database.CreateTokenParams{
-		Token:     uuid.New(),
-		ID:        uuid.New(),
-		Name:      request_body.Name,
-		Email:     request_body.Email,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	err = SendEmail(token.Token, request_body.Email, request_body.Name)
+	err = SendEmail(token_value, request_body.Email, request_body.Name)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return

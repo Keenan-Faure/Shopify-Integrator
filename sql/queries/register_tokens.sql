@@ -27,7 +27,8 @@ email = $2;
 -- name: GetToken :one
 SELECT
     name,
-    email
+    email,
+    token
 FROM register_tokens
 WHERE name = $1
 AND email = $2;
