@@ -10,7 +10,9 @@ WORKDIR /keenan/
 # Migrations
 ADD /sql/ /keenan/sql/
 ADD /scripts/migrations.sh /keenan/sql/schema
-COPY .env /keenan/sql/schema/
+
+# Mount the .env file for development
+# COPY .env /keenan/sql/schema/
 
 RUN ["chmod", "+x", "/keenan/sql/schema/migrations.sh"]
 
