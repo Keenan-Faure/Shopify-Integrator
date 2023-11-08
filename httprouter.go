@@ -852,7 +852,9 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusCreated, []string{"email sent"})
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+		Message: "email sent",
+	})
 }
 
 // POST /api/register

@@ -408,7 +408,9 @@ func (dbconfig *DbConfig) ClearQueueByID(
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, "success")
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // DELETE /api/queue?key=value
@@ -424,7 +426,9 @@ func (dbconfig *DbConfig) ClearQueueByFilter(
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, response)
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: response,
+	})
 }
 
 // Process a queue item

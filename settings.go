@@ -4,6 +4,7 @@ import (
 	"context"
 	"integrator/internal/database"
 	"net/http"
+	"objects"
 	"strings"
 	"time"
 	"utils"
@@ -81,7 +82,9 @@ func (dbconfig *DbConfig) AddAppSetting(w http.ResponseWriter, r *http.Request, 
 			}
 		}
 	}
-	RespondWithJSON(w, http.StatusOK, "success")
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // DELETE /api/settings
@@ -102,7 +105,9 @@ func (dbconfig *DbConfig) RemoveAppSettings(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, "success")
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // GET /api/shopify/settings
@@ -175,7 +180,9 @@ func (dbconfig *DbConfig) AddShopifySetting(w http.ResponseWriter, r *http.Reque
 			}
 		}
 	}
-	RespondWithJSON(w, http.StatusOK, "success")
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // DELETE /api/shopify/settings
@@ -196,5 +203,7 @@ func (dbconfig *DbConfig) RemoveShopifySettings(w http.ResponseWriter, r *http.R
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, "success")
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
 }
