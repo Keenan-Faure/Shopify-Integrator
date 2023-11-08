@@ -866,10 +866,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	token, err := dbconfig.DB.GetTokenValidation(r.Context(), database.GetTokenValidationParams{
-		Name:  body.Name,
-		Email: body.Email,
-	})
+	token, err := dbconfig.DB.GetTokenValidation(r.Context(), body.Email)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return

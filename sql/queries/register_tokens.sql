@@ -30,8 +30,7 @@ SELECT
     email,
     token
 FROM register_tokens
-WHERE name = $1
-AND email = $2;
+WHERE email = $1;
 
 -- name: GetTokenValidation :one
 SELECT
@@ -39,5 +38,4 @@ SELECT
     email,
     token
 FROM register_tokens
-WHERE name = $1
-AND email = $2;
+WHERE email = $1;

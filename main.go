@@ -34,7 +34,9 @@ func main() {
 	if !*flags {
 		fmt.Println("Starting Workers")
 		go iocsv.LoopRemoveCSV()
-		go LoopJSONShopify(&dbCon, shopifyConfig)
+		if shopifyConfig.Valid {
+			go LoopJSONShopify(&dbCon, shopifyConfig)
+		}
 		QueueWorker(&dbCon)
 	}
 	fmt.Println("Starting API")

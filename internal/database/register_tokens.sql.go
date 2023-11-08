@@ -79,14 +79,8 @@ SELECT
     email,
     token
 FROM register_tokens
-WHERE name = $1
-AND email = $2
+WHERE email = $1
 `
-
-type GetTokenParams struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
 
 type GetTokenRow struct {
 	Name  string    `json:"name"`
@@ -94,8 +88,8 @@ type GetTokenRow struct {
 	Token uuid.UUID `json:"token"`
 }
 
-func (q *Queries) GetToken(ctx context.Context, arg GetTokenParams) (GetTokenRow, error) {
-	row := q.db.QueryRowContext(ctx, getToken, arg.Name, arg.Email)
+func (q *Queries) GetToken(ctx context.Context, email string) (GetTokenRow, error) {
+	row := q.db.QueryRowContext(ctx, getToken, email)
 	var i GetTokenRow
 	err := row.Scan(&i.Name, &i.Email, &i.Token)
 	return i, err
@@ -107,14 +101,8 @@ SELECT
     email,
     token
 FROM register_tokens
-WHERE name = $1
-AND email = $2
+WHERE email = $1
 `
-
-type GetTokenValidationParams struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
 
 type GetTokenValidationRow struct {
 	Name  string    `json:"name"`
@@ -122,8 +110,8 @@ type GetTokenValidationRow struct {
 	Token uuid.UUID `json:"token"`
 }
 
-func (q *Queries) GetTokenValidation(ctx context.Context, arg GetTokenValidationParams) (GetTokenValidationRow, error) {
-	row := q.db.QueryRowContext(ctx, getTokenValidation, arg.Name, arg.Email)
+func (q *Queries) GetTokenValidation(ctx context.Context, email string) (GetTokenValidationRow, error) {
+	row := q.db.QueryRowContext(ctx, getTokenValidation, email)
 	var i GetTokenValidationRow
 	err := row.Scan(&i.Name, &i.Email, &i.Token)
 	return i, err

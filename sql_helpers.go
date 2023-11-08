@@ -57,16 +57,13 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 
 // checks if a token already exists in the database
 func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreRegister, r *http.Request) (uuid.UUID, bool, error) {
-	token, err := dbconfig.DB.GetToken(r.Context(), database.GetTokenParams{
-		Name:  request_body.Name,
-		Email: request_body.Email,
-	})
+	token, err := dbconfig.DB.GetToken(r.Context(), request_body.Email)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			return uuid.UUID{}, false, err
 		}
 	}
-	if token.Email == request_body.Email && token.Name == request_body.Email {
+	if token.Email == request_body.Email {
 		return token.Token, true, nil
 	}
 	return uuid.UUID{}, false, nil
