@@ -8,9 +8,6 @@ import '../CSS/login.css';
 function Login()
 {
     const[inputs, setInputs] = useState({});
-    const [result, setResult] = useState("");
-    const [result2, setResult2] = useState("");
-    const [result3, setResult3] = useState("");
 
     const handleChange = (event) =>
     {
@@ -22,105 +19,139 @@ function Login()
     const Login = (event) =>
     {
         event.preventDefault();
-        const form = $(event.target);
-        
-        $.ajax
+
+        /* Hide the user the information received from the api */
+        let re = document.querySelector(".result-container");
+        re.style.display = "none";
+
+        console.log(inputs);
+
+        let message = document.getElementById("message");
+        message.style.display = "block";
+
+        $.ajaxSetup
         ({
-            type: "POST",
-            url: "http://localhost:8000/api/login",
-            data: form.serialize(), // important to maintain the form data output
-            dataType: 'json',
-            success(data) 
-            {
-                setResult3(data);
-                console.log(data);
-            },
+            headers: { 'Authorization': 'ApiKey ' + inputs.password }
         });
-        
-        
+
+        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
+        .done(function( _data) 
+        {
+            console.log(_data);
+            message.innerHTML = "Login Sucessful";
+            message.style.backgroundColor = "rgb(6, 133, 6)";
+            setTimeout(() =>
+            {
+                message.innerHTML = "";
+                message.style.backgroundColor = "transparent";
+                message.style.display = "none";
+                window.location.href = '/dashboard';
+            }, 1000);
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+            message.innerHTML = "Error - Login failed";
+            message.style.backgroundColor = "rgb(175, 11, 11)";
+            setTimeout(() =>
+            {
+                message.innerHTML = "";
+                message.style.backgroundColor = "transparent";
+                message.style.display = "none";
+            }, 2000);
+        });
     }
 
     const Register = (event) =>
     {
         event.preventDefault();
-        const form = $(event.target);
+
         /* Show the user the information received from the api */
-
         let re = document.querySelector(".result-container");
-        re.style.display = "block";
+        let copyText = document.getElementById("myInput");
+        let main2 = document.getElementById("main2");
+        let message = document.getElementById("message");
 
-        console.log(inputs.authentication);
+
+        message.style.display = "block";
         
-        
-        $.ajax
-        ({
-            type: "POST",
-            url: "http://localhost:8080/api/register",
-            data: form.serialize(), // important to maintain the form data output
-            dataType: 'json',
-            success(data) 
+        $.post("http://localhost:8080/api/register", JSON.stringify(inputs),[], 'json')
+        .done(function( _data) 
+        {
+            console.log(_data);
+            copyText.innerHTML = JSON.stringify(_data, null, 2);
+
+            message.innerHTML = "Registration Sucessful";
+            message.style.backgroundColor = "rgb(6, 133, 6)";
+            main2.style.animation = "Fadeout 2s ease-out";
+            setTimeout(() =>
             {
-                setResult2(data);
-                console.log(data);
-            },
+                main2.style.display = "none";
+                re.style.display = "block";
+                message.innerHTML = "";
+                message.style.backgroundColor = "transparent";
+                message.style.display = "none";
+            }, 2000);
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+            message.innerHTML = "Error - Ensure the Token is correct";
+            message.style.backgroundColor = "rgb(175, 11, 11)";
+            setTimeout(() =>
+            {
+                message.innerHTML = "";
+                message.style.backgroundColor = "transparent";
+                message.style.display = "none";
+            }, 2000);
         });
-        
-        
-        /* Upon sucessfully registering, return to the login form to login */
-        /* Information is retrieved via the post request */
     }
 
     const Register_auth = (event) =>
     {
         event.preventDefault();
-
         console.log(inputs);
-        /*
-        $.ajax
-        ({
-            type: "POST",
-            url: "http://localhost:8080/api/preregister",
-            data: 
-            {
-                name: inputs.name, 
-                email: inputs.email
-            },
-            dataType: 'json',
-            success(data) 
-            {
-                setResult(data);
-                console.log(data);
-            },
-        });
-        */
-    
-        $.post("http://localhost:8080/api/preregister", JSON.stringify(inputs))
+        let message = document.getElementById("message");
+        message.style.display = "block";
+
+        $.post("http://localhost:8080/api/preregister", JSON.stringify(inputs),[], 'json')
         .done(function( _data) 
         {
             console.log(_data);
+
+            message.innerHTML = "Email sent";
+            message.style.backgroundColor = "rgb(6, 133, 6)";
+            setTimeout(() =>
+            {
+                message.innerHTML = "";
+                message.style.backgroundColor = "transparent";
+                message.style.display = "none";
+            }, 2000);
+
+            /* Adds the proceedings after the user enters his registration info */
+            let form2 = document.getElementById("form2");
+            let form3 = document.getElementById("form3");
+            let return_button2 = document.querySelector(".return-button2");
+            form2.style.animation = "Fadeout ease-out 1s";
+            form2.style.display = "none";
+            form3.style.animation = "FadeIn ease-in 1s";
+            form3.style.display = "block";
+            return_button2.style.display = "block";
+
+            
         })
-        .fail( function(xhr, textStatus, errorThrown) 
+        .fail( function(xhr) 
         { 
-            console.log(errorThrown.responseText);
-            console.log(xhr.responseText)
-            console.log(textStatus.responseText)
-        });
-        
-        
-
-        /* Adds the proceedings after the user enters his registration info */
-        let form2 = document.getElementById("form2");
-        let form3 = document.getElementById("form3");
-        let return_button2 = document.querySelector(".return-button2");
-
-        form2.style.animation = "Fadeout ease-out 1s";
-        form2.style.display = "none";
-        form3.style.animation = "FadeIn ease-in 1s";
-        form3.style.display = "block";
-        return_button2.style.display = "block";
-        
-        
-        
+            alert(xhr.responseText);
+            message.innerHTML = "Error";
+            message.style.backgroundColor = "rgb(175, 11, 11)";
+            setTimeout(() =>
+            {
+                message.innerHTML = "";
+                message.style.backgroundColor = "transparent";
+                message.style.display = "none";
+            }, 2000);
+        }); 
     }
 
 
@@ -176,8 +207,38 @@ function Login()
             return_button.style.display = "block";
         });
 
-        /* Rain Functions */
+        
+        let clip = document.getElementById("clip");
+        clip.addEventListener("click", () =>
+        {
+            let copyText = document.getElementById("myInput");
+          
+            navigator.clipboard.writeText(copyText.innerHTML);
+            
+            setTimeout(() =>
+            {
+                let re = document.querySelector(".result-container");
+                let form2 = document.getElementById("form2");
+                let message = document.getElementById("message");
 
+                message.style.display = "block";
+                message.innerHTML = "Copied to Clipboard";
+
+                message.style.backgroundColor = "rgb(6, 133, 6)";
+                re.style.animation = "Fadeout 2s ease-out";
+                form2.style.animation = "Fadeout 2s ease-out";
+                
+                setTimeout(() =>
+                {
+                    window.location.reload();
+                }, 1000);
+            }, 1000)
+            
+        });
+
+
+
+        /* Rain Functions */
         var makeItRain = function() 
         {
             //clear out everything
@@ -264,7 +325,7 @@ function Login()
             </div>
 
             <form className = 'modal-content' method = 'post' onSubmit={(event) => Login(event)} autoComplete='off' id = 'form1'>
-                <div className = 'modal-container'>
+                <div className = 'modal-container' id = "main">
 
                     <label style = {{fontSize: '18px'}}><b>Welcome. Please login to proceed</b></label>
                     <br /><br /><br />
@@ -283,7 +344,7 @@ function Login()
             <form style = {{display: 'none'}} className = 'modal-content'  method = 'post' onSubmit={(event) => Register_auth(event)} autoComplete='off' id = 'form2'>
                 <div className = 'modal-container'>
                     
-                    <label style = {{fontSize: '18px'}}><b><u>Register a New Account</u></b></label>
+                    <label id = "info" style = {{fontSize: '18px'}}><b><u>Register a New Account</u></b></label>
                     <br /><br /><br />
                     <label><b>Username</b></label>
                     <br />
@@ -299,29 +360,34 @@ function Login()
             </form>
 
             <form style = {{display: 'none'}} className = 'modal-content'  method = 'post' onSubmit={(event) => Register(event)} autoComplete='off' id = 'form3'>
-                <div className = 'modal-container'>
+                <div className = 'modal-container' id = "main2">
                     <div className = 'reg-portion' id = "reg-portion">
                         <label><b>Authentication Token</b></label>
-                        <br /><br /><br />
-                        <span><input type = 'password' placeholder = "Enter Token" name = "authentication" value = {inputs.authentication || ""} onChange = {handleChange} required></input></span>
+                        <br />
+                        <div className = "message">A Token was sent to the email address</div>
+                        <br /><br />
+                        <span><input type = 'password' placeholder = "Enter Token" name = "token" value = {inputs.token || ""} onChange = {handleChange} required></input></span>
                         <br /><br /><br />
                         <button className = 'button' id = "reg-auth" type = 'submit'>Register</button>
                     </div>
                 </div>
             </form>
-
             <div className = 'result-container'>
                 <div className = 'reg-portion'>
                     <label><b>Information Returned</b></label>
-                    <br /><br /><br />
-                    <span>Api Key</span>
-                    <br /><br /><br />
-                    <button className = 'button'type = 'button'>Copy to Clipboard</button>
+                    <div className = "message">You are recommended to save this information!</div>
+                    <br />
+                    <pre id = "myInput" className = "pre"/>
+                    <br /><br />
+                    <button className = 'button' type = 'button' id = "clip">Copy to Clipboard</button>
                 </div>
             </div>
 
+            
+
             <div className = 'return-button'></div>
             <div className = 'return-button2'></div>
+            <div className = 'info-message' id = 'message'></div>
         </div>
 
         

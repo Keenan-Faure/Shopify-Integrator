@@ -32,11 +32,11 @@
 .modal-container
 {
     width: 39%;
-	padding: 16px;
+    padding: 16px;
     position: relative;
-	left: 50%;
-	top: 40%;
-	transform: translate(-50%, -40%);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.1);
     transition-duration: 0.5s;
 
@@ -73,6 +73,40 @@ input[type = text], input[type = password], input[type = email]
 	box-sizing: border-box;
     background-color: transparent;
     border-radius: 0px;
+}
+input[type = return]
+{
+    width: auto;
+    padding: 5px;
+    margin: 0px 0;
+    border-top: transparent;
+    border-left: transparent;
+    border-right: transparent;
+    border-bottom: transparent;
+    display: inline-block;
+    box-sizing: border-box;
+    background-color: transparent;
+    border-radius: 0px;
+    text-align: left;
+    height: 100px;
+    overflow: auto;
+}
+.pre 
+{
+    width: auto;
+    padding: 5px;
+    margin: 0px 0;
+    border-top: transparent;
+    border-left: transparent;
+    border-right: transparent;
+    border-bottom: transparent;
+    display: inline-block;
+    box-sizing: border-box;
+    background-color: transparent;
+    border-radius: 0px;
+    text-align: left;
+    height: 100px;
+    overflow: auto;
 }
 
 .button 
@@ -137,17 +171,48 @@ input[type = text], input[type = password], input[type = email]
 {
     display: none;
     width: 39%;
-	padding: 16px;
+    padding: 16px;
     position: absolute;
-	left: 50%;
-	top: 70%;
-	transform: translate(-50%, -40%);
+    left: 50%;
+    top: 44%;
+    transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.1);
     transition-duration: 0.5s;
     animation: FadeIn ease-in 1s;
     text-align: center;
+    z-index: 2;
 }
-
+.message 
+{
+    width: auto;
+    height: auto;
+    padding: 5px;
+    font-size: 13px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.info-message 
+{
+	position: absolute;
+	display: none;
+	left: 0%;
+    top: 100%;
+    transform: translate(0%, -100%);
+	min-width: 120px;
+    padding: 14px;
+	text-align: center;
+	font-family: monospace;
+	font-size: 12px;
+	border-radius: 5px;
+	background-color: transparent;
+	animation: fadeMessage ease-in-out 2s;
+	z-index: 2;
+}
+@keyframes fadeMessage
+{
+	0%{opacity: 0; }
+	50% { opacity: 1; }
+	100% { opacity: 0; }
+}
 /* Rain droplets */
 .rain 
 {
