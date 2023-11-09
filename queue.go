@@ -22,15 +22,17 @@ import (
 )
 
 func QueueWorker(dbconfig *DbConfig) {
-	if dbconfig.Valid {
-		go LoopQueueWorker(dbconfig)
-	}
+	go LoopQueueWorker(dbconfig)
 }
 
 func LoopQueueWorker(dbconfig *DbConfig) {
 	interval := 5
 	db_interval, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_cron_time")
 	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return
+		}
 		interval = 5
 	}
 	interval, err = strconv.Atoi(db_interval.Value)
@@ -40,12 +42,27 @@ func LoopQueueWorker(dbconfig *DbConfig) {
 	timer := time.Duration(interval * int(time.Second))
 	ticker := time.NewTicker(timer)
 	for ; ; <-ticker.C {
-		QueueWaitGroup(dbconfig)
+		queue_enabled := false
+		queue_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_queue_worker")
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				log.Println(err)
+				return
+			}
+			queue_enabled = false
+		}
+		queue_enabled, err = strconv.ParseBool(queue_enabled_db.Value)
+		if err != nil {
+			queue_enabled = false
+		}
+		if queue_enabled {
+			fmt.Println("running queue worker...")
+			QueueWaitGroup(dbconfig)
+		}
 	}
 }
 
 func QueueWaitGroup(dbconfig *DbConfig) {
-	fmt.Println("running queue worker...")
 	waitgroup := &sync.WaitGroup{}
 	process_limit := 0
 	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")

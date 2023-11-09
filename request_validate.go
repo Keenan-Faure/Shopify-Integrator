@@ -17,6 +17,9 @@ func DecodeQueueItemOrder(rawJSON json.RawMessage) (objects.RequestBodyOrder, er
 	var params objects.RequestBodyOrder
 	err := json.Unmarshal(rawJSON, &params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -27,6 +30,9 @@ func DecodeQueueItemProduct(rawJSON json.RawMessage) (objects.RequestQueueItemPr
 	var params objects.RequestQueueItemProducts
 	err := json.Unmarshal(rawJSON, &params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -87,6 +93,9 @@ func DecodeQueueItem(r *http.Request) (objects.RequestQueueItem, error) {
 	params := objects.RequestQueueItem{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return objects.RequestQueueItem{}, err
 	}
 	return params, nil
@@ -138,6 +147,9 @@ func DecodeSettings(r *http.Request) ([]objects.RequestSettings, error) {
 	params := []objects.RequestSettings{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return []objects.RequestSettings{}, err
 	}
 	return params, nil
@@ -149,6 +161,9 @@ func DecodeSetting(r *http.Request) (objects.RequestSettings, error) {
 	params := objects.RequestSettings{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return objects.RequestSettings{}, err
 	}
 	return params, nil
@@ -168,6 +183,9 @@ func DecodeInventoryMap(r *http.Request) (objects.RequestWarehouseLocation, erro
 	params := objects.RequestWarehouseLocation{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -303,6 +321,9 @@ func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyUser, e
 	params := objects.RequestBodyUser{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -322,6 +343,9 @@ func DecodePreRegisterRequestBody(r *http.Request) (objects.RequestBodyPreRegist
 	params := objects.RequestBodyPreRegister{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -341,6 +365,9 @@ func DecodeCustomerRequestBody(r *http.Request) (objects.RequestBodyCustomer, er
 	params := objects.RequestBodyCustomer{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -352,6 +379,9 @@ func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
 	params := objects.RequestBodyOrder{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -518,6 +548,9 @@ func DecodeProductRequestBody(r *http.Request) (objects.RequestBodyProduct, erro
 	params := objects.RequestBodyProduct{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil
@@ -529,6 +562,9 @@ func DecodeUserRequestBody(r *http.Request) (objects.RequestBodyUser, error) {
 	params := objects.RequestBodyUser{}
 	err := decoder.Decode(&params)
 	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
 		return params, err
 	}
 	return params, nil

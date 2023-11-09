@@ -15,7 +15,7 @@ import (
 	"github.com/shurcooL/graphql"
 )
 
-const PRODUCT_FETCH_LIMIT = "50" // limit on products to fetch
+const PRODUCT_FETCH_LIMIT = "10" // limit on products to fetch
 
 type ConfigShopify struct {
 	APIKey      string
@@ -400,6 +400,32 @@ func (configShopify *ConfigShopify) GetShopifyCategories() (objects.ResponseGetC
 	return response, nil
 }
 
+// Retrieves a product's collection from Shopify
+// used for shopify_fetch.go
+// https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#get-custom-collections
+func (configShopify *ConfigShopify) GetShopifyCategoryByProductID(product_id string) (objects.ResponseGetCustomCollections, error) {
+	res, err := configShopify.FetchHelper("custom_collections.json?fields=title,id&product_id="+product_id, http.MethodGet, nil)
+	if err != nil {
+		return objects.ResponseGetCustomCollections{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Println(err)
+		return objects.ResponseGetCustomCollections{}, err
+	}
+	if res.StatusCode != 200 {
+		return objects.ResponseGetCustomCollections{}, errors.New(string(respBody))
+	}
+	response := objects.ResponseGetCustomCollections{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		log.Println(err)
+		return objects.ResponseGetCustomCollections{}, err
+	}
+	return response, nil
+}
+
 // Determines if a product's category already exists on Shopify
 func (configShopify *ConfigShopify) CategoryExists(product objects.Product, categories objects.ResponseGetCustomCollections) (bool, int) {
 	for _, value := range categories.CustomCollections {
@@ -483,6 +509,7 @@ func (configShopify *ConfigShopify) FetchProducts(fetch_url string) (objects.Sho
 	}
 	res, err := configShopify.FetchHelper(fetch_url, http.MethodGet, nil)
 	if err != nil {
+		log.Println(err)
 		return objects.ShopifyProducts{}, "", err
 	}
 	defer res.Body.Close()
