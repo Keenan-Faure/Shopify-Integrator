@@ -70,8 +70,6 @@ function Page1(props)
         const itemsPerPage = 4;
         let currentPage = 0;
         const items = Array.from(content.getElementsByClassName('pan'));
-        console.log("YE");
-        console.log(items);
           
         function showPage(page) 
         {
@@ -128,6 +126,7 @@ function Page1(props)
         
         createPageButtons(); // Call this function to create the page buttons initially
         showPage(currentPage);
+
     
     }, []);
 
@@ -144,24 +143,6 @@ function Page1(props)
                 <br />
 
                 <button className = "filter-button">Clear Filter</button>
-            </div>
-            <div className = "main" style = {{display: props.main_display, backgroundColor: props.main_bgc, top: props.main_top,
-            left: props.main_left, transform: props.transform, width: props.width, height: props.height, animation: props.animation}}>
-                <div className = "search">
-                    <form className = "search-area">
-                        <input className ="search-area" type="search" placeholder="Search..." />
-                    </form>    
-                </div>
-                <div className = "main-elements">
-                    <Pan_details />
-                    <Pan_details />
-                    <Pan_details />
-                    <Pan_details />
-                    <Pan_details />
-                    <Pan_details />
-                    <Pan_details />
-                </div>
-                <div className = "center" id = "pag"></div>
             </div>
         </>
     );

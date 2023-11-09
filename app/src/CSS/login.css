@@ -64,7 +64,7 @@ input[type = text], input[type = password], input[type = email]
 {
 	width: 450px;
 	padding: 15px;
-	margin: 0px 0; 
+	margin: 5px 0; 
     border-top: transparent;
     border-left: transparent;
     border-right: transparent;

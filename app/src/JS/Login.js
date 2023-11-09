@@ -38,6 +38,10 @@ function Login()
         .done(function( _data) 
         {
             console.log(_data);
+
+            /* Sets the user information for this session */
+            localStorage.setItem('api_key', inputs.password);
+
             message.innerHTML = "Login Sucessful";
             message.style.backgroundColor = "rgb(6, 133, 6)";
             setTimeout(() =>
