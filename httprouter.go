@@ -34,7 +34,11 @@ func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.R
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, shopify_locations)
+	locations := []database.ShopifyLocation{}
+	if len(shopify_locations) > 0 {
+		locations = append(locations, shopify_locations...)
+	}
+	RespondWithJSON(w, http.StatusOK, locations)
 }
 
 // DELETE /api/inventory

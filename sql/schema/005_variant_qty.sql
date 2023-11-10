@@ -2,7 +2,7 @@
 CREATE TABLE variant_qty(
     id UUID PRIMARY KEY UNIQUE,
     variant_id UUID NOT NULL,
-    name VARCHAR(16) NOT NULL,
+    name VARCHAR(32) NOT NULL,
     value INTEGER DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
