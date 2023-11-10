@@ -125,6 +125,7 @@
 }
 .settings-2
 {
+    display: block;
     overflow: auto;
     padding: 30px;
     text-align: center;

@@ -3,6 +3,7 @@ import $ from 'jquery';
 import Page1 from '../components/Page1';
 import Pan_details from '../components/semi-components/pan-detail';
 import '../CSS/page1.css';
+import product from '../media/products.png';
 
 function Products(props)
 {
@@ -10,7 +11,7 @@ function Products(props)
 
     useEffect(()=> 
     {
-        /* Ensures the navbar is set correctly */
+        /* Ensures the page elements are set correctly */
         let navigation = document.getElementById("navbar");
         window.onload = function(event)
         {
@@ -19,28 +20,6 @@ function Products(props)
             navigation.style.width = "70%";
             navigation.style.animation = "MoveLeft 1.2s ease";
         }
-
-        /* animation for the search bar */
-        let search = document.querySelector(".search-area");
-        setTimeout(() =>
-        {
-            search.style.opacity = "1";
-            search.style.animation = "appear 1.2s ease-in";
-        }, 1400);
-
-        /* animation for the pan elements */
-        let pan = document.querySelectorAll(".pan");
-        let pag = document.getElementById("pag");
-        setTimeout(() =>
-        {
-            for(let i = 0; i < pan.length; i ++)
-            {
-                pan[i].style.display = "block";
-                pan[i].style.animation = "appear 1.2s ease-in";
-            }
-            pag.style.display = "block";
-            pag.style.animation = "appear 1.4s ease-in";
-        }, 1400);
 
         /*  API  */
         const api_key = localStorage.getItem('api_key');
@@ -64,7 +43,7 @@ function Products(props)
     }, []);
 
     return (
-        <>
+        <div className = "products">
             <div className = "main">
                 <div className = "search">
                     <form className = "search-area">
@@ -72,20 +51,24 @@ function Products(props)
                     </form>    
                 </div>
                 <div className = "main-elements">
-                    {data.map((_data, id)=>
-                        {
-                            return <Pan_details />
+                    <div className = "pan-main">
+                        {data.map((_data, id)=>
+                            {
+                                return <Pan_details />
 
-                        })
-                    }
-                    <Pan_details />
+                            })
+                        }
+                        <Pan_details />
+                    </div>
                 </div>
-                <div className = "center" id = "pag"></div>
+                <div className = "center" id = "pag">
+                    
+                </div>
             </div>
 
-            <Page1 />
+            <Page1 image = {product} title = "Products"/>
 
-        </>
+        </div>
     );
 }
 

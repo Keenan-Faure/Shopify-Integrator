@@ -44,7 +44,7 @@ function Customers()
     }, []);
 
     return (
-        <>
+        <div className = "customer">
             <div className = "main" style = {{left: '50%', top: '53%', transform: 'translate(-50%, -50%)', 
                                         height: '90%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in'}}>
                 <div className = "search">
@@ -53,21 +53,23 @@ function Customers()
                     </form>    
                 </div>
                 <div className = "main-elements">
-                    {data.map((_data, id)=>
-                        {
-                            return <Customer_details />
+                    <div className = "pan-main">
+                        {data.map((_data, id)=>
+                            {
+                                return <Customer_details />
 
-                        })
-                    }
-                    <Customer_details />
-                    <Customer_details />
+                            })
+                        }
+                        <Customer_details />
+                        <Customer_details />
+                    </div>
                 </div>
                 <div className = "center" id = "pag"></div>
             </div>
 
             <Page1 filter_display = "none"/>
             
-        </>
+        </div>
     );
 }
 

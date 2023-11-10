@@ -44,7 +44,7 @@ function Orders()
     }, []);
 
     return (
-        <>
+        <div className = "orders">
             <div className = "main" style = {{left: '50%', top: '53%', transform: 'translate(-50%, -50%)', 
                                         height: '90%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in'}}>
 
@@ -54,21 +54,23 @@ function Orders()
                     </form>    
                 </div>
                 <div className = "main-elements">
-                    {data.map((_data, id)=>
-                        {
-                            return <Order_details />
+                    <div className = "pan-main">
+                        {data.map((_data, id)=>
+                            {
+                                return <Order_details />
 
-                        })
-                    }
-                    <Order_details />
-                    <Order_details />
+                            })
+                        }
+                        <Order_details />
+                        <Order_details />
+                    </div>
                 </div>
                 <div className = "center" id = "pag"></div>
             </div>
 
             <Page1 filter_display = "none"/>
             
-        </>
+        </div>
     );
 }
 

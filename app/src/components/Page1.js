@@ -1,6 +1,5 @@
 import {useEffect} from 'react';
 import Background from './Background';
-import Pan_details from './semi-components/pan-detail';
 
 import '../CSS/page1.css';
 
@@ -135,7 +134,6 @@ function Page1(props)
             <Background />
             <div className = "filter" style = {{display: props.filter_display}}>
                 <div className = "filter-title"><b>Available Filters:</b></div>
-                <br /><br />
                 <div className = "filter-elements">Filter 1<div className = "filter-img"></div></div>
                 <div className = "filter-elements">Filter 2<div className = "filter-img"></div></div>
                 <div className = "filter-elements">Filter 3<div className = "filter-img"></div></div>
@@ -143,6 +141,7 @@ function Page1(props)
                 <br />
 
                 <button className = "filter-button">Clear Filter</button>
+                
             </div>
         </>
     );
