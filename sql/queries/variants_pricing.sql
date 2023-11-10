@@ -21,7 +21,18 @@ SET
 WHERE variant_id IN (
     SELECT id FROM variants
     WHERE sku = $4
-);
+) AND name = $5;
+
+-- name: GetPriceTierBySKU :one
+SELECT 
+    name,
+    value,
+    isdefault
+FROM variant_pricing
+WHERE variant_id IN (
+    SELECT id FROM variants
+    WHERE sku = $1
+) AND name = $2;
 
 -- name: GetVariantPricing :many
 SELECT 

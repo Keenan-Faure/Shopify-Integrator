@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE products(
-    id UUID PRIMARY KEY UNIQUE,
+    id UUID UNIQUE PRIMARY KEY,
     active VARCHAR(1) NOT NULL,
     product_code TEXT UNIQUE NOT NULL,
     title VARCHAR(255),

@@ -673,6 +673,18 @@ func CompileProductData(
 			Position: int(value.Position),
 		})
 	}
+	product_images, err := dbconfig.DB.GetProductImageByProductID(ctx, product_id)
+	if err != nil {
+		return objects.Product{}, err
+	}
+	images := []objects.ProductImages{}
+	for _, product_image := range product_images {
+		images = append(images, objects.ProductImages{
+			Src:       product_image.ImageUrl,
+			Position:  int(product_image.Position),
+			UpdatedAt: product_image.UpdatedAt,
+		})
+	}
 	if ignore_variant {
 		product_data := objects.Product{
 			ID:             product_id,
@@ -685,6 +697,7 @@ func CompileProductData(
 			ProductType:    product.ProductType.String,
 			Variants:       []objects.ProductVariant{},
 			ProductOptions: options,
+			ProductImages:  images,
 			UpdatedAt:      product.UpdatedAt,
 		}
 		return product_data, nil
@@ -704,6 +717,7 @@ func CompileProductData(
 		ProductType:    product.ProductType.String,
 		Variants:       variant_data,
 		ProductOptions: options,
+		ProductImages:  images,
 		UpdatedAt:      product.UpdatedAt,
 	}
 	return product_data, nil

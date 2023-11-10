@@ -15,6 +15,7 @@ SET
     name = $1,
     position = $2
 WHERE product_id = $3
+and position = $4
 RETURNING *;
 
 -- name: GetProductOptions :many

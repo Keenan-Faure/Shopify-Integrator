@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE order_lines(
-    id UUID PRIMARY KEY UNIQUE,
+    id UUID UNIQUE PRIMARY KEY,
     order_id UUID NOT NULL,
     line_type VARCHAR(16),
     sku VARCHAR(64) NOT NULL,

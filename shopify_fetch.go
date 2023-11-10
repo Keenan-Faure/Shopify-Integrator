@@ -14,7 +14,7 @@ import (
 )
 
 // loop function that uses Goroutine to run
-// a function each interval
+// the fetch function each interval
 func LoopJSONShopify(
 	dbconfig *DbConfig,
 	shopifyConfig shopify.ConfigShopify) {
@@ -58,7 +58,6 @@ func LoopJSONShopify(
 					internal_product, err := dbconfig.DB.GetVariantBySKU(context.Background(), product_variant.Sku)
 					if err != nil {
 						if err.Error() != "sql: no rows in result set" {
-							// Breaking out of loop for this iteration incase the database issue is temporary?
 							log.Println(err)
 							break
 						}
@@ -68,15 +67,16 @@ func LoopJSONShopify(
 					// if the `app_fetch_overwrite_products` setting is enabled
 					if internal_product.Sku == product_variant.Sku {
 						overwrite := false
-						overwrite_db, err := dbconfig.DB.GetShopifySettingByKey(
+						overwrite_db, err := dbconfig.DB.GetAppSettingByKey(
 							context.Background(),
 							"app_fetch_overwrite_products",
 						)
 						if err != nil {
 							if err.Error() != "sql: no rows in result set" {
 								log.Println(err)
-								overwrite = false
+								break
 							}
+							overwrite = false
 						}
 						overwrite, err = strconv.ParseBool(overwrite_db.Value)
 						if err != nil {
@@ -88,7 +88,7 @@ func LoopJSONShopify(
 								// updates product
 								// retrieves the existant product category from Shopify
 								category := ""
-								categories, err := shopifyConfig.GetShopifyCategoryByProductID(fmt.Sprint(internal_product.ProductID))
+								categories, err := shopifyConfig.GetShopifyCategoryByProductID(fmt.Sprint(product.ID))
 								if err != nil {
 									log.Println(err)
 									break
@@ -116,9 +116,10 @@ func LoopJSONShopify(
 										_, err = dbconfig.DB.UpdateProductOption(
 											context.Background(),
 											database.UpdateProductOptionParams{
-												Name:      option_value.Name,
-												Position:  int32(option_value.Position),
-												ProductID: internal_product.ProductID,
+												Name:       option_value.Name,
+												Position:   int32(option_value.Position),
+												ProductID:  internal_product.ProductID,
+												Position_2: int32(option_value.Position),
 											},
 										)
 										if err != nil {
@@ -135,7 +136,7 @@ func LoopJSONShopify(
 								Option3:   utils.ConvertStringToSQL(IgnoreDefaultOption(product_variant.Option3)),
 								Barcode:   utils.ConvertStringToSQL(product_variant.Barcode),
 								UpdatedAt: time.Now().UTC(),
-								Sku:       product_variant.Sku,
+								Sku:       internal_product.Sku,
 							})
 							if err != nil {
 								log.Println(err)
@@ -163,20 +164,52 @@ func LoopJSONShopify(
 								"shopify_default_price_tier",
 							)
 							if err != nil {
-								log.Println(err)
-								break
+								if err.Error() != "sql: no rows in result set" {
+									log.Println(err)
+									break
+								}
 							}
 							// update only the price that is syncing to Shopify
 							if pricing_name.Value != "" {
-								err = dbconfig.DB.UpdateVariantPricing(context.Background(), database.UpdateVariantPricingParams{
-									Name:      pricing_name.Value,
-									Value:     utils.ConvertStringToSQL(product_variant.Price),
-									Isdefault: false,
-									Sku:       product_variant.Sku,
-								})
+								exists, err := CheckExistsPriceTier(
+									dbconfig,
+									context.Background(),
+									internal_product.Sku,
+									pricing_name.Value,
+								)
 								if err != nil {
 									log.Println(err)
 									break
+								}
+								if exists {
+									err = dbconfig.DB.UpdateVariantPricing(context.Background(), database.UpdateVariantPricingParams{
+										Name:      pricing_name.Value,
+										Value:     utils.ConvertStringToSQL(product_variant.Price),
+										Isdefault: false,
+										Sku:       internal_product.Sku,
+										Name_2:    pricing_name.Value,
+									})
+									if err != nil {
+										log.Println(err)
+										break
+									}
+								} else {
+									_, err = dbconfig.DB.CreateVariantPricing(
+										context.Background(),
+										database.CreateVariantPricingParams{
+											ID:        uuid.New(),
+											VariantID: internal_product.ID,
+											Name:      pricing_name.Value,
+											Value:     utils.ConvertStringToSQL(product_variant.Price),
+											Isdefault: false,
+											CreatedAt: time.Now().UTC(),
+											UpdatedAt: time.Now().UTC(),
+										},
+									)
+									if err != nil {
+										log.Println(err)
+										break
+									}
 								}
 							} else {
 								if create_price_tier_enabled {
@@ -196,40 +229,91 @@ func LoopJSONShopify(
 									}
 									if price_tier_name != "" {
 										// price tier is set use the defined name
-										_, err := dbconfig.DB.CreateVariantPricing(
+										exists, err := CheckExistsPriceTier(
+											dbconfig,
 											context.Background(),
-											database.CreateVariantPricingParams{
-												ID:        uuid.New(),
-												VariantID: internal_product.ID,
-												Name:      price_tier_name,
-												Value:     utils.ConvertStringToSQL(product_variant.Price),
-												Isdefault: false,
-												CreatedAt: time.Now().UTC(),
-												UpdatedAt: time.Now().UTC(),
-											},
+											internal_product.Sku,
+											price_tier_name,
 										)
 										if err != nil {
 											log.Println(err)
 											break
 										}
+										if exists {
+											err = dbconfig.DB.UpdateVariantPricing(context.Background(), database.UpdateVariantPricingParams{
+												Name:      price_tier_name,
+												Value:     utils.ConvertStringToSQL(product_variant.Price),
+												Isdefault: false,
+												Sku:       internal_product.Sku,
+												Name_2:    price_tier_name,
+											})
+											if err != nil {
+												log.Println(err)
+												break
+											}
+										} else {
+											// creates the price_tier that is set
+											_, err = dbconfig.DB.CreateVariantPricing(
+												context.Background(),
+												database.CreateVariantPricingParams{
+													ID:        uuid.New(),
+													VariantID: internal_product.ID,
+													Name:      price_tier_name,
+													Value:     utils.ConvertStringToSQL(product_variant.Price),
+													Isdefault: false,
+													CreatedAt: time.Now().UTC(),
+													UpdatedAt: time.Now().UTC(),
+												},
+											)
+											if err != nil {
+												log.Println(err)
+												break
+											}
+										}
 									} else {
 										// price tier is not set
 										// use the default value of `shopify_fetch_price_tier`
-										_, err := dbconfig.DB.CreateVariantPricing(
+										exists, err := CheckExistsPriceTier(
+											dbconfig,
 											context.Background(),
-											database.CreateVariantPricingParams{
-												ID:        uuid.New(),
-												VariantID: internal_product.ID,
-												Name:      "shopify_fetch_price_tier",
-												Value:     utils.ConvertStringToSQL(product_variant.Price),
-												Isdefault: false,
-												CreatedAt: time.Now().UTC(),
-												UpdatedAt: time.Now().UTC(),
-											},
+											internal_product.Sku,
+											"shopify_fetch_price_tier",
 										)
 										if err != nil {
 											log.Println(err)
 											break
+										}
+										if exists {
+											err = dbconfig.DB.UpdateVariantPricing(context.Background(),
+												database.UpdateVariantPricingParams{
+													Name:      "shopify_fetch_price_tier",
+													Value:     utils.ConvertStringToSQL(product_variant.Price),
+													Isdefault: false,
+													Sku:       internal_product.Sku,
+													Name_2:    "shopify_fetch_price_tier",
+												})
+											if err != nil {
+												log.Println(err)
+												break
+											}
+										} else {
+											// creates the price_tier
+											_, err = dbconfig.DB.CreateVariantPricing(
+												context.Background(),
+												database.CreateVariantPricingParams{
+													ID:        uuid.New(),
+													VariantID: internal_product.ID,
+													Name:      "shopify_fetch_price_tier",
+													Value:     utils.ConvertStringToSQL(product_variant.Price),
+													Isdefault: false,
+													CreatedAt: time.Now().UTC(),
+													UpdatedAt: time.Now().UTC(),
+												},
+											)
+											if err != nil {
+												log.Println(err)
+												break
+											}
 										}
 									}
 								}
@@ -238,17 +322,53 @@ func LoopJSONShopify(
 								context.Background(),
 								"shopify_default_compare_at_price_tier",
 							)
+							if err != nil {
+								if err.Error() != "sql: no rows in result set" {
+									log.Println(err)
+									break
+								}
+							}
 							// update only the compare price that is syncing to Shopify
 							if pricing_compare_name.Value != "" {
-								err = dbconfig.DB.UpdateVariantPricing(context.Background(), database.UpdateVariantPricingParams{
-									Name:      pricing_compare_name.Value,
-									Value:     utils.ConvertStringToSQL(product_variant.CompareAtPrice),
-									Isdefault: false,
-									Sku:       product_variant.Sku,
-								})
+								exists, err := CheckExistsPriceTier(
+									dbconfig,
+									context.Background(),
+									internal_product.Sku,
+									pricing_compare_name.Value,
+								)
 								if err != nil {
 									log.Println(err)
 									break
+								}
+								if exists {
+									err = dbconfig.DB.UpdateVariantPricing(context.Background(), database.UpdateVariantPricingParams{
+										Name:      pricing_compare_name.Value,
+										Value:     utils.ConvertStringToSQL(product_variant.CompareAtPrice),
+										Isdefault: false,
+										Sku:       internal_product.Sku,
+										Name_2:    pricing_compare_name.Value,
+									})
+									if err != nil {
+										log.Println(err)
+										break
+									}
+								} else {
+									_, err = dbconfig.DB.CreateVariantPricing(
+										context.Background(),
+										database.CreateVariantPricingParams{
+											ID:        uuid.New(),
+											VariantID: internal_product.ID,
+											Name:      "shopify_fetch_price_tier",
+											Value:     utils.ConvertStringToSQL(product_variant.Price),
+											Isdefault: false,
+											CreatedAt: time.Now().UTC(),
+											UpdatedAt: time.Now().UTC(),
+										},
+									)
+									if err != nil {
+										log.Println(err)
+										break
+									}
 								}
 							} else {
 								if create_price_tier_enabled {
@@ -267,48 +387,92 @@ func LoopJSONShopify(
 										price_tier_name = ""
 									}
 									if price_tier_name != "" {
-										// price tier is set use the defined name
-										_, err := dbconfig.DB.CreateVariantPricing(
+										exists, err := CheckExistsPriceTier(
+											dbconfig,
 											context.Background(),
-											database.CreateVariantPricingParams{
-												ID:        uuid.New(),
-												VariantID: internal_product.ID,
-												Name:      price_tier_name,
-												Value:     utils.ConvertStringToSQL(product_variant.Price),
-												Isdefault: false,
-												CreatedAt: time.Now().UTC(),
-												UpdatedAt: time.Now().UTC(),
-											},
+											internal_product.Sku,
+											price_tier_name,
 										)
 										if err != nil {
 											log.Println(err)
 											break
+										}
+										if exists {
+											err = dbconfig.DB.UpdateVariantPricing(context.Background(), database.UpdateVariantPricingParams{
+												Name:      price_tier_name,
+												Value:     utils.ConvertStringToSQL(product_variant.CompareAtPrice),
+												Isdefault: false,
+												Sku:       internal_product.Sku,
+												Name_2:    price_tier_name,
+											})
+											if err != nil {
+												log.Println(err)
+												break
+											}
+										} else {
+											// price tier is set use the defined name
+											_, err = dbconfig.DB.CreateVariantPricing(
+												context.Background(),
+												database.CreateVariantPricingParams{
+													ID:        uuid.New(),
+													VariantID: internal_product.ID,
+													Name:      price_tier_name,
+													Value:     utils.ConvertStringToSQL(product_variant.Price),
+													Isdefault: false,
+													CreatedAt: time.Now().UTC(),
+													UpdatedAt: time.Now().UTC(),
+												},
+											)
+											if err != nil {
+												log.Println(err)
+												break
+											}
 										}
 									} else {
 										// price tier is not set
 										// use the default value of `shopify_fetch_compare_price_tier`
-										_, err := dbconfig.DB.CreateVariantPricing(
+										exists, err := CheckExistsPriceTier(
+											dbconfig,
 											context.Background(),
-											database.CreateVariantPricingParams{
-												ID:        uuid.New(),
-												VariantID: internal_product.ID,
-												Name:      "shopify_fetch_compare_price_tier",
-												Value:     utils.ConvertStringToSQL(product_variant.Price),
-												Isdefault: false,
-												CreatedAt: time.Now().UTC(),
-												UpdatedAt: time.Now().UTC(),
-											},
+											internal_product.Sku,
+											"shopify_fetch_compare_price_tier",
 										)
 										if err != nil {
 											log.Println(err)
 											break
 										}
+										if exists {
+											err = dbconfig.DB.UpdateVariantPricing(context.Background(), database.UpdateVariantPricingParams{
+												Name:      "shopify_fetch_compare_price_tier",
+												Value:     utils.ConvertStringToSQL(product_variant.CompareAtPrice),
+												Isdefault: false,
+												Sku:       internal_product.Sku,
+												Name_2:    "shopify_fetch_compare_price_tier",
+											})
+											if err != nil {
+												log.Println(err)
+												break
+											}
+										} else {
+											_, err = dbconfig.DB.CreateVariantPricing(
+												context.Background(),
+												database.CreateVariantPricingParams{
+													ID:        uuid.New(),
+													VariantID: internal_product.ID,
+													Name:      "shopify_fetch_compare_price_tier",
+													Value:     utils.ConvertStringToSQL(product_variant.Price),
+													Isdefault: false,
+													CreatedAt: time.Now().UTC(),
+													UpdatedAt: time.Now().UTC(),
+												},
+											)
+											if err != nil {
+												log.Println(err)
+												break
+											}
+										}
 									}
 								}
-							}
-							if err != nil {
-								log.Println(err)
-								break
 							}
 							// check if the product's inventory should be tracked
 							if product_variant.InventoryManagement == "shopify" {
@@ -346,7 +510,42 @@ func LoopJSONShopify(
 										Value:     utils.ConvertIntToSQL(available),
 										Isdefault: false,
 										Sku:       product_variant.Sku,
+										Name_2:    warehouse_name,
 									})
+									if err != nil {
+										log.Println(err)
+										break
+									}
+								}
+							}
+							sync_images_enabled := false
+							sync_images_enabled_db, err := dbconfig.DB.GetAppSettingByKey(
+								context.Background(),
+								"app_fetch_sync_images",
+							)
+							if err != nil {
+								if err.Error() != "sql: no rows in result set" {
+									log.Println(err)
+									break
+								}
+								sync_images_enabled = false
+							}
+							sync_images_enabled, err = strconv.ParseBool(sync_images_enabled_db.Value)
+							if err != nil {
+								sync_images_enabled = false
+							}
+							// update local images
+							if sync_images_enabled {
+								for _, image := range product.Images {
+									err = dbconfig.DB.UpdateProductImage(
+										context.Background(),
+										database.UpdateProductImageParams{
+											ImageUrl:  image.Src,
+											UpdatedAt: time.Now().UTC(),
+											ProductID: internal_product.ProductID,
+											Position:  int32(image.Position),
+										},
+									)
 									if err != nil {
 										log.Println(err)
 										break
@@ -355,7 +554,6 @@ func LoopJSONShopify(
 							}
 						}
 					} else {
-						fmt.Println("create product")
 						// product and variants can be created if setting is enabled
 						create_fetched_product := false
 						created_fetch_product_db, err := dbconfig.DB.GetAppSettingByKey(
@@ -661,6 +859,42 @@ func LoopJSONShopify(
 										CreatedAt: time.Now().UTC(),
 										UpdatedAt: time.Now().UTC(),
 									})
+									if err != nil {
+										log.Println(err)
+										break
+									}
+								}
+							}
+							sync_images_enabled := false
+							sync_images_enabled_db, err := dbconfig.DB.GetAppSettingByKey(
+								context.Background(),
+								"app_fetch_sync_images",
+							)
+							if err != nil {
+								if err.Error() != "sql: no rows in result set" {
+									log.Println(err)
+									break
+								}
+								sync_images_enabled = false
+							}
+							sync_images_enabled, err = strconv.ParseBool(sync_images_enabled_db.Value)
+							if err != nil {
+								sync_images_enabled = false
+							}
+							// add shopify images to database
+							if sync_images_enabled {
+								for _, image := range product.Images {
+									err = dbconfig.DB.CreateProductImage(
+										context.Background(),
+										database.CreateProductImageParams{
+											ID:        uuid.New(),
+											ProductID: created_db_product.ID,
+											ImageUrl:  image.Src,
+											Position:  int32(image.Position),
+											CreatedAt: time.Now().UTC(),
+											UpdatedAt: time.Now().UTC(),
+										},
+									)
 									if err != nil {
 										log.Println(err)
 										break

@@ -17,7 +17,7 @@ import (
 	"github.com/gocarina/gocsv"
 )
 
-const csv_remove_time = 300 * time.Second // 300 seconds
+const csv_remove_time = 5 * time.Minute // 5 minutes
 
 func CSVProductHeaders(product objects.Product) []string {
 	headers := []string{}
@@ -58,6 +58,7 @@ func CSVProductValuesByVariant(product objects.Product, variant objects.ProductV
 	headers = append(headers, CSVVariantOptions(product, variant)...)
 	headers = append(headers, getVariantPricingCSV(variant, false)...)
 	headers = append(headers, getVariantQtyCSV(variant, false)...)
+	headers = append(headers, GetProductImagesCSV(product.ProductImages, 0, false)...)
 	return headers
 }
 
@@ -75,17 +76,41 @@ func CSVProductVariant(variant objects.ProductVariant) []string {
 
 func CSVVariantOptions(product objects.Product, variant objects.ProductVariant) []string {
 	header := []string{}
-	for key, value := range product.ProductOptions {
-		if key == 0 {
-			header = append(header, value.Value)
+	if len(product.ProductOptions) > 0 {
+		if variant.Sku == "GenImp-K-ES-1" {
+			fmt.Println(product.ProductOptions)
+		}
+		if len(product.ProductOptions) == 1 {
+			header = append(header, product.ProductOptions[0].Value)
 			header = append(header, variant.Option1)
-		} else if key == 1 {
-			header = append(header, value.Value)
+			header = append(header, "")
+			header = append(header, "")
+			header = append(header, "")
+			header = append(header, "")
+		}
+		if len(product.ProductOptions) == 2 {
+			header = append(header, product.ProductOptions[0].Value)
+			header = append(header, variant.Option1)
+			header = append(header, product.ProductOptions[1].Value)
 			header = append(header, variant.Option2)
-		} else if key == 2 {
-			header = append(header, value.Value)
+			header = append(header, "")
+			header = append(header, "")
+		}
+		if len(product.ProductOptions) == 3 {
+			header = append(header, product.ProductOptions[0].Value)
+			header = append(header, variant.Option1)
+			header = append(header, product.ProductOptions[1].Value)
+			header = append(header, variant.Option2)
+			header = append(header, product.ProductOptions[2].Value)
 			header = append(header, variant.Option3)
 		}
+	} else {
+		header = append(header, "")
+		header = append(header, "")
+		header = append(header, "")
+		header = append(header, "")
+		header = append(header, "")
+		header = append(header, "")
 	}
 	return header
 }
@@ -110,6 +135,27 @@ func getVariantPricingCSV(variant objects.ProductVariant, key bool) []string {
 		}
 	}
 	return qty_headers
+}
+
+// Returns the images of each product
+func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []string {
+	image_headers := []string{}
+	if key {
+		count := 1
+		for {
+			if count <= max {
+				image_headers = append(image_headers, "image_"+fmt.Sprint(count))
+				count += 1
+				continue
+			}
+			return image_headers
+		}
+	} else {
+		for _, image := range images {
+			image_headers = append(image_headers, fmt.Sprintf("%v", image.Src))
+		}
+	}
+	return image_headers
 }
 
 // Returns the name of each price tier

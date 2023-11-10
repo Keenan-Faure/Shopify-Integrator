@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE shopify_pid(
-    id UUID PRIMARY KEY,
+    id UUID UNIQUE PRIMARY KEY,
     product_code TEXT UNIQUE NOT NULL,
     product_id UUID NOT NULL,
     shopify_product_id VARCHAR(16) NOT NULL,

@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE variant_qty(
-    id UUID PRIMARY KEY UNIQUE,
+    id UUID UNIQUE PRIMARY KEY,
     variant_id UUID NOT NULL,
     name VARCHAR(32) NOT NULL,
     value INTEGER DEFAULT 0,

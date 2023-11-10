@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE queue_items(
-    id UUID PRIMARY KEY UNIQUE,
+    id UUID UNIQUE PRIMARY KEY,
     queue_type VARCHAR(32) NOT NULL,
     instruction VARCHAR(32) NOT NULL,
     "status" VARCHAR(16) NOT NULL,

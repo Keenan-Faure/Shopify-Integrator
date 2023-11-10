@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE address(
-    id UUID PRIMARY KEY UNIQUE,
+    id UUID UNIQUE PRIMARY KEY,
     customer_id UUID NOT NULL,
     name VARCHAR(16),
     first_name VARCHAR(32) NOT NULL,

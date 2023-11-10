@@ -21,7 +21,7 @@ SET
 WHERE variant_id IN (
     SELECT id FROM variants
     WHERE sku = $4
-);
+) AND name = $5;
 
 -- name: GetVariantQty :many
 SELECT 
@@ -40,7 +40,7 @@ FROM variant_qty
 WHERE variant_id IN (
     SELECT id FROM variants
     WHERE sku = $1
-);
+) AND name = $2;
 
 -- name: RemoveQty :exec
 DELETE FROM variant_qty

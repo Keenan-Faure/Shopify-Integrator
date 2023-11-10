@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE variant_pricing(
-    id UUID PRIMARY KEY,
+    id UUID UNIQUE PRIMARY KEY,
     variant_id UUID NOT NULL,
     name VARCHAR(32) NOT NULL,
     value DECIMAL(9, 2) DEFAULT 0.00,

@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE app_settings(
-    id UUID PRIMARY KEY UNIQUE,
+    id UUID UNIQUE PRIMARY KEY,
     key VARCHAR(64) UNIQUE NOT NULL,
     description VARCHAR(255) NOT NULL DEFAULT '',
     value TEXT NOT NULL DEFAULT '',

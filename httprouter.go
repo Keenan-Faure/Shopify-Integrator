@@ -111,6 +111,14 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 	if len(products) > 0 {
 		headers = iocsv.CSVProductHeaders(products[0])
 	}
+	images_max_db, err := dbconfig.DB.GetMaxPosition(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	images_max := images_max_db.(int64)
+	image_headers := iocsv.GetProductImagesCSV(products[0].ProductImages, int(images_max), true)
+	headers = append(headers, image_headers...)
 	csv_data = append(csv_data, headers)
 	for _, product := range products {
 		for _, variant := range product.Variants {
@@ -245,6 +253,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 						Value:     utils.ConvertStringToSQL(pricing_value.Value),
 						Isdefault: pricing_value.IsDefault,
 						Sku:       csv_product.SKU,
+						Name_2:    pricing_value.Name,
 					})
 					if err != nil {
 						fmt.Println("7: " + err.Error())
@@ -258,6 +267,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 						Value:     utils.ConvertIntToSQL(qty_value.Value),
 						Isdefault: qty_value.IsDefault,
 						Sku:       csv_product.SKU,
+						Name_2:    qty_value.Name,
 					})
 					if err != nil {
 						fmt.Println("8: " + err.Error())
@@ -736,7 +746,7 @@ func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Req
 // GET /api/products/search?q=value
 func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
 	search_query := r.URL.Query().Get("q")
-	if search_query != "" || len(search_query) == 0 {
+	if search_query == "" || len(search_query) == 0 {
 		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
 		return
 	}

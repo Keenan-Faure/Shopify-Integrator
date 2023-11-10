@@ -516,12 +516,20 @@ type Product struct {
 	ProductType    string           `json:"product_type"`
 	Variants       []ProductVariant `json:"variants"`
 	ProductOptions []ProductOptions `json:"options"`
+	ProductImages  []ProductImages  `json:"product_images"`
 	UpdatedAt      time.Time        `json:"updated_at"`
 }
 type ProductOptions struct {
 	Value    string `json:"value"`
 	Position int    `json:"position"`
 }
+
+type ProductImages struct {
+	Src       string    `json:"src"`
+	Position  int       `json:"position"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type ProductVariant struct {
 	ID              uuid.UUID      `json:"id"`
 	Sku             string         `json:"sku"`

@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE variants(
-    id UUID PRIMARY KEY,
+    id UUID UNIQUE PRIMARY KEY,
     product_id UUID NOT NULL,
     sku TEXT UNIQUE NOT NULL,
     option1 VARCHAR(32),

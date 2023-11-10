@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE shopify_vid(
-    id UUID PRIMARY KEY,
+    id UUID UNIQUE PRIMARY KEY,
     sku TEXT UNIQUE NOT NULL,
     variant_id UUID NOT NULL,
     shopify_variant_id VARCHAR(16) NOT NULL,

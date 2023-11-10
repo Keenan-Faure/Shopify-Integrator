@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"integrator/internal/database"
 	"net/http"
@@ -202,8 +203,8 @@ func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProdu
 
 // Checks if a price tier already exists
 // in the database for a certain SKU
-func CheckExistsPriceTier(dbconfig *DbConfig, r *http.Request, sku, price_tier string) (bool, error) {
-	price_tiers, err := dbconfig.DB.GetVariantPricingBySKU(r.Context(), sku)
+func CheckExistsPriceTier(dbconfig *DbConfig, ctx context.Context, sku, price_tier string) (bool, error) {
+	price_tiers, err := dbconfig.DB.GetVariantPricingBySKU(ctx, sku)
 	if err != nil {
 		return false, err
 	}
@@ -218,8 +219,11 @@ func CheckExistsPriceTier(dbconfig *DbConfig, r *http.Request, sku, price_tier s
 
 // Checks if a warehouse already exists
 // in the database for a certain SKU
-func CheckExistsWarehouse(dbconfig *DbConfig, r *http.Request, sku, warehouse string) (bool, error) {
-	warehouses, err := dbconfig.DB.GetVariantQtyBySKU(r.Context(), sku)
+func CheckExistsWarehouse(dbconfig *DbConfig, ctx context.Context, sku, warehouse string) (bool, error) {
+	warehouses, err := dbconfig.DB.GetVariantQtyBySKU(ctx, database.GetVariantQtyBySKUParams{
+		Sku:  sku,
+		Name: warehouse,
+	})
 	if err != nil {
 		return false, err
 	}

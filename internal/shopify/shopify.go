@@ -15,7 +15,7 @@ import (
 	"github.com/shurcooL/graphql"
 )
 
-const PRODUCT_FETCH_LIMIT = "10" // limit on products to fetch
+const PRODUCT_FETCH_LIMIT = "20" // limit on products to fetch
 
 type ConfigShopify struct {
 	APIKey      string
