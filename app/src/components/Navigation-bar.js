@@ -12,6 +12,10 @@ import Orders from '../JS/Orders';
 import Settings from '../JS/Settings';
 import Customers from '../JS/Customers';
 import Home from '../JS/Login';
+import Import_Product from "../JS/Products/ImportProduct";
+import Export_Product from "../JS/Products/ExportProduct";
+import Add_Product from "../JS/Products/AddProduct";
+import Add_Customer from "../JS/Customers/AddCustomer";
 
 // Import Style sheet below
 import '../CSS/navigation-bar.css'
@@ -75,6 +79,11 @@ function Navigation_Bar(props)
                         <Route path = "orders" element = {<Orders />}></Route>
                         <Route path = "customers" element = {<Customers />}></Route>
                         <Route path = "settings" element = {<Settings />}></Route>
+                        <Route path = "importProducts" element = {<Import_Product />}></Route>
+                        <Route path = "exportProducts" element = {<Export_Product />}></Route>
+                        <Route path = "addProduct" element = {<Add_Product />}></Route>
+                        <Route path = "addCustomer" element = {<Add_Customer />}></Route>
+
 
                         <Route path = "*" element = {<NoPage />}></Route>
                     </Route>

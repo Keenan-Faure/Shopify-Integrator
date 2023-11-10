@@ -237,10 +237,7 @@ function Login()
                     window.location.reload();
                 }, 1000);
             }, 1000)
-            
         });
-
-
 
         /* Rain Functions */
         var makeItRain = function() 
@@ -287,31 +284,22 @@ function Login()
             makeItRain();
         });
           
-          $('.back-row-toggle.toggle').on('click', function() 
-            {
-                $('body').toggleClass('back-row-toggle');
-                $('.back-row-toggle.toggle').toggleClass('active');
-                makeItRain();
-            });
-          
-            $('.single-toggle.toggle').on('click', function() 
-            {
-                $('body').toggleClass('single-toggle');
-                $('.single-toggle.toggle').toggleClass('active');
-                makeItRain();
-            });
+        $('.back-row-toggle.toggle').on('click', function() 
+        {
+            $('body').toggleClass('back-row-toggle');
+            $('.back-row-toggle.toggle').toggleClass('active');
+            makeItRain();
+        });
+        
+        $('.single-toggle.toggle').on('click', function() 
+        {
+            $('body').toggleClass('single-toggle');
+            $('.single-toggle.toggle').toggleClass('active');
+            makeItRain();
+        });
           
         /* DONT MAKE IT RAIN YET! */
         //makeItRain();
-
-        /* Upon a successful login 
-        function sucessfulLogin()
-        {
-            let model = document.getElementById("model");
-            model.style.zIndex = "0";
-        }
-        */
-
     }, []);
 
 

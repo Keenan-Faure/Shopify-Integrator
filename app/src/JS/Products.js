@@ -3,14 +3,42 @@ import $ from 'jquery';
 import Page1 from '../components/Page1';
 import Pan_details from '../components/semi-components/pan-detail';
 import '../CSS/page1.css';
+import product from '../media/products.png';
 
 function Products(props)
 {
+    const[inputs, setInputs] = useState({});
+
+    const handleChange = (event) =>
+    {
+        const name = event.target.name;
+        const value = event.target.value;
+        setInputs(values => ({...values, [name]: value}))
+    }
+
     const [data, setData] = useState([]);
+
+    const SearchProduct = (event) =>
+    {
+        event.preventDefault();
+        console.log(inputs);
+
+        /*
+        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
+        .done(function( _data) 
+        {
+            console.log(_data);
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+        });
+        */
+    }
 
     useEffect(()=> 
     {
-        /* Ensures the navbar is set correctly */
+        /* Ensures the page elements are set correctly */
         let navigation = document.getElementById("navbar");
         window.onload = function(event)
         {
@@ -19,28 +47,6 @@ function Products(props)
             navigation.style.width = "70%";
             navigation.style.animation = "MoveLeft 1.2s ease";
         }
-
-        /* animation for the search bar */
-        let search = document.querySelector(".search-area");
-        setTimeout(() =>
-        {
-            search.style.opacity = "1";
-            search.style.animation = "appear 1.2s ease-in";
-        }, 1400);
-
-        /* animation for the pan elements */
-        let pan = document.querySelectorAll(".pan");
-        let pag = document.getElementById("pag");
-        setTimeout(() =>
-        {
-            for(let i = 0; i < pan.length; i ++)
-            {
-                pan[i].style.display = "block";
-                pan[i].style.animation = "appear 1.2s ease-in";
-            }
-            pag.style.display = "block";
-            pag.style.animation = "appear 1.4s ease-in";
-        }, 1400);
 
         /*  API  */
         const api_key = localStorage.getItem('api_key');
@@ -64,28 +70,33 @@ function Products(props)
     }, []);
 
     return (
-        <>
+        <div className = "products">
             <div className = "main">
                 <div className = "search">
-                    <form className = "search-area">
-                        <input className ="search-area" type="search" placeholder="Search..." />
+                    <form className = "search-area" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
+                        <input className ="search-area" type="search" placeholder="Search..." 
+                        name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
                 </div>
                 <div className = "main-elements">
-                    {data.map((_data, id)=>
-                        {
-                            return <Pan_details />
+                    <div className = "pan-main">
+                        {data.map((_data, id)=>
+                            {
+                                return <Pan_details />
 
-                        })
-                    }
-                    <Pan_details />
+                            })
+                        }
+                        <Pan_details />
+                    </div>
                 </div>
-                <div className = "center" id = "pag"></div>
+                <div className = "center" id = "pag">
+                    
+                </div>
             </div>
 
-            <Page1 />
+            <Page1 image = {product} title = "Products"/>
 
-        </>
+        </div>
     );
 }
 
