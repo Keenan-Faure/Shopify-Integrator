@@ -7,7 +7,34 @@ import product from '../media/products.png';
 
 function Products(props)
 {
+    const[inputs, setInputs] = useState({});
+
+    const handleChange = (event) =>
+    {
+        const name = event.target.name;
+        const value = event.target.value;
+        setInputs(values => ({...values, [name]: value}))
+    }
+
     const [data, setData] = useState([]);
+
+    const SearchProduct = (event) =>
+    {
+        event.preventDefault();
+        console.log(inputs);
+
+        /*
+        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
+        .done(function( _data) 
+        {
+            console.log(_data);
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+        });
+        */
+    }
 
     useEffect(()=> 
     {
@@ -46,8 +73,9 @@ function Products(props)
         <div className = "products">
             <div className = "main">
                 <div className = "search">
-                    <form className = "search-area">
-                        <input className ="search-area" type="search" placeholder="Search..." />
+                    <form className = "search-area" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
+                        <input className ="search-area" type="search" placeholder="Search..." 
+                        name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
                 </div>
                 <div className = "main-elements">

@@ -7,7 +7,33 @@ import '../CSS/page1.css';
 /* Must start with a Caps letter */
 function Customers()
 {
+    const[inputs, setInputs] = useState({});
+
+    const handleChange = (event) =>
+    {
+        const name = event.target.name;
+        const value = event.target.value;
+        setInputs(values => ({...values, [name]: value}))
+    }
     const [data, setData] = useState([]);
+
+    const SearchCustomer = (event) =>
+    {
+        event.preventDefault();
+        console.log(inputs);
+
+        /*
+        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
+        .done(function( _data) 
+        {
+            console.log(_data);
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+        });
+        */
+    }
 
     useEffect(()=> 
     {
@@ -48,8 +74,9 @@ function Customers()
             <div className = "main" style = {{left: '50%', top: '53%', transform: 'translate(-50%, -50%)', 
                                         height: '90%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in'}}>
                 <div className = "search">
-                    <form className = "search-area">
-                        <input className ="search-area" type="search" placeholder="Search..." />
+                    <form className = "search-area" autoComplete = 'off' onSubmit={(event) => SearchCustomer(event)}>
+                    <input className ="search-area" type="search" placeholder="Search..." 
+                        name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
                 </div>
                 <div className = "main-elements">

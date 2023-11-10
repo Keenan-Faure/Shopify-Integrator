@@ -39,6 +39,7 @@
     transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.1);
     transition-duration: 0.5s;
+    overflow: auto;
 
 }
 .modal-container:hover 
@@ -112,25 +113,24 @@ input[type = return]
 .button 
 {
     padding: 2px;
-	text-align: center;
-	text-decoration: none;
-	font-size: 12px;
-	cursor: pointer;
-	width: 100px;
-	height: 40px;
-	position: relative;
-	background-size: cover;
-	color: black;
-	border: 1px solid #000000;
-	border-radius: 4px;
-	margin: 0;
-	transition-duration: 0.4s;
+    text-align: center;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100px;
+    height: 40px;
+    position: relative;
+    color: black;
+    border: 1px solid #000000;
+    border-radius: 4px;
+    color: white;
+    transition-duration: 0.4s;
+    background: linear-gradient(to bottom, #202020, #111119);
 }
 .button:hover
 {
-	color: rgb(0, 0, 0);
+	color: rgb(255, 255, 255);
 	border: 1px solid white;
-	background-position: center;
 }
 .reg-portion 
 {
@@ -206,6 +206,13 @@ input[type = return]
 	background-color: transparent;
 	animation: fadeMessage ease-in-out 2s;
 	z-index: 2;
+}
+.holder 
+{
+    position: relative;
+    height: 300px;
+    margin: 25px;
+    overflow: auto;
 }
 @keyframes fadeMessage
 {

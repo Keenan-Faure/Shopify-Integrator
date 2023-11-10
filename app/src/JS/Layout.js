@@ -34,37 +34,37 @@ const Layout = () => {
     <>
         <div className = "navbar" id = "navbar">
 
-        <div className = "dropdown">
-            <button onClick = {navigateToDashboard} className = "dropbtn">DashBoard</button>
-        </div>
-
-        <div className = "dropdown">
-            <button onClick = {navigateToProducts} className = "dropbtn">Products</button>
-            <div className = "dropdown-content">
-                <Link to="/importProducts">Import Product</Link>
-                <Link to="/exportProducts">Export Product</Link>
-                <Link to="/addProduct">Add Product</Link>
+            <div className = "dropdown">
+                <button onClick = {navigateToDashboard} className = "dropbtn">DashBoard</button>
             </div>
-        </div>
 
-        <div className = "dropdown">
-            <button onClick = {navigateToOrders} className = "dropbtn">Orders</button>
-        </div>
-
-        <div className = "dropdown">
-            <button onClick = {navigateToCustomers} className = "dropbtn">Customers</button>
-            <div className = "dropdown-content">
-                <Link to="/addCustomer">Simulacra</Link>
+            <div className = "dropdown">
+                <button onClick = {navigateToProducts} className = "dropbtn">Products</button>
+                <div className = "dropdown-content">
+                    <Link to="/importProducts">Import Product</Link>
+                    <Link to="/exportProducts">Export Product</Link>
+                    <Link to="/addProduct">Add Product</Link>
+                </div>
             </div>
-        </div>
 
-        <div className = "dropdown">
-            <button onClick = {navigateToSettings} className = "dropbtn">Settings</button>
-        </div>
+            <div className = "dropdown">
+                <button onClick = {navigateToOrders} className = "dropbtn">Orders</button>
+            </div>
 
-        <div className = "avatar">
-            <img className = "avatar" alt = "" src = {MyImage} />
-        </div>
+            <div className = "dropdown">
+                <button onClick = {navigateToCustomers} className = "dropbtn">Customers</button>
+                <div className = "dropdown-content">
+                    <Link to="/addCustomer">Add Customer</Link>
+                </div>
+            </div>
+
+            <div className = "dropdown">
+                <button onClick = {navigateToSettings} className = "dropbtn">Settings</button>
+            </div>
+
+            <div className = "avatar">
+                <img className = "avatar" alt = "" src = {MyImage} />
+            </div>
 
 
         </div>
