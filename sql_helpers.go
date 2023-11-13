@@ -169,6 +169,15 @@ func CreateOptionValuesMap(csv_product objects.CSVProduct) []string {
 	return mapp
 }
 
+// Creates a map with images in
+func CreateImageMap(csv_product objects.CSVProduct) []string {
+	images := []string{}
+	images = append(images, csv_product.Image1)
+	images = append(images, csv_product.Image2)
+	images = append(images, csv_product.Image3)
+	return images
+}
+
 // Convert Product (POST) into CSVProduct
 func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProduct {
 	csv_products := []objects.CSVProduct{}

@@ -256,6 +256,9 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 			Option3Name:  products[key-1].Option3Name,
 			Option3Value: products[key-1].Option3Value,
 			Barcode:      products[key-1].Barcode,
+			Image1:       products[key-1].Image1,
+			Image2:       products[key-1].Image2,
+			Image3:       products[key-1].Image3,
 			Warehouses:   qty,
 			Pricing:      pricing,
 		})

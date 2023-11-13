@@ -242,6 +242,37 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 				continue
 			}
 		}
+		// Update product options
+		option_names := CreateOptionNamesMap(csv_product)
+		for key, option_name := range option_names {
+			if option_name != "" {
+				_, err = dbconfig.DB.UpdateProductOption(r.Context(), database.UpdateProductOptionParams{
+					Name:       option_name,
+					Position:   int32(key + 1),
+					ProductID:  product.ID,
+					Position_2: int32(key + 1),
+				})
+				if err != nil {
+					log.Println(err)
+					failure_counter++
+					continue
+				}
+			}
+		}
+		// add images to product
+		// overwrite ones with the same position
+		images := CreateImageMap(csv_product)
+		for key := range images {
+			if images[key] != "" {
+				err = AddImagery(dbconfig, product.ID, images[key], key+1)
+				if err != nil {
+					log.Println(err)
+					failure_counter++
+					continue
+				}
+			}
+		}
+		// create variant
 		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
 			ID:        uuid.New(),
 			ProductID: product.ID,
@@ -254,7 +285,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
-			log.Println(err)
+			// if it already exists, then we update it
 			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
 				err := dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
 					Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
@@ -270,13 +301,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 					continue
 				}
 				for _, pricing_value := range csv_product.Pricing {
-					err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-						Name:      pricing_value.Name,
-						Value:     utils.ConvertStringToSQL(pricing_value.Value),
-						Isdefault: pricing_value.IsDefault,
-						Sku:       csv_product.SKU,
-						Name_2:    pricing_value.Name,
-					})
+					err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
 					if err != nil {
 						log.Println(err)
 						failure_counter++
@@ -284,13 +309,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 					}
 				}
 				for _, qty_value := range csv_product.Warehouses {
-					err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
-						Name:      qty_value.Name,
-						Value:     utils.ConvertIntToSQL(qty_value.Value),
-						Isdefault: qty_value.IsDefault,
-						Sku:       csv_product.SKU,
-						Name_2:    qty_value.Name,
-					})
+					err = AddWarehouse(dbconfig, variant.Sku, variant.ID, qty_value.Name, qty_value.Value)
 					if err != nil {
 						log.Println(err)
 						failure_counter++
@@ -314,14 +333,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			}
 		}
 		for _, pricing_value := range csv_product.Pricing {
-			_, err = dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
-				ID:        uuid.New(),
-				VariantID: variant.ID,
-				Name:      pricing_value.Name,
-				Value:     utils.ConvertStringToSQL(pricing_value.Value),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
+			err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
 			if err != nil {
 				log.Println(err)
 				failure_counter++
@@ -329,15 +341,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			}
 		}
 		for _, qty_value := range csv_product.Warehouses {
-			_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
-				ID:        uuid.New(),
-				VariantID: variant.ID,
-				Name:      qty_value.Name,
-				Isdefault: qty_value.IsDefault,
-				Value:     utils.ConvertIntToSQL(qty_value.Value),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
+			err = AddWarehouse(dbconfig, variant.Sku, variant.ID, qty_value.Name, qty_value.Value)
 			if err != nil {
 				log.Println(err)
 				failure_counter++

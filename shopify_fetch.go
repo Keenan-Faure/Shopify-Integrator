@@ -171,7 +171,7 @@ func LoopJSONShopify(
 							}
 							// update only the price that is syncing to Shopify
 							if pricing_name.Value != "" {
-								err = FetchPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_name.Value, product_variant.Price)
+								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_name.Value, product_variant.Price)
 								if err != nil {
 									log.Println(err)
 									break
@@ -180,7 +180,7 @@ func LoopJSONShopify(
 								if create_price_tier_enabled {
 									// price tier is not set
 									// use the default value of `fetch_price`
-									err = FetchPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_price", product_variant.Price)
+									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_price", product_variant.Price)
 									if err != nil {
 										log.Println(err)
 										break
@@ -199,7 +199,7 @@ func LoopJSONShopify(
 							}
 							// update only the compare price that is syncing to Shopify
 							if pricing_compare_name.Value != "" {
-								err = FetchPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
+								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
 								if err != nil {
 									log.Println(err)
 									break
@@ -208,7 +208,7 @@ func LoopJSONShopify(
 								if create_price_tier_enabled {
 									// price tier is not set
 									// use the default value of `fetch_compare_price`
-									err = FetchPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_compare_price", product_variant.CompareAtPrice)
+									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_compare_price", product_variant.CompareAtPrice)
 									if err != nil {
 										log.Println(err)
 										break
@@ -278,7 +278,7 @@ func LoopJSONShopify(
 							// update local images
 							if sync_images_enabled {
 								for _, image := range product.Images {
-									err = FetchImagery(dbconfig, internal_product.ProductID, image.Src, image.Position)
+									err = AddImagery(dbconfig, internal_product.ProductID, image.Src, image.Position)
 									if err != nil {
 										log.Println(err)
 										break
@@ -401,7 +401,7 @@ func LoopJSONShopify(
 							}
 							// update only the price that is syncing to Shopify
 							if pricing_name.Value != "" {
-								err = FetchPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_name.Value, product_variant.Price)
+								err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_name.Value, product_variant.Price)
 								if err != nil {
 									log.Println(err)
 									break
@@ -410,7 +410,7 @@ func LoopJSONShopify(
 								if create_price_tier_enabled {
 									// price tier is not set
 									// use the default value of `fetch_price`
-									err = FetchPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_price", product_variant.Price)
+									err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_price", product_variant.Price)
 									if err != nil {
 										log.Println(err)
 										break
@@ -429,7 +429,7 @@ func LoopJSONShopify(
 							}
 							// update only the compare price that is syncing to Shopify
 							if pricing_compare_name.Value != "" {
-								err = FetchPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
+								err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
 								if err != nil {
 									log.Println(err)
 									break
@@ -438,7 +438,7 @@ func LoopJSONShopify(
 								if create_price_tier_enabled {
 									// price tier is not set
 									// use the default value of `fetch_compare_price`
-									err = FetchPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_compare_price", product_variant.CompareAtPrice)
+									err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_compare_price", product_variant.CompareAtPrice)
 									if err != nil {
 										log.Println(err)
 										break
@@ -510,7 +510,7 @@ func LoopJSONShopify(
 							// add shopify images to database
 							if sync_images_enabled {
 								for _, image := range product.Images {
-									err = FetchImagery(dbconfig, created_db_product.ID, image.Src, image.Position)
+									err = AddImagery(dbconfig, created_db_product.ID, image.Src, image.Position)
 									if err != nil {
 										log.Println(err)
 										break
@@ -529,7 +529,7 @@ func LoopJSONShopify(
 
 // Updates/Creates the specific price tier for
 // a certain SKU
-func FetchPricing(
+func AddPricing(
 	dbconfig *DbConfig,
 	sku string,
 	variant_id uuid.UUID,
@@ -577,7 +577,7 @@ func FetchPricing(
 }
 
 // Updates/Creates an image for a certain product
-func FetchImagery(
+func AddImagery(
 	dbconfig *DbConfig,
 	product_id uuid.UUID,
 	image_url string,
@@ -608,6 +608,45 @@ func FetchImagery(
 			ProductID: product_id,
 			ImageUrl:  image_url,
 			Position:  int32(position),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Updates/Creates a warehouse for a certain variant
+func AddWarehouse(
+	dbconfig *DbConfig,
+	sku string,
+	variant_id uuid.UUID,
+	warehouse_name string,
+	qty int) error {
+	exists, err := CheckExistsWarehouse(dbconfig, context.Background(), sku, warehouse_name)
+	if err != nil {
+		return err
+	}
+	if exists {
+		err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
+			Name:      warehouse_name,
+			Value:     utils.ConvertIntToSQL(qty),
+			Isdefault: false,
+			Sku:       sku,
+			Name_2:    warehouse_name,
+		})
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = dbconfig.DB.CreateVariantQty(context.Background(), database.CreateVariantQtyParams{
+			ID:        uuid.New(),
+			VariantID: variant_id,
+			Name:      warehouse_name,
+			Isdefault: false,
+			Value:     utils.ConvertIntToSQL(qty),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 		})

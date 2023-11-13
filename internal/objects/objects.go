@@ -347,6 +347,9 @@ type CSVProduct struct {
 	Option3Name  string        `csv:"option3_name"`
 	Option3Value string        `csv:"option3_value"`
 	Barcode      string        `csv:"barcode"`
+	Image1       string        `csv:"image_1"`
+	Image2       string        `csv:"image_2"`
+	Image3       string        `csv:"image_3"`
 	Warehouses   []CSVQuantity `csv:"-"`
 	Pricing      []CSVPricing  `csv:"-"`
 }
