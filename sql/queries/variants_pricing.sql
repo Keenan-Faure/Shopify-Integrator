@@ -53,6 +53,12 @@ WHERE variant_id IN (
     WHERE sku = $1
 );
 
+-- name: GetCountOfUniquePrices :one
+SELECT COUNT(DISTINCT "name") FROM variant_pricing;
+
+-- name: GetUniquePriceTiers :many
+SELECT DISTINCT "name" FROM variant_pricing;
+
 -- name: RemovePricing :exec
 DELETE FROM variant_pricing
 WHERE id = $1;

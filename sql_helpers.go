@@ -203,15 +203,39 @@ func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProdu
 
 // Checks if a price tier already exists
 // in the database for a certain SKU
-func CheckExistsPriceTier(dbconfig *DbConfig, ctx context.Context, sku, price_tier string) (bool, error) {
+func CheckExistsPriceTier(dbconfig *DbConfig, ctx context.Context, sku, price_tier string, split bool) (bool, error) {
 	price_tiers, err := dbconfig.DB.GetVariantPricingBySKU(ctx, sku)
 	if err != nil {
 		return false, err
 	}
-	price_tier_split := strings.Split(price_tier, "_")
-	for _, value := range price_tiers {
-		if value.Name == price_tier_split[0] {
-			return true, nil
+	if split {
+		price_tier_split := strings.Split(price_tier, "_")
+		for _, value := range price_tiers {
+			if value.Name == price_tier_split[0] {
+				return true, nil
+			}
+		}
+	} else {
+		for _, value := range price_tiers {
+			if value.Name == price_tier {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+// Checks if a image already exists on a product
+func CheckExistsProductImage(dbconfig *DbConfig, ctx context.Context, product_id uuid.UUID, image_url string, position int) (bool, error) {
+	images, err := dbconfig.DB.GetProductImageByProductID(ctx, product_id)
+	if err != nil {
+		return false, err
+	}
+	for _, image := range images {
+		if image.Position == int32(position) {
+			if image.ImageUrl == image_url {
+				return true, nil
+			}
 		}
 	}
 	return false, nil
@@ -234,4 +258,54 @@ func CheckExistsWarehouse(dbconfig *DbConfig, ctx context.Context, sku, warehous
 		}
 	}
 	return false, nil
+}
+
+func IOGetMax(dbconfig *DbConfig, ctx context.Context, column_type string) (int, error) {
+	max := 0
+	if column_type == "image" {
+		max_db, err := dbconfig.DB.GetMaxImagePosition(ctx)
+		if err != nil {
+			return 0, err
+		}
+		max = int(max_db)
+	} else if column_type == "price" {
+		max_db, err := dbconfig.DB.GetCountOfUniquePrices(ctx)
+		if err != nil {
+			return 0, err
+		}
+		max = int(max_db)
+	} else if column_type == "qty" {
+		max_db, err := dbconfig.DB.GetCountOfUniqueWarehouses(ctx)
+		if err != nil {
+			return 0, err
+		}
+		max = int(max_db)
+	} else {
+		return 0, errors.New("invalid column type to retrieve maximum of")
+	}
+	return max, nil
+}
+
+func AddPricingHeaders(dbconfig *DbConfig, ctx context.Context) ([]string, error) {
+	price_tiers := []string{}
+	price_tiers_db, err := dbconfig.DB.GetUniquePriceTiers(ctx)
+	if err != nil {
+		return price_tiers, err
+	}
+	for _, price := range price_tiers_db {
+		price_tiers = append(price_tiers, "price_"+price)
+	}
+	return price_tiers, nil
+}
+
+func AddQtyHeaders(dbconfig *DbConfig, ctx context.Context) ([]string, error) {
+	warehouses := []string{}
+	warehouses_db, err := dbconfig.DB.GetUniqueWarehouses(ctx)
+	if err != nil {
+		return warehouses, err
+	}
+	for _, warehouse := range warehouses_db {
+		warehouses = append(warehouses, "qty_"+warehouse)
+	}
+	return warehouses, nil
 }

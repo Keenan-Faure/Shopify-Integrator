@@ -22,5 +22,7 @@ AND position = $4;
 SELECT * FROM product_images
 WHERE product_id = $1;
 
--- name: GetMaxPosition :one
-SELECT MAX("position") FROM product_images;
+-- name: GetMaxImagePosition :one
+SELECT 
+    CAST(MAX("position") AS INTEGER)
+FROM product_images;

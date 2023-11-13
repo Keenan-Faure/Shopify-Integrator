@@ -42,6 +42,13 @@ WHERE variant_id IN (
     WHERE sku = $1
 ) AND name = $2;
 
+-- name: GetCountOfUniqueWarehouses :one
+SELECT COUNT(DISTINCT "name") FROM variant_qty;
+
+-- name: GetUniqueWarehouses :many
+SELECT DISTINCT "name" FROM variant_qty;
+
 -- name: RemoveQty :exec
 DELETE FROM variant_qty
 WHERE id = $1;
+

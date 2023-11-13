@@ -111,18 +111,41 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 	if len(products) > 0 {
 		headers = iocsv.CSVProductHeaders(products[0])
 	}
-	images_max_db, err := dbconfig.DB.GetMaxPosition(r.Context())
+	// Adds (distinct) pricing and warehouses headers
+	price_tiers, err := AddPricingHeaders(dbconfig, r.Context())
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	images_max := images_max_db.(int64)
+	headers = append(headers, price_tiers...)
+	qty_warehouses, err := AddQtyHeaders(dbconfig, r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	headers = append(headers, qty_warehouses...)
+
+	images_max, err := IOGetMax(dbconfig, r.Context(), "image")
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	pricing_max, err := IOGetMax(dbconfig, r.Context(), "price")
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	qty_max, err := IOGetMax(dbconfig, r.Context(), "qty")
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	image_headers := iocsv.GetProductImagesCSV(products[0].ProductImages, int(images_max), true)
 	headers = append(headers, image_headers...)
 	csv_data = append(csv_data, headers)
 	for _, product := range products {
 		for _, variant := range product.Variants {
-			row := iocsv.CSVProductValuesByVariant(product, variant)
+			row := iocsv.CSVProductValuesByVariant(product, variant, pricing_max, qty_max)
 			csv_data = append(csv_data, row)
 		}
 	}
@@ -179,14 +202,13 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 					UpdatedAt:   time.Now().UTC(),
 				})
 				if err != nil {
-					fmt.Println("2: " + err.Error())
+					log.Println(err)
 					failure_counter++
 					continue
 				}
 				products_updated++
 			} else {
-				// TODO log messages to console?
-				fmt.Println("3: " + err.Error())
+				log.Println(err)
 				failure_counter++
 				continue
 			}
@@ -205,7 +227,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 						Position:  int32(key + 1),
 					})
 					if err != nil {
-						fmt.Println("4: " + err.Error())
+						log.Println(err)
 						failure_counter++
 						continue
 					}
@@ -215,7 +237,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		if product.ID == uuid.Nil {
 			product.ID, err = dbconfig.DB.GetProductIDByCode(r.Context(), csv_product.ProductCode)
 			if err != nil {
-				fmt.Println("4.5: " + err.Error())
+				log.Println(err)
 				failure_counter++
 				continue
 			}
@@ -232,7 +254,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
-			fmt.Println("5: " + err.Error())
+			log.Println(err)
 			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
 				err := dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
 					Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
@@ -243,7 +265,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 					Sku:       csv_product.SKU,
 				})
 				if err != nil {
-					fmt.Println("6: " + err.Error())
+					log.Println(err)
 					failure_counter++
 					continue
 				}
@@ -256,7 +278,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 						Name_2:    pricing_value.Name,
 					})
 					if err != nil {
-						fmt.Println("7: " + err.Error())
+						log.Println(err)
 						failure_counter++
 						continue
 					}
@@ -270,7 +292,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 						Name_2:    qty_value.Name,
 					})
 					if err != nil {
-						fmt.Println("8: " + err.Error())
+						log.Println(err)
 						failure_counter++
 						continue
 					}
@@ -278,7 +300,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 				variants_updated++
 				continue
 			}
-			fmt.Println("9: " + err.Error())
+			log.Println(err)
 			failure_counter++
 			continue
 		}
@@ -286,7 +308,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		if variant.ID == uuid.Nil {
 			variant.ID, err = dbconfig.DB.GetVariantIDByCode(r.Context(), csv_product.SKU)
 			if err != nil {
-				fmt.Println("9.5: " + err.Error())
+				log.Println(err)
 				failure_counter++
 				continue
 			}
@@ -301,7 +323,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				fmt.Println("7: " + err.Error())
+				log.Println(err)
 				failure_counter++
 				continue
 			}
@@ -317,13 +339,13 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				fmt.Println("8: " + err.Error())
+				log.Println(err)
 				failure_counter++
 				continue
 			}
 		}
 		if err != nil {
-			fmt.Println("11: " + err.Error())
+			log.Println(err)
 			failure_counter++
 			continue
 		}
