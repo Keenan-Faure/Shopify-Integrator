@@ -300,22 +300,6 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 					failure_counter++
 					continue
 				}
-				for _, pricing_value := range csv_product.Pricing {
-					err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
-					if err != nil {
-						log.Println(err)
-						failure_counter++
-						continue
-					}
-				}
-				for _, qty_value := range csv_product.Warehouses {
-					err = AddWarehouse(dbconfig, variant.Sku, variant.ID, qty_value.Name, qty_value.Value)
-					if err != nil {
-						log.Println(err)
-						failure_counter++
-						continue
-					}
-				}
 				variants_updated++
 				continue
 			}
@@ -395,7 +379,7 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	for key := range customer_body.Address {
-		_, err = dbconfig.DB.CreateAddress(r.Context(), database.CreateAddressParams{
+		_, err := dbconfig.DB.CreateAddress(r.Context(), database.CreateAddressParams{
 			ID:         uuid.New(),
 			CustomerID: customer.ID,
 			Name:       utils.ConvertStringToSQL("default"),
@@ -416,9 +400,14 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
-	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-		Message: customer.ID.String(),
-	})
+	customer_data, err := CompileCustomerData(dbconfig, customer.ID, r.Context(), false)
+	if err != nil {
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, customer_data)
 }
 
 // POST /api/orders?token={{token}}&api_key={{key}}
@@ -488,7 +477,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// POST /api/products/
+// POST /api/products
 func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	params, err := DecodeProductRequestBody(r)
 	if err != nil {
@@ -507,7 +496,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	}
 	err = ValidateDuplicateSKU(params, dbconfig, r)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		RespondWithError(w, http.StatusConflict, utils.ConfirmError(err))
 		return
 	}
 	err = DuplicateOptionValues(params)

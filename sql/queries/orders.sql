@@ -113,8 +113,8 @@ WHERE o.id in (
     INNER JOIN customers c
     ON co.customer_id = c.id
     WHERE CONCAT(LOWER(c.first_name), ' ', LOWER(c.last_name)) SIMILAR TO LOWER($1)
-    AND LOWER(c.first_name) LIKE CONCAT('%',LOWER($1),'%')
-    AND LOWER(c.last_name) LIKE CONCAT('%',LOWER($1),'%')
+    OR LOWER(c.first_name) LIKE CONCAT('%',LOWER($1),'%')
+    OR LOWER(c.last_name) LIKE CONCAT('%',LOWER($1),'%')
 );
 
 -- name: RemoveOrder :exec

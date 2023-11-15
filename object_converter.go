@@ -323,6 +323,7 @@ func CompileCustomerData(
 		})
 	}
 	return objects.Customer{
+		ID:        customer_id,
 		FirstName: customer.FirstName,
 		LastName:  customer.LastName,
 		Email:     customer.Email.String,

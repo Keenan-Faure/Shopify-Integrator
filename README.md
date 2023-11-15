@@ -100,7 +100,9 @@ A friendly list of features currently supported and available:
 - Filter search for products, orders and customers.
 - Automatic customer creation from orders.
 - RESTful API endpoint and documentation.
-- Workers that automatically fetch products from Shopify at a set interval to keep constant syncronization of product data
+- Workers that automatically fetch products from Shopify at a set interval to keep constant syncronization of product data.
+- Adjustable settings via the API or on the app.
+-
 
 ## What is next (inc)
 

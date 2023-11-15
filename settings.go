@@ -90,17 +90,19 @@ func (dbconfig *DbConfig) AddAppSetting(w http.ResponseWriter, r *http.Request, 
 // DELETE /api/settings
 func (dbconfig *DbConfig) RemoveAppSettings(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	setting_keys := utils.GetAppSettings("app")
-	app_settings_map, err := DecodeSetting(r)
+	key := r.URL.Query().Get("key")
+	err := SettingValidation(
+		objects.RequestSettings{
+			Key:   key,
+			Value: "",
+		},
+		setting_keys,
+	)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = SettingValidation(app_settings_map, setting_keys)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = dbconfig.DB.RemoveAppSetting(r.Context(), app_settings_map.Key)
+	err = dbconfig.DB.RemoveAppSetting(r.Context(), key)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -188,17 +190,19 @@ func (dbconfig *DbConfig) AddShopifySetting(w http.ResponseWriter, r *http.Reque
 // DELETE /api/shopify/settings
 func (dbconfig *DbConfig) RemoveShopifySettings(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	setting_keys := utils.GetAppSettings("shopify")
-	shopify_settings_map, err := DecodeSetting(r)
+	key := r.URL.Query().Get("key")
+	err := SettingValidation(
+		objects.RequestSettings{
+			Key:   key,
+			Value: "",
+		},
+		setting_keys,
+	)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	err = SettingValidation(shopify_settings_map, setting_keys)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = dbconfig.DB.RemoveShopifySetting(r.Context(), shopify_settings_map.Key)
+	err = dbconfig.DB.RemoveShopifySetting(r.Context(), key)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
