@@ -10,4 +10,5 @@ source .env
 
 docker stop $APP_CONTAINER_NAME
 docker stop $SERVER_CONTAINER_NAME
+docker stop $DOCS_CONTAINER_NAME
 docker stop $DB_NAME

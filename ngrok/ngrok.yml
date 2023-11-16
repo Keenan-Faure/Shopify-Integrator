@@ -1,0 +1,11 @@
+version: 2
+web_addr: localhost:8080
+tunnels:
+  website:
+    addr: 8888
+    schemes:
+      - http
+    host_header: "integrator.ngrok.dev"
+    inspect: false
+    proto: http
+    domain: integrator.ngrok.dev

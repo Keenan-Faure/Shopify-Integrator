@@ -4,10 +4,21 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/run.sh
 
-echo "---run containers---"
 
-echo "pulling latest from remote"
+cd ../
+echo "---creating workspace---"
 
+if [ ! -d "/Shopify-Integrator-docs" ]
+then
+    cd Shopify-Integrator-docs
+    echo "pulling latest 'Shopify-Integrator-docs'"
+    git pull
+else
+    git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
+fi
+
+cd ../Shopify-Integrator
+echo "pulling latest 'Shopify-Integrator'"
 git pull
 
 OS="$(uname -s)"
@@ -29,7 +40,7 @@ if ! docker compose up -d --force-recreate; then
     exit
 else 
     source .env
-    until 
+    until
         docker exec $DB_NAME pg_isready
     do 
         sleep 3; 

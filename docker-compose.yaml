@@ -16,6 +16,33 @@ services:
         volumes:
             -  .env:/keenan/.env
 
+    docs:
+        build:
+            context: ../Shopify-Integrator-docs
+            dockerfile: ../Shopify-Integrator-docs/setup/Dockerfile
+        ports:
+            - "${DOCS_PORT}:${DOCS_PORT}"
+        container_name: ${DOCS_CONTAINER_NAME}
+        env_file:
+            - ../Shopify-Integrator/.env
+        networks:
+            - integrator-net
+        volumes:
+            -  .env:/keenan/.env
+
+    ngrok:
+        image: ngrok/ngrok:latest
+        restart: unless-stopped
+        command:
+          - "start"
+          - "--all"
+          - "--config"
+          - "/etc/ngrok.yml"
+        volumes:
+          - ./ngrok/ngrok.yml:/etc/ngrok.yml
+        ports:
+          - 8888:8888
+
     app:
         build:
             context: ./
