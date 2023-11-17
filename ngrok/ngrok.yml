@@ -1,11 +1,10 @@
+# Please enter your authToken below
+authtoken: 
 version: 2
-web_addr: localhost:8080
+web_addr: 127.0.0.1:8888
 tunnels:
-  website:
-    addr: 8888
-    schemes:
-      - http
-    host_header: "integrator.ngrok.dev"
-    inspect: false
-    proto: http
-    domain: integrator.ngrok.dev
+    website:
+        addr: 8080
+        schemes:
+            - https
+        proto: http
