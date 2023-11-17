@@ -12,3 +12,4 @@ docker stop $APP_CONTAINER_NAME
 docker stop $SERVER_CONTAINER_NAME
 docker stop $DOCS_CONTAINER_NAME
 docker stop $DB_NAME
+docker stop $NGROK_CONTAINER_NAME

@@ -4,11 +4,12 @@ Pushes and pulls data from Shopify with some additional features.
 
 1. Description of project
 2. Setup Project
-    1. What is already done
-    2. Configuring .env file
-    3. Setting up application passwords for emails
-    4. Configuring app and shopify setting
-    5. Installing Docker
+   1. What is already done
+   2. Configuring .env file
+   3. Setting up application passwords for emails
+   4. Configuring app and shopify setting
+   5. Installing Docker
+   6. Creating Ngrok account and authtoken
 3. Configuring custom [ngrok](https://ngrok.com/) URL for orders
 4. How to run the project
 5. List of features
@@ -32,6 +33,7 @@ With the use of [Docker](https://www.docker.com/) containers, many of the prereq
 - Goose (used to manage database migrations)
 - Node Package Manager (NPM)
 - React (Popular HTML framework with which the front-end is built upon)
+- Ngrok
 
 ### Configuring .env file
 
@@ -67,7 +69,7 @@ Please read this guide [here](https://support.google.com/mail/answer/185833?hl=e
 
 The application consists of settings that needs to be configured, which are, of course, import in the functions of each feature. These are outlined below:
 
-### Instlling Golang
+### Installing Golang
 
 Installing golang is required to compile and build the server script. Follow the setup guide below to install Golang on your machine.
 
@@ -77,9 +79,27 @@ Installing golang is required to compile and build the server script. Follow the
 
 It is required to have a valid docker installation. Please see a guide on how to install [Docker](https://www.docker.com/).
 
-## Configuring custom [ngrok](https://ngrok.com/) URL for orders
+### Creating Ngrok account and authtoken
 
-Coming soon.
+To use ngrok, an account needs to be created on their [website](https://dashboard.ngrok.com). You can either link you github account or create a new one.
+
+After successfully creating an account, an `authtoken` needs to be retrieved and saved into the ngrok config file located in
+
+```bash
+${pwd}/ngrok/ngrok.yml
+```
+
+**Please dont alter any of the data in the `ngrok.yml` file**
+
+## Configuring custom ngrok URL for orders
+
+_This step assumes that you have a valid ngrok account and an `authtoken` populated in the ngrok config file._
+
+This application, which runs on your local machine `localhost`, cannot be accessed over the internet. Hence, we use an
+application called `ngrok` to do this for us.
+
+The `install.sh` script installs ngrok for you, however, to create the webhook url that is used when creating orders
+you can just retrieve it in the dashboard of the application.
 
 ## How to run the project
 

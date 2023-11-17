@@ -14,7 +14,7 @@ services:
         networks:
             - integrator-net
         volumes:
-            -  .env:/keenan/.env
+            - .env:/keenan/.env
 
     docs:
         build:
@@ -28,20 +28,23 @@ services:
         networks:
             - integrator-net
         volumes:
-            -  .env:/keenan/.env
+            - .env:/keenan/.env
 
     ngrok:
         image: ngrok/ngrok:latest
         restart: unless-stopped
+        container_name: ${NGROK_CONTAINER_NAME}
         command:
-          - "start"
-          - "--all"
-          - "--config"
-          - "/etc/ngrok.yml"
+            - "start"
+            - "--all"
+            - "--config"
+            - "/etc/ngrok.yml"
         volumes:
-          - ./ngrok/ngrok.yml:/etc/ngrok.yml
+            - ./ngrok/ngrok.yml:/etc/ngrok.yml
         ports:
-          - 8888:8888
+          - 4040:4040
+        depends_on:
+            - server
 
     app:
         build:
@@ -53,7 +56,7 @@ services:
         networks:
             - integrator-net
         volumes:
-            -  ./app/src:/keenan/app/src
+            - ./app/src:/keenan/app/src
 
     postgres:
         restart: always

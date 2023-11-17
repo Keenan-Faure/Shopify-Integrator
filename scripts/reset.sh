@@ -8,26 +8,25 @@ echo "---reset containers---"
 
 source .env
 
-echo "stopping containers"
-echo "---"
-
 docker stop $APP_CONTAINER_NAME
 docker stop $SERVER_CONTAINER_NAME
 docker stop $DOCS_CONTAINER_NAME
 docker stop $DB_NAME
+docker stop $NGROK_CONTAINER_NAME
 
-echo "removing containers"
 echo "---"
+echo "removing containers"
 
 docker rm $SERVER_CONTAINER_NAME
 docker rm $APP_CONTAINER_NAME
 docker rm $DOCS_CONTAINER_NAME
 docker rm $DB_NAME
+docker rm $NGROK_CONTAINER_NAME
 
 #removes images
 
-echo "removing images containers"
 echo "---"
+echo "removing images containers"
 
 if docker image inspect $IMAGE_NAME >/dev/null 2>&1; then
   docker rmi $(docker images $IMAGE_NAME -a -q) -f
@@ -47,4 +46,4 @@ else
   echo "'$DOCS_IMAGE_NAME' does not exist."
 fi
 
-echo "Please re-run './scripts/run.sh'"
+echo "Please re-run './scripts/install.sh'"

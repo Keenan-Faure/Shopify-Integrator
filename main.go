@@ -56,7 +56,6 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Post("/register", dbconfig.RegisterHandle)
 	api.Post("/preregister", dbconfig.PreRegisterHandle)
 	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
-	api.Get("/endpoints", dbconfig.EndpointsHandle)
 	api.Get("/ready", dbconfig.ReadyHandle)
 	api.Get("/products", dbconfig.middlewareAuth(dbconfig.ProductsHandle))
 	api.Get("/products/{id}", dbconfig.middlewareAuth(dbconfig.ProductHandle))
@@ -69,6 +68,8 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
 	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
+	api.Delete("/products/{id}", dbconfig.middlewareAuth(dbconfig.RemoveProductHandle))
+	api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
 
 	api.Get("/inventory", dbconfig.middlewareAuth(dbconfig.GetWarehouseLocations))
 	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))

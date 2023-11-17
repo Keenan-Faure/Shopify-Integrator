@@ -1,7 +1,6 @@
 package main
 
 import (
-	"api"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -51,7 +50,7 @@ func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http
 	}
 	delete_id, err := uuid.Parse(id)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+id)
+		RespondWithError(w, http.StatusBadRequest, "could not decode id: "+id)
 		return
 	}
 	err = dbconfig.DB.RemoveShopifyLocationMap(r.Context(), delete_id)
@@ -477,6 +476,52 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// DELETE /api/products?id={{product_id}}
+func (dbconfig *DbConfig) RemoveProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	product_id := chi.URLParam(r, "id")
+	err := IDValidation(product_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	product_uuid, err := uuid.Parse(product_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode product id: "+product_id)
+		return
+	}
+	err = dbconfig.DB.RemoveProduct(r.Context(), product_uuid)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
+// DELETE /api/products?variant_id={{variant_id}}
+func (dbconfig *DbConfig) RemoveProductVariantHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	variant_id := chi.URLParam(r, "variant_id")
+	err := IDValidation(variant_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	variant_uuid, err := uuid.Parse(variant_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode variant id: "+variant_id)
+		return
+	}
+	err = dbconfig.DB.RemoveVariant(r.Context(), variant_uuid)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
 // POST /api/products
 func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	params, err := DecodeProductRequestBody(r)
@@ -631,7 +676,7 @@ func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request,
 	}
 	customer_uuid, err := uuid.Parse(customer_id)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+customer_id)
+		RespondWithError(w, http.StatusBadRequest, "could not decode customer id: "+customer_id)
 		return
 	}
 	customer, err := CompileCustomerData(dbconfig, customer_uuid, r.Context(), false)
@@ -700,7 +745,7 @@ func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, db
 	}
 	order_uuid, err := uuid.Parse(order_id)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+order_id)
+		RespondWithError(w, http.StatusBadRequest, "could not decode order id: "+order_id)
 		return
 	}
 	order_data, err := CompileOrderData(dbconfig, order_uuid, r.Context(), false)
@@ -788,7 +833,7 @@ func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, 
 	}
 	product_uuid, err := uuid.Parse(product_id)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+product_id)
+		RespondWithError(w, http.StatusBadRequest, "could not decode product id: "+product_id)
 		return
 	}
 	product_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
@@ -906,7 +951,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 	}
 	request_token, err := uuid.Parse(body.Token)
 	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode feed_id: "+body.Token)
+		RespondWithError(w, http.StatusBadRequest, "could not decode token: "+body.Token)
 		return
 	}
 	if token.Token != request_token {
@@ -934,11 +979,6 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	RespondWithJSON(w, http.StatusCreated, user)
-}
-
-// GET /api/endpoints
-func (dbconfig *DbConfig) EndpointsHandle(w http.ResponseWriter, r *http.Request) {
-	RespondWithJSON(w, http.StatusOK, api.Endpoints())
 }
 
 // puppy function for a handler
