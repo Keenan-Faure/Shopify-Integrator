@@ -981,16 +981,6 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 	RespondWithJSON(w, http.StatusCreated, user)
 }
 
-// puppy function for a handler
-//func Handle{{Name}} {
-// 1.) decode params
-// 2.) validate requestBody
-// 3.) Check for duplicates in db
-// 4.) (fi) create/insert new record
-// 4.) (if) return record
-// 5.) (else) return error
-//}
-
 // GET /api/ready
 func (dbconfig *DbConfig) ReadyHandle(w http.ResponseWriter, r *http.Request) {
 	if dbconfig.Valid {
@@ -1005,39 +995,54 @@ func (dbconfig *DbConfig) ReadyHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 // JSON helper functions
-func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) error {
+func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	if payload == nil {
 		response, err := json.Marshal(payload)
 		if err != nil {
-			return err
+			log.Printf("Error marshalling JSON: %s", err)
+			w.WriteHeader(500)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(code)
-		w.Write(response)
-		return nil
+		_, err = w.Write(response)
+		if err != nil {
+			log.Printf("Error writing JSON: %s", err)
+			w.WriteHeader(500)
+			return
+		}
 	} else {
 		response, err := json.Marshal(payload)
 		if err != nil {
-			return err
+			log.Printf("Error writing JSON: %s", err)
+			w.WriteHeader(500)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(code)
-		w.Write(response)
-		return nil
+		_, err = w.Write(response)
+		if err != nil {
+			log.Printf("Error writing JSON: %s", err)
+			w.WriteHeader(500)
+			return
+		}
 	}
 }
 
-func RespondWithError(w http.ResponseWriter, code int, msg string) error {
-	return RespondWithJSON(w, code, map[string]string{"error": msg})
+func RespondWithError(w http.ResponseWriter, code int, msg string) {
+	RespondWithJSON(w, code, map[string]string{"error": msg})
 }
 
 // Middleware that determines which headers, http methods and orgins are allowed
 func MiddleWare() cors.Options {
 	return cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
-		AllowedHeaders: []string{"*"},
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"*"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
 	}
 }
