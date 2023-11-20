@@ -8,12 +8,13 @@
 cd ../
 echo "---creating workspace---"
 
-if [ ! -d "/Shopify-Integrator-docs" ]
+if [ -d "Shopify-Integrator-docs" ]
 then
     cd Shopify-Integrator-docs
     echo "pulling latest 'Shopify-Integrator-docs'"
     git pull
 else
+    echo "I am here"
     git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
 fi
 
@@ -22,6 +23,12 @@ echo "pulling latest 'Shopify-Integrator'"
 git pull
 
 OS="$(uname -s)"
+
+if ! command -v go &> /dev/null
+then
+    echo "Golang required but it's not installed."
+    exit
+fi
 
 # Builds the go code depending of OS
 if [ $OS == "Darwin" ]; then
