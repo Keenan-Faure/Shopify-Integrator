@@ -46,6 +46,7 @@ function Pan_details(props)
     }, []);
 
     return (
+
         <div className = "pan">
             <div className = "pan-img"></div>
             <div className = "pan-details">

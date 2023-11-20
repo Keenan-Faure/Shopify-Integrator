@@ -62,7 +62,8 @@ function Login()
                 message.innerHTML = "";
                 message.style.backgroundColor = "transparent";
                 message.style.display = "none";
-            }, 2000);
+                window.reload();
+            }, 1000);
         });
     }
 
@@ -107,7 +108,7 @@ function Login()
                 message.innerHTML = "";
                 message.style.backgroundColor = "transparent";
                 message.style.display = "none";
-            }, 2000);
+            }, 1000);
         });
     }
 
@@ -140,9 +141,7 @@ function Login()
             form2.style.display = "none";
             form3.style.animation = "FadeIn ease-in 1s";
             form3.style.display = "block";
-            return_button2.style.display = "block";
-
-            
+            return_button2.style.display = "block"; 
         })
         .fail( function(xhr) 
         { 
@@ -154,7 +153,8 @@ function Login()
                 message.innerHTML = "";
                 message.style.backgroundColor = "transparent";
                 message.style.display = "none";
-            }, 2000);
+                //window.location.reload();
+            }, 1000);
         }); 
     }
 

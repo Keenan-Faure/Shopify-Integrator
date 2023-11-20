@@ -181,6 +181,7 @@ input.search-area
     /* transition-duration: 0.4s; */
     background-color: rgb(0, 0, 0, 0.6);
     user-select: none;
+    cursor: pointer;
 }
 .pan:hover 
 {
@@ -374,6 +375,97 @@ a
     background-size: cover;
     background-size: cover;
     background-image: url(../media/add.png);
+}
+.details 
+{
+    position: absolute;
+    display: none;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(61, 61, 61, 0.5);
+    width: 100%;
+    height: 100%;
+}    
+.details-details 
+{
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-size: 13px;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 10px;
+    width: auto;
+    height: auto;
+}
+.details-image
+{
+    background-size: cover;
+    background-position: center;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+.details-title 
+{
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translate(-50%);
+}
+.details-code 
+{
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%);
+}
+.details-options 
+{
+    position: absolute;
+    top: 10%;
+    left: 20%;
+    transform: translate(-20%);
+}
+.details-category 
+{
+    position: absolute;
+    top: 15%;
+    left: 70%;
+    transform: translate(-70%);
+}
+.details-type 
+{
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%);
+}
+.details-vendor 
+{
+    position: absolute;
+    top: 30%;
+    left: 20%;
+    transform: translate(-20%);
+}
+.details-price 
+{
+    position: absolute;
+    top: 30%;
+    left: 70%;
+    transform: translate(-70%);
+}
+.close-button 
+{
+    position: absolute;
+    display: none;
+    width: 70px;
+    height: 50px;
+    top: 5px;
+    right: 0px;
+    cursor: pointer;
+    z-index: 2;
+    color: rgb(184, 11, 11);
+    font-size: 45px;
+    text-align: center;
 }
 
 

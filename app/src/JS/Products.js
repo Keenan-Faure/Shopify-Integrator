@@ -54,7 +54,6 @@ function Products(props)
         ({
             headers: { 'Authorization': 'ApiKey ' + api_key}
         });
-        
         $.get("http://localhost:8080/api/products", [], [])
         .done(function( _data) 
         {
@@ -65,6 +64,67 @@ function Products(props)
         {
             alert(xhr.responseText);
         });
+
+        /* When the user clicks on the pan elements show info about that specified pan element */
+        let pan = document.querySelectorAll(".pan");
+        for(let i = 0; i < pan.length; i++)
+        {
+            pan[i].addEventListener("click", () =>
+            {
+                
+                //var img = pan[i].querySelector(".pan-img").innerHTML; 
+                document.getElementById("img").style.backgroundImage = pan[i].querySelector(".pan-img").style.backgroundImage;
+                document.getElementById("te").innerHTML = pan[i].querySelector(".p-d-title").innerHTML;
+                document.getElementById("co").innerHTML = pan[i].querySelector(".p-d-code").innerHTML;
+                document.getElementById("op").innerHTML = pan[i].querySelector(".p-d-options").innerHTML; 
+                document.getElementById("ca").innerHTML = pan[i].querySelector(".p-d-category").innerHTML;
+                document.getElementById("ty").innerHTML = pan[i].querySelector(".p-d-type").innerHTML; 
+                document.getElementById("ve").innerHTML = pan[i].querySelector(".p-d-vendor").innerHTML;
+                document.getElementById("pr").innerHTML = pan[i].querySelector(".pan-price").innerHTML;
+
+                /* Get the filter & main elements */
+                let filter = document.querySelector(".filter");
+                let main = document.querySelector(".main");
+                let navbar = document.getElementById("navbar");
+                let details = document.querySelector(".details");
+                let close = document.querySelector(".close-button");
+
+                filter.style.animation = "Fadeout 0.5s ease-out";
+                main.style.animation = "Fadeout 0.5s ease-out";
+                navbar.style.animation = "Fadeout 0.5s ease-out";
+
+                filter.style.display = "none";
+                main.style.display = "none";
+                navbar.style.display = "none";
+                details.style.animation = "FadeIn ease-in 0.5s";
+                details.style.display = "block";
+                close.style.display = "block";
+
+               
+            });
+
+            /* When the user clicks on the return button */
+            let close = document.querySelector(".close-button");
+            let filter = document.querySelector(".filter");
+            let main = document.querySelector(".main");
+            let navbar = document.getElementById("navbar");
+            let details = document.querySelector(".details");
+            close.addEventListener("click", ()=> 
+            {
+                close.style.display = "none";
+                details.style.animation = "Fadeout 0.5s ease-out";
+                main.style.animation = "FadeIn ease-in 0.5s";
+                filter.style.animation = "FadeIn ease-in 0.5s";
+                navbar.style.animation = "FadeIn ease-in 0.5s";
+                setTimeout(() => 
+                {
+                    details.style.display = "none";
+                    navbar.style.display = "block";
+                    main.style.display = "block";
+                    filter.style.display = "block";
+                }, 500);
+            });
+        }
         
         
     }, []);
@@ -86,7 +146,15 @@ function Products(props)
 
                             })
                         }
-                        <Pan_details />
+                        <Pan_details Product_Title = "5-star sword" Product_Code = "#w123d" Product_Options = "True-False" Product_Category = "Gacha"
+                        Product_Type = "SSR" Product_Vendor = "HottaGames" Product_Price = "$15"/>
+
+                        <Pan_details Product_Title = "5-star " Product_Code = "#rf34g" Product_Options = "white black" Product_Category = "pog"
+                        Product_Type = "SW@" Product_Vendor = "PMdfg" Product_Price = "$155"/>
+
+                        <Pan_details Product_Title = "5 sword" Product_Code = "#kn39c" Product_Options = "542/544" Product_Category = "Posxc"
+                        Product_Type = "postman" Product_Vendor = "keyboard" Product_Price = "$147"/>
+
                     </div>
                 </div>
                 <div className = "center" id = "pag">
@@ -95,6 +163,19 @@ function Products(props)
             </div>
 
             <Page1 image = {product} title = "Products"/>
+            <div className = "details">
+                <div className = 'close-button'>&times;</div>
+                <div id = "img" className = "details-image">
+                    <div id = "te" className = "details-details details-title"></div>
+                    <div id = "co" className = "details-details details-code"></div>
+                    <div id = "op" className = "details-details details-options"></div>
+                    <div id = "ca" className = "details-details details-category"></div>
+                    <div id = "ty" className = "details-details details-type"></div>
+                    <div id = "ve" className = "details-details details-vendor"></div>
+                    <div id = "pr" className = "details-details details-price"></div>
+                </div>
+                
+            </div>
 
         </div>
     );
