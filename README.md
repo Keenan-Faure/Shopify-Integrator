@@ -21,7 +21,7 @@ Web based application that pulls product data from Shopify at a predefined inter
 
 The application has it's own RESTful API that allows communication between the application and one or more software components. An example is that it allows the syncing of orders from Shopify into the application through the use of a webhook and a predefined endpoint.
 
-For a entire list of available features, please see [List of Features]().
+For a entire list of available features, please see [List of Features](https://google.com).
 
 ## Setup Project
 
