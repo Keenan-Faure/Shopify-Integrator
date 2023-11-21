@@ -43,7 +43,7 @@ WHERE variant_id IN (
 ) AND name = $2;
 
 -- name: GetCountOfUniqueWarehouses :one
-SELECT COUNT(DISTINCT "name") FROM variant_qty;
+SELECT CAST(COALESCE(COUNT(DISTINCT "name"),0) AS INTEGER) FROM variant_qty;
 
 -- name: GetUniqueWarehouses :many
 SELECT DISTINCT "name" FROM variant_qty;

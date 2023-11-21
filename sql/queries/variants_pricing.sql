@@ -54,7 +54,7 @@ WHERE variant_id IN (
 );
 
 -- name: GetCountOfUniquePrices :one
-SELECT COUNT(DISTINCT "name") FROM variant_pricing;
+SELECT CAST(COALESCE(COUNT(DISTINCT "name"),0) AS INTEGER) FROM variant_pricing;
 
 -- name: GetUniquePriceTiers :many
 SELECT DISTINCT "name" FROM variant_pricing;

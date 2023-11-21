@@ -62,14 +62,14 @@ func (q *Queries) CreateVariantQty(ctx context.Context, arg CreateVariantQtyPara
 }
 
 const getCountOfUniqueWarehouses = `-- name: GetCountOfUniqueWarehouses :one
-SELECT COUNT(DISTINCT "name") FROM variant_qty
+SELECT CAST(COALESCE(COUNT(DISTINCT "name"),0) AS INTEGER) FROM variant_qty
 `
 
-func (q *Queries) GetCountOfUniqueWarehouses(ctx context.Context) (int64, error) {
+func (q *Queries) GetCountOfUniqueWarehouses(ctx context.Context) (int32, error) {
 	row := q.db.QueryRowContext(ctx, getCountOfUniqueWarehouses)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const getUniqueWarehouses = `-- name: GetUniqueWarehouses :many

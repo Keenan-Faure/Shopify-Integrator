@@ -139,8 +139,10 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	image_headers := iocsv.GetProductImagesCSV(products[0].ProductImages, int(images_max), true)
-	headers = append(headers, image_headers...)
+	if len(products) > 0 {
+		image_headers := iocsv.GetProductImagesCSV(products[0].ProductImages, int(images_max), true)
+		headers = append(headers, image_headers...)
+	}
 	csv_data = append(csv_data, headers)
 	for _, product := range products {
 		for _, variant := range product.Variants {

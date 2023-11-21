@@ -48,7 +48,7 @@ func (q *Queries) CreateProductImage(ctx context.Context, arg CreateProductImage
 
 const getMaxImagePosition = `-- name: GetMaxImagePosition :one
 SELECT 
-    CAST(MAX("position") AS INTEGER)
+    CAST(COALESCE(MAX("position"), 0) AS INTEGER)
 FROM product_images
 `
 
