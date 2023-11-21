@@ -39,7 +39,7 @@ jobs:
 
       - name: Run database migrations
         run: |
-          chmod +x ./public/scripts/test.sh
+          chmod +x ./scripts/migrations.sh
           ./scripts/migrations.sh
         shell: bash
 
