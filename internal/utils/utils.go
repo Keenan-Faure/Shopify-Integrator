@@ -3,6 +3,7 @@ package utils
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -12,7 +13,10 @@ import (
 
 // Returns the value of the environment variable
 func LoadEnv(key string) string {
-	godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("could not load .env")
+	}
 	value := os.Getenv(strings.ToUpper(key))
 	return value
 }

@@ -14,10 +14,9 @@ then
     echo "pulling latest 'Shopify-Integrator-docs'"
     git pull
 else
-    echo "I am here"
     git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
+    cd Shopify-Integrator-docs
 fi
-
 cd ../Shopify-Integrator
 echo "pulling latest 'Shopify-Integrator'"
 git pull
@@ -27,7 +26,8 @@ OS="$(uname -s)"
 if ! command -v go &> /dev/null
 then
     echo "Golang required but it's not installed."
-    exit
+    echo "Please visit https://go.dev/dl/"
+    exit;
 fi
 
 # Builds the go code depending of OS

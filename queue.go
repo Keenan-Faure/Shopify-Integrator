@@ -64,12 +64,12 @@ func LoopQueueWorker(dbconfig *DbConfig) {
 
 func QueueWaitGroup(dbconfig *DbConfig) {
 	waitgroup := &sync.WaitGroup{}
-	process_limit := 0
+	process_limit := int64(0)
 	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")
 	if err != nil {
 		process_limit = 20
 	}
-	process_limit, err = strconv.Atoi(process_limit_db.Value)
+	process_limit, err = strconv.ParseInt(process_limit_db.Value, 10, 32)
 	if err != nil {
 		process_limit = 20
 	}

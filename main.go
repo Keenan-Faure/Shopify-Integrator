@@ -23,13 +23,13 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
+	flags := flag.Bool("test", false, "Enable server for tests only")
+	flag.Parse()
+
 	dbCon, err := InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("db_name") + "?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}
-	flags := flag.Bool("test", false, "Enable server for tests only")
-	flag.Parse()
-
 	shopifyConfig := shopify.InitConfigShopify()
 	if !*flags {
 		fmt.Println("Starting Workers")
@@ -110,8 +110,9 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	}
 
 	server := &http.Server{
-		Addr:    ":" + port,
-		Handler: r,
+		Addr:              ":" + port,
+		Handler:           r,
+		ReadHeaderTimeout: 300,
 	}
 
 	log.Printf("Serving files from %s and listening on port %s", file_path, port)

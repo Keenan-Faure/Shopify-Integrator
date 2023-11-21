@@ -160,7 +160,7 @@ func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []st
 // Writes data to a file
 func WriteFile(data [][]string, file_name string) (string, error) {
 	if file_name != "" {
-		f, err := os.Create(file_name + ".csv")
+		f, err := os.Create(filepath.Clean(file_name) + ".csv")
 		if err != nil {
 			return "", err
 		}
@@ -174,7 +174,7 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 		return "", nil
 	}
 	csv_name := "product_export-" + time.Now().UTC().String() + ".csv"
-	f, err := os.Create(csv_name)
+	f, err := os.Create(filepath.Clean(csv_name))
 	if err != nil {
 		return "", err
 	}
@@ -192,11 +192,11 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 	if file_name == "" {
 		return []objects.CSVProduct{}, errors.New("invalid file")
 	}
-	file_data, err := os.Open(file_name + ".csv")
+	file_data, err := os.Open(filepath.Clean(file_name) + ".csv")
 	if err != nil {
 		return []objects.CSVProduct{}, err
 	}
-	file_data2, err := os.Open(file_name + ".csv")
+	file_data2, err := os.Open(filepath.Clean(file_name) + ".csv")
 	if err != nil {
 		return []objects.CSVProduct{}, err
 	}
