@@ -4,13 +4,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  DB_NAME: postgres
-  DB_PASSWORD: postgres
-  DB_USER: postgres
-  DB_PORT: 5432
-  DOCKER_DB_URL: postgres://postgres:postgres@postgres:5432/
-
 jobs:
   integration-tests:
     name: integration tests
@@ -20,10 +13,10 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_USER: $DB_USER
-          POSTGRES_PASSWORD: $DB_PASSWORD
-          POSTGRES_PORT: $DB_PORT
-          POSTGRES_DB: $DB_NAME
+          POSTGRES_USER: ${{secrets.DB_USER}}
+          POSTGRES_PASSWORD: ${{secrets.DB_PASSWORD}}
+          POSTGRES_PORT: ${{secrets.DB_PORT}}
+          POSTGRES_DB: ${{secrets.DB_NAME}}
 
         # Set health checks to wait until postgres has started
         options: >-
