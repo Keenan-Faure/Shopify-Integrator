@@ -9,7 +9,7 @@ echo "---reset database migrations---"
 cd ./sql/schema
 
 SSL_MODE="?sslmode=disable"
-DB_STRING="${DOCKER_DB_URL}${DATABASE}${SSL_MODE}"
+DB_STRING="${DRIVER}${DB_USER}${DB_PSW}@localhost:5432/${DB_NAME}${SSL_MODE}"
 
 if ! goose postgres "$DB_STRING" reset ; then
 

@@ -2,15 +2,29 @@
 
 echo "---running migrations on server container---"
 
-cd /keenan/sql/schema
-source .env
-
-echo "Checking GOOSE version"
-goose -version
-
 SSL_MODE="?sslmode=disable"
-DB_STRING="${DOCKER_DB_URL}${DB_NAME}${SSL_MODE}"
+DRIVER="postgres://"
 
-echo "running migrations on '${DB_NAME}'"
+if [ -z "$1" ]; then
+    if [ $1 = "ci" ]; then
+        cd /sql/schema
+        echo "Checking GOOSE version"
+        goose -version
+        DB_STRING="${DRIVER}${DB_USER}${DB_PSW}@localhost:5432/${DB_NAME}${SSL_MODE}"
+        echo "running migrations on '${DB_NAME}'"
+        goose postgres "$DB_STRING" up
+    else
+        echo "invalid parameter passed, expected 'ci'"
+        exit;
+    fi
+    # postgres://postgres:postgres@postgres:5432/
+else
+    cd /keenan/sql/schema
+    source .env
 
-goose postgres "$DB_STRING" up
+    echo "Checking GOOSE version"
+    goose -version
+    DB_STRING="${DRIVER}${DB_USER}${DB_PSW}@postgres:5432/${DB_NAME}${SSL_MODE}"
+    echo "running migrations on '${DB_NAME}'"
+    goose postgres "$DB_STRING" up
+fi
