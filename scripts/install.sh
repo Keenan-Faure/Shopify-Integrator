@@ -4,7 +4,6 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/install.sh
 
-
 cd ../
 echo "---creating workspace---"
 
@@ -54,6 +53,7 @@ else
     done
 
     echo "---Running database migrations---"
+    chmod +x ./sql/schema/migrations.sh
     docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
 
     docker restart $SERVER_CONTAINER_NAME

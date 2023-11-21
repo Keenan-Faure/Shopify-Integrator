@@ -188,17 +188,29 @@ func CreateProd() objects.RequestBodyProduct {
 }
 
 func CreateDemoUser(dbconfig *DbConfig) database.User {
-	user, err := dbconfig.DB.CreateUser(context.Background(), database.CreateUserParams{
-		ID:        uuid.New(),
-		Name:      "Demo",
-		Email:     "Demo@test.com",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
+	user, err := dbconfig.DB.GetUserByEmail(context.Background(), "Demo@test.com")
 	if err != nil {
-		return database.User{}
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return database.User{}
+		}
 	}
-	return user
+	if user.ApiKey == "" {
+		user, err := dbconfig.DB.CreateUser(context.Background(), database.CreateUserParams{
+			ID:        uuid.New(),
+			Name:      "Demo",
+			Email:     "Demo@test.com",
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			log.Println(err)
+			return database.User{}
+		}
+		return user
+	} else {
+		return user
+	}
 }
 
 func TestDatabaseConnection(t *testing.T) {
@@ -693,4 +705,5 @@ func TestQueueCRUD(t *testing.T) {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateVariant))
 	}
 	defer UFetchHelperPost("queue?status=completed", "DELETE", user.ApiKey, &buffer)
+	defer UFetchHelperPost("queue?instruction=add_product", "DELETE", user.ApiKey, &buffer)
 }
