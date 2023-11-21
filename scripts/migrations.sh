@@ -5,9 +5,9 @@ echo "---running migrations on server container---"
 SSL_MODE="?sslmode=disable"
 DRIVER="postgres://"
 
-if [ -z "$1" ]; then
-    if [ $1 = "ci" ]; then
-        cd /sql/schema
+if [ ! -z "$1" ]; then
+    if [ $1 == "ci" ]; then
+        cd ./sql/schema
         echo "Checking GOOSE version"
         goose -version
         DB_STRING="${DRIVER}${DB_USER}${DB_PSW}@localhost:5432/${DB_NAME}${SSL_MODE}"
