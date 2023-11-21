@@ -11,7 +11,7 @@ if [ ! -z "$1" ]; then
         echo "Checking GOOSE version"
         goose -version
 
-        DB_STRING="${DRIVER}${DB_USER}${DB_PSW}@localhost:5432/${DB_NAME}${SSL_MODE}"
+        DB_STRING="${DRIVER}${DB_USER}:${DB_PSW}@localhost:5432/${DB_NAME}${SSL_MODE}"
         echo "running migrations on '${DB_NAME}'"
         goose postgres "$DB_STRING" up
     else
@@ -24,7 +24,7 @@ else
 
     echo "Checking GOOSE version"
     goose -version
-    DB_STRING="${DRIVER}${DB_USER}${DB_PSW}@postgres:5432/${DB_NAME}${SSL_MODE}"
+    DB_STRING="${DRIVER}${DB_USER}:${DB_PSW}@postgres:5432/${DB_NAME}${SSL_MODE}"
     echo "running migrations on '${DB_NAME}'"
     goose postgres "$DB_STRING" up
 fi
