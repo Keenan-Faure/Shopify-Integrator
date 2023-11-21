@@ -13,10 +13,10 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_USER: ${{secrets.DB_USER}}
-          POSTGRES_PASSWORD: ${{secrets.DB_PSW}}
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
           POSTGRES_PORT: 5432
-          POSTGRES_DB: ${{secrets.DB_NAME}}
+          POSTGRES_DB: test
 
         options: >-
           --health-cmd pg_isready
@@ -44,9 +44,9 @@ jobs:
           ./scripts/migrations.sh ci
         shell: bash
         env:
-          DB_USER: ${{secrets.DB_USER}}
-          DB_PSW: ${{secrets.DB_PSW}}
-          DB_NAME: ${{secrets.DB_NAME}}
+          DB_USER: test
+          DB_PSW: test
+          DB_NAME: test
 
       - name: Run test server
         run: |
