@@ -1,3 +1,5 @@
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import {useEffect, useState} from 'react';
 import $ from 'jquery';
 import Page1 from '../components/Page1';
@@ -5,7 +7,7 @@ import Pan_details from '../components/semi-components/pan-detail';
 import '../CSS/page1.css';
 import product from '../media/products.png';
 
-function Products(props)
+function Products()
 {
     const[inputs, setInputs] = useState({});
 
@@ -54,7 +56,7 @@ function Products(props)
         ({
             headers: { 'Authorization': 'ApiKey ' + api_key}
         });
-        $.get("http://localhost:8080/api/products", [], [])
+        $.get("http://localhost:8080/api/products?page=1", [], [])
         .done(function( _data) 
         {
             console.log(_data);
@@ -125,6 +127,243 @@ function Products(props)
                 }, 500);
             });
         }
+
+        /* Script to automatically format the number of elements on each page */
+        const content = document.querySelector('.center'); 
+        const paginationContainer = document.createElement('div');
+        const paginationDiv = document.body.appendChild(paginationContainer);
+        paginationContainer.classList.add('pagination');
+        content.appendChild(paginationContainer);
+
+        let div = document.getElementById("pan-main");
+        let root = createRoot(div);
+
+        function Pagintation(index)
+        {
+            /* Check done to remove old elements if they exist */
+            if(document.getElementById("next") != null && document.getElementById("prev") != null && document.getElementById("hod") != null)
+            //If they exist remove them, and create new based on the new index value
+            {
+                document.getElementById("next").remove();
+                document.getElementById("prev").remove();
+                document.getElementById("hod").remove();
+
+                const pageButton = document.createElement('button');
+                pageButton.id = "hod";
+                pageButton.className = "active";
+                pageButton.innerHTML = index;
+                paginationDiv.appendChild(pageButton);
+
+                const nextPage = document.createElement('button');
+                nextPage.id = "next";
+                nextPage.innerHTML = "→";
+                paginationDiv.appendChild(nextPage);
+
+                const prevPage = document.createElement('button');
+                prevPage.id = "prev";
+                prevPage.innerHTML = "←";
+                paginationDiv.appendChild(prevPage);
+                if(index == 1)
+                {
+                    prevPage.disabled = true;
+                    prevPage.style.cursor = "not-allowed";
+                }
+                else if(index > 1)
+                {
+                    prevPage.style.cursor = "pointer";
+                    prevPage.disabled = false;
+                    nextPage.disabled = false;
+                }
+                else if(index <= 1)
+                {
+                    prevPage.disabled = true;
+                    prevPage.style.cursor = "not-allowed";
+                }
+
+                nextPage.addEventListener("click", () =>
+                {
+                    index = index + 1;
+                    /* Fetches the data from page, based on the page / index value */
+                    const page = "http://localhost:8080/api/products?page=" + index;
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup
+                    ({
+                        headers: { 'Authorization': 'ApiKey ' + api_key}
+                    });
+                    $.get(page, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        if(_data == "")
+                        {
+
+                            let main = document.getElementById("pan-main");
+                            main.innerHTML = "No data";
+                        }
+                        else 
+                        {
+                            flushSync(() => 
+                            {
+                                root.render(_data.map((el, i) => 
+                                    <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                                ))
+                            });
+                        }
+                        
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+                    Pagintation(index);
+                });
+
+                prevPage.addEventListener("click", () =>
+                {
+                    index = index - 1;
+                    /* Fetches the data from page, based on the page / index value */
+                    const page = "http://localhost:8080/api/products?page=" + index;
+
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup
+                    ({
+                        headers: { 'Authorization': 'ApiKey ' + api_key}
+                    });
+                    $.get(page, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        flushSync(() => 
+                        {
+                            root.render(_data.map((el, i) => 
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                            ))
+                        });
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+
+                    Pagintation(index--);
+                });
+            }
+            else 
+            //If they dont exist create new ones 
+            {
+                const pageButton = document.createElement('button');
+                pageButton.id = "hod";
+                pageButton.className = "active";
+                pageButton.innerHTML = index;
+                paginationDiv.appendChild(pageButton);
+
+                const nextPage = document.createElement('button');
+                nextPage.id = "next";
+                nextPage.innerHTML = "→";
+                paginationDiv.appendChild(nextPage);
+
+                const prevPage = document.createElement('button');
+                prevPage.id = "prev";
+                prevPage.innerHTML = "←";
+                paginationDiv.appendChild(prevPage);
+                
+                
+                if(index == 1)
+                {
+                    prevPage.disabled = true;
+                    prevPage.style.cursor = "not-allowed";
+                }
+                else if(index > 1)
+                {
+                    prevPage.style.cursor = "pointer";
+                    prevPage.disabled = false;
+                    nextPage.disabled = false;
+                }
+                else if(index <= 1)
+                {
+                    prevPage.disabled = true;
+                    prevPage.style.cursor = "not-allowed";
+                }
+
+                nextPage.addEventListener("click", () =>
+                {
+                    index = index + 1;
+                    /* Fetches the data from page, based on the page / index value */
+                    const page = "http://localhost:8080/api/products?page=" + index;
+
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup
+                    ({
+                        headers: { 'Authorization': 'ApiKey ' + api_key}
+                    });
+                    $.get(page, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        /* Check if pan elements exist and remove + update if it does*/
+                        let pan = document.querySelectorAll(".pan");
+                        pan.forEach(pan => 
+                        {
+                            pan.remove();
+                        });
+
+                        flushSync(() => 
+                        {
+                            root.render(_data.map((el, i) => 
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                            ))
+                        });
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+
+                    Pagintation(index);
+                });
+
+                prevPage.addEventListener("click", () =>
+                {
+                    index = index - 1;
+                    /* Fetches the data from page, based on the page / index value */
+                    const page = "http://localhost:8080/api/products?page=" + index;
+
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup
+                    ({
+                        headers: { 'Authorization': 'ApiKey ' + api_key}
+                    });
+                    $.get(page, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        /* Check if pan elements exist and remove + update if it does*/
+                        let pan = document.querySelectorAll(".pan");
+                        pan.forEach(pan => 
+                        {
+                            pan.remove();
+                        });
+                        flushSync(() => 
+                        {
+                            root.render(_data.map((el, i) => 
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                            ))
+                        });
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+
+                    Pagintation(index--);
+                });
+            } 
+        }
+        Pagintation(1);
         
         
     }, []);
@@ -139,22 +378,10 @@ function Products(props)
                     </form>    
                 </div>
                 <div className = "main-elements">
-                    <div className = "pan-main">
-                        {data.map((_data, id)=>
-                            {
-                                return <Pan_details />
-
-                            })
-                        }
-                        <Pan_details Product_Title = "5-star sword" Product_Code = "#w123d" Product_Options = "True-False" Product_Category = "Gacha"
-                        Product_Type = "SSR" Product_Vendor = "HottaGames" Product_Price = "$15"/>
-
-                        <Pan_details Product_Title = "5-star " Product_Code = "#rf34g" Product_Options = "white black" Product_Category = "pog"
-                        Product_Type = "SW@" Product_Vendor = "PMdfg" Product_Price = "$155"/>
-
-                        <Pan_details Product_Title = "5 sword" Product_Code = "#kn39c" Product_Options = "542/544" Product_Category = "Posxc"
-                        Product_Type = "postman" Product_Vendor = "keyboard" Product_Price = "$147"/>
-
+                    <div className = "pan-main" id = "pan-main">
+                        {data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                        )}
                     </div>
                 </div>
                 <div className = "center" id = "pag">
@@ -182,3 +409,22 @@ function Products(props)
 }
 
 export default Products;
+
+/*
+    {data.map((_data, id)=>
+        {
+            return <Pan_details />
+
+        })
+    }
+
+    <Pan_details Product_Title = "5-star sword" Product_Code = "#w123d" Product_Options = "True-False" Product_Category = "Gacha"
+    Product_Type = "SSR" Product_Vendor = "HottaGames" Product_Price = "$15"/>
+
+    <Pan_details Product_Title = "5-star " Product_Code = "#rf34g" Product_Options = "white black" Product_Category = "pog"
+    Product_Type = "SW@" Product_Vendor = "PMdfg" Product_Price = "$155"/>
+
+    <Pan_details Product_Title = "5 sword" Product_Code = "#kn39c" Product_Options = "542/544" Product_Category = "Posxc"
+    Product_Type = "postman" Product_Vendor = "keyboard" Product_Price = "$147"/>
+
+*/

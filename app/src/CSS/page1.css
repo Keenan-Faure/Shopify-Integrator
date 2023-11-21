@@ -164,6 +164,7 @@ input.search-area
     overflow: auto;
     width: 100%;
     height: 90%;
+    top: 5px;
 }
 /* divs inside main element */
 .pan
@@ -275,7 +276,7 @@ input.search-area
     position: relative;
     top: -15px;
     display: none;
-    left: 50%;
+    height: 100%;
 }
 .hidden 
 {
@@ -286,15 +287,6 @@ input.search-area
     position: absolute;
     white-space: nowrap;
     width: 1px;
-}
-
-.pagination 
-{
-    text-align: center;
-    position: relative;
-    bottom: -10px;
-    width: 50px;
-    height: 50px;
 }
   
 .pagination button 
@@ -307,6 +299,7 @@ input.search-area
     border: 1px solid #ddd;
     margin: 0 4px;
     background-color: transparent;
+    cursor: pointer;
 }
   
 .pagination button.active 
@@ -314,7 +307,25 @@ input.search-area
     background-color: #4CAF50;
     color: white;
     border: 1px solid #4CAF50;
+    position: absolute;
+    transform: translate(-50%);
+    left: 50%;
 }
+#next 
+{
+    float: right;
+    position: relative;
+    left: -50%;
+    transform: translate(172%);
+}
+#prev
+{
+    float: right;
+    position: relative;
+    left: -50%;
+    transform: translate(76%);
+}
+
 a
 {
     color: black;
