@@ -1,7 +1,7 @@
 #!/bin/bash
 source .env
 docker-compose rm -f
-if ! docker compose up -d --force-recreate --profile init; then
+if ! docker compose up -d --force-recreate --no-deps server, postgres; then
     exit
 else 
     until

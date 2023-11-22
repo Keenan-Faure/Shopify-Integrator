@@ -1,7 +1,6 @@
 version: "2"
 services:
     server:
-        profiles: ["init"]
         build:
             context: ./
             dockerfile: ./setup/server/Dockerfile
@@ -60,7 +59,6 @@ services:
             - ./app/src:/keenan/app/src
 
     postgres:
-        profiles: ["init"]
         restart: always
         container_name: ${DB_NAME}
         image: postgres
