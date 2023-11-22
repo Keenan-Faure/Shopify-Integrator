@@ -7,6 +7,7 @@ import (
 	"iocsv"
 	"log"
 	"net/http"
+	"os"
 	"shopify"
 	"time"
 	"utils"
@@ -24,6 +25,7 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
+	fmt.Println(os.Getwd())
 	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
 	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
 	flag.Parse()

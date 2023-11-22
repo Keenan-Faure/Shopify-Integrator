@@ -165,6 +165,7 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 			return "", err
 		}
 		defer f.Close()
+		fmt.Println(os.Getwd())
 		w := csv.NewWriter(f)
 		err = w.WriteAll(data)
 
