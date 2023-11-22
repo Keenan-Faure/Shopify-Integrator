@@ -44,7 +44,7 @@ echo "---Running Docker compose up---"
 
 if ! docker compose up -d --force-recreate; then
     exit
-else 
+else
     source .env
     until
         docker exec $DB_NAME pg_isready

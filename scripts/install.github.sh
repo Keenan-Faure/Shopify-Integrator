@@ -21,8 +21,8 @@ else
     do 
         sleep 3;
     done
-    chmod +x ./sql/schema/migrations.github.sh
-    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.github.sh
+    chmod +x ./sql/schema/migrations.sh
+    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
 
     docker restart $SERVER_CONTAINER_NAME
 fi
