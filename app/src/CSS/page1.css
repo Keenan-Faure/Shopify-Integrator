@@ -426,12 +426,33 @@ a
 .detailed 
 {
     position: absolute;
-    color: white;
-    /* top: 5%; */
+    color: rgb(0, 0, 0);
     left: 50%;
     transform: translate(-50%);
     background-color: rgb(255 255 255 / 57%);
-    width: 100%;
+    width: 60%;
+    height: 100%;
+    overflow: auto;
+    text-align: center;
+}
+.details-left 
+{
+    position: absolute;
+    color: white;
+    right: 0%;
+    background-color: rgb(255 255 255 / 57%);
+    width: 20%;
+    height: 100%;
+    overflow: auto;
+    text-align: center;
+}
+.details-right
+{
+    position: absolute;
+    color: white;
+    left: 0%;
+    background-color: rgb(255 255 255 / 57%);
+    width: 20%;
     height: 100%;
     overflow: auto;
     text-align: center;
@@ -443,63 +464,45 @@ a
     font-size: 30px;
     font-weight: bold;
     text-decoration: underline;
-    top: 5%;
-    left: 50%;
-    transform: translate(-50%);
+    padding-bottom: 45px;
+    padding-top: 45px;
 }
 .details-activity 
 {
-
+    position: relative;
 }
 .details-description 
 {
-
+    position: relative;
 }
 .details-code 
 {
-    position: absolute;
-    top: 10%;
-    left: 50%;
-    transform: translate(-50%);
+    position: relative;
 }
 .details-options 
 {
-    position: absolute;
-    top: 10%;
-    left: 20%;
-    transform: translate(-20%);
+    position: relative;
 }
 .details-category 
 {
-    position: absolute;
-    top: 15%;
-    left: 70%;
-    transform: translate(-70%);
+    position: relative;
+
 }
 .details-type 
 {
-    position: absolute;
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%);
+    position: relative;
 }
 .details-vendor 
 {
-    position: absolute;
-    top: 30%;
-    left: 20%;
-    transform: translate(-20%);
+    position: relative;
 }
 .details-price 
 {
-    position: absolute;
-    top: 30%;
-    left: 70%;
-    transform: translate(-70%);
+    position: relative;
 }
 .details-update-date 
 {
-    
+    position: relative;
 }
 .close-button 
 {
@@ -514,6 +517,39 @@ a
     color: rgb(184, 11, 11);
     font-size: 45px;
     text-align: center;
+}
+table 
+{
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    border-collapse: collapse;
+    width: 80%;
+    position: relative;
+    left: 50%;
+    transform: translate(-50%);
+    margin-bottom: 40px;
+    color: black;
+}
+  
+td, th 
+{
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+  
+tr:nth-child(even) 
+{
+    background-color: #dddddd;
+    cursor: pointer;
+}
+tr
+{ 
+    border: none;
+    transition-duration: 0.4s;
+}
+tr:hover 
+{
+    border-left: 1px solid black;
 }
 
 
