@@ -13,11 +13,7 @@ then
     echo "pulling latest 'Shopify-Integrator-docs'"
     git pull
 else
-    if [ -z "$1" ]; then
-        git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
-    else
-        git clone "https://${{secrets.PAT}}@github.com/Keenan-Faure/Shopify-Integrator-docs"
-    fi
+    git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
     cd Shopify-Integrator-docs
 fi
 cd ../Shopify-Integrator
@@ -47,11 +43,9 @@ docker-compose rm -f
 echo "---Running Docker compose up---"
 
 if ! docker compose up -d --force-recreate; then
-    exit;
-else
-    if [ -z "$1" ]; then
-        source .env
-    fi
+    exit
+else 
+    source .env
     until
         docker exec $DB_NAME pg_isready
     do 
@@ -60,11 +54,7 @@ else
 
     echo "---Running database migrations---"
     chmod +x ./sql/schema/migrations.sh
-    if [ -z "$1" ]; then
-        docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
-    else
-        docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh ci
-    fi
+    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
 
     docker restart $SERVER_CONTAINER_NAME
 fi
