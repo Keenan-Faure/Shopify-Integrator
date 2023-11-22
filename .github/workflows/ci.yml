@@ -32,13 +32,10 @@ jobs:
         with:
           go-version: "1.20"
 
-      - name: Set up Goose
-        run: go install github.com/pressly/goose/v3/cmd/goose@latest
-
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Run database migrations
+      - name: Run install script
         run: |
           chmod +x ./scripts/install.sh
           ./scripts/install.sh ci
@@ -49,10 +46,6 @@ jobs:
           DB_PSW: ${{secrets.DB_PSW}}
           SERVER_CONTAINER_NAME: integrator-server
 
-      - name: Run test server
-        run: |
-          go build -o integrator-test
-          ./integrator-test --localhost
       - name: 🔎 Run unit tests
         run: go test ./... -cover
 

@@ -13,7 +13,11 @@ then
     echo "pulling latest 'Shopify-Integrator-docs'"
     git pull
 else
-    git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
+    if [ -z "$1" ]; then
+        git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
+    else
+        git clone "https://${{secrets.PAT}}github.com/Keenan-Faure/Shopify-Integrator-docs"
+    fi
     cd Shopify-Integrator-docs
 fi
 cd ../Shopify-Integrator
