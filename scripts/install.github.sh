@@ -1,5 +1,7 @@
 #!/bin/bash
 
+OS="$(uname -s)"
+
 # Builds the go code depending of OS
 if [ $OS == "Darwin" ]; then
     echo "OSX detected"
