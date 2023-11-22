@@ -1,7 +1,7 @@
 #!/bin/bash
 source .env
 docker-compose rm -f
-if ! docker compose up -d --force-recreate; then
+if ! docker compose up -d --force-recreate --profile init; then
     exit
 else 
     until
