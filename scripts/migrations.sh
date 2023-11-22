@@ -6,7 +6,7 @@ SSL_MODE="?sslmode=disable"
 DRIVER="postgres://"
 
 if [ ! -z "$1" ]; then
-    if [ $1 = "ci" ]; then
+    if [ $1 == "ci" ]; then
         cd ./sql/schema
         echo "Checking GOOSE version"
         goose -version

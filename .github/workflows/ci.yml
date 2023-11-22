@@ -40,13 +40,14 @@ jobs:
 
       - name: Run database migrations
         run: |
-          chmod +x ./scripts/migrations.sh
-          ./scripts/migrations.sh ci
+          chmod +x ./scripts/install.sh
+          ./scripts/install.sh ci
         shell: bash
         env:
+          DB_NAME: ${{secrets.DB_NAME}}
           DB_USER: ${{secrets.DB_USER}}
           DB_PSW: ${{secrets.DB_PSW}}
-          DB_NAME: ${{secrets.DB_NAME}}
+          SERVER_CONTAINER_NAME: integrator-server
 
       - name: Run test server
         run: |

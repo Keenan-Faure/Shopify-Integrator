@@ -43,9 +43,11 @@ docker-compose rm -f
 echo "---Running Docker compose up---"
 
 if ! docker compose up -d --force-recreate; then
-    exit
-else 
-    source .env
+    exit;
+else
+    if [ -z "$1" ]; then
+        source .env
+    fi
     until
         docker exec $DB_NAME pg_isready
     do 
@@ -54,7 +56,11 @@ else
 
     echo "---Running database migrations---"
     chmod +x ./sql/schema/migrations.sh
-    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
+    if [ -z "$1" ]; then
+        docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
+    else
+        docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh ci
+    fi
 
     docker restart $SERVER_CONTAINER_NAME
 fi
