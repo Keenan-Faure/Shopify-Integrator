@@ -165,8 +165,12 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 // POST /api/products/import?file_name={{file}}
 func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	file_name := r.URL.Query().Get("file_name")
-	fmt.Println(os.Getwd())
-	csv_products, err := iocsv.ReadFile(file_name)
+	wd, err := os.Getwd()
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	csv_products, err := iocsv.ReadFile(wd + file_name)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return

@@ -160,12 +160,15 @@ func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []st
 // Writes data to a file
 func WriteFile(data [][]string, file_name string) (string, error) {
 	if file_name != "" {
-		f, err := os.Create(filepath.Clean(file_name) + ".csv")
+		path, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		f, err := os.Create(filepath.Clean(path+file_name) + ".csv")
 		if err != nil {
 			return "", err
 		}
 		defer f.Close()
-		fmt.Println(os.Getwd())
 		w := csv.NewWriter(f)
 		err = w.WriteAll(data)
 
