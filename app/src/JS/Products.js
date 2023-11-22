@@ -47,7 +47,7 @@ function Products()
             navigation.style.left = "30%";
             navigation.style.position = "absolute";
             navigation.style.width = "70%";
-            navigation.style.animation = "MoveLeft 1.2s ease";
+            navigation.style.animation = "MoveLeft 0.8s ease";
         }
 
         /*  API  */
@@ -68,64 +68,66 @@ function Products()
         });
 
         /* When the user clicks on the pan elements show info about that specified pan element */
-        let pan = document.querySelectorAll(".pan");
-        for(let i = 0; i < pan.length; i++)
+        function DetailedView()
         {
-            pan[i].addEventListener("click", () =>
+            let pan = document.querySelectorAll(".pan");
+            console.log("pan");
+            for(let i = 0; i < pan.length; i++)
             {
-                
-                //var img = pan[i].querySelector(".pan-img").innerHTML; 
-                document.getElementById("img").style.backgroundImage = pan[i].querySelector(".pan-img").style.backgroundImage;
-                document.getElementById("te").innerHTML = pan[i].querySelector(".p-d-title").innerHTML;
-                document.getElementById("co").innerHTML = pan[i].querySelector(".p-d-code").innerHTML;
-                document.getElementById("op").innerHTML = pan[i].querySelector(".p-d-options").innerHTML; 
-                document.getElementById("ca").innerHTML = pan[i].querySelector(".p-d-category").innerHTML;
-                document.getElementById("ty").innerHTML = pan[i].querySelector(".p-d-type").innerHTML; 
-                document.getElementById("ve").innerHTML = pan[i].querySelector(".p-d-vendor").innerHTML;
-                document.getElementById("pr").innerHTML = pan[i].querySelector(".pan-price").innerHTML;
+                pan[i].addEventListener("click", () =>
+                {
+                    console.log([i] + " was clicked");
+                    //var img = pan[i].querySelector(".pan-img").innerHTML;
+                    document.getElementById("img").style.backgroundImage = pan[i].querySelector(".pan-img").style.backgroundImage;
+                    document.getElementById("te").innerHTML = pan[i].querySelector(".p-d-title").innerHTML;
+                    document.getElementById("co").innerHTML = pan[i].querySelector(".p-d-code").innerHTML;
+                    document.getElementById("op").innerHTML = pan[i].querySelector(".p-d-options").innerHTML; 
+                    document.getElementById("ca").innerHTML = pan[i].querySelector(".p-d-category").innerHTML;
+                    document.getElementById("ty").innerHTML = pan[i].querySelector(".p-d-type").innerHTML; 
+                    document.getElementById("ve").innerHTML = pan[i].querySelector(".p-d-vendor").innerHTML;
+                    document.getElementById("pr").innerHTML = pan[i].querySelector(".pan-price").innerHTML;
 
-                /* Get the filter & main elements */
+                    
+                    let filter = document.querySelector(".filter");
+                    let main = document.querySelector(".main");
+                    let navbar = document.getElementById("navbar");
+                    let details = document.querySelector(".details");
+                    let close = document.querySelector(".close-button");
+
+                    filter.style.animation = "Fadeout 0.5s ease-out";
+                    main.style.animation = "Fadeout 0.5s ease-out";
+                    navbar.style.animation = "Fadeout 0.5s ease-out";
+
+                    filter.style.display = "none";
+                    main.style.display = "none";
+                    navbar.style.display = "none";
+                    details.style.animation = "FadeIn ease-in 0.5s";
+                    details.style.display = "block";
+                    close.style.display = "block";
+                });
+
+                /* When the user clicks on the return button */
+                let close = document.querySelector(".close-button");
                 let filter = document.querySelector(".filter");
                 let main = document.querySelector(".main");
                 let navbar = document.getElementById("navbar");
                 let details = document.querySelector(".details");
-                let close = document.querySelector(".close-button");
-
-                filter.style.animation = "Fadeout 0.5s ease-out";
-                main.style.animation = "Fadeout 0.5s ease-out";
-                navbar.style.animation = "Fadeout 0.5s ease-out";
-
-                filter.style.display = "none";
-                main.style.display = "none";
-                navbar.style.display = "none";
-                details.style.animation = "FadeIn ease-in 0.5s";
-                details.style.display = "block";
-                close.style.display = "block";
-
-               
-            });
-
-            /* When the user clicks on the return button */
-            let close = document.querySelector(".close-button");
-            let filter = document.querySelector(".filter");
-            let main = document.querySelector(".main");
-            let navbar = document.getElementById("navbar");
-            let details = document.querySelector(".details");
-            close.addEventListener("click", ()=> 
-            {
-                close.style.display = "none";
-                details.style.animation = "Fadeout 0.5s ease-out";
-                main.style.animation = "FadeIn ease-in 0.5s";
-                filter.style.animation = "FadeIn ease-in 0.5s";
-                navbar.style.animation = "FadeIn ease-in 0.5s";
-                setTimeout(() => 
+                close.addEventListener("click", ()=> 
                 {
-                    details.style.display = "none";
-                    navbar.style.display = "block";
-                    main.style.display = "block";
-                    filter.style.display = "block";
-                }, 500);
-            });
+                    close.style.display = "none";
+                    details.style.animation = "Fadeout 0.5s ease-out";
+                    main.style.animation = "FadeIn ease-in 0.5s";
+                    filter.style.animation = "FadeIn ease-in 0.5s";
+                    navbar.style.animation = "FadeIn ease-in 0.5s";
+                    setTimeout(() => 
+                    {
+                        details.style.display = "none";
+                        navbar.style.display = "block";
+                        main.style.display = "block";
+                        filter.style.display = "block";
+                    }, 500);
+                });
+            }
         }
 
         /* Script to automatically format the number of elements on each page */
@@ -187,36 +189,46 @@ function Products()
                     const page = "http://localhost:8080/api/products?page=" + index;
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        if(_data == "")
-                        {
 
-                            let main = document.getElementById("pan-main");
-                            main.innerHTML = "No data";
-                        }
-                        else 
+                        flushSync(() => 
                         {
-                            flushSync(() => 
-                            {
-                                root.render(_data.map((el, i) => 
-                                    <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
-                                ))
-                            });
-                        }
+                            root.render(_data.map((el, i) => 
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                            ))
+                        });
                         
                     })
                     .fail( function(xhr) 
                     {
                         alert(xhr.responseText);
                     });
+
+                    let ahead = index + 1;
+                    /*  API  */
+                    $.get('http://localhost:8080/api/products?page=' + ahead, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        if(_data == "")
+                        {
+                            let next = document.getElementById("next");
+                            next.style.cursor = "not-allowed";
+                            next.disabled = true;
+                            
+                        } 
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+
                     Pagintation(index);
+                    setTimeout(() => { DetailedView(); }, 500);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -227,10 +239,7 @@ function Products()
 
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
                     .done(function( _data) 
                     {
@@ -238,7 +247,7 @@ function Products()
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
                             ))
                         });
                     })
@@ -248,6 +257,7 @@ function Products()
                     });
 
                     Pagintation(index--);
+                    setTimeout(() => { DetailedView(); }, 500);
                 });
             }
             else 
@@ -268,8 +278,7 @@ function Products()
                 prevPage.id = "prev";
                 prevPage.innerHTML = "←";
                 paginationDiv.appendChild(prevPage);
-                
-                
+
                 if(index == 1)
                 {
                     prevPage.disabled = true;
@@ -286,34 +295,25 @@ function Products()
                     prevPage.disabled = true;
                     prevPage.style.cursor = "not-allowed";
                 }
-
                 nextPage.addEventListener("click", () =>
                 {
                     index = index + 1;
                     /* Fetches the data from page, based on the page / index value */
                     const page = "http://localhost:8080/api/products?page=" + index;
-
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
                         /* Check if pan elements exist and remove + update if it does*/
                         let pan = document.querySelectorAll(".pan");
-                        pan.forEach(pan => 
-                        {
-                            pan.remove();
-                        });
-
+                        pan.forEach(pan => { pan.remove(); });
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
                             ))
                         });
                     })
@@ -322,7 +322,8 @@ function Products()
                         alert(xhr.responseText);
                     });
 
-                    Pagintation(index);
+                    Pagintation(index++);
+                    setTimeout(() => { DetailedView(); }, 500);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -333,24 +334,18 @@ function Products()
 
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
                         /* Check if pan elements exist and remove + update if it does*/
                         let pan = document.querySelectorAll(".pan");
-                        pan.forEach(pan => 
-                        {
-                            pan.remove();
-                        });
+                        pan.forEach(pan => { pan.remove(); });
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
                             ))
                         });
                     })
@@ -359,13 +354,14 @@ function Products()
                         alert(xhr.responseText);
                     });
 
-                    Pagintation(index--);
+                    Pagintation(index);
+                    setTimeout(() => { DetailedView(); }, 500);
                 });
             } 
         }
         Pagintation(1);
-        
-        
+        setTimeout(() => { DetailedView(); }, 500);
+
     }, []);
 
     return (
@@ -380,7 +376,9 @@ function Products()
                 <div className = "main-elements">
                     <div className = "pan-main" id = "pan-main">
                         {data.map((el, i) => 
-                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Code={el.product_code}
+                            />
                         )}
                     </div>
                 </div>

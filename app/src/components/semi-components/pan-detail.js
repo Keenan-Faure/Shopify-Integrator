@@ -12,7 +12,7 @@ function Pan_details(props)
             for(let i = 0; i < pan.length; i ++)
             {
                 pan[i].style.display = "block";
-                pan[i].style.animation = "appear 1.2s ease-in";
+                pan[i].style.animation = "appear 0.4s ease-in";
             }
         }, 1400);
 
@@ -53,7 +53,7 @@ function Pan_details(props)
                 <a href = "/#" className = "p-d-title">{props.Product_Title}</a>
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-code">{props.Product_Code}</a>
+                <a href = "/#" className = "p-d-code">{props.Product_Code}</a> | <a href = "/#" className = "p-d-id">{props.Product_ID}</a>
                 <br/><br/>
 
                 <a href = "/#" className = "p-d-options">{props.Product_Options}</a> | <a href = "/#" className = "p-d-category">{props.Product_Category}</a> | <a href = "/#" className = "p-d-type">{props.Product_Type}</a> | <a href = "/#" className = "p-d-vendor">{props.Product_Vendor}</a>

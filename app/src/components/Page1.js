@@ -17,8 +17,8 @@ function Page1(props)
         setTimeout(() =>
         {
             search.style.opacity = "1";
-            search.style.animation = "appear 1.2s ease-in";
-        }, 1400);
+            search.style.animation = "appear 0.8s ease-in";
+        }, 1000);
 
         /* animation for the pan elements */
         let pan = document.querySelectorAll(".pan");
@@ -28,11 +28,11 @@ function Page1(props)
             for(let i = 0; i < pan.length; i ++)
             {
                 pan[i].style.display = "block";
-                pan[i].style.animation = "appear 1.2s ease-in";
+                pan[i].style.animation = "appear 0.8s ease-in";
             }
             pag.style.display = "block";
-            pag.style.animation = "appear 1.4s ease-in";
-        }, 1400);
+            pag.style.animation = "appear 1s ease-in";
+        }, 1000);
 
         /* filter element animation */
         let filters = document.querySelector(".filter").children;
@@ -41,9 +41,9 @@ function Page1(props)
             for(let i = 0; i < filters.length; i ++)
             {
                 filters[i].style.display = "block";
-                filters[i].style.animation = "appear 1.2s ease-in";
+                filters[i].style.animation = "appear 0.8s ease-in";
             }
-        }, 1400);
+        }, 1000);
 
         /* filter image script to show when clicked on */
         let filter = document.querySelectorAll(".filter-elements");
@@ -92,7 +92,7 @@ Page1.defaultProps =
     transform: 'translate(-30%, -6%)',
     width: '70%',
     height: '96%', 
-    animation: 'SlideUp2 1.2s ease-in'
+    animation: 'SlideUp2 0.8s ease-in'
 };
 
 export default Page1;
