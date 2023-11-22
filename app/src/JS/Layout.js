@@ -3,7 +3,7 @@ import {useNavigate} from 'react-router-dom';
 import '../CSS/navigation-bar.css';
 
 /* Insert Logo below ↓ */
-import MyImage from '../media/Screenshot 2023-08-31 144726.png';
+import MyImage from '../media/Screenshot.png';
 
 const Layout = () => {
 

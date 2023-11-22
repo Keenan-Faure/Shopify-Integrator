@@ -1,9 +1,12 @@
 import {useEffect} from 'react';
 import Page2 from '../components/Page2';
+import Detailed_product from '../components/semi-components/detailed_product';
+import MyImage from '../media/Screenshot.png';
+
 import '../CSS/page2.css';
 
 /* Must start with a Caps letter */
-function Settings(props)
+function Settings()
 {
     useEffect(()=> 
     {
@@ -20,8 +23,7 @@ function Settings(props)
 
     return (
         <>
-            <Page2
-            />
+            <Detailed_product Product_Image = {MyImage}/>
             
         </>
     );

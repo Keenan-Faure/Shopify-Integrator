@@ -234,7 +234,7 @@ input.search-area
 }
 .p-d-id 
 {
-    
+    display: none;
 }
 @keyframes SlideUp 
 {
@@ -407,9 +407,10 @@ a
     font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     font-size: 13px;
     background-color: rgba(255, 255, 255, 0.7);
-    padding: 10px;
-    width: auto;
-    height: auto;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: block;
 }
 .details-image
 {
@@ -418,13 +419,41 @@ a
     width: 100%;
     height: 100%;
     position: absolute;
+    overflow: auto;
+    padding: 10px;
+    filter: blur(5px);
+}
+.detailed 
+{
+    position: absolute;
+    color: white;
+    /* top: 5%; */
+    left: 50%;
+    transform: translate(-50%);
+    background-color: rgb(255 255 255 / 57%);
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    text-align: center;
 }
 .details-title 
 {
-    position: absolute;
+    position: relative;
+    color: black;
+    font-size: 30px;
+    font-weight: bold;
+    text-decoration: underline;
     top: 5%;
     left: 50%;
     transform: translate(-50%);
+}
+.details-activity 
+{
+
+}
+.details-description 
+{
+
 }
 .details-code 
 {
@@ -467,6 +496,10 @@ a
     top: 30%;
     left: 70%;
     transform: translate(-70%);
+}
+.details-update-date 
+{
+    
 }
 .close-button 
 {

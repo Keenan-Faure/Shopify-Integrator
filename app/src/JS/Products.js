@@ -52,10 +52,7 @@ function Products()
 
         /*  API  */
         const api_key = localStorage.getItem('api_key');
-        $.ajaxSetup
-        ({
-            headers: { 'Authorization': 'ApiKey ' + api_key}
-        });
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
         $.get("http://localhost:8080/api/products?page=1", [], [])
         .done(function( _data) 
         {
@@ -77,17 +74,23 @@ function Products()
                 pan[i].addEventListener("click", () =>
                 {
                     console.log([i] + " was clicked");
-                    //var img = pan[i].querySelector(".pan-img").innerHTML;
-                    document.getElementById("img").style.backgroundImage = pan[i].querySelector(".pan-img").style.backgroundImage;
-                    document.getElementById("te").innerHTML = pan[i].querySelector(".p-d-title").innerHTML;
-                    document.getElementById("co").innerHTML = pan[i].querySelector(".p-d-code").innerHTML;
-                    document.getElementById("op").innerHTML = pan[i].querySelector(".p-d-options").innerHTML; 
-                    document.getElementById("ca").innerHTML = pan[i].querySelector(".p-d-category").innerHTML;
-                    document.getElementById("ty").innerHTML = pan[i].querySelector(".p-d-type").innerHTML; 
-                    document.getElementById("ve").innerHTML = pan[i].querySelector(".p-d-vendor").innerHTML;
-                    document.getElementById("pr").innerHTML = pan[i].querySelector(".pan-price").innerHTML;
+                    let id = pan[i].querySelector(".p-d-id").innerHTML;
 
-                    
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/products/" + id, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+
+
                     let filter = document.querySelector(".filter");
                     let main = document.querySelector(".main");
                     let navbar = document.getElementById("navbar");
