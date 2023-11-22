@@ -1,4 +1,14 @@
 #!/bin/bash
+
+# Builds the go code depending of OS
+if [ $OS == "Darwin" ]; then
+    echo "OSX detected"
+    GOOS=linux GOARCH=amd64 go build -o integrator
+else
+    echo "Linux detected"
+    go build -o integrator
+fi
+
 source .env
 docker-compose rm -f
 if ! docker compose up -d --force-recreate --no-deps server postgres; then
