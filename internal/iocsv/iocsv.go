@@ -164,7 +164,7 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		f, err := os.Create(filepath.Clean(path+file_name) + ".csv")
+		f, err := os.Create(filepath.Clean(path+"/"+file_name) + ".csv")
 		if err != nil {
 			return "", err
 		}
