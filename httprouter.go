@@ -177,7 +177,10 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price", "qty_Cape Town", "qty_Japan"},
 			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00", "10", "5"},
 		}
-		iocsv.WriteFile(data, "test_import")
+		_, err := iocsv.WriteFile(data, "test_import")
+		if(err != nil) {
+			fmt.Println(err)
+			}
 	}
 	wd, err := os.Getwd()
 	if err != nil {
