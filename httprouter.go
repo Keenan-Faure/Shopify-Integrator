@@ -178,9 +178,9 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00", "10", "5"},
 		}
 		_, err := iocsv.WriteFile(data, "test_import")
-		if(err != nil) {
+		if err != nil {
 			fmt.Println(err)
-			}
+		}
 	}
 	wd, err := os.Getwd()
 	if err != nil {
