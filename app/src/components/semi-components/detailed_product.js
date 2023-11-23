@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import '../../CSS/page1.css';
+import '../../CSS/detailed.css';
 
 function Detailed_product(props)
 {
@@ -43,6 +43,17 @@ function Detailed_product(props)
         });
 
         document.getElementById("Product").click();
+
+        let activity = document.querySelector(".details-title").innerHTML;
+        let status = document.querySelector(".inactive");
+        if(activity != "1")
+        {
+            status.className = "inactive";
+        }
+        else 
+        {
+            status.className = "active";
+        }
           
     }, []);
 
@@ -58,10 +69,9 @@ function Detailed_product(props)
                 <div className = "details-details">
                     <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
                     <div className = "detailed">
-                        <div className = "details-title">
-                            <i className = "active"/>{props.Product_Title}
-                            <span id = "activity">Activity</span>
-                        </div>
+                        <div className = "details-title"> {props.Product_Title}</div>
+                        <i className = "inactive"/>
+                        <span id = "activity">Activity</span>
                         <table>
                             <tbody>
                                 <tr>
@@ -71,10 +81,10 @@ function Detailed_product(props)
                                     <th>Product_Price</th>
                                 </tr>
                                 <tr>
-                                    <td><div className = "details-category">Product_Category</div></td>
-                                    <td><div className = "details-code">Product_Code</div></td>
-                                    <td><div className = "details-type">Product_Type</div></td>
-                                    <td><div className = "details-price">Product_Price</div></td>
+                                    <td>{props.Product_Category}</td>
+                                    <td>{props.Product_Code}</td>
+                                    <td>{props.Product_Type}</td>
+                                    <td>{props.Product_Price}</td>
                                 </tr>
                             </tbody>
                         </table> 
@@ -91,7 +101,31 @@ function Detailed_product(props)
             <div className = "details-details">
                     <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
                     <div className = "detailed">
-                        
+
+                        <div className = "details-title"> {props.Product_Title} Variants</div>
+                        <div className = "variants">
+                            <div className = "variant-title">{props.Variant_Title}</div>
+
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>Variant Barcode</th>
+                                        <th>Variant ID</th>
+                                        <th>Variant SKU</th>
+                                    </tr>
+                                    <tr>
+                                        <td>{props.Variant_Barcode}</td>
+                                        <td>{props.Variant_ID}</td>
+                                        <td>{props.Variant_SKU}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div className = "vr">
+                                <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
+                                <div className = "variant-price"><c>--</c>{props.Price_high}</div><div className = "variant-price">{props.Price_low}</div>
+                            </div>
+                            
+                        </div> 
                     </div>
                     <div className = "details-left"></div>
                     <div className = "details-right"></div>
@@ -121,7 +155,14 @@ Detailed_product.defaultProps =
     Product_Type: 'Type',
     Product_Vendor: 'Vendor',
     Product_Image: '#ccc',
-    Product_Price: 'Price'
+    Product_Price: 'Price',
+    Variant_Title: 'Variant Title',
+    Variant_Barcode: 'Variant Barcode',
+    Variant_ID: 'Variant ID',
+    Variant_SKU: 'Variant SKU',
+    Variant_UpdateDate: 'Variant Update Date',
+    Price_high: 'High Price',
+    Price_low: 'Low Price'
 }
 export default Detailed_product;
 /*
