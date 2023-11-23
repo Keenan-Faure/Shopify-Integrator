@@ -391,6 +391,55 @@ a
     background-size: cover;
     background-image: url(../media/add.png);
 }
+
+.tablink 
+{
+    background-color: #fcfafa;
+    color: rgb(37, 37, 37);
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 8px 16px;
+    margin: 2px;
+    font-size: 15px;
+    width: 7%;
+    position: relative;
+    transition-duration: 0.4s;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+/*
+.tablink:first-child
+{
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+}
+.tablink:last-child
+{
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+*/
+.tablink:hover 
+{
+    background-color: #b6b6b6;
+}
+
+.tabcontent 
+{
+    color: white;
+    display: none;
+    height: 100%;
+    position: absolute;
+    width: 100%;
+}
+.button-holder 
+{
+    position: relative;
+    width: 100%;
+    text-align: center;
+    background-color: rgba(238, 243, 248, 1);
+}
+
 .details 
 {
     position: absolute;
@@ -414,26 +463,29 @@ a
 }
 .details-image
 {
-    background-size: cover;
-    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
     width: 100%;
     height: 100%;
     position: absolute;
     overflow: auto;
     padding: 10px;
-    filter: blur(5px);
+    filter: blur(2px);
+    left: 0%;
+    /* transform: translate(-50%); */
 }
 .detailed 
 {
     position: absolute;
     color: rgb(0, 0, 0);
     left: 50%;
-    transform: translate(-50%);
+    transform: translate(-49%);
     background-color: rgb(255 255 255 / 57%);
-    width: 60%;
+    width: 51%;
     height: 100%;
     overflow: auto;
     text-align: center;
+    left: 54%;
 }
 .details-left 
 {
@@ -445,6 +497,7 @@ a
     height: 100%;
     overflow: auto;
     text-align: center;
+    border-left: 1px solid #e1e1e1;
 }
 .details-right
 {
@@ -452,7 +505,7 @@ a
     color: white;
     left: 0%;
     background-color: rgb(255 255 255 / 57%);
-    width: 20%;
+    width: 29%;
     height: 100%;
     overflow: auto;
     text-align: center;
@@ -474,6 +527,12 @@ a
 .details-description 
 {
     position: relative;
+    border-bottom: 1px solid black;
+    width: 25%;
+    font-size: 18px;
+    text-align: center;
+    left: 50%;
+    transform: translate(-50%);
 }
 .details-code 
 {
@@ -528,18 +587,17 @@ table
     transform: translate(-50%);
     margin-bottom: 40px;
     color: black;
+    font-size: 14px;
 }
-  
 td, th 
 {
-    border: 1px solid #dddddd;
+    border: 1px solid #5d5d5d;
     text-align: left;
-    padding: 8px;
+    padding: 10px;
 }
-  
 tr:nth-child(even) 
 {
-    background-color: #dddddd;
+    background-color: #e0e0e0;
     cursor: pointer;
 }
 tr
@@ -552,4 +610,30 @@ tr:hover
     border-left: 1px solid black;
 }
 
+.active
+{
+    position: absolute;
+    height: 30px;
+    width: 30px;
+    right: 245px;
+    display: block;
+    background-size: cover;
+    background-image: url(../media/tick.png);
+}
+#activity
+{
+    transition-duration: 0.1s;
+    visibility: hidden;
+    position: absolute;
+    margin: 1px;
+    font-size: 12px;
+    left: 68%;
+    top: 50px;
+    user-select: none;
+    background-color: rgba(61, 61, 61, 0.1);
+}
+.active:hover ~ #activity
+{
+    visibility: visible;
+}
 
