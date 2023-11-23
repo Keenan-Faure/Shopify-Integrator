@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"integrator/internal/database"
 	"io"
-	"iocsv"
 	"log"
 	"net/http"
 	"objects"
@@ -85,14 +84,6 @@ func CreateCustmr() objects.RequestBodyCustomer {
 		fmt.Println(err)
 	}
 	return customerData
-}
-
-func CreateTestCSVFile() {
-	data := [][]string{
-		{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price", "qty_Cape Town", "qty_Japan"},
-		{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00", "10", "5"},
-	}
-	iocsv.WriteFile(data, "test_import")
 }
 
 func CreateQueueItemProduct(dbconfig *DbConfig, user database.User, product objects.RequestBodyProduct) objects.RequestQueueItem {
@@ -504,8 +495,7 @@ func TestProductIOCRUD(t *testing.T) {
 	fmt.Println("Test 1 - Importing products")
 	dbconfig := SetUpDatabase()
 	user := CreateDemoUser(&dbconfig)
-	CreateTestCSVFile()
-	res, err := UFetchHelper("products/import?file_name=test_import", "POST", user.ApiKey)
+	res, err := UFetchHelper("products/import?file_name=test_import&test=true", "POST", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -537,7 +527,7 @@ func TestProductIOCRUD(t *testing.T) {
 	}
 	dbconfig.DB.RemoveProductByCode(context.Background(), "grouper")
 	fmt.Println("Test 2 - Exporting products")
-	res, err = UFetchHelperPost("products/export", "GET", user.ApiKey, nil)
+	res, err = UFetchHelperPost("products/export?test=true", "GET", user.ApiKey, nil)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -555,10 +545,6 @@ func TestProductIOCRUD(t *testing.T) {
 	}
 	if exportResponse.Message == "" {
 		t.Errorf("Expected a file name, but found " + exportResponse.Message)
-	}
-	err = os.Remove(exportResponse.Message)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 }
 

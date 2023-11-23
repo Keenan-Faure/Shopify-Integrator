@@ -92,6 +92,7 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap(w http.ResponseWriter, r *http
 
 // GET /api/products/export
 func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	test := r.URL.Query().Get("test")
 	product_ids, err := dbconfig.DB.GetProductIDs(r.Context())
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -156,15 +157,28 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	// removes the product from the server if there are tests
+	if test == "true" {
+		defer os.Remove(file_name)
+	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: file_name,
 	})
 	// use javascript to return that file to be sent on the browser
 }
 
-// POST /api/products/import?file_name={{file}}
+// POST /api/products/import?file_name={{file}}&test=true
 func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	file_name := r.URL.Query().Get("file_name")
+	test := r.URL.Query().Get("test")
+	if test == "true" {
+		// generate the file for the test
+		data := [][]string{
+			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price", "qty_Cape Town", "qty_Japan"},
+			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00", "10", "5"},
+		}
+		iocsv.WriteFile(data, "test_import")
+	}
 	wd, err := os.Getwd()
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
