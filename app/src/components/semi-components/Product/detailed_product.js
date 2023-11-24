@@ -63,7 +63,7 @@ function Detailed_product(props)
         
             <div className="tabcontent" id="_Product" >
                 <div className = "details-details">
-                    <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
+                    <div className = "auto-slideshow-container" />
                     <div className = "detailed">
                         <div className = "details-title">{props.Product_Title}</div>
                         <i className = "inactive"/>
@@ -95,7 +95,7 @@ function Detailed_product(props)
 
             <div className="tabcontent" id="_Variants" >
                 <div className = "details-details">
-                <div className = "auto-slideshow-container" />
+                    <div className = "auto-slideshow-container" />
                     <div className = "detailed">
                         <div className = "details-title"> {props.Product_Title} Variants</div>
                         <div className = "variants" id="_variants" >

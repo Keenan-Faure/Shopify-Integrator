@@ -12,6 +12,7 @@ function Detailed_Images(props)
         {
             let i;
             let slides = document.getElementsByClassName("mySlides");
+            console.log(slides);
             if(slides != null)
             {
                 for (i = 0; i < slides.length; i++) 

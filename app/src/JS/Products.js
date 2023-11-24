@@ -105,13 +105,16 @@ function Products()
                         /* For some reason it wont pick up the element unless it throw it here */
                         setTimeout(() =>
                         {
-                            let _div = details.querySelector(".auto-slideshow-container");
-                            let _root = createRoot(_div);
+                            let _div = details.querySelectorAll(".auto-slideshow-container");
+                            for(let i = 0; i < _div.length; i++)
+                            {
+                                let _root = createRoot(_div[i]);
 
-                            _root.render( _data.product_images.map((el, i) =>
-                                <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                            ))
-
+                                _root.render( _data.product_images.map((el, i) =>
+                                    <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                ))
+                            }
+                            
                             let new_div = details.querySelector(".variants"); 
                             let rt = createRoot(new_div);
     
@@ -124,7 +127,7 @@ function Products()
                                 <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
                                 ))
                             */
-                        }, 50);
+                        }, 0);
                          
 
                            
