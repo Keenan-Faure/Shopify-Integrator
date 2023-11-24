@@ -24,5 +24,5 @@ WHERE product_id = $1;
 
 -- name: GetMaxImagePosition :one
 SELECT 
-    CAST(MAX("position") AS INTEGER)
+    CAST(COALESCE(MAX("position"), 0) AS INTEGER)
 FROM product_images;

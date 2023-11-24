@@ -4,33 +4,10 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  DB_NAME: postgres
-  DB_PASSWORD: postgres
-  DB_USER: postgres
-  DB_PORT: 5432
-  DOCKER_DB_URL: postgres://postgres:postgres@postgres:5432/
-
 jobs:
   integration-tests:
     name: integration tests
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_USER: $DB_USER
-          POSTGRES_PASSWORD: $DB_PASSWORD
-          POSTGRES_PORT: $DB_PORT
-          POSTGRES_DB: $DB_NAME
-
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Set up Go
@@ -38,24 +15,15 @@ jobs:
         with:
           go-version: "1.20"
 
-      - name: Set up Goose
-        uses: go install github.com/pressly/goose/v3/cmd/goose@latest
-        with:
-          go-version: "1.20"
-
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Run database migrations
+      - name: Run install script
         run: |
-          chmod +x ./public/scripts/test.sh
-          ./scripts/migrations.sh
+          chmod +x ./scripts/install.github.sh
+          ./scripts/install.github.sh
         shell: bash
 
-      - name: Run test server
-        run: |
-          go build -o integrator-test
-          ./integrator-test --test
       - name: 🔎 Run unit tests
         run: go test ./... -cover
 

@@ -11,6 +11,9 @@ WORKDIR /keenan/
 ADD /sql/ /keenan/sql/
 ADD /scripts/migrations.sh /keenan/sql/schema
 
+# Add test_payloads for tests
+ADD /test_payloads /keenan/test_payloads
+
 # Mount the .env file for development
 COPY .env /keenan/sql/schema/
 

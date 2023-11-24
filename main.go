@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"shopify"
+	"time"
 	"utils"
 
 	"github.com/go-chi/chi/v5"
@@ -23,15 +24,22 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
-	flags := flag.Bool("test", false, "Enable server for tests only")
+	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
+	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
 	flag.Parse()
 
-	dbCon, err := InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("db_name") + "?sslmode=disable")
+	connection_string := "postgres://" + utils.LoadEnv("db_user") + ":" + utils.LoadEnv("db_psw")
+	host := "@localhost:5432/"
+	if !*use_localhost {
+		host = "@postgres:5432/"
+	}
+	dbCon, err := InitConn(connection_string + host + utils.LoadEnv("db_name") + "?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}
+
 	shopifyConfig := shopify.InitConfigShopify()
-	if !*flags {
+	if !*workers {
 		fmt.Println("Starting Workers")
 		go iocsv.LoopRemoveCSV()
 		if shopifyConfig.Valid {
@@ -112,7 +120,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	server := &http.Server{
 		Addr:              ":" + port,
 		Handler:           r,
-		ReadHeaderTimeout: 300,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	log.Printf("Serving files from %s and listening on port %s", file_path, port)

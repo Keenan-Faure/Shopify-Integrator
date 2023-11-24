@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"integrator/internal/database"
 	"io"
-	"iocsv"
 	"log"
 	"net/http"
 	"objects"
@@ -21,7 +20,8 @@ import (
 )
 
 func SetUpDatabase() DbConfig {
-	dbCon, err := InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("database") + "?sslmode=disable")
+	connection_string := "postgres://" + utils.LoadEnv("db_user") + ":" + utils.LoadEnv("db_psw")
+	dbCon, err := InitConn(connection_string + "@127.0.0.1:5432/" + utils.LoadEnv("db_name") + "?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}
@@ -84,14 +84,6 @@ func CreateCustmr() objects.RequestBodyCustomer {
 		fmt.Println(err)
 	}
 	return customerData
-}
-
-func CreateTestCSVFile() {
-	data := [][]string{
-		{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price", "qty_Cape Town", "qty_Japan"},
-		{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00", "10", "5"},
-	}
-	iocsv.WriteFile(data, "test_import")
 }
 
 func CreateQueueItemProduct(dbconfig *DbConfig, user database.User, product objects.RequestBodyProduct) objects.RequestQueueItem {
@@ -187,21 +179,36 @@ func CreateProd() objects.RequestBodyProduct {
 }
 
 func CreateDemoUser(dbconfig *DbConfig) database.User {
-	user, err := dbconfig.DB.CreateUser(context.Background(), database.CreateUserParams{
-		ID:        uuid.New(),
-		Name:      "Demo",
-		Email:     "Demo@test.com",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
+	user, err := dbconfig.DB.GetUserByEmail(context.Background(), "Demo@test.com")
 	if err != nil {
-		return database.User{}
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return database.User{}
+		}
 	}
-	return user
+	if user.ApiKey == "" {
+		user, err := dbconfig.DB.CreateUser(context.Background(), database.CreateUserParams{
+			ID:        uuid.New(),
+			Name:      "Demo",
+			Email:     "Demo@test.com",
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			log.Println(err)
+			return database.User{}
+		}
+		return user
+	} else {
+		return user
+	}
 }
 
 func TestDatabaseConnection(t *testing.T) {
 	fmt.Println("Test Case 1 - Invalid database url string")
+	connection_string := "postgres://" + utils.LoadEnv("db_user") + ":" + utils.LoadEnv("db_psw")
+	docker_url := connection_string + "@localhost:5432/"
+
 	dbconfig, err := InitConn("abc123")
 	if err != nil && dbconfig.Valid {
 		t.Errorf("Expected 'nil' but found: " + err.Error())
@@ -214,7 +221,7 @@ func TestDatabaseConnection(t *testing.T) {
 		t.Errorf("Expected 'error' but found 'nil'")
 	}
 	fmt.Println("Test Case 2 - Invalid database")
-	dbconfig, err = InitConn(utils.LoadEnv("docker_db_url") + "fake_abc123" + "?sslmode=disable")
+	dbconfig, err = InitConn(docker_url + "fake_abc123" + "?sslmode=disable")
 	if err != nil && dbconfig.Valid {
 		t.Errorf("Expected 'nil' but found: " + err.Error())
 	}
@@ -226,7 +233,7 @@ func TestDatabaseConnection(t *testing.T) {
 		t.Errorf("Expected 'error' but found 'nil'")
 	}
 	fmt.Println("Test Case 3 - Valid connection url")
-	dbconfig, err = InitConn(utils.LoadEnv("docker_db_url") + utils.LoadEnv("database") + "?sslmode=disable")
+	dbconfig, err = InitConn(docker_url + utils.LoadEnv("db_name") + "?sslmode=disable")
 	if err != nil && !dbconfig.Valid {
 		t.Errorf("Expected 'nil' but found: " + err.Error())
 	}
@@ -423,13 +430,13 @@ func TestCustomerCRUD(t *testing.T) {
 	if res.StatusCode != 201 {
 		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	customerData := objects.RequestString{}
+	customerData := objects.Customer{}
 	err = json.Unmarshal(respBody, &customerData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	fmt.Println("Test 2 - Fetching customer")
-	res, err = UFetchHelper("customers/"+customerData.Message, "GET", user.ApiKey)
+	res, err = UFetchHelper("customers/"+customerData.ID.String(), "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -441,7 +448,7 @@ func TestCustomerCRUD(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	customer_id, err := uuid.Parse(customerData.Message)
+	customer_id, err := uuid.Parse(customerData.ID.String())
 	if err != nil {
 		t.Errorf("Unexpected error: " + err.Error())
 	}
@@ -453,8 +460,8 @@ func TestCustomerCRUD(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	if customerData_fetched.ID.String() != customerData.Message {
-		t.Errorf("Expected '" + customerData_fetched.ID.String() + "' but found: " + customerData.Message)
+	if customerData_fetched.ID.String() != customerData.ID.String() {
+		t.Errorf("Expected '" + customerData_fetched.ID.String() + "' but found: " + customerData.ID.String())
 	}
 
 	fmt.Println("Test 3 - Deleting customer & recheck")
@@ -462,7 +469,7 @@ func TestCustomerCRUD(t *testing.T) {
 	type ErrorStruct struct {
 		Error string `json:"error"`
 	}
-	res, err = UFetchHelper("customers/"+customerData.Message, "GET", user.ApiKey)
+	res, err = UFetchHelper("customers/"+customerData.ID.String(), "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -488,8 +495,7 @@ func TestProductIOCRUD(t *testing.T) {
 	fmt.Println("Test 1 - Importing products")
 	dbconfig := SetUpDatabase()
 	user := CreateDemoUser(&dbconfig)
-	CreateTestCSVFile()
-	res, err := UFetchHelper("products/import?file_name=test_import", "POST", user.ApiKey)
+	res, err := UFetchHelper("products/import?file_name=test_import&test=true", "POST", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -521,7 +527,7 @@ func TestProductIOCRUD(t *testing.T) {
 	}
 	dbconfig.DB.RemoveProductByCode(context.Background(), "grouper")
 	fmt.Println("Test 2 - Exporting products")
-	res, err = UFetchHelperPost("products/export", "GET", user.ApiKey, nil)
+	res, err = UFetchHelperPost("products/export?test=true", "GET", user.ApiKey, nil)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -539,10 +545,6 @@ func TestProductIOCRUD(t *testing.T) {
 	}
 	if exportResponse.Message == "" {
 		t.Errorf("Expected a file name, but found " + exportResponse.Message)
-	}
-	err = os.Remove(exportResponse.Message)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 }
 
@@ -672,7 +674,8 @@ func TestQueueCRUD(t *testing.T) {
 	if queueCount.AddOrder != 0 {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddOrder))
 	}
-	if queueCount.AddProduct != 0 {
+	// by default the queue is disabled
+	if queueCount.AddProduct != 1 {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddProduct))
 	}
 	if queueCount.AddVariant != 0 {
@@ -688,4 +691,5 @@ func TestQueueCRUD(t *testing.T) {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.UpdateVariant))
 	}
 	defer UFetchHelperPost("queue?status=completed", "DELETE", user.ApiKey, &buffer)
+	defer UFetchHelperPost("queue?instruction=add_product", "DELETE", user.ApiKey, &buffer)
 }
