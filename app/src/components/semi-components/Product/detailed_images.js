@@ -5,34 +5,54 @@ function Detailed_Images(props)
 {
     useEffect(()=> 
     {
-        let slideIndex = 0;
-        showSlides();
+        
         
         function showSlides() 
         {
-            let i;
             let slides = document.getElementsByClassName("mySlides");
-            console.log(slides);
-            if(slides != null)
+            
+            
+            setTimeout(() =>
             {
-                for (i = 0; i < slides.length; i++) 
+                console.log(slides);
+                
+                if(slides.length <= 2)
                 {
-                slides[i].style.display = "none";  
+                    
+                    for(let i = 0; i < slides.length; i++)
+                    {
+                        slides[i].style.display = "block"
+                        slides[i].style.animationName = "";
+                    }
                 }
-                slideIndex++;
-                if (slideIndex > slides.length) {slideIndex = 1}    
-                slides[slideIndex-1].style.display = "block";  
-                setTimeout(() =>
+                else if(slides.length > 2)
                 {
-                    showSlides();
-                }, 5000); // Change image every 5 seconds
-            }
-            else 
-            {
-                console.log("no slides to display");
-            }
+                    for (let i = 0; i < slides.length; i++) 
+                    {
+                        slides[i].style.display = "none";  
+                    }
+                    slideIndex++;
+                    if (slideIndex > slides.length) {slideIndex = 1}    
+                    slides[slideIndex-1].style.display = "block";  
+                    setTimeout(() =>
+                    {
+                        showSlides();
+                    }, 5000); // Change image every 5 seconds
+                }
+                else
+                {
+                    console.log("no slides to display");
+                }
+                
+            },100)
+            
+            
             
         }
+
+        let slideIndex = 0;
+        showSlides();
+
     }, []);
 
     return (

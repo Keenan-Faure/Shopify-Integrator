@@ -104,6 +104,7 @@
     height: 100%;
     overflow: auto;
     text-align: center;
+    border-right: 1px solid #e1e1e1;
 }
 .details-title 
 {
