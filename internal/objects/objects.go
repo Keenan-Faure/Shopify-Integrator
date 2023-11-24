@@ -6,6 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type RequestWebhookURL struct {
+	ApiKey string `json:"api_key"`
+}
+
 // queue.go
 
 type ResponseQueueWorker struct {

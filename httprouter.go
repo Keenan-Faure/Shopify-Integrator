@@ -20,6 +20,23 @@ import (
 	"github.com/google/uuid"
 )
 
+// POST /api/webhook
+func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	body, err := DecodeWebhookURL(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	if body.ApiKey == "" {
+		RespondWithError(w, http.StatusBadRequest, "data validation error")
+		return
+	}
+	// check if a user exists
+	// create webhook url
+	// how we going to get the ngrok forwarding url??
+	// return url as a string
+}
+
 // GET /api/inventory
 func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
