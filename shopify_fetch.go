@@ -19,18 +19,18 @@ func LoopJSONShopify(
 	dbconfig *DbConfig,
 	shopifyConfig shopify.ConfigShopify) {
 	fetch_url := ""
-	fetch_time := 5
+	fetch_time := 1
 	fetch_time_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_shopify_fetch_time")
 	if err != nil {
-		fetch_time = 5
+		fetch_time = 1
 	}
 	fetch_time, err = strconv.Atoi(fetch_time_db.Value)
 	if err != nil {
-		fetch_time = 5
+		fetch_time = 1
 	}
 	// do not allow fetch time lower than 5 minutes
-	if fetch_time < 5 {
-		fetch_time = 5
+	if fetch_time < 1 {
+		fetch_time = 1
 	}
 	ticker := time.NewTicker(time.Duration(fetch_time) * time.Minute)
 	for ; ; <-ticker.C {
@@ -523,6 +523,7 @@ func LoopJSONShopify(
 			}
 			log.Printf("From Shopify %d products were collected", len(shopifyProds.Products))
 			fetch_url = utils.GetNextURL(next)
+			fmt.Println(fetch_url)
 		}
 	}
 }

@@ -146,10 +146,22 @@ func GetAppSettings(key string) map[string]string {
 
 // Returns the next URL in the Shopify Response header
 func GetNextURL(next string) string {
-	result := strings.Split(next, ";")
+	result := strings.Split(next, ", ")
 	if len(result) == 0 {
-		return ""
+		result = strings.Split(next, "; ")
+		if len(result) == 0 {
+			return ""
+		} else {
+			next = strings.TrimSuffix(strings.TrimPrefix(result[0], "<"), ">")
+			result = strings.Split(next, "?")
+			if len(result) > 0 {
+				next = "products.json?" + result[1]
+				return next
+			}
+			return ""
+		}
 	}
+	result = strings.Split(result[len(result)-1], "; ")
 	next = strings.TrimSuffix(strings.TrimPrefix(result[0], "<"), ">")
 	result = strings.Split(next, "?")
 	if len(result) > 0 {
