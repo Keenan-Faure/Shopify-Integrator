@@ -10,28 +10,26 @@ function Product_Variants(props)
 
     return (
         <div>
-            <div className = "variants">
-                <div className = "variant-title">{props.Variant_Title}</div>
-                <table>
-                    <tbody>
-                        <tr>
-                            <th>Variant Barcode</th>
-                            <th>Variant ID</th>
-                            <th>Variant SKU</th>
-                        </tr>
-                        <tr>
-                            <td>{props.Variant_Barcode}</td>
-                            <td>{props.Variant_ID}</td>
-                            <td>{props.Variant_SKU}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div className = "vr">
-                    <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
-                    <div className = "variant-price"><div className = "c">--</div>{props.Price_high}</div><div className = "variant-price">{props.Price_low}</div>
-                </div>
-                
-            </div> 
+            
+            <div className = "variant-title">{props.Variant_Title}</div>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Variant Barcode</th>
+                        <th>Variant ID</th>
+                        <th>Variant SKU</th>
+                    </tr>
+                    <tr>
+                        <td>{props.Variant_Barcode}</td>
+                        <td>{props.Variant_ID}</td>
+                        <td>{props.Variant_SKU}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div className = "vr">
+                <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
+                <div className = "variant-price"><div className = "c">--</div>{props.Price_high}</div><div className = "variant-price">{props.Price_low}</div>
+            </div>
         </div>
     );
 };

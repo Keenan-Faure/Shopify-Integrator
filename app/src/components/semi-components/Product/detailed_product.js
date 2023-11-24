@@ -61,7 +61,7 @@ function Detailed_product(props)
                 <button className="tablink" id ="Variants">Variants</button>
             </div>
         
-            <div id="_Product" className="tabcontent">
+            <div className="tabcontent" id="_Product" >
                 <div className = "details-details">
                     <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
                     <div className = "detailed">
@@ -93,12 +93,15 @@ function Detailed_product(props)
                 </div>
             </div>
 
-            <div id="_Variants" className="tabcontent">
+            <div className="tabcontent">
                 <div className = "details-details">
                     <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
                     <div className = "detailed">
                         <div className = "details-title"> {props.Product_Title} Variants</div>
-                         <Product_Variants />
+                        <div className = "variants" id="_Variants" >
+
+
+                        </div>
                     </div>
                     <div className = "details-left"></div>
                     <div className = "details-right"></div>

@@ -92,6 +92,41 @@ function Products()
                     {
                         console.log(_data);
                         setData2(_data);
+
+
+                        
+                        let details = document.querySelector(".details");
+                        console.log(details);
+                        let rot = createRoot(details);
+
+                        rot.render( <Detailed_product Product_Title = {_data.title} />)
+                        
+
+                        console.log(details);
+                        /* For some reason it wont pick up the element unless it throw it here */
+                        setTimeout(() =>
+                        {
+                            let new_div = details.querySelector(".variants");
+                            console.log(new_div); 
+                        }, 0);
+                         
+
+                        /*    
+                        let rt = createRoot(new_div);
+                        rt.render( _data.variants.map((el, i) =>
+                        {
+                            <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
+                        }))   
+                        */ 
+
+                        /*
+                        {data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Code={el.product_code}
+                            />
+                        )}
+                        */
+
                     })
                     .fail( function(xhr) 
                     {
@@ -401,12 +436,9 @@ function Products()
             <Page1 image = {product} title = "Products"/>
             <div className = "details">
                 <div className = 'close-button'>&times;</div>
-
-                <Detailed_product Product_Title = {data2.title} 
                 
                 
-                />
-
+                       
 
             </div>
 
