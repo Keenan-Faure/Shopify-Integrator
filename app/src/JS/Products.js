@@ -1,11 +1,16 @@
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import {useEffect, useState} from 'react';
+import ReactDOM from 'react-dom/client';
 import $ from 'jquery';
+
 import Page1 from '../components/Page1';
 import Pan_details from '../components/semi-components/pan-detail';
-import '../CSS/page1.css';
+import Detailed_product from '../components/semi-components/Product/detailed_product';
+import Product_Variants from '../components/semi-components/Product/product_variants';
 import product from '../media/products.png';
+
+import '../CSS/page1.css';
 
 function Products()
 {
@@ -19,6 +24,7 @@ function Products()
     }
 
     const [data, setData] = useState([]);
+    const [data2, setData2] = useState([]);
 
     const SearchProduct = (event) =>
     {
@@ -57,18 +63,20 @@ function Products()
         .done(function( _data) 
         {
             console.log(_data);
-            setData(_data)
+            setData(_data);
         })
         .fail( function(xhr) 
         {
             alert(xhr.responseText);
         });
 
+
         /* When the user clicks on the pan elements show info about that specified pan element */
         function DetailedView()
         {
             let pan = document.querySelectorAll(".pan");
             console.log("pan");
+            
             for(let i = 0; i < pan.length; i++)
             {
                 pan[i].addEventListener("click", () =>
@@ -79,11 +87,11 @@ function Products()
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-                    $.get("http://localhost:8080/api/products/" + id, [], [])
-                    .done(function( _data) 
+                    $.get("http://localhost:8080/api/products/" + id, [], [], 'json')
+                    .done(function(_data) 
                     {
                         console.log(_data);
-                        
+                        setData2(_data);
                     })
                     .fail( function(xhr) 
                     {
@@ -131,6 +139,7 @@ function Products()
                     }, 500);
                 });
             }
+            
         }
 
         /* Script to automatically format the number of elements on each page */
@@ -364,9 +373,10 @@ function Products()
         }
         Pagintation(1);
         setTimeout(() => { DetailedView(); }, 500);
+        
 
     }, []);
-
+    
     return (
         <div className = "products">
             <div className = "main">
@@ -385,24 +395,19 @@ function Products()
                         )}
                     </div>
                 </div>
-                <div className = "center" id = "pag">
-                    
-                </div>
+                <div className = "center" id = "pag"></div>
             </div>
 
             <Page1 image = {product} title = "Products"/>
             <div className = "details">
                 <div className = 'close-button'>&times;</div>
-                <div id = "img" className = "details-image">
-                    <div id = "te" className = "details-details details-title"></div>
-                    <div id = "co" className = "details-details details-code"></div>
-                    <div id = "op" className = "details-details details-options"></div>
-                    <div id = "ca" className = "details-details details-category"></div>
-                    <div id = "ty" className = "details-details details-type"></div>
-                    <div id = "ve" className = "details-details details-vendor"></div>
-                    <div id = "pr" className = "details-details details-price"></div>
-                </div>
+
+                <Detailed_product Product_Title = {data2.title} 
                 
+                
+                />
+
+
             </div>
 
         </div>
@@ -412,6 +417,17 @@ function Products()
 export default Products;
 
 /*
+
+{data2.map((el, i) => 
+                    {
+                        <Detailed_product Product_Title = {el.title} key={`${el.id}_${i}`} inputRef = 
+                        {
+                            <Product_Variants/>
+                        } 
+                    /> 
+                })}
+
+
     {data.map((_data, id)=>
         {
             return <Pan_details />

@@ -201,7 +201,7 @@ tr:hover
     border-left: 1px solid black;
 }
 
-.active
+.activee
 {
     position: absolute;
     height: 30px;
@@ -235,7 +235,7 @@ tr:hover
     user-select: none;
     background-color: rgba(61, 61, 61, 0.1);
 }
-.active:hover, .inactive:hover ~ #activity
+.activee:hover, .inactive:hover ~ #activity
 {
     visibility: visible;
 }
@@ -265,10 +265,11 @@ tr:hover
     height: auto;
 }
 p{ padding: 10px 60px;}
-c 
+.c 
 {
     margin-left: 5px;
     margin-right: 5px;
+    display: inline;
 }
 .variant-title 
 {
@@ -282,8 +283,4 @@ c
 {
     margin-bottom: 5px;
     float: right;
-}
-.variant-updateDate 
-{
-
 }

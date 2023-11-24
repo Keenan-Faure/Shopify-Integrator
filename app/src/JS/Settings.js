@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 import Page2 from '../components/Page2';
-import Detailed_product from '../components/semi-components/detailed_product';
+import Detailed_product from '../components/semi-components/Product/detailed_product';
 import MyImage from '../media/3ada.png';
 
 import '../CSS/page2.css';

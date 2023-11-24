@@ -1,5 +1,7 @@
 import {useEffect} from 'react';
-import '../../CSS/detailed.css';
+import { useRef } from "react";
+import Product_Variants from './product_variants';
+import '../../../CSS/detailed.css';
 
 function Detailed_product(props)
 {
@@ -36,12 +38,6 @@ function Detailed_product(props)
             openPage('Variants');
         });
 
-        let contact = document.getElementById("Images");
-        contact.addEventListener("click", () =>
-        {
-            openPage('Images');
-        });
-
         document.getElementById("Product").click();
 
         let activity = document.querySelector(".details-title").innerHTML;
@@ -52,17 +48,17 @@ function Detailed_product(props)
         }
         else 
         {
-            status.className = "active";
+            status.className = "activee";
         }
           
     }, []);
 
     return (
-        <div>
+        
+        <div id = "detailss" style = {{display: props.Display}}>
             <div className = "button-holder">
                 <button className="tablink" id = "Product">Product</button>
                 <button className="tablink" id ="Variants">Variants</button>
-                <button className="tablink" id = "Images">Images</button>
             </div>
         
             <div id="_Product" className="tabcontent">
@@ -98,45 +94,11 @@ function Detailed_product(props)
             </div>
 
             <div id="_Variants" className="tabcontent">
-            <div className = "details-details">
+                <div className = "details-details">
                     <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
                     <div className = "detailed">
-
                         <div className = "details-title"> {props.Product_Title} Variants</div>
-                        <div className = "variants">
-                            <div className = "variant-title">{props.Variant_Title}</div>
-
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <th>Variant Barcode</th>
-                                        <th>Variant ID</th>
-                                        <th>Variant SKU</th>
-                                    </tr>
-                                    <tr>
-                                        <td>{props.Variant_Barcode}</td>
-                                        <td>{props.Variant_ID}</td>
-                                        <td>{props.Variant_SKU}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div className = "vr">
-                                <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
-                                <div className = "variant-price"><c>--</c>{props.Price_high}</div><div className = "variant-price">{props.Price_low}</div>
-                            </div>
-                            
-                        </div> 
-                    </div>
-                    <div className = "details-left"></div>
-                    <div className = "details-right"></div>
-                </div>
-            </div>
-
-            <div id="_Images" className="tabcontent">
-            <div className = "details-details">
-                    <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
-                    <div className = "detailed">
-                        
+                         <Product_Variants />
                     </div>
                     <div className = "details-left"></div>
                     <div className = "details-right"></div>
