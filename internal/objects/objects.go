@@ -7,7 +7,8 @@ import (
 )
 
 type RequestWebhookURL struct {
-	ApiKey string `json:"api_key"`
+	ApiKey        string `json:"api_key"`
+	ForwardingURL string `json:"forwarding_url"`
 }
 
 // queue.go

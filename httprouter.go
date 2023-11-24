@@ -20,7 +20,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// POST /api/webhook
+// POST /api/settings/webhook
 func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	body, err := DecodeWebhookURL(r)
 	if err != nil {
@@ -32,9 +32,21 @@ func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	// check if a user exists
+	db_user, err := dbconfig.DB.GetUserByApiKey(r.Context(), body.ApiKey)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "invalid api_key")
+		return
+	}
+	if db_user.ApiKey != body.ApiKey {
+		RespondWithError(w, http.StatusInternalServerError, "invalid api_key")
+		return
+	}
 	// create webhook url
+	webhook_url := body.ForwardingURL + "/api/orders?token=" + db_user.WebhookToken + "&api_key=" + db_user.ApiKey
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: webhook_url,
+	})
 	// how we going to get the ngrok forwarding url??
-	// return url as a string
 }
 
 // GET /api/inventory

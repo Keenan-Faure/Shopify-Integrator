@@ -105,6 +105,8 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Delete("/queue/{id}", dbconfig.middlewareAuth(dbconfig.ClearQueueByID))
 	api.Delete("/queue", dbconfig.middlewareAuth(dbconfig.ClearQueueByFilter))
 
+	api.Post("/settings/webhook", dbconfig.middlewareAuth(dbconfig.GetWebhookURL))
+
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))
