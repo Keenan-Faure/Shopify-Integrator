@@ -8,6 +8,7 @@ import Page1 from '../components/Page1';
 import Pan_details from '../components/semi-components/pan-detail';
 import Detailed_product from '../components/semi-components/Product/detailed_product';
 import Product_Variants from '../components/semi-components/Product/product_variants';
+import Detailed_Images from '../components/semi-components/Product/detailed_images';
 import product from '../media/products.png';
 
 import '../CSS/page1.css';
@@ -24,7 +25,7 @@ function Products()
     }
 
     const [data, setData] = useState([]);
-    const [data2, setData2] = useState([]);
+    //const [data2, setData2] = useState([]);
 
     const SearchProduct = (event) =>
     {
@@ -91,33 +92,46 @@ function Products()
                     .done(function(_data) 
                     {
                         console.log(_data);
-                        setData2(_data);
+                        //setData2(_data);
 
 
                         
                         let details = document.querySelector(".details");
-                        console.log(details);
                         let rot = createRoot(details);
 
                         rot.render( <Detailed_product Product_Title = {_data.title} />)
                         
 
-                        console.log(details);
                         /* For some reason it wont pick up the element unless it throw it here */
                         setTimeout(() =>
                         {
-                            let new_div = details.querySelector(".variants");
-                            console.log(new_div); 
-                        }, 0);
+                            let _div = details.querySelector(".auto-slideshow-container");
+                            let _root = createRoot(_div);
+
+                            _root.render( _data.product_images.map((el, i) =>
+                                <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
+                            ))
+
+                            let new_div = details.querySelector(".variants"); 
+                            let rt = createRoot(new_div);
+    
+                            rt.render( _data.variants.map((el, i) =>
+                                <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
+                            ))
+
+                            /*
+                                root.render(_data.map((el, i) => 
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                                ))
+                            */
+                        }, 50);
                          
 
-                        /*    
-                        let rt = createRoot(new_div);
-                        rt.render( _data.variants.map((el, i) =>
-                        {
-                            <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
-                        }))   
-                        */ 
+                           
+                        
+                        /*
+                           
+                        */
 
                         /*
                         {data.map((el, i) => 

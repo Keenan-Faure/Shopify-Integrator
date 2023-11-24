@@ -22,7 +22,7 @@ function Detailed_product(props)
             }
 
             document.getElementById("_" + pageName).style.display = "block";
-            document.getElementById(pageName).style.backgroundColor = "#b6b6b6";
+            document.getElementById(pageName).style.backgroundColor = "#e7e7e7";
             
         }
 
@@ -65,7 +65,7 @@ function Detailed_product(props)
                 <div className = "details-details">
                     <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
                     <div className = "detailed">
-                        <div className = "details-title"> {props.Product_Title}</div>
+                        <div className = "details-title">{props.Product_Title}</div>
                         <i className = "inactive"/>
                         <span id = "activity">Activity</span>
                         <table>
@@ -93,13 +93,13 @@ function Detailed_product(props)
                 </div>
             </div>
 
-            <div className="tabcontent">
+            <div className="tabcontent" id="_Variants" >
                 <div className = "details-details">
-                    <div className = "details-image" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
+                <div className = "auto-slideshow-container" />
                     <div className = "detailed">
                         <div className = "details-title"> {props.Product_Title} Variants</div>
-                        <div className = "variants" id="_Variants" >
-
+                        <div className = "variants" id="_variants" >
+                        
 
                         </div>
                     </div>

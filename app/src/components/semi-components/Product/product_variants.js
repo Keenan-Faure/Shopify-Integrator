@@ -10,7 +10,6 @@ function Product_Variants(props)
 
     return (
         <div>
-            
             <div className = "variant-title">{props.Variant_Title}</div>
             <table>
                 <tbody>
