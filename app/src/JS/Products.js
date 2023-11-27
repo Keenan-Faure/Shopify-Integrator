@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import ReactDOM from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import {useEffect, useState} from 'react';
 import $ from 'jquery';
@@ -44,9 +45,15 @@ function Products()
         });
         */
     }
+    
+
 
     useEffect(()=> 
     {
+        const div = document.getElementById('pan-main');
+        let _div = document.createElement('div');
+        let root = createRoot(_div);
+
         /* Ensures the page elements are set correctly */
         let navigation = document.getElementById("navbar");
         window.onload = function(event)
@@ -75,9 +82,8 @@ function Products()
         /* When the user clicks on the pan elements show info about that specified pan element */
         function DetailedView()
         {
+            let products = document.querySelector(".products");
             let pan = document.querySelectorAll(".pan");
-            console.log("pan");
-            
             for(let i = 0; i < pan.length; i++)
             {
                 pan[i].addEventListener("click", () =>
@@ -91,43 +97,51 @@ function Products()
                     $.get("http://localhost:8080/api/products/" + id, [], [], 'json')
                     .done(function(_data) 
                     {
-                        console.log(_data);
-                        //setData2(_data);
-
-
                         
-                        let details = document.querySelector(".details");
-                        let rot = createRoot(details);
-
-                        rot.render( <Detailed_product Product_Title = {_data.title} />)
-                        
-
-                        /* For some reason it wont pick up the element unless it throw it here */
-                        setTimeout(() =>
+                        if(document.querySelector(".details") != null)
+                        //div already exists, remove it, and create another
                         {
-                            let _div = details.querySelectorAll(".auto-slideshow-container");
-                            for(let i = 0; i < _div.length; i++)
+                            document.querySelector(".details").remove();
+                            let details = document.createElement('details');
+                            products.appendChild(details);
+
+                            let rot = createRoot(details);
+                            rot.render( <Detailed_product Product_Title = {_data.title} />)
+                            /* For some reason it wont pick up the element unless it throw it here */
+                            setTimeout(() =>
                             {
-                                let _root = createRoot(_div[i]);
-                                if(i == 0)
+                                let _div = details.querySelectorAll(".auto-slideshow-container");
+                                for(let i = 0; i < _div.length; i++)
                                 {
-                                    _root.render( _data.product_images.map((el, i) =>
-                                    <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                ))
+                                    console.log("OR here");
+                                    let _root = createRoot(_div[i]);
+                                    if(i == 0)
+                                    {
+                                        _root.render( _data.product_images.map((el, i) =>
+                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                    ))
+                                    }
+                                    else 
+                                    {
+                                        _root.render( _data.product_images.map((el, i) =>
+                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                    ))
+                                    }
                                 }
-                                else 
-                                {
-                                    _root.render( _data.product_images.map((el, i) =>
-                                    <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                let new_div = details.querySelector(".variants"); 
+                                let rt = createRoot(new_div);
+                                rt.render( _data.variants.map((el, i) =>
+                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
                                 ))
-                                }
-                            }
-                            let new_div = details.querySelector(".variants"); 
-                            let rt = createRoot(new_div);
-                            rt.render( _data.variants.map((el, i) =>
-                                <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
-                            ))
-                        }, 0);
+                            }, 0);
+                            
+                            
+                        }
+                        else 
+                        //create new div
+                        {
+
+                        }
                     })
                     .fail( function(xhr) 
                     {
@@ -139,7 +153,6 @@ function Products()
                     let main = document.querySelector(".main");
                     let navbar = document.getElementById("navbar");
                     let details = document.querySelector(".details");
-                    let close = document.querySelector(".close-button");
 
                     filter.style.animation = "Fadeout 0.5s ease-out";
                     main.style.animation = "Fadeout 0.5s ease-out";
@@ -150,29 +163,6 @@ function Products()
                     navbar.style.display = "none";
                     details.style.animation = "FadeIn ease-in 0.5s";
                     details.style.display = "block";
-                    close.style.display = "block";
-                });
-
-                /* When the user clicks on the return button */
-                let close = document.querySelector(".close-button");
-                let filter = document.querySelector(".filter");
-                let main = document.querySelector(".main");
-                let navbar = document.getElementById("navbar");
-                let details = document.querySelector(".details");
-                close.addEventListener("click", ()=> 
-                {
-                    close.style.display = "none";
-                    details.style.animation = "Fadeout 0.5s ease-out";
-                    main.style.animation = "FadeIn ease-in 0.5s";
-                    filter.style.animation = "FadeIn ease-in 0.5s";
-                    navbar.style.animation = "FadeIn ease-in 0.5s";
-                    setTimeout(() => 
-                    {
-                        details.style.display = "none";
-                        navbar.style.display = "block";
-                        main.style.display = "block";
-                        filter.style.display = "block";
-                    }, 500);
                 });
             }
             
@@ -184,9 +174,6 @@ function Products()
         const paginationDiv = document.body.appendChild(paginationContainer);
         paginationContainer.classList.add('pagination');
         content.appendChild(paginationContainer);
-
-        let div = document.getElementById("pan-main");
-        let root = createRoot(div);
 
         function Pagintation(index)
         {
@@ -410,8 +397,29 @@ function Products()
         Pagintation(1);
         setTimeout(() => { DetailedView(); }, 200);
         
+        // select the target node
+        var target = document.getElementById("pan-main");
+
+        // create an observer instance
+        var observer = new MutationObserver(function(mutations) 
+        {
+            mutations.forEach(function(mutation) 
+            {
+                DetailedView();
+            });    
+        });
+
+        // configuration of the observer:
+        var config = { attributes: true, childList: true, characterData: true };
+
+        // pass in the target node, as well as the observer options
+        observer.observe(target, config)
+
 
     }, []);
+
+    
+    
     
     return (
         <div className = "products">
@@ -435,13 +443,7 @@ function Products()
             </div>
 
             <Page1 image = {product} title = "Products"/>
-            <div className = "details">
-                <div className = 'close-button'>&times;</div>
-                
-                
-                       
-
-            </div>
+            <div className = "details"></div>
 
         </div>
     );

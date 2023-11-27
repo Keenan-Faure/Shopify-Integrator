@@ -123,12 +123,10 @@ function Page1(props)
             let type = document.querySelector(".type").innerHTML;
             let vendor = document.querySelector(".vendor").innerHTML;
 
-            //let final = "http://localhost:8080/products/filter?type=" +type +"&" + "vendor="+vendor+"&category="+category;
             $.get("http://localhost:8080/api/products/filter?type=" +type + "&" + "vendor="+ vendor +"&category="+category,[], [], 'json')
             .done(function( _data) 
             {
                 let div = document.getElementById("pan-main");
-                console.log(div);
                 let root = createRoot(div);
                 let pan = document.querySelectorAll(".pan");
 
@@ -145,8 +143,8 @@ function Page1(props)
                 alert(xhr.responseText);
             });
             
-
         });
+        
 
 
     }, []);

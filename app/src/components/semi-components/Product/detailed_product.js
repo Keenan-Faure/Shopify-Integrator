@@ -48,12 +48,36 @@ function Detailed_product(props)
         {
             status.className = "activee";
         }
-          
+
+        /* When the user clicks on the return button */
+        let close = document.querySelector(".rtn-button");
+        let filter = document.querySelector(".filter");
+        let main = document.querySelector(".main");
+        let navbar = document.getElementById("navbar");
+        let details = document.querySelector(".details");
+        close.addEventListener("click", ()=> 
+        {
+            close.style.display = "none";
+            details.style.animation = "Fadeout 0.5s ease-out";
+            
+            setTimeout(() => 
+            {
+                main.style.animation = "FadeIn ease-in 0.5s";
+                filter.style.animation = "FadeIn ease-in 0.5s";
+                navbar.style.animation = "FadeIn ease-in 0.5s";
+                details.style.display = "none";
+                navbar.style.display = "block";
+                main.style.display = "block";
+                filter.style.display = "block";
+            }, 500);
+        });
+
     }, []);
 
     return (
         
         <div id = "detailss" style = {{display: props.Display}}>
+            <div className = 'rtn-button'></div>
             <div className = "button-holder">
                 <button className="tablink" id = "Product">Product</button>
                 <button className="tablink" id ="Variants">Variants</button>
@@ -100,10 +124,7 @@ function Detailed_product(props)
                     <div className = "auto-slideshow-container" />
                     <div className = "detailed">
                         <div className = "details-title"> {props.Product_Title} Variants</div>
-                        <div className = "variants" id="_variants" >
-                        
-
-                        </div>
+                        <div className = "variants" id="_variants" ></div>
                     </div>
                     <div className = "details-left"></div>
                     <div className = "details-right"></div>
@@ -132,6 +153,3 @@ Detailed_product.defaultProps =
     Price_low: 'Low Price'
 }
 export default Detailed_product;
-/*
-<div className = "details-image" style = {{backgroundImage: `linear-gradient(to bottom, transparent, white), url(${props.Product_Image})`}}>
-*/
