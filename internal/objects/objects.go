@@ -11,6 +11,35 @@ type RequestWebhookURL struct {
 	ForwardingURL string `json:"forwarding_url"`
 }
 
+type ResponseWarehouseLocation struct {
+	Warehouses       []string `json:"warehouses"`
+	ShopifyLocations any      `json:"shopify_locations"`
+}
+
+type ShopifyLocations struct {
+	Locations []struct {
+		ID                    int64     `json:"id"`
+		Name                  string    `json:"name"`
+		Address1              string    `json:"address1"`
+		Address2              string    `json:"address2"`
+		City                  string    `json:"city"`
+		Zip                   string    `json:"zip"`
+		Province              string    `json:"province"`
+		Country               string    `json:"country"`
+		Phone                 string    `json:"phone"`
+		CreatedAt             time.Time `json:"created_at"`
+		UpdatedAt             time.Time `json:"updated_at"`
+		CountryCode           string    `json:"country_code"`
+		CountryName           string    `json:"country_name"`
+		ProvinceCode          string    `json:"province_code"`
+		Legacy                bool      `json:"legacy"`
+		Active                bool      `json:"active"`
+		AdminGraphqlAPIID     string    `json:"admin_graphql_api_id"`
+		LocalizedCountryName  string    `json:"localized_country_name"`
+		LocalizedProvinceName string    `json:"localized_province_name"`
+	} `json:"locations"`
+}
+
 // queue.go
 
 type ResponseQueueWorker struct {

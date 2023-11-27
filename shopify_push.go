@@ -87,18 +87,6 @@ func (dbconfig *DbConfig) CalculateAvailableQuantity(
 	}
 }
 
-// Retrieves a list of locations and it asks the user which will be used, and which warehouse should be
-// mapped to the respective location
-// TODO how to make it an endpoint on the app
-func (dbconfig *DbConfig) FetchShopifyLocations(configShopify *shopify.ConfigShopify) {
-	response, err := configShopify.GetLocationsShopify()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	log.Println(response)
-}
-
 // Removes mapping between Location and warehouses
 func (dbconfig *DbConfig) RemoveLocationMap(id string) error {
 	err := IDValidation(id)

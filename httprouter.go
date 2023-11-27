@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"objects"
 	"os"
+	"shopify"
 	"strconv"
 	"time"
 	"utils"
@@ -46,7 +47,7 @@ func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, 
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: webhook_url,
 	})
-	// how we going to get the ngrok forwarding url??
+	// TODO how we going to get the ngrok forwarding url??
 }
 
 // GET /api/inventory
@@ -90,6 +91,31 @@ func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http
 	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: "Deleted",
+	})
+}
+
+// Returns all locations on Shopify and all warehouses in the app
+
+// GET /api/inventory/config
+func (dbconfig *DbConfig) ConfigLocationMap(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	shopifyConfig := shopify.InitConfigShopify()
+	if !shopifyConfig.Valid {
+		RespondWithError(w, http.StatusInternalServerError, "invalid shopify config")
+		return
+	}
+	locations, err := shopifyConfig.GetShopifyLocations()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	warehouses, err := dbconfig.DB.GetUniqueWarehouses(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseWarehouseLocation{
+		Warehouses:       warehouses,
+		ShopifyLocations: locations,
 	})
 }
 
