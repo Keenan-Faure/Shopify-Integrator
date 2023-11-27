@@ -1,15 +1,14 @@
 import {useEffect} from 'react';
 import '../../../CSS/detailed.css';
 
-function Detailed_Images(props)
+function Detailed_Images2(props)
 {
     useEffect(()=> 
     {
-        
-        
         function showSlides() 
         {
-            let slides = document.getElementsByClassName("mySlides");
+            let slides = document.getElementsByClassName("mySlides2");
+        
             setTimeout(() =>
             {
                 if(slides.length <= 2)
@@ -40,9 +39,8 @@ function Detailed_Images(props)
                     console.log("no slides to display");
                 }
                 
-            },100)  
+            }, 100) 
         }
-
         let slideIndex = 0;
         showSlides();
 
@@ -50,7 +48,7 @@ function Detailed_Images(props)
 
     return (
     <>
-        <div className = "mySlides fade">
+        <div className = "mySlides2 fade">
             <img src = {props.Image1} className = "details-image"></img>
         </div>
     </>
@@ -58,8 +56,8 @@ function Detailed_Images(props)
   
 };
 
-Detailed_Images.defaultProps = 
+Detailed_Images2.defaultProps = 
 { 
     Image1: '#ccc',
 }
-export default Detailed_Images;
+export default Detailed_Images2;

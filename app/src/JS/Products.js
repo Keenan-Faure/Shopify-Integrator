@@ -1,14 +1,14 @@
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import {useEffect, useState} from 'react';
-import ReactDOM from 'react-dom/client';
 import $ from 'jquery';
-
 import Page1 from '../components/Page1';
 import Pan_details from '../components/semi-components/pan-detail';
 import Detailed_product from '../components/semi-components/Product/detailed_product';
 import Product_Variants from '../components/semi-components/Product/product_variants';
 import Detailed_Images from '../components/semi-components/Product/detailed_images';
+import Detailed_Images2 from '../components/semi-components/Product/detailed_images2';
+import Detailed_Warehousing from '../components/semi-components/Product/detailed_warehousing';
 import product from '../media/products.png';
 
 import '../CSS/page1.css';
@@ -109,41 +109,25 @@ function Products()
                             for(let i = 0; i < _div.length; i++)
                             {
                                 let _root = createRoot(_div[i]);
-
-                                _root.render( _data.product_images.map((el, i) =>
+                                if(i == 0)
+                                {
+                                    _root.render( _data.product_images.map((el, i) =>
                                     <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
                                 ))
+                                }
+                                else 
+                                {
+                                    _root.render( _data.product_images.map((el, i) =>
+                                    <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                ))
+                                }
                             }
-                            
                             let new_div = details.querySelector(".variants"); 
                             let rt = createRoot(new_div);
-    
                             rt.render( _data.variants.map((el, i) =>
                                 <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
                             ))
-
-                            /*
-                                root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                                ))
-                            */
                         }, 0);
-                         
-
-                           
-                        
-                        /*
-                           
-                        */
-
-                        /*
-                        {data.map((el, i) => 
-                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
-                            Product_Code={el.product_code}
-                            />
-                        )}
-                        */
-
                     })
                     .fail( function(xhr) 
                     {
@@ -292,7 +276,7 @@ function Products()
                     });
 
                     Pagintation(index);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -321,7 +305,7 @@ function Products()
                     });
 
                     Pagintation(index--);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
             }
             else 
@@ -387,7 +371,7 @@ function Products()
                     });
 
                     Pagintation(index++);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -419,12 +403,12 @@ function Products()
                     });
 
                     Pagintation(index);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
             } 
         }
         Pagintation(1);
-        setTimeout(() => { DetailedView(); }, 500);
+        setTimeout(() => { DetailedView(); }, 200);
         
 
     }, []);
@@ -464,33 +448,3 @@ function Products()
 }
 
 export default Products;
-
-/*
-
-{data2.map((el, i) => 
-                    {
-                        <Detailed_product Product_Title = {el.title} key={`${el.id}_${i}`} inputRef = 
-                        {
-                            <Product_Variants/>
-                        } 
-                    /> 
-                })}
-
-
-    {data.map((_data, id)=>
-        {
-            return <Pan_details />
-
-        })
-    }
-
-    <Pan_details Product_Title = "5-star sword" Product_Code = "#w123d" Product_Options = "True-False" Product_Category = "Gacha"
-    Product_Type = "SSR" Product_Vendor = "HottaGames" Product_Price = "$15"/>
-
-    <Pan_details Product_Title = "5-star " Product_Code = "#rf34g" Product_Options = "white black" Product_Category = "pog"
-    Product_Type = "SW@" Product_Vendor = "PMdfg" Product_Price = "$155"/>
-
-    <Pan_details Product_Title = "5 sword" Product_Code = "#kn39c" Product_Options = "542/544" Product_Category = "Posxc"
-    Product_Type = "postman" Product_Vendor = "keyboard" Product_Price = "$147"/>
-
-*/

@@ -1,13 +1,7 @@
-import {useEffect} from 'react';
 import '../../../CSS/detailed.css';
 
 function Product_Variants(props)
 {
-    useEffect(()=> 
-    {
-          
-    }, []);
-
     return (
         <div>
             <div className = "variant-title">{props.Variant_Title}</div>

@@ -1,6 +1,4 @@
 import {useEffect} from 'react';
-import { useRef } from "react";
-import Product_Variants from './product_variants';
 import '../../../CSS/detailed.css';
 
 function Detailed_product(props)
@@ -85,8 +83,12 @@ function Detailed_product(props)
                             </tbody>
                         </table> 
                         <div className = "details-description">Product Description</div>
-                        <p>Product Description goes here, and it will be a extremelty long piece of text, of course, this can vary
-                            but, on average, it could grow to be this large. But we'll see eyy!~</p>
+                        <p id = "description">
+                            Product Description goes here, and it will be a extremelty long piece of text, of course, this can vary
+                            but, on average, it could grow to be this large. But we'll see eyy!~
+                        </p>
+                        <div className = "details-description">Product Warehousing</div> 
+                        <div className = "details-warehousing"></div>  
                     </div>
                     <div className = "details-left"></div>
                     <div className = "details-right"></div>
