@@ -62,9 +62,9 @@ function Detailed_product(props)
             
             setTimeout(() => 
             {
-                main.style.animation = "FadeIn ease-in 0.5s";
-                filter.style.animation = "FadeIn ease-in 0.5s";
-                navbar.style.animation = "FadeIn ease-in 0.5s";
+                main.style.animation = "FadeIn ease-in 0.6s";
+                filter.style.animation = "FadeIn ease-in 0.6s";
+                navbar.style.animation = "FadeIn ease-in 0.6s";
                 details.style.display = "none";
                 navbar.style.display = "block";
                 main.style.display = "block";

@@ -1,6 +1,12 @@
 import {useEffect, useState} from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
+
+import Detailed_Images from './semi-components/Product/detailed_images';
+import Detailed_Images2 from './semi-components/Product/detailed_images2';
+import Detailed_product from './semi-components/Product/detailed_product';
+import Product_Variants from './semi-components/Product/product_variants';
+
 import Background from './Background';
 import $ from 'jquery';
 import Pan_details from './semi-components/pan-detail';
@@ -83,12 +89,10 @@ function Page1(props)
 
         /* filter image script to show when clicked on */
         let filter = document.querySelectorAll(".filter-elements");
-        let filter_main = document.querySelector(".filter");
         let filter_img = document.querySelectorAll(".filter-img");
-        let C_filter = document.querySelector(".filter-button");
+        let C_filter = document.getElementById("clear_filter");
         let filter_input = document.querySelectorAll(".filter-selection-main");
         let close = document.querySelectorAll(".close-filter");
-        let main = document.querySelector(".main");
 
         for(let i = 0; i < filter.length; i++)
         {
@@ -126,17 +130,39 @@ function Page1(props)
             $.get("http://localhost:8080/api/products/filter?type=" +type + "&" + "vendor="+ vendor +"&category="+category,[], [], 'json')
             .done(function( _data) 
             {
-                let div = document.getElementById("pan-main");
-                let root = createRoot(div);
-                let pan = document.querySelectorAll(".pan");
-
-                pan.forEach(pan => { pan.remove(); });
-                flushSync(() => 
+                if(document.querySelector(".pan-main") != null)
                 {
-                    root.render(_data.map((el, i) => 
-                        <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                    ))
-                });
+                    document.querySelector(".pan-main").remove();
+                    let pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+
+                    let root = createRoot(pan_main);
+                    flushSync(() => 
+                    {
+                        root.render(_data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                        ))
+                    });
+                    DetailedView();
+                }
+                else 
+                {
+                    let pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+
+                    let root = createRoot(pan_main);
+                    flushSync(() => 
+                    {
+                        root.render(_data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                        ))
+                    });
+                    DetailedView();
+                }
             })
             .fail( function(xhr) 
             {
@@ -144,6 +170,122 @@ function Page1(props)
             });
             
         });
+        /* When the user clicks on the pan elements show info about that specified pan element */
+        function DetailedView()
+        {
+            let products = document.querySelector(".products");
+            let pan = document.querySelectorAll(".pan");
+            for(let i = 0; i < pan.length; i++)
+            {
+                pan[i].addEventListener("click", () =>
+                {
+                    console.log(i);
+                    console.log([i] + " was clicked");
+                    let id = pan[i].querySelector(".p-d-id").innerHTML;
+
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/products/" + id, [], [], 'json')
+                    .done(function(_data) 
+                    {   
+                        if(document.querySelector(".details") != null)
+                        //div already exists, remove it, and create another
+                        {
+
+                            document.querySelector(".details").remove();
+                            let details = document.createElement('div');
+                            details.className = "details";
+                            products.appendChild(details);
+
+                            let rot = createRoot(details);
+                            rot.render( <Detailed_product Product_Title = {_data.title} />)
+                            /* For some reason it wont pick up the element unless it throw it here */
+                            setTimeout(() =>
+                            {
+                                let _div = details.querySelectorAll(".auto-slideshow-container");
+                                for(let i = 0; i < _div.length; i++)
+                                {
+                                    let _root = createRoot(_div[i]);
+                                    if(i == 0)
+                                    {
+                                        _root.render( _data.product_images.map((el, i) =>
+                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                    ))
+                                    }
+                                    else 
+                                    {
+                                        _root.render( _data.product_images.map((el, i) =>
+                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                    ))
+                                    }
+                                }
+                                let new_div = details.querySelector(".variants"); 
+                                let rt = createRoot(new_div);
+                                rt.render( _data.variants.map((el, i) =>
+                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
+                                ))
+                            }, 0);
+                            
+                        }
+                        else 
+                        //create new div
+                        {
+                            let details = document.createElement('details');
+                            products.appendChild(details);
+                            let rot = createRoot(details);
+                            rot.render( <Detailed_product Product_Title = {_data.title} />)
+                            /* For some reason it wont pick up the element unless it throw it here */
+                            setTimeout(() =>
+                            {
+                                let _div = details.querySelectorAll(".auto-slideshow-container");
+                                for(let i = 0; i < _div.length; i++)
+                                {
+                                    let _root = createRoot(_div[i]);
+                                    if(i == 0)
+                                    {
+                                        _root.render( _data.product_images.map((el, i) =>
+                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                    ))
+                                    }
+                                    else 
+                                    {
+                                        _root.render( _data.product_images.map((el, i) =>
+                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
+                                    ))
+                                    }
+                                }
+                                let new_div = details.querySelector(".variants"); 
+                                let rt = createRoot(new_div);
+                                rt.render( _data.variants.map((el, i) =>
+                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
+                                ))
+                            }, 0);
+                        }
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+                    setTimeout(() =>
+                    {
+                        let filter = document.querySelector(".filter");
+                        let main = document.querySelector(".main");
+                        let navbar = document.getElementById("navbar");
+                        let details = document.querySelector(".details");
+
+                        filter.style.animation = "Fadeout 0.5s ease-out";
+                        main.style.animation = "Fadeout 0.5s ease-out";
+                        navbar.style.animation = "Fadeout 0.5s ease-out";
+                        filter.style.display = "none";
+                        main.style.display = "none";
+                        navbar.style.display = "none";
+                        details.style.display = "block";
+                    }, 50);
+                });
+            } 
+        }
+
         
 
 
@@ -178,7 +320,7 @@ function Page1(props)
                 <div className = "type"></div>
                 <div className = "category"></div>
 
-                <button className = "filter-button">Clear Filter</button>
+                <button id = "clear_filter"className = "filter-button">Clear Filter</button>
                 <button id = "_filter"className = "filter-button">Filter Results</button>
                 
             </div>
