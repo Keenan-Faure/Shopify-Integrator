@@ -44,6 +44,8 @@ function Products()
         });
         */
     }
+    
+
 
     useEffect(()=> 
     {
@@ -65,11 +67,24 @@ function Products()
         {
             console.log(_data);
             let root;
-            let pan_main = document.querySelector(".pan-main");
-            let div = document.createElement("div");
-            pan_main.appendChild(div);
+            let pan_main;
+            if(document.querySelector(".pan-main") != null)
+            {
+                document.querySelector(".pan-main").remove();
+                pan_main = document.createElement('div');
+                let main_elements = document.querySelector(".main-elements");
+                pan_main.className = "pan-main";
+                main_elements.appendChild(pan_main);
+            }
+            else 
+            {
+                pan_main = document.createElement('div');
+                let main_elements = document.querySelector(".main-elements");
+                pan_main.className = "pan-main";
+                main_elements.appendChild(pan_main);
+            }
 
-            root = createRoot(div);
+            root = createRoot(pan_main);
             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>))
             DetailedView();
         })
@@ -202,11 +217,29 @@ function Products()
         paginationContainer.classList.add('pagination');
         content.appendChild(paginationContainer);
 
-        let div = document.getElementById("pan-main");
-        let root = createRoot(div);
-
         function Pagintation(index)
         {
+            let root;
+            let pan_main;
+            if(document.querySelector(".pan-main") != null)
+            {
+                console.log("h");
+                document.querySelector(".pan-main").remove();
+                pan_main = document.createElement('div');
+                let main_elements = document.querySelector(".main-elements");
+                pan_main.className = "pan-main";
+                main_elements.appendChild(pan_main);
+            }
+            else 
+            {
+                console.log("he");
+                pan_main = document.createElement('div');
+                let main_elements = document.querySelector(".main-elements");
+                pan_main.className = "pan-main";
+                main_elements.appendChild(pan_main);
+            }
+            root = createRoot(pan_main);
+            
             /* Check done to remove old elements if they exist */
             if(document.getElementById("next") != null && document.getElementById("prev") != null && document.getElementById("hod") != null)
             //If they exist remove them, and create new based on the new index value
@@ -259,7 +292,6 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
-
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
@@ -293,7 +325,7 @@ function Products()
                     });
 
                     Pagintation(index);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -311,9 +343,7 @@ function Products()
                         console.log(_data);
                         flushSync(() => 
                         {
-                            root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                            ))
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>))
                         });
                     })
                     .fail( function(xhr) 
@@ -322,7 +352,7 @@ function Products()
                     });
 
                     Pagintation(index--);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
             }
             else 
@@ -362,24 +392,31 @@ function Products()
                 }
                 nextPage.addEventListener("click", () =>
                 {
+                    document.querySelector(".pan-main").remove();
+                    let pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+                    let root = createRoot(pan_main);
+                    
+
                     index = index + 1;
                     /* Fetches the data from page, based on the page / index value */
-                    const page = "http://localhost:8080/api/products?page=" + index;
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-                    $.get(page, [], [])
+                    $.get("http://localhost:8080/api/products?page=" + index, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        /* Check if pan elements exist and remove + update if it does*/
+                        /* Check if pan elements exist and remove + update if it does
                         let pan = document.querySelectorAll(".pan");
                         pan.forEach(pan => { pan.remove(); });
+                        */
+
                         flushSync(() => 
                         {
-                            root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                            ))
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>))
                         });
                     })
                     .fail( function(xhr) 
@@ -388,7 +425,7 @@ function Products()
                     });
 
                     Pagintation(index++);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -409,9 +446,7 @@ function Products()
                         pan.forEach(pan => { pan.remove(); });
                         flushSync(() => 
                         {
-                            root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                            ))
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>))
                         });
                     })
                     .fail( function(xhr) 
@@ -420,14 +455,63 @@ function Products()
                     });
 
                     Pagintation(index);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView(); }, 200);
                 });
             } 
         }
         Pagintation(1);
-        setTimeout(() => { DetailedView(); }, 500);
+        setTimeout(() => { DetailedView(); }, 200);
+
+        
+        let C_filter = document.getElementById("clear_filter");
+        C_filter.addEventListener("click", () => 
+        {
+            /*  API  */
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.get("http://localhost:8080/api/products?page=1", [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+                let root;
+                let pan_main;
+                if(document.querySelector(".pan-main") != null)
+                {
+                    document.querySelector(".pan-main").remove();
+                    pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+                }
+                else 
+                {
+                    let pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+                }
+
+                root = createRoot(pan_main);
+                root.render(_data.map((el, i) => 
+                    <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                ))
+                DetailedView();
+                
+            })
+            .fail(function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+        });
+        
+
+
+
 
     }, []);
+
+    
+    
     
     return (
         <div className = "products">
@@ -440,20 +524,14 @@ function Products()
                 </div>
                 <div className = "main-elements">
                     <div className = "pan-main" id = "pan-main">
-                
+                        
                     </div>
                 </div>
                 <div className = "center" id = "pag"></div>
             </div>
 
             <Page1 image = {product} title = "Products"/>
-            <div className = "details">
-                <div className = 'close-button'>&times;</div>
-                
-                
-                       
-
-            </div>
+            <div className = "details"></div>
 
         </div>
     );

@@ -72,12 +72,9 @@ body
 }
 .filter-button 
 {
-    padding: 0px;
     display: none;
     text-align: center;
-    text-decoration: none;
     font-size: 12px;
-    cursor: pointer;
     width: 100px;
     height: 40px;
     position: relative;
@@ -85,12 +82,12 @@ body
     color: black;
     border: 1px solid #000000;
     border-radius: 4px;
-    margin: 0;
     transition-duration: 0.4s;
     left: 25%;
     float: left;
     margin-left: 10px;
     transform: translate(-10%);
+    cursor: not-allowed;
 }
 .filter-button:hover
 {

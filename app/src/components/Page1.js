@@ -45,6 +45,12 @@ function Page1(props)
         {
             filter_input[i].style.display = "none";
         }
+        let filter_button = document.getElementById("_filter");
+        let C_filter = document.getElementById("clear_filter");
+        filter_button.disabled = false;
+        C_filter.disabled = false;
+        filter_button.style.cursor = "pointer";
+        C_filter.style.cursor = "pointer";
     }
 
 
@@ -88,11 +94,15 @@ function Page1(props)
         }, 1000);
 
         /* filter image script to show when clicked on */
+        let filter_button = document.getElementById("_filter");
         let filter = document.querySelectorAll(".filter-elements");
         let filter_img = document.querySelectorAll(".filter-img");
         let C_filter = document.getElementById("clear_filter");
         let filter_input = document.querySelectorAll(".filter-selection-main");
         let close = document.querySelectorAll(".close-filter");
+
+        filter_button.disabled = true;
+        C_filter.disabled = true;
 
         for(let i = 0; i < filter.length; i++)
         {
@@ -119,57 +129,6 @@ function Page1(props)
             });
         }
 
-        /* Filter */
-        let filter_button = document.getElementById("_filter");
-        filter_button.addEventListener("click", () =>
-        {
-            let category = document.querySelector(".category").innerHTML;
-            let type = document.querySelector(".type").innerHTML;
-            let vendor = document.querySelector(".vendor").innerHTML;
-
-            $.get("http://localhost:8080/api/products/filter?type=" +type + "&" + "vendor="+ vendor +"&category="+category,[], [], 'json')
-            .done(function( _data) 
-            {
-                if(document.querySelector(".pan-main") != null)
-                {
-                    document.querySelector(".pan-main").remove();
-                    let pan_main = document.createElement('div');
-                    let main_elements = document.querySelector(".main-elements");
-                    pan_main.className = "pan-main";
-                    main_elements.appendChild(pan_main);
-
-                    let root = createRoot(pan_main);
-                    flushSync(() => 
-                    {
-                        root.render(_data.map((el, i) => 
-                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                        ))
-                    });
-                    DetailedView();
-                }
-                else 
-                {
-                    let pan_main = document.createElement('div');
-                    let main_elements = document.querySelector(".main-elements");
-                    pan_main.className = "pan-main";
-                    main_elements.appendChild(pan_main);
-
-                    let root = createRoot(pan_main);
-                    flushSync(() => 
-                    {
-                        root.render(_data.map((el, i) => 
-                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                        ))
-                    });
-                    DetailedView();
-                }
-            })
-            .fail( function(xhr) 
-            {
-                alert(xhr.responseText);
-            });
-            
-        });
         /* When the user clicks on the pan elements show info about that specified pan element */
         function DetailedView()
         {
@@ -285,6 +244,108 @@ function Page1(props)
                 });
             } 
         }
+
+        /* Filter */
+        filter_button.addEventListener("click", () =>
+        {
+            let category = document.querySelector(".category").innerHTML;
+            let type = document.querySelector(".type").innerHTML;
+            let vendor = document.querySelector(".vendor").innerHTML;
+
+            $.get("http://localhost:8080/api/products/filter?type=" +type + "&" + "vendor="+ vendor +"&category="+category,[], [], 'json')
+            .done(function( _data) 
+            {
+                if(document.querySelector(".pan-main") != null)
+                {
+                    document.querySelector(".pan-main").remove();
+                    let pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+
+                    let root = createRoot(pan_main);
+                    flushSync(() => 
+                    {
+                        root.render(_data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                        ))
+                    });
+                    DetailedView();
+                }
+                else 
+                {
+                    let pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+
+                    let root = createRoot(pan_main);
+                    flushSync(() => 
+                    {
+                        root.render(_data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                        ))
+                    });
+                    DetailedView();
+                }
+            })
+            .fail(function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+            
+        });
+
+        C_filter.addEventListener("click", () => 
+        {
+            /*  API  */
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.get("http://localhost:8080/api/products?page=1", [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+
+                let filter_button = document.getElementById("_filter");
+                let C_filter = document.getElementById("clear_filter");
+                filter_button.disabled = true;
+                C_filter.disabled = true;
+                filter_button.style.cursor = "not-allowed";
+                C_filter.style.cursor = "not-allowed";
+
+                
+                let root;
+                let pan_main;
+                if(document.querySelector(".pan-main") != null)
+                {
+                    document.querySelector(".pan-main").remove();
+                    pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+                }
+                else 
+                {
+                    let pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+                }
+
+                root = createRoot(pan_main);
+                root.render(_data.map((el, i) => 
+                    <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                ))
+                DetailedView();
+                
+            })
+            .fail(function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+        });
+
+
 
         
 

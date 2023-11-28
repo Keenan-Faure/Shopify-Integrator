@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import {useEffect, useState} from 'react';
+import ReactDOM from 'react-dom/client';
 import $ from 'jquery';
 
 import Page1 from '../components/Page1';
@@ -8,7 +9,6 @@ import Pan_details from '../components/semi-components/pan-detail';
 import Detailed_product from '../components/semi-components/Product/detailed_product';
 import Product_Variants from '../components/semi-components/Product/product_variants';
 import Detailed_Images from '../components/semi-components/Product/detailed_images';
-import Detailed_Images2 from '../components/semi-components/Product/detailed_images2';
 import product from '../media/products.png';
 
 import '../CSS/page1.css';
@@ -64,14 +64,7 @@ function Products()
         .done(function( _data) 
         {
             console.log(_data);
-            let root;
-            let pan_main = document.querySelector(".pan-main");
-            let div = document.createElement("div");
-            pan_main.appendChild(div);
-
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>))
-            DetailedView();
+            setData(_data);
         })
         .fail( function(xhr) 
         {
@@ -82,13 +75,13 @@ function Products()
         /* When the user clicks on the pan elements show info about that specified pan element */
         function DetailedView()
         {
-            let products = document.querySelector(".products");
             let pan = document.querySelectorAll(".pan");
+            console.log("pan");
+            
             for(let i = 0; i < pan.length; i++)
             {
                 pan[i].addEventListener("click", () =>
                 {
-                    console.log(i);
                     console.log([i] + " was clicked");
                     let id = pan[i].querySelector(".p-d-id").innerHTML;
 
@@ -97,102 +90,105 @@ function Products()
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get("http://localhost:8080/api/products/" + id, [], [], 'json')
                     .done(function(_data) 
-                    {   
-                        if(document.querySelector(".details") != null)
-                        //div already exists, remove it, and create another
-                        {
+                    {
+                        console.log(_data);
+                        //setData2(_data);
 
-                            document.querySelector(".details").remove();
-                            let details = document.createElement('div');
-                            details.className = "details";
-                            products.appendChild(details);
 
-                            let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} />)
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                let _div = details.querySelectorAll(".auto-slideshow-container");
-                                for(let i = 0; i < _div.length; i++)
-                                {
-                                    let _root = createRoot(_div[i]);
-                                    if(i == 0)
-                                    {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
-                                    }
-                                    else 
-                                    {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
-                                    }
-                                }
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) =>
-                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
-                                ))
-                            }, 0);
-                            
-                        }
-                        else 
-                        //create new div
+                        
+                        let details = document.querySelector(".details");
+                        let rot = createRoot(details);
+
+                        rot.render( <Detailed_product Product_Title = {_data.title} />)
+                        
+
+                        /* For some reason it wont pick up the element unless it throw it here */
+                        setTimeout(() =>
                         {
-                            let details = document.createElement('details');
-                            products.appendChild(details);
-                            let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} />)
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                let _div = details.querySelectorAll(".auto-slideshow-container");
-                                for(let i = 0; i < _div.length; i++)
-                                {
-                                    let _root = createRoot(_div[i]);
-                                    if(i == 0)
-                                    {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
-                                    }
-                                    else 
-                                    {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
-                                    }
-                                }
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) =>
-                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
+                            let _div = details.querySelector(".auto-slideshow-container");
+                            let _root = createRoot(_div);
+
+                            _root.render( _data.product_images.map((el, i) =>
+                                <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
+                            ))
+
+                            let new_div = details.querySelector(".variants"); 
+                            let rt = createRoot(new_div);
+    
+                            rt.render( _data.variants.map((el, i) =>
+                                <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
+                            ))
+
+                            /*
+                                root.render(_data.map((el, i) => 
+                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
                                 ))
-                            }, 0);
-                        }
+                            */
+                        }, 50);
+                         
+
+                           
+                        
+                        /*
+                           
+                        */
+
+                        /*
+                        {data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Code={el.product_code}
+                            />
+                        )}
+                        */
+
                     })
                     .fail( function(xhr) 
                     {
                         alert(xhr.responseText);
                     });
-                    setTimeout(() =>
-                    {
-                        let filter = document.querySelector(".filter");
-                        let main = document.querySelector(".main");
-                        let navbar = document.getElementById("navbar");
-                        let details = document.querySelector(".details");
 
-                        filter.style.animation = "Fadeout 0.5s ease-out";
-                        main.style.animation = "Fadeout 0.5s ease-out";
-                        navbar.style.animation = "Fadeout 0.5s ease-out";
-                        filter.style.display = "none";
-                        main.style.display = "none";
-                        navbar.style.display = "none";
-                        details.style.display = "block";
-                    }, 50);
+
+                    let filter = document.querySelector(".filter");
+                    let main = document.querySelector(".main");
+                    let navbar = document.getElementById("navbar");
+                    let details = document.querySelector(".details");
+                    let close = document.querySelector(".close-button");
+
+                    filter.style.animation = "Fadeout 0.5s ease-out";
+                    main.style.animation = "Fadeout 0.5s ease-out";
+                    navbar.style.animation = "Fadeout 0.5s ease-out";
+
+                    filter.style.display = "none";
+                    main.style.display = "none";
+                    navbar.style.display = "none";
+                    details.style.animation = "FadeIn ease-in 0.5s";
+                    details.style.display = "block";
+                    close.style.display = "block";
                 });
-            } 
+
+                /* When the user clicks on the return button */
+                let close = document.querySelector(".close-button");
+                let filter = document.querySelector(".filter");
+                let main = document.querySelector(".main");
+                let navbar = document.getElementById("navbar");
+                let details = document.querySelector(".details");
+                close.addEventListener("click", ()=> 
+                {
+                    close.style.display = "none";
+                    details.style.animation = "Fadeout 0.5s ease-out";
+                    main.style.animation = "FadeIn ease-in 0.5s";
+                    filter.style.animation = "FadeIn ease-in 0.5s";
+                    navbar.style.animation = "FadeIn ease-in 0.5s";
+                    setTimeout(() => 
+                    {
+                        details.style.display = "none";
+                        navbar.style.display = "block";
+                        main.style.display = "block";
+                        filter.style.display = "block";
+                    }, 500);
+                });
+            }
+            
         }
 
         /* Script to automatically format the number of elements on each page */
@@ -426,6 +422,7 @@ function Products()
         }
         Pagintation(1);
         setTimeout(() => { DetailedView(); }, 500);
+        
 
     }, []);
     
@@ -440,7 +437,11 @@ function Products()
                 </div>
                 <div className = "main-elements">
                     <div className = "pan-main" id = "pan-main">
-                
+                        {data.map((el, i) => 
+                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Code={el.product_code}
+                            />
+                        )}
                     </div>
                 </div>
                 <div className = "center" id = "pag"></div>
