@@ -88,8 +88,6 @@ function Products()
             {
                 pan[i].addEventListener("click", () =>
                 {
-                    console.log(i);
-                    console.log([i] + " was clicked");
                     let id = pan[i].querySelector(".p-d-id").innerHTML;
 
                     /*  API  */
@@ -466,6 +464,50 @@ function Products()
         }
         Pagintation(1);
         setTimeout(() => { DetailedView(); }, 500);
+
+        let C_filter = document.getElementById("clear_filter");
+        C_filter.addEventListener("click", () => 
+        {
+            /*  API  */
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.get("http://localhost:8080/api/products?page=1", [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+
+                let filter_button = document.getElementById("_filter");
+                let C_filter = document.getElementById("clear_filter");
+                filter_button.disabled = true;
+                C_filter.disabled = true;
+                filter_button.style.cursor = "not-allowed";
+                C_filter.style.cursor = "not-allowed";
+
+                
+                let root;
+                let pan_main;
+
+                document.querySelector(".pan-main").remove();
+                pan_main = document.createElement('div');
+                let main_elements = document.querySelector(".main-elements");
+                pan_main.className = "pan-main";
+                main_elements.appendChild(pan_main);
+
+
+                root = createRoot(pan_main);
+                root.render(_data.map((el, i) => 
+                    <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
+                ))
+                DetailedView();
+                Pagintation(1);
+                
+                
+            })
+            .fail(function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+        });
 
     }, []);
     
