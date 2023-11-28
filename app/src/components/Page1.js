@@ -316,27 +316,20 @@ function Page1(props)
                 
                 let root;
                 let pan_main;
-                if(document.querySelector(".pan-main") != null)
-                {
-                    document.querySelector(".pan-main").remove();
-                    pan_main = document.createElement('div');
-                    let main_elements = document.querySelector(".main-elements");
-                    pan_main.className = "pan-main";
-                    main_elements.appendChild(pan_main);
-                }
-                else 
-                {
-                    let pan_main = document.createElement('div');
-                    let main_elements = document.querySelector(".main-elements");
-                    pan_main.className = "pan-main";
-                    main_elements.appendChild(pan_main);
-                }
+
+                document.querySelector(".pan-main").remove();
+                pan_main = document.createElement('div');
+                let main_elements = document.querySelector(".main-elements");
+                pan_main.className = "pan-main";
+                main_elements.appendChild(pan_main);
+
 
                 root = createRoot(pan_main);
                 root.render(_data.map((el, i) => 
                     <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
                 ))
                 DetailedView();
+                
                 
             })
             .fail(function(xhr) 

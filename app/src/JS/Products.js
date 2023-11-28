@@ -98,6 +98,7 @@ function Products()
                     $.get("http://localhost:8080/api/products/" + id, [], [], 'json')
                     .done(function(_data) 
                     {   
+                        console.log(_data);
                         if(document.querySelector(".details") != null)
                         //div already exists, remove it, and create another
                         {
@@ -202,11 +203,18 @@ function Products()
         paginationContainer.classList.add('pagination');
         content.appendChild(paginationContainer);
 
-        let div = document.getElementById("pan-main");
+        document.querySelector(".pan-main").remove();
+        let div = document.createElement("div");
+        div.className = "pan-main";
+        div.id = "pan-main";
+        let main = document.querySelector(".main-elements");
+        main.appendChild(div);
         let root = createRoot(div);
 
         function Pagintation(index)
         {
+            /* Create a new root */
+
             /* Check done to remove old elements if they exist */
             if(document.getElementById("next") != null && document.getElementById("prev") != null && document.getElementById("hod") != null)
             //If they exist remove them, and create new based on the new index value
@@ -259,6 +267,14 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
+                        
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
 
                         flushSync(() => 
                         {
@@ -309,6 +325,15 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
+
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
@@ -360,6 +385,8 @@ function Products()
                     prevPage.disabled = true;
                     prevPage.style.cursor = "not-allowed";
                 }
+
+
                 nextPage.addEventListener("click", () =>
                 {
                     index = index + 1;
@@ -372,9 +399,15 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        /* Check if pan elements exist and remove + update if it does*/
-                        let pan = document.querySelectorAll(".pan");
-                        pan.forEach(pan => { pan.remove(); });
+
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
@@ -404,9 +437,15 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        /* Check if pan elements exist and remove + update if it does*/
-                        let pan = document.querySelectorAll(".pan");
-                        pan.forEach(pan => { pan.remove(); });
+                        
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
