@@ -211,6 +211,7 @@ function Products()
         main.appendChild(div);
         let root = createRoot(div);
 
+        
         function Pagintation(index)
         {
             /* Create a new root */
