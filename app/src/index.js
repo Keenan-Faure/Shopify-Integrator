@@ -6,7 +6,7 @@ import './CSS/index.css';
 export default function Main()  
 {
     return (    
-        <div id = "root">
+        <div>
             <NavigationBar Display = "block"/>
         </div>
     );
