@@ -81,7 +81,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
+WHERE category LIKE $1
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductsByVendor :many
@@ -94,7 +94,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(vendor) LIKE CONCAT('%',LOWER($1),'%')
+WHERE vendor LIKE $1
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductsByType :many
@@ -107,7 +107,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(product_type) LIKE CONCAT('%',LOWER($1),'%')
+WHERE product_type LIKE $1
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductByCategoryAndType :many
@@ -120,8 +120,8 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
-AND LOWER(product_type) LIKE CONCAT('%',LOWER($2),'%')
+WHERE category LIKE $1
+AND product_type LIKE $2
 LIMIT $3 OFFSET $4;
 
 -- name: GetProductsByTypeAndVendor :many
@@ -134,8 +134,8 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(product_type) LIKE CONCAT('%',LOWER($1),'%')
-AND LOWER(vendor) LIKE CONCAT('%',LOWER($2),'%')
+WHERE product_type LIKE $1
+AND vendor LIKE $2
 LIMIT $3 OFFSET $4;
 
 -- name: GetProductsByVendorAndCategory :many
@@ -148,8 +148,8 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(vendor) LIKE CONCAT('%',LOWER($1),'%')
-AND LOWER(category) LIKE CONCAT('%',LOWER($2),'%')
+WHERE vendor LIKE $1
+AND category LIKE $2
 LIMIT $3 OFFSET $4;
 
 -- name: GetProductsFilter :many
@@ -162,9 +162,9 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(category) LIKE CONCAT('%',LOWER($1),'%')
-AND LOWER(product_type) LIKE CONCAT('%',LOWER($2),'%')
-AND LOWER(vendor) LIKE CONCAT('%',LOWER($3),'%')
+WHERE category LIKE $1
+AND product_type LIKE $2
+AND vendor LIKE $3
 LIMIT $4 OFFSET $5;
 
 -- name: GetProductsSearchSKU :many
@@ -177,8 +177,8 @@ SELECT
     p.product_type
 FROM products p
 INNER JOIN variants v
-ON p.id = variants.product_id
-WHERE LOWER(v.sku) LIKE CONCAT('%',LOWER($1),'%')
+    ON p.id = v.product_id
+WHERE v.sku LIKE $1
 LIMIT 5;
 
 -- name: GetProductsSearchTitle :many
@@ -190,7 +190,7 @@ SELECT
     vendor,
     product_type
 FROM products
-WHERE LOWER(title) LIKE CONCAT('%',LOWER($1),'%')
+WHERE title LIKE $1
 LIMIT 5;
 
 -- name: GetProducts :many

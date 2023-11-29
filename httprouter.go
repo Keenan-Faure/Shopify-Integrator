@@ -753,7 +753,7 @@ func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 	}
-	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), search_query)
+	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), utils.ConvertStringToLike(search_query))
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 	}
@@ -820,7 +820,14 @@ func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Req
 	query_param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
 	query_param_category := utils.ConfirmFilters(r.URL.Query().Get("category"))
 	query_param_vendor := utils.ConfirmFilters(r.URL.Query().Get("vendor"))
-	response, err := CompileFilterSearch(dbconfig, r.Context(), page, query_param_type, query_param_category, query_param_vendor)
+	response, err := CompileFilterSearch(
+		dbconfig,
+		r.Context(),
+		page,
+		utils.ConvertStringToLike(query_param_type),
+		utils.ConvertStringToLike(query_param_category),
+		utils.ConvertStringToLike(query_param_vendor),
+	)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -840,7 +847,7 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), search_query)
+	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), utils.ConvertStringToSQL(utils.ConvertStringToLike(search_query)))
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
