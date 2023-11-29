@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"integrator/internal/database"
 	"objects"
+	"utils"
 
 	"github.com/google/uuid"
 )
@@ -482,7 +483,7 @@ func CompileFilterSearch(
 		if category == "" {
 			// vendor
 			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
-				Lower:  vendor,
+				Vendor: utils.ConvertStringToSQL(vendor),
 				Limit:  10,
 				Offset: int32((page - 1) * 10),
 			})
@@ -502,10 +503,10 @@ func CompileFilterSearch(
 		} else {
 			// category & vendor
 			results, err := dbconfig.DB.GetProductsByVendorAndCategory(ctx, database.GetProductsByVendorAndCategoryParams{
-				Lower:   vendor,
-				Lower_2: category,
-				Limit:   10,
-				Offset:  int32((page - 1) * 10),
+				Vendor:   utils.ConvertStringToSQL(vendor),
+				Category: utils.ConvertStringToSQL(category),
+				Limit:    10,
+				Offset:   int32((page - 1) * 10),
 			})
 			if err != nil {
 				return response, err
@@ -525,7 +526,7 @@ func CompileFilterSearch(
 	if category != "" {
 		if product_type != "" {
 			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
-				Lower:  vendor,
+				Vendor: utils.ConvertStringToSQL(vendor),
 				Limit:  10,
 				Offset: int32((page - 1) * 10),
 			})
@@ -544,10 +545,10 @@ func CompileFilterSearch(
 			return response, nil
 		}
 		results, err := dbconfig.DB.GetProductsByTypeAndVendor(ctx, database.GetProductsByTypeAndVendorParams{
-			Lower:   vendor,
-			Lower_2: category,
-			Limit:   10,
-			Offset:  int32((page - 1) * 10),
+			ProductType: utils.ConvertStringToSQL(product_type),
+			Vendor:      utils.ConvertStringToSQL(vendor),
+			Limit:       10,
+			Offset:      int32((page - 1) * 10),
 		})
 		if err != nil {
 			return response, err
@@ -566,9 +567,9 @@ func CompileFilterSearch(
 	if vendor != "" {
 		if product_type == "" {
 			results, err := dbconfig.DB.GetProductsByCategory(ctx, database.GetProductsByCategoryParams{
-				Lower:  category,
-				Limit:  10,
-				Offset: int32((page - 1) * 10),
+				Category: utils.ConvertStringToSQL(category),
+				Limit:    10,
+				Offset:   int32((page - 1) * 10),
 			})
 			if err != nil {
 				return response, err
@@ -585,10 +586,10 @@ func CompileFilterSearch(
 			return response, nil
 		} else {
 			results, err := dbconfig.DB.GetProductsByTypeAndVendor(ctx, database.GetProductsByTypeAndVendorParams{
-				Lower:   product_type,
-				Lower_2: vendor,
-				Limit:   10,
-				Offset:  int32((page - 1) * 10),
+				ProductType: utils.ConvertStringToSQL(product_type),
+				Vendor:      utils.ConvertStringToSQL(vendor),
+				Limit:       10,
+				Offset:      int32((page - 1) * 10),
 			})
 			if err != nil {
 				return response, err
@@ -606,11 +607,11 @@ func CompileFilterSearch(
 		}
 	}
 	results, err := dbconfig.DB.GetProductsFilter(ctx, database.GetProductsFilterParams{
-		Lower:   category,
-		Lower_2: product_type,
-		Lower_3: vendor,
-		Limit:   10,
-		Offset:  int32((page - 1) * 10),
+		Category:    utils.ConvertStringToSQL(category),
+		ProductType: utils.ConvertStringToSQL(product_type),
+		Vendor:      utils.ConvertStringToSQL(vendor),
+		Limit:       10,
+		Offset:      int32((page - 1) * 10),
 	})
 	if err != nil {
 		return response, err

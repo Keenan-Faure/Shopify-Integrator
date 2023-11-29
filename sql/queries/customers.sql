@@ -53,9 +53,9 @@ SELECT
     phone,
     updated_at
 FROM customers
-WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO LOWER($1)
-AND LOWER(first_name) LIKE CONCAT('%',LOWER($1),'%')
-AND LOWER(last_name) LIKE CONCAT('%',LOWER($1),'%')
+WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO $1
+AND first_name LIKE $1
+AND last_name LIKE $1
 LIMIT 10;
 
 -- name: RemoveCustomer :exec
