@@ -1,8 +1,6 @@
 import {useEffect} from 'react';
 import Page2 from '../components/Page2';
-import Detailed_product from '../components/semi-components/Product/detailed_product';
-import Detailed_Images from '../components/semi-components/Product/detailed_images';
-import MyImage from '../media/3ada.png';
+import Detailed_customer from '../components/semi-components/Customer/detailed_customer';
 import '../CSS/page2.css';
 
 /* Must start with a Caps letter */
@@ -24,7 +22,7 @@ function Settings()
     return (
         <>
             
-            <Page2 />
+            <Detailed_customer />
         </>
     );
 }

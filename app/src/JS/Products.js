@@ -24,25 +24,19 @@ function Products()
         setInputs(values => ({...values, [name]: value}))
     }
 
-    const [data, setData] = useState([]);
-    //const [data2, setData2] = useState([]);
-
     const SearchProduct = (event) =>
     {
         event.preventDefault();
         console.log(inputs);
 
-        /*
-        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
+        
+        $.get("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
         .done(function( _data) 
         {
             console.log(_data);
         })
-        .fail( function(xhr) 
-        {
-            alert(xhr.responseText);
-        });
-        */
+        .fail( function(xhr) { alert(xhr.responseText); });
+        
     }
 
     useEffect(()=> 
@@ -73,10 +67,7 @@ function Products()
             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>))
             DetailedView();
         })
-        .fail( function(xhr) 
-        {
-            alert(xhr.responseText);
-        });
+        .fail( function(xhr) { alert(xhr.responseText); });
 
 
         /* When the user clicks on the pan elements show info about that specified pan element */
@@ -89,7 +80,6 @@ function Products()
                 pan[i].addEventListener("click", () =>
                 {
                     let id = pan[i].querySelector(".p-d-id").innerHTML;
-
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -115,24 +105,12 @@ function Products()
                                 for(let i = 0; i < _div.length; i++)
                                 {
                                     let _root = createRoot(_div[i]);
-                                    if(i == 0)
-                                    {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
-                                    }
-                                    else 
-                                    {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
-                                    }
+                                    if(i == 0) { _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
+                                    else { _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
                                 }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) =>
-                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
-                                ))
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
                             }, 0);
                             
                         }
@@ -152,22 +130,16 @@ function Products()
                                     let _root = createRoot(_div[i]);
                                     if(i == 0)
                                     {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> ))
                                     }
                                     else 
                                     {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> ))
                                     }
                                 }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) =>
-                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
-                                ))
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
                             }, 0);
                         }
                     })
@@ -207,8 +179,6 @@ function Products()
         div.id = "pan-main";
         let main = document.querySelector(".main-elements");
         main.appendChild(div);
-        let root = createRoot(div);
-
         
         function Pagintation(index)
         {
@@ -237,22 +207,9 @@ function Products()
                 prevPage.id = "prev";
                 prevPage.innerHTML = "←";
                 paginationDiv.appendChild(prevPage);
-                if(index == 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
-                else if(index > 1)
-                {
-                    prevPage.style.cursor = "pointer";
-                    prevPage.disabled = false;
-                    nextPage.disabled = false;
-                }
-                else if(index <= 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
+                if(index == 1) { prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+                else if(index > 1) { prevPage.style.cursor = "pointer"; prevPage.disabled = false; nextPage.disabled = false; }
+                else if(index <= 1) {prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
 
                 nextPage.addEventListener("click", () =>
                 {
@@ -266,7 +223,6 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        
                         document.querySelector(".pan-main").remove();
                         let div = document.createElement("div");
                         div.className = "pan-main";
@@ -274,19 +230,12 @@ function Products()
                         let main = document.querySelector(".main-elements");
                         main.appendChild(div);
                         let root = createRoot(div);
-
                         flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                            ))
+                        { 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> )) 
                         });
-                        
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
+                    .fail( function(xhr) { alert(xhr.responseText); });
 
                     let ahead = index + 1;
                     /*  API  */
@@ -299,16 +248,12 @@ function Products()
                             let next = document.getElementById("next");
                             next.style.cursor = "not-allowed";
                             next.disabled = true;
-                            
                         } 
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
+                    .fail( function(xhr) { alert(xhr.responseText); });
 
                     Pagintation(index);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -334,19 +279,13 @@ function Products()
                         let root = createRoot(div);
 
                         flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                            ))
+                        { 
+                            root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
                         });
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
-
+                    .fail( function(xhr) { alert(xhr.responseText); });
                     Pagintation(index--);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
             }
             else 
@@ -368,24 +307,9 @@ function Products()
                 prevPage.innerHTML = "←";
                 paginationDiv.appendChild(prevPage);
 
-                if(index == 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
-                else if(index > 1)
-                {
-                    prevPage.style.cursor = "pointer";
-                    prevPage.disabled = false;
-                    nextPage.disabled = false;
-                }
-                else if(index <= 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
-
-
+                if(index == 1) { prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+                else if(index > 1) { prevPage.style.cursor = "pointer"; prevPage.disabled = false; nextPage.disabled = false; }
+                else if(index <= 1) {prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
                 nextPage.addEventListener("click", () =>
                 {
                     index = index + 1;
@@ -398,7 +322,6 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
-
                         document.querySelector(".pan-main").remove();
                         let div = document.createElement("div");
                         div.className = "pan-main";
@@ -408,19 +331,13 @@ function Products()
                         let root = createRoot(div);
 
                         flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                            ))
+                        { 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> )) 
                         });
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
-
+                    .fail( function(xhr) { alert(xhr.responseText); });
                     Pagintation(index++);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -446,24 +363,18 @@ function Products()
                         let root = createRoot(div);
 
                         flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => 
-                                <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                            ))
+                        { 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> )) 
                         });
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
-
+                    .fail( function(xhr) { alert(xhr.responseText); });
                     Pagintation(index);
-                    setTimeout(() => { DetailedView(); }, 500);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
             } 
         }
         Pagintation(1);
-        setTimeout(() => { DetailedView(); }, 500);
+        setTimeout(() => { DetailedView();}, 200);
 
         let C_filter = document.getElementById("clear_filter");
         C_filter.addEventListener("click", () => 
@@ -475,7 +386,6 @@ function Products()
             .done(function( _data) 
             {
                 console.log(_data);
-
                 let filter_button = document.getElementById("_filter");
                 let C_filter = document.getElementById("clear_filter");
                 filter_button.disabled = true;
@@ -483,30 +393,19 @@ function Products()
                 filter_button.style.cursor = "not-allowed";
                 C_filter.style.cursor = "not-allowed";
 
-                
                 let root;
                 let pan_main;
-
                 document.querySelector(".pan-main").remove();
                 pan_main = document.createElement('div');
                 let main_elements = document.querySelector(".main-elements");
                 pan_main.className = "pan-main";
                 main_elements.appendChild(pan_main);
-
-
                 root = createRoot(pan_main);
-                root.render(_data.map((el, i) => 
-                    <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                ))
+                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
                 DetailedView();
                 Pagintation(1);
-                
-                
             })
-            .fail(function(xhr) 
-            {
-                alert(xhr.responseText);
-            });
+            .fail( function(xhr) { alert(xhr.responseText); });
         });
 
     }, []);
@@ -531,10 +430,6 @@ function Products()
             <Page1 image = {product} title = "Products"/>
             <div className = "details">
                 <div className = 'close-button'>&times;</div>
-                
-                
-                       
-
             </div>
 
         </div>

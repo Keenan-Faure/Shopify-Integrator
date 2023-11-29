@@ -64,7 +64,7 @@
     position: absolute;
     overflow: auto;
     filter: blur(1px);
-    width: 30%;
+    width: 29%;
     height: 100%;
     object-fit: cover;
     object-position: 38% 25%;

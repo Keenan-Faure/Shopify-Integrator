@@ -18,7 +18,6 @@ function Pan_details(props)
 
         /* Hover brightens the color of the pan element details */
         let pan_details = document.querySelectorAll(".pan-details");
-        let pan_price = document.querySelectorAll(".pan-price");
 
         for(let i = 0; i < pan.length; i++)
         {
@@ -30,7 +29,6 @@ function Pan_details(props)
                     a_class[p].style.color = "rgb(240, 248, 255, 0.8)"
                 }
                 pan_details[i].style.color = "rgb(240, 248, 255, 0.8)";
-                pan_price[i].style.color = "rgb(240, 248, 255, 0.8)";
             }
             pan[i].onmouseout = function(event)
             {
@@ -40,7 +38,6 @@ function Pan_details(props)
                     a_class[p].style.color = "black";
                 }
                 pan_details[i].style.color = "black";
-                pan_price[i].style.color = "black"; 
             }
         }
     }, []);
@@ -58,9 +55,6 @@ function Pan_details(props)
 
                 <a href = "/#" className = "p-d-options">{props.Product_Options}</a> | <a href = "/#" className = "p-d-category">{props.Product_Category}</a> | <a href = "/#" className = "p-d-type">{props.Product_Type}</a> | <a href = "/#" className = "p-d-vendor">{props.Product_Vendor}</a>
             </div>
-            <div className = "pan-price">
-            {props.Product_Price}
-            </div>
         </div>
     );
 };
@@ -73,6 +67,5 @@ Pan_details.defaultProps =
     Product_Category: 'Category',
     Product_Type: 'Type',
     Product_Vendor: 'Vendor',
-    Product_Price: 'Price'
 }
 export default Pan_details;

@@ -1,7 +1,7 @@
 import {useEffect} from 'react';
 import '../../../CSS/detailed.css';
 
-function Detailed_product(props)
+function Detailed_customer(props)
 {
     useEffect(()=> 
     {
@@ -24,10 +24,10 @@ function Detailed_product(props)
             
         }
 
-        let home = document.getElementById("Product");
+        let home = document.getElementById("Customer");
         home.addEventListener("click", () =>
         {
-            openPage('Product');
+            openPage('Customer');
         });
 
         let defaul = document.getElementById("Variants");
@@ -36,7 +36,7 @@ function Detailed_product(props)
             openPage('Variants');
         });
 
-        document.getElementById("Product").click();
+        document.getElementById("Customer").click();
 
         let activity = document.querySelector(".details-title").innerHTML;
         let status = document.querySelector(".inactive");
@@ -79,13 +79,13 @@ function Detailed_product(props)
         <div id = "detailss" style = {{display: props.Display}}>
             <div className = 'rtn-button'></div>
             <div className = "button-holder">
-                <button className="tablink" id = "Product">Product</button>
+                <button className="tablink" id = "Customer">Customer</button>
                 <button className="tablink" id ="Variants">Variants</button>
             </div>
         
-            <div className="tabcontent" id="_Product" >
+            <div className="tabcontent" id="_Customer" >
                 <div className = "details-details">
-                    <div className = "auto-slideshow-container" />
+                    <div className = "detailed-image" />
                     <div className = "detailed">
                         <div className = "details-title">{props.Product_Title}</div>
                         <i className = "inactive"/>
@@ -106,12 +106,12 @@ function Detailed_product(props)
                                 </tr>
                             </tbody>
                         </table> 
-                        <div className = "details-description">Product Description</div>
+                        <div className = "details-description">Customer Descriptions</div>
                         <p id = "description">
-                            Product Description goes here, and it will be a extremelty long piece of text, of course, this can vary
+                            Customer Description goes here, and it will be a extremelty long piece of text, of course, this can vary
                             but, on average, it could grow to be this large. But we'll see eyy!~
                         </p>
-                        <div className = "details-description">Product Warehousing</div> 
+                        <div className = "details-description">Customer Warehousing</div> 
                         <div className = "details-warehousing"></div>  
                     </div>
                     <div className = "details-left"></div>
@@ -121,7 +121,7 @@ function Detailed_product(props)
 
             <div className="tabcontent" id="_Variants" >
                 <div className = "details-details">
-                    <div className = "auto-slideshow-container" />
+                <div className = "detailed-image" />
                     <div className = "detailed">
                         <div className = "details-title"> {props.Product_Title} Variants</div>
                         <div className = "variants" id="_variants" ></div>
@@ -134,15 +134,14 @@ function Detailed_product(props)
     );
 };
 
-Detailed_product.defaultProps = 
+Detailed_customer.defaultProps = 
 {
-    Product_Title: 'Product title',
-    Product_Code: 'Product code',
-    Product_Options: 'Options',
-    Product_Category: 'Category',
-    Product_Type: 'Type',
-    Product_Vendor: 'Vendor',
-    Product_Image: '#ccc',
-    Product_Price: 'Price',
+    Customer_Title: 'Customer title',
+    Customer_Code: 'Customer code',
+    Customer_Options: 'Options',
+    Customert_Category: 'Category',
+    Customer_Type: 'Type',
+    Customer_Vendor: 'Vendor',
+    Customer_Price: 'Price'
 }
-export default Detailed_product;
+export default Detailed_customer;

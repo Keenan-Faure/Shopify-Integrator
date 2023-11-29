@@ -22,7 +22,7 @@ function Detailed_Images2(props)
                 }
                 else if(slides.length > 2)
                 {
-                    for (let i = 0; i < 4; i++) 
+                    for (let i = 0; i < slides.length; i++) 
                     {
                         slides[i].style.display = "none";  
                     }

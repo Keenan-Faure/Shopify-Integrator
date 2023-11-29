@@ -41,10 +41,7 @@ function Page1(props)
         vendor.innerHTML = inputs.vendor;
 
         let filter_input = document.querySelectorAll(".filter-selection-main");
-        for(let i = 0; i < filter_input.length; i++)
-        {
-            filter_input[i].style.display = "none";
-        }
+        for(let i = 0; i < filter_input.length; i++) { filter_input[i].style.display = "none"; }
         let filter_button = document.getElementById("_filter");
         let C_filter = document.getElementById("clear_filter");
         filter_button.disabled = false;
@@ -63,10 +60,7 @@ function Page1(props)
         /* animation for the search bar */
         let search = document.querySelector(".search-area");
         setTimeout(() =>
-        {
-            search.style.opacity = "1";
-            search.style.animation = "appear 0.8s ease-in";
-        }, 1000);
+        { search.style.opacity = "1"; search.style.animation = "appear 0.8s ease-in"; }, 1000);
 
         /* animation for the pan elements */
         let pan = document.querySelectorAll(".pan");
@@ -166,22 +160,16 @@ function Page1(props)
                                     let _root = createRoot(_div[i]);
                                     if(i == 0)
                                     {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> ))
                                     }
                                     else 
                                     {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> ))
                                     }
                                 }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) =>
-                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
-                                ))
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
                             }, 0);
                             
                         }
@@ -201,22 +189,16 @@ function Page1(props)
                                     let _root = createRoot(_div[i]);
                                     if(i == 0)
                                     {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> ))
                                     }
                                     else 
                                     {
-                                        _root.render( _data.product_images.map((el, i) =>
-                                        <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>
-                                    ))
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>))
                                     }
                                 }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) =>
-                                    <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/>
-                                ))
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
                             }, 0);
                         }
                     })
@@ -265,9 +247,7 @@ function Page1(props)
                     let root = createRoot(pan_main);
                     flushSync(() => 
                     {
-                        root.render(_data.map((el, i) => 
-                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                        ))
+                        root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
                     });
                     DetailedView();
                 }
@@ -281,21 +261,13 @@ function Page1(props)
                     let root = createRoot(pan_main);
                     flushSync(() => 
                     {
-                        root.render(_data.map((el, i) => 
-                            <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>
-                        ))
+                        root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
                     });
                     DetailedView();
                 }
             })
-            .fail(function(xhr) 
-            {
-                alert(xhr.responseText);
-            });
-            
+            .fail( function(xhr) { alert(xhr.responseText); });
         });
-        
-        
     }, []);
 
     return (
@@ -303,33 +275,27 @@ function Page1(props)
             <Background />
             <div className = "filter" style = {{display: props.filter_display}}>
                 <div className = "filter-title"><b>Available Filters:</b></div>
-
                 <div className = "filter-elements">
                     Filter By Type
                     <div className = "filter-img"/>
                     <div className = "type"></div>
                 </div>
-
                 <div className = "filter-elements">
                     Filter By Vendor
                     <div className = "filter-img"/>
                     <div className = "vendor"></div>
                 </div>
-
                 <div className = "filter-elements">
                     Filter By Category
                     <div className = "filter-img"/>
                     <div className = "category"></div>
                 </div>
                 <br />
-
                 <div className = "vendor"></div>
                 <div className = "type"></div>
                 <div className = "category"></div>
-
                 <button id = "clear_filter"className = "filter-button">Clear Filter</button>
                 <button id = "_filter"className = "filter-button">Filter Results</button>
-                
             </div>
             <div className = "filter-selection-main">
                 <div className = "filter-input">
@@ -340,7 +306,7 @@ function Page1(props)
                         <br/><br/><br/>
                         <button className = 'button' type = 'submit'>Confirm</button>
                     </form>
-                    
+
                 </div>
             </div>
             <div className = "filter-selection-main">
