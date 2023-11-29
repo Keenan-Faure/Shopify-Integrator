@@ -177,7 +177,7 @@ SELECT
     p.product_type
 FROM products p
 INNER JOIN variants v
-ON p.id = variants.product_id
+ON p.id = v.product_id
 WHERE LOWER(v.sku) LIKE CONCAT('%',LOWER($1),'%')
 LIMIT 5;
 

@@ -469,13 +469,13 @@ func ValidateDuplicateSKU(
 	}
 	for _, value := range sku_array {
 		db_sku, err := dbconfig.DB.GetVariantBySKU(r.Context(), value)
-		if err.Error() == "record not found" {
-			return nil
-		}
-		if err.Error() == "sql: no rows in result set" {
-			return nil
-		}
 		if err != nil {
+			if err.Error() == "record not found" {
+				return nil
+			}
+			if err.Error() == "sql: no rows in result set" {
+				return nil
+			}
 			return err
 		}
 		if db_sku.Sku == value {
