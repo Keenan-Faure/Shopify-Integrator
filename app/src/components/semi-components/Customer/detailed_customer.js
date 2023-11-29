@@ -114,8 +114,8 @@ function Detailed_customer(props)
                         <div className = "details-description">Customer Warehousing</div> 
                         <div className = "details-warehousing"></div>  
                     </div>
-                    <div className = "details-left"></div>
                     <div className = "details-right"></div>
+                    <div className = "details-left"></div>
                 </div>
             </div>
 
@@ -126,8 +126,8 @@ function Detailed_customer(props)
                         <div className = "details-title"> {props.Product_Title} Variants</div>
                         <div className = "variants" id="_variants" ></div>
                     </div>
-                    <div className = "details-left"></div>
                     <div className = "details-right"></div>
+                    <div className = "details-left"></div>
                 </div>
             </div>
         </div>
