@@ -291,9 +291,9 @@ WHERE o.id in (
     SELECT order_id FROM customerorders co
     INNER JOIN customers c
     ON co.customer_id = c.id
-    WHERE CONCAT(LOWER(c.first_name), ' ', LOWER(c.last_name)) SIMILAR TO LOWER($1)
-    OR LOWER(c.first_name) LIKE CONCAT('%',LOWER($1),'%')
-    OR LOWER(c.last_name) LIKE CONCAT('%',LOWER($1),'%')
+    WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
+    OR c.first_name LIKE $1
+    OR c.last_name LIKE $1
 )
 `
 
@@ -308,8 +308,8 @@ type GetOrdersSearchByCustomerRow struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetOrdersSearchByCustomer(ctx context.Context, lower string) ([]GetOrdersSearchByCustomerRow, error) {
-	rows, err := q.db.QueryContext(ctx, getOrdersSearchByCustomer, lower)
+func (q *Queries) GetOrdersSearchByCustomer(ctx context.Context, similarToEscape string) ([]GetOrdersSearchByCustomerRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOrdersSearchByCustomer, similarToEscape)
 	if err != nil {
 		return nil, err
 	}

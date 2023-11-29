@@ -161,9 +161,9 @@ SELECT
     phone,
     updated_at
 FROM customers
-WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO LOWER($1)
-AND LOWER(first_name) LIKE CONCAT('%',LOWER($1),'%')
-AND LOWER(last_name) LIKE CONCAT('%',LOWER($1),'%')
+WHERE CONCAT(first_name, ' ', last_name) SIMILAR TO $1
+AND first_name LIKE $1
+AND last_name LIKE $1
 LIMIT 10
 `
 
@@ -176,8 +176,8 @@ type GetCustomersByNameRow struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetCustomersByName(ctx context.Context, lower string) ([]GetCustomersByNameRow, error) {
-	rows, err := q.db.QueryContext(ctx, getCustomersByName, lower)
+func (q *Queries) GetCustomersByName(ctx context.Context, similarToEscape string) ([]GetCustomersByNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCustomersByName, similarToEscape)
 	if err != nil {
 		return nil, err
 	}
