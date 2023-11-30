@@ -523,7 +523,6 @@ func LoopJSONShopify(
 			}
 			log.Printf("From Shopify %d products were collected", len(shopifyProds.Products))
 			fetch_url = utils.GetNextURL(next)
-			fmt.Println(fetch_url)
 		}
 	}
 }

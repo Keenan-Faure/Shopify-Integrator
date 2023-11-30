@@ -24,10 +24,12 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
+	// flags
 	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
 	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
 	flag.Parse()
 
+	// db connnection config
 	connection_string := "postgres://" + utils.LoadEnv("db_user") + ":" + utils.LoadEnv("db_psw")
 	host := "@localhost:5432/"
 	if !*use_localhost {
@@ -38,16 +40,19 @@ func main() {
 		log.Fatalf("Error occured %v", err.Error())
 	}
 
+	// shopify connection config
 	shopifyConfig := shopify.InitConfigShopify()
+
+	// config workers only if flags are set
 	if !*workers {
-		fmt.Println("Starting Workers")
+		fmt.Println("starting workers")
 		go iocsv.LoopRemoveCSV()
 		if shopifyConfig.Valid {
 			go LoopJSONShopify(&dbCon, shopifyConfig)
 		}
 		QueueWorker(&dbCon)
 	}
-	fmt.Println("Starting API")
+	fmt.Println("starting API")
 	setupAPI(dbCon, shopifyConfig)
 }
 
@@ -57,28 +62,39 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	r.Use(cors.Handler(MiddleWare()))
 	api := chi.NewRouter()
 
-	api.Post("/products/import", dbconfig.middlewareAuth(dbconfig.ProductImportHandle))
-	api.Post("/products", dbconfig.middlewareAuth(dbconfig.PostProductHandle))
+	// utils
+	api.Get("/ready", dbconfig.ReadyHandle)
+
+	// customers
 	api.Post("/customers", dbconfig.middlewareAuth(dbconfig.PostCustomerHandle))
+	api.Get("/customers", dbconfig.middlewareAuth(dbconfig.CustomersHandle))
+	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
+	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
+
+	// orders
+	api.Get("/orders", dbconfig.middlewareAuth(dbconfig.OrdersHandle))
+	api.Get("/orders/{id}", dbconfig.middlewareAuth(dbconfig.OrderHandle))
+	api.Get("/orders/search", dbconfig.middlewareAuth(dbconfig.OrderSearchHandle))
+
+	// registration
 	api.Post("/orders", dbconfig.middlewareAuth(dbconfig.PostOrderHandle))
 	api.Post("/register", dbconfig.RegisterHandle)
 	api.Post("/preregister", dbconfig.PreRegisterHandle)
 	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
-	api.Get("/ready", dbconfig.ReadyHandle)
+
+	// products
+	api.Post("/products/import", dbconfig.middlewareAuth(dbconfig.ProductImportHandle))
+	api.Post("/products", dbconfig.middlewareAuth(dbconfig.PostProductHandle))
 	api.Get("/products", dbconfig.middlewareAuth(dbconfig.ProductsHandle))
 	api.Get("/products/{id}", dbconfig.middlewareAuth(dbconfig.ProductHandle))
 	api.Get("/products/search", dbconfig.middlewareAuth(dbconfig.ProductSearchHandle))
 	api.Get("/products/filter", dbconfig.middlewareAuth(dbconfig.ProductFilterHandle))
-	api.Get("/orders", dbconfig.middlewareAuth(dbconfig.OrdersHandle))
-	api.Get("/orders/{id}", dbconfig.middlewareAuth(dbconfig.OrderHandle))
-	api.Get("/orders/search", dbconfig.middlewareAuth(dbconfig.OrderSearchHandle))
-	api.Get("/customers", dbconfig.middlewareAuth(dbconfig.CustomersHandle))
-	api.Get("/customers/{id}", dbconfig.middlewareAuth(dbconfig.CustomerHandle))
-	api.Get("/customers/search", dbconfig.middlewareAuth(dbconfig.CustomerSearchHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 	api.Delete("/products/{id}", dbconfig.middlewareAuth(dbconfig.RemoveProductHandle))
 	api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
 
+	// Configure warehouse-locations
+	api.Get("/inventory/config", dbconfig.middlewareAuth(dbconfig.ConfigLocationMap))
 	api.Get("/inventory", dbconfig.middlewareAuth(dbconfig.GetWarehouseLocations))
 	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
 	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
@@ -92,6 +108,8 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/settings", dbconfig.middlewareAuth(dbconfig.GetAppSettingValue))
 	api.Post("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
 	api.Delete("/settings", dbconfig.middlewareAuth(dbconfig.RemoveAppSettings))
+	// webhook configuration
+	api.Post("/settings/webhook", dbconfig.middlewareAuth(dbconfig.GetWebhookURL))
 
 	// queue
 	api.Get("/queue/{id}", dbconfig.middlewareAuth(dbconfig.GetQueueItemByID))
@@ -118,8 +136,9 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	}
 
 	server := &http.Server{
-		Addr:              ":" + port,
-		Handler:           r,
+		Addr:    ":" + port,
+		Handler: r,
+		// 10 second timeout
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 

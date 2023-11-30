@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"objects"
 	"os"
+	"shopify"
 	"strconv"
 	"time"
 	"utils"
@@ -19,6 +20,35 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/google/uuid"
 )
+
+// POST /api/settings/webhook
+func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	body, err := DecodeWebhookURL(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	if body.ApiKey == "" {
+		RespondWithError(w, http.StatusBadRequest, "data validation error")
+		return
+	}
+	// check if a user exists
+	db_user, err := dbconfig.DB.GetUserByApiKey(r.Context(), body.ApiKey)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "invalid api_key")
+		return
+	}
+	if db_user.ApiKey != body.ApiKey {
+		RespondWithError(w, http.StatusInternalServerError, "invalid api_key")
+		return
+	}
+	// create webhook url
+	webhook_url := body.ForwardingURL + "/api/orders?token=" + db_user.WebhookToken + "&api_key=" + db_user.ApiKey
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: webhook_url,
+	})
+	// TODO how we going to get the ngrok forwarding url??
+}
 
 // GET /api/inventory
 func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.Request, dbUser database.User) {
@@ -61,6 +91,31 @@ func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http
 	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: "Deleted",
+	})
+}
+
+// Returns all locations on Shopify and all warehouses in the app
+
+// GET /api/inventory/config
+func (dbconfig *DbConfig) ConfigLocationMap(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	shopifyConfig := shopify.InitConfigShopify()
+	if !shopifyConfig.Valid {
+		RespondWithError(w, http.StatusInternalServerError, "invalid shopify config")
+		return
+	}
+	locations, err := shopifyConfig.GetShopifyLocations()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	warehouses, err := dbconfig.DB.GetUniqueWarehouses(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseWarehouseLocation{
+		Warehouses:       warehouses,
+		ShopifyLocations: locations,
 	})
 }
 
@@ -447,8 +502,13 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		ApiKey:       dbUser.ApiKey,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, "invalid token for user")
+			return
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
 	}
 	order_body, err := DecodeOrderRequestBody(r)
 	if err != nil {
