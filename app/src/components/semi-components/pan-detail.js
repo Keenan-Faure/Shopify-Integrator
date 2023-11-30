@@ -47,13 +47,13 @@ function Pan_details(props)
         <div className = "pan">
             <div className = "pan-img"></div>
             <div className = "pan-details">
-                <a href = "/#" className = "p-d-title">{props.Product_Title}</a>
+                <a href = "/#" className = "p-d-title">{props.Product_Title} <i href = "/#" className = "p-d-options">{props.Product_Activity}</i></a>
                 <br/><br/>
 
                 <a href = "/#" className = "p-d-code">{props.Product_Code}</a> <a href = "/#" className = "p-d-id">{props.Product_ID}</a>
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-options">{props.Product_Options}</a> | <a href = "/#" className = "p-d-category">{props.Product_Category}</a> | <a href = "/#" className = "p-d-type">{props.Product_Type}</a> | <a href = "/#" className = "p-d-vendor">{props.Product_Vendor}</a>
+                <a href = "/#" className = "p-d-category">{props.Product_Category}</a> <b>|</b> <a href = "/#" className = "p-d-type">{props.Product_Type}</a> <b>|</b> <a href = "/#" className = "p-d-vendor">{props.Product_Vendor}</a>
             </div>
         </div>
     );
@@ -63,7 +63,7 @@ Pan_details.defaultProps =
 {
     Product_Title: 'Product title',
     Product_Code: 'Product code',
-    Product_Options: 'Options',
+    Product_Activity: '',
     Product_Category: 'Category',
     Product_Type: 'Type',
     Product_Vendor: 'Vendor',

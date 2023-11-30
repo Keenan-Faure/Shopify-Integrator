@@ -64,7 +64,9 @@ function Products()
             pan_main.appendChild(div);
 
             root = createRoot(div);
-            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/>))
+            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+            />))
             DetailedView();
         })
         .fail( function(xhr) { alert(xhr.responseText); });
@@ -232,7 +234,9 @@ function Products()
                         let root = createRoot(div);
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> )) 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                        /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -280,7 +284,9 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
+                            root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                        /> ))
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -332,7 +338,9 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> )) 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                        /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -364,7 +372,9 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> )) 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                        /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -401,7 +411,9 @@ function Products()
                 pan_main.className = "pan-main";
                 main_elements.appendChild(pan_main);
                 root = createRoot(pan_main);
-                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
+                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                /> ))
                 DetailedView();
                 Pagintation(1);
             })
