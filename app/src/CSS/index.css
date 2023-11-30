@@ -3,6 +3,10 @@ body
 	margin: 0;
     background: linear-gradient(to bottom, #202020, #111119);
 }
+html 
+{
+    overflow: hidden;
+}
 *
 {
 	box-sizing: border-box;

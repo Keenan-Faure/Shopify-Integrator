@@ -202,6 +202,7 @@ input.search-area
     z-index: 2;
     transform: translate(-30%, -6%);
     animation: SlideUp2 1.2s ease-in;
+    overflow: hidden;
 }
 .main-elements 
 {

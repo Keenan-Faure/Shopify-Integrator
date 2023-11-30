@@ -32,7 +32,7 @@ function Detailed_Images2(props)
                     setTimeout(() =>
                     {
                         showSlides();
-                    }, 2000); // Change image every 5 seconds
+                    }, 4000); // Change image every 5 seconds
                 }
                 else
                 {
