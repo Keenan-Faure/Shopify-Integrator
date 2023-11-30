@@ -447,8 +447,13 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		ApiKey:       dbUser.ApiKey,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, "invalid token for user")
+			return
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
 	}
 	order_body, err := DecodeOrderRequestBody(r)
 	if err != nil {
