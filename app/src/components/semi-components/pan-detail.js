@@ -40,6 +40,23 @@ function Pan_details(props)
                 pan_details[i].style.color = "black";
             }
         }
+
+        /* Activity of pan elements 
+        let activity = document.querySelectorAll(".p-d-activity");
+        let option = document.querySelectorAll(".p-d-options");
+        for(let i = 0; i < activity.length; i++)
+        {
+            if(activity[i].innerHTML == "1")
+            {
+                option[i].classList.replace("p-d-options", "p-d-true");
+            }
+            else
+            {
+                option[i].classList.replace("p-d-options", "p-d-false");
+            }
+        }
+
+        */
     }, []);
 
     return (
@@ -47,10 +64,10 @@ function Pan_details(props)
         <div className = "pan">
             <div className = "pan-img"></div>
             <div className = "pan-details">
-                <a href = "/#" className = "p-d-title">{props.Product_Title} <i href = "/#" className = "p-d-options">{props.Product_Activity}</i></a>
+                <a href = "/#" className = "p-d-title">{props.Product_Title} <i href = "/#" className = "p-d-options" /></a> 
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-code">{props.Product_Code}</a> <a href = "/#" className = "p-d-id">{props.Product_ID}</a>
+                <a href = "/#" className = "p-d-code">{props.Product_Code}</a> <a href = "/#" className = "p-d-id">{props.Product_ID}</a> <a className = "p-d-activity">{props.Product_Activity}</a>
                 <br/><br/>
 
                 <a href = "/#" className = "p-d-category">{props.Product_Category}</a> <b>|</b> <a href = "/#" className = "p-d-type">{props.Product_Type}</a> <b>|</b> <a href = "/#" className = "p-d-vendor">{props.Product_Vendor}</a>

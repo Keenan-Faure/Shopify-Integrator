@@ -98,7 +98,7 @@ body
 .filter-selection-main 
 {
     display: none;
-    background-color: rgb(0 0 0 / 95%);
+    background-color: rgb(137 137 137 / 25%);
     position: absolute;
     width: 100%;
     height: 100%;
@@ -173,7 +173,9 @@ input[type="search"]
     color: inherit;
     border: 1px solid transparent;
     border-radius: inherit;
+    
 }
+
 input[type="search"]::placeholder 
 {
     color: #3b3b3b;
@@ -295,11 +297,21 @@ input.search-area
     padding: 4px;
     transition-duration: 0.4s;
 }
-.p-d-id 
+.p-d-id, .p-d-activity
 {
     display: none;
 }
-.p-d-options 
+.p-d-false 
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 3px;
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/cross.png);
+}
+.p-d-true 
 {
     position: relative;
     height: 20px;

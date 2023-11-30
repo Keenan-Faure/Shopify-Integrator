@@ -2,7 +2,6 @@ import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import {useEffect, useState} from 'react';
 import $ from 'jquery';
-
 import Page1 from '../components/Page1';
 import Pan_details from '../components/semi-components/pan-detail';
 import Detailed_product from '../components/semi-components/Product/detailed_product';
@@ -27,16 +26,7 @@ function Products()
     const SearchProduct = (event) =>
     {
         event.preventDefault();
-        console.log(inputs);
 
-        
-        $.get("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
-        .done(function( _data) 
-        {
-            console.log(_data);
-        })
-        .fail( function(xhr) { alert(xhr.responseText); });
-        
     }
 
     useEffect(()=> 
@@ -51,7 +41,7 @@ function Products()
             navigation.style.animation = "MoveLeft 0.8s ease";
         }
 
-        /*  API  */
+        /*  API INITIAL-REQUEST */
         const api_key = localStorage.getItem('api_key');
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
         $.get("http://localhost:8080/api/products?page=1", [], [])
@@ -64,12 +54,81 @@ function Products()
             pan_main.appendChild(div);
 
             root = createRoot(div);
-            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
-                Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
             />))
-            DetailedView();
+            
         })
         .fail( function(xhr) { alert(xhr.responseText); });
+
+        /* SEARCH */
+        document.getElementById("search").addEventListener("submit", function(e)
+        {
+
+            $.get("http://localhost:8080/api/products/search?q=" + document.getElementsByName("search")[0].value,[],[], 'json')
+            .done(function( _data) 
+            {
+                console.log(_data);
+
+                document.querySelector(".pan-main").remove();
+                let div = document.createElement("div");
+                div.className = "pan-main";
+                div.id = "pan-main";
+                let main = document.querySelector(".main-elements");
+                main.appendChild(div);
+                let root = createRoot(div);
+
+                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                /> )) 
+
+                setTimeout(() =>
+                {
+                    DetailedView();
+                }, 100);
+            })
+            .fail( function(xhr) { alert(xhr.responseText); });
+        });
+
+        /* When the user clicks the X on the search bar */
+        document.getElementById("search").addEventListener("search", function(event) 
+        {
+            if(document.getElementsByName("search")[0].value == "")
+            {
+                const api_key = localStorage.getItem('api_key');
+                $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                $.get("http://localhost:8080/api/products?page=1", [], [])
+                .done(function( _data) 
+                {
+                    console.log(_data);
+                    let filter_button = document.getElementById("_filter");
+                    let C_filter = document.getElementById("clear_filter");
+                    filter_button.disabled = true;
+                    C_filter.disabled = true;
+                    filter_button.style.cursor = "not-allowed";
+                    C_filter.style.cursor = "not-allowed";
+
+                    let root;
+                    let pan_main;
+                    document.querySelector(".pan-main").remove();
+                    pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+                    root = createRoot(pan_main);
+                    root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                    Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                    /> ))
+                    DetailedView();
+                    Pagintation(1);
+                })
+                .fail( function(xhr) { alert(xhr.responseText); });
+            }
+
+
+            
+        });
+
 
 
         /* When the user clicks on the pan elements show info about that specified pan element */
@@ -82,6 +141,7 @@ function Products()
                 pan[i].addEventListener("click", () =>
                 {
                     let id = pan[i].querySelector(".p-d-id").innerHTML;
+                    console.log(id);
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -234,9 +294,9 @@ function Products()
                         let root = createRoot(div);
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                        /> )) 
+                            /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -284,9 +344,9 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                        /> ))
+                            /> ))
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -338,9 +398,9 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                        /> )) 
+                            /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -372,9 +432,9 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                        /> )) 
+                            /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -411,7 +471,7 @@ function Products()
                 pan_main.className = "pan-main";
                 main_elements.appendChild(pan_main);
                 root = createRoot(pan_main);
-                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}
+                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                 Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
                 /> ))
                 DetailedView();
@@ -419,6 +479,8 @@ function Products()
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
+        
+        
 
     }, []);
     
@@ -426,7 +488,7 @@ function Products()
         <div className = "products">
             <div className = "main">
                 <div className = "search">
-                    <form className = "search-area" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
+                    <form className = "search-area" id = "search" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
                         <input className ="search-area" type="search" placeholder="Search..." 
                         name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    

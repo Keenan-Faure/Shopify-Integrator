@@ -41,6 +41,9 @@ function Page1(props)
         vendor.innerHTML = inputs.vendor;
 
         let filter_input = document.querySelectorAll(".filter-selection-main");
+        let navbar = document.querySelector(".navbar");
+        let main = document.querySelector(".main");
+        let filter = document.querySelector(".filter");
         for(let i = 0; i < filter_input.length; i++) { filter_input[i].style.display = "none"; }
         let filter_button = document.getElementById("_filter");
         let C_filter = document.getElementById("clear_filter");
@@ -48,6 +51,10 @@ function Page1(props)
         C_filter.disabled = false;
         filter_button.style.cursor = "pointer";
         C_filter.style.cursor = "pointer";
+
+        navbar.style.display = "block";
+        main.style.display = "block";
+        filter.style.display = "block";
     }
 
 
@@ -76,6 +83,7 @@ function Page1(props)
             pag.style.animation = "appear 1s ease-in";
         }, 1000);
 
+
         /* filter element animation */
         let filters = document.querySelector(".filter").children;
         setTimeout(() =>
@@ -94,6 +102,8 @@ function Page1(props)
         let C_filter = document.getElementById("clear_filter");
         let filter_input = document.querySelectorAll(".filter-selection-main");
         let close = document.querySelectorAll(".close-filter");
+        let main = document.querySelector(".main");
+        let filter_main = document.querySelector(".filter");
 
         filter_button.disabled = true;
         C_filter.disabled = true;
@@ -106,6 +116,20 @@ function Page1(props)
                 filter_img[i].style.display = "block";
                 filter[i].style.backgroundColor = "rgba(64, 165, 24, 0.7)";
                 filter_input[i].style.display = "block";
+                navbar.style.display = "none";
+                main.style.display = "none";
+                filter_main.style.display = "none";
+            });
+
+            /* Filter Close button onclick */
+            close[i].addEventListener("click", () =>
+            {
+                filter_img[i].style.display = "none";
+                filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
+                filter_input[i].style.display = "none";
+                navbar.style.display = "block";
+                main.style.display = "block";
+                filter_main.style.display = "block";
             });
 
             /* Clear Filter */
@@ -114,13 +138,7 @@ function Page1(props)
                 filter_img[i].style.display = "none";
                 filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
             });
-
-            close[i].addEventListener("click", () =>
-            {
-                filter_img[i].style.display = "none";
-                filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
-                filter_input[i].style.display = "none";
-            });
+            
         }
 
         /* When the user clicks on the pan elements show info about that specified pan element */
@@ -231,11 +249,17 @@ function Page1(props)
             let category = document.querySelector(".category").innerHTML;
             let type = document.querySelector(".type").innerHTML;
             let vendor = document.querySelector(".vendor").innerHTML;
+            let next = document.getElementById("next");
 
             $.get("http://localhost:8080/api/products/filter?type=" +type + "&" + "vendor="+ vendor +"&category="+category,[], [], 'json')
             .done(function( _data) 
             {
                 console.log(_data);
+                if(_data.length < 10)
+                {
+                    next.disabled = true;
+                    next.style.cursor = "not-allowed";
+                }
                 if(document.querySelector(".pan-main") != null)
                 {
                     document.querySelector(".pan-main").remove();

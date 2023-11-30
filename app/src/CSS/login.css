@@ -137,6 +137,7 @@ input[type = return]
     display: block;
     opacity: 1;
     position: relative;
+    overflow: hidden;
 }
 
 @keyframes SlideIn 
