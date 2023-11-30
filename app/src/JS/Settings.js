@@ -22,7 +22,7 @@ function Settings()
     return (
         <>
             
-            <Detailed_order />
+            <Page2 />
         </>
     );
 }

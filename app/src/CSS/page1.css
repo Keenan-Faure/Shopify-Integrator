@@ -307,6 +307,7 @@ input.search-area
     height: 20px;
     width: 20px;
     top: 3px;
+    opacity: 0.75;
     display: inline-block;
     background-size: cover;
     background-image: url(../media/cross.png);
@@ -317,6 +318,7 @@ input.search-area
     height: 20px;
     width: 20px;
     top: 3px;
+    opacity: 0.75;
     display: inline-block;
     background-size: cover;
     background-image: url(../media/tick.png);
