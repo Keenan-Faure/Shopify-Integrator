@@ -225,23 +225,23 @@ tr:hover
 
 .activee
 {
-    position: absolute;
+    position: relative;
     height: 30px;
-    top: 47px;
+    top: 8px;
     width: 30px;
-    right: 245px;
-    display: block;
+    right: -5px;
+    display: inline-block;
     background-size: cover;
     background-image: url(../media/tick.png);
 }
 .inactive
 {
-    position: absolute;
+    position: relative;
     height: 30px;
-    top: 48px;
+    top: 8px;
     width: 30px;
-    right: 245px;
-    display: block;
+    right: -5px;
+    display: inline-block;
     background-size: cover;
     background-image: url(../media/cross.png);
 }

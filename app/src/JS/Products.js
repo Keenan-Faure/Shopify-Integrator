@@ -403,7 +403,6 @@ function Products()
                     Pagintation(index);
                     setTimeout(() => { DetailedView();}, 200);
                 });
-
                 prevPage.addEventListener("click", () =>
                 {
                     index = index - 1;
@@ -417,7 +416,6 @@ function Products()
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        
                         document.querySelector(".pan-main").remove();
                         let div = document.createElement("div");
                         div.className = "pan-main";
@@ -445,7 +443,6 @@ function Products()
         let C_filter = document.getElementById("clear_filter");
         C_filter.addEventListener("click", () => 
         {
-            /*  API  */
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.get("http://localhost:8080/api/products?page=1", [], [])

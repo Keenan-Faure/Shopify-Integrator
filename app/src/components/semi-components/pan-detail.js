@@ -41,22 +41,20 @@ function Pan_details(props)
             }
         }
 
-        /* Activity of pan elements 
+        /* Activity of pan elements */
         let activity = document.querySelectorAll(".p-d-activity");
-        let option = document.querySelectorAll(".p-d-options");
+        let option = document.querySelectorAll("#options");
         for(let i = 0; i < activity.length; i++)
         {
             if(activity[i].innerHTML == "1")
             {
-                option[i].classList.replace("p-d-options", "p-d-true");
+                option[i].className = "p-d-true";
             }
             else
             {
-                option[i].classList.replace("p-d-options", "p-d-false");
+                option[i].className = "p-d-false";
             }
         }
-
-        */
     }, []);
 
     return (
@@ -64,7 +62,7 @@ function Pan_details(props)
         <div className = "pan">
             <div className = "pan-img"></div>
             <div className = "pan-details">
-                <a href = "/#" className = "p-d-title">{props.Product_Title} <i href = "/#" className = "p-d-options" /></a> 
+                <a href = "/#" className = "p-d-title">{props.Product_Title} <i id = "options" href = "/#" className = "p-d-options" /></a> 
                 <br/><br/>
 
                 <a href = "/#" className = "p-d-code">{props.Product_Code}</a> <a href = "/#" className = "p-d-id">{props.Product_ID}</a> <a className = "p-d-activity">{props.Product_Activity}</a>

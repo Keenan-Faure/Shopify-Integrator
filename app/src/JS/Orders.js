@@ -61,7 +61,6 @@ function Orders()
         .done(function( _data) 
         {
             console.log(_data);
-            setData(_data)
         })
         .fail( function(xhr) 
         {
@@ -237,7 +236,7 @@ function Orders()
                         flushSync(() => 
                         {
                             root.render(_data.map((el, i) => 
-                                <Order_details key={`${el.title}_${i}`} Product_Title={el.title}/>
+                                <Order_details key={`${el.title}_${i}`}/>
                             ))
                         });
                     })
@@ -379,12 +378,7 @@ function Orders()
                 </div>
                 <div className = "main-elements">
                     <div className = "pan-main" id = "pan-main">
-                        {data.map((_data, id)=>
-                            {
-                                return <Order_details />
 
-                            })
-                        }
                     </div>
                 </div>
                 <div className = "center" id = "pag"></div>

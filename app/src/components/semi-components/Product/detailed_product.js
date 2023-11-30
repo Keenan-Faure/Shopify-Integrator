@@ -87,8 +87,8 @@ function Detailed_product(props)
                 <div className = "details-details">
                     <div className = "auto-slideshow-container" />
                     <div className = "detailed">
-                        <div className = "details-title">{props.Product_Title}</div>
-                        <i className = "inactive"/>
+                        <div className = "details-title">{props.Product_Title}<i className = "inactive"/></div>
+                        
                         <span id = "activity">Activity</span>
                         <table>
                             <tbody>
