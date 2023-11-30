@@ -292,6 +292,243 @@ function Page1(props)
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
+
+        /* Script to automatically format the number of elements on each page */
+        const content = document.querySelector('.center'); 
+        const paginationContainer = document.createElement('div');
+        const paginationDiv = document.body.appendChild(paginationContainer);
+        paginationContainer.classList.add('pagination');
+        content.appendChild(paginationContainer);
+
+        function Filter_Pagintation(index)
+        {
+
+            if(index == 1)
+            {
+                let category = document.querySelector(".category").innerHTML;
+                let type = document.querySelector(".type").innerHTML;
+                let vendor = document.querySelector(".vendor").innerHTML;
+                let ahead = index + 1;
+                $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + ahead, [], [])
+                .done(function( _data) 
+                {
+                    console.log(_data);
+                    if(_data == "") { let next = document.getElementById("next"); next.style.cursor = "not-allowed"; next.disabled = true; } 
+                })
+                .fail( function(xhr) { alert(xhr.responseText); });
+            }
+
+            /* Check done to remove old elements if they exist */
+            if(document.getElementById("next") != null && document.getElementById("prev") != null && document.getElementById("hod") != null)
+            //If they exist remove them, and create new based on the new index value
+            {
+                document.getElementById("next").remove();
+                document.getElementById("prev").remove();
+                document.getElementById("hod").remove();
+
+                const pageButton = document.createElement('button');
+                pageButton.id = "hod";
+                pageButton.className = "active";
+                pageButton.innerHTML = index;
+                paginationDiv.appendChild(pageButton);
+
+                const nextPage = document.createElement('button');
+                nextPage.id = "next";
+                nextPage.innerHTML = "→";
+                paginationDiv.appendChild(nextPage);
+
+                const prevPage = document.createElement('button');
+                prevPage.id = "prev";
+                prevPage.innerHTML = "←";
+                paginationDiv.appendChild(prevPage);
+                if(index == 1) { prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+                else if(index > 1) { prevPage.style.cursor = "pointer"; prevPage.disabled = false; nextPage.disabled = false; }
+                else if(index <= 1) {prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+
+                nextPage.addEventListener("click", () =>
+                {
+                    let category = document.querySelector(".category").innerHTML;
+                    let type = document.querySelector(".type").innerHTML;
+                    let vendor = document.querySelector(".vendor").innerHTML;
+
+                    index = index + 1;
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + index, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+                        flushSync(() => 
+                        { 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            /> )) 
+                        });
+                        
+                    })
+                    .fail( function(xhr) { alert(xhr.responseText); });
+
+                    let ahead = index + 1;
+                    /*  API  */
+                    $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + ahead, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        if(_data == "") { let next = document.getElementById("next"); next.style.cursor = "not-allowed"; next.disabled = true; }  
+                    })
+                    .fail( function(xhr) { alert(xhr.responseText); });
+
+                    Filter_Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
+                });
+
+                prevPage.addEventListener("click", () =>
+                {
+                    console.log("prev1" + index);
+                    let category = document.querySelector(".category").innerHTML;
+                    let type = document.querySelector(".type").innerHTML;
+                    let vendor = document.querySelector(".vendor").innerHTML;
+                    index = index - 1;
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + index, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+                        flushSync(() => 
+                        { 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            /> )) 
+                        });
+
+                    
+                    })
+                    .fail( function(xhr) { alert(xhr.responseText); });
+                    Filter_Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
+                });
+            }
+            else 
+            //If they dont exist create new ones 
+            {
+                const pageButton = document.createElement('button');
+                pageButton.id = "hod";
+                pageButton.className = "active";
+                pageButton.innerHTML = index;
+                paginationDiv.appendChild(pageButton);
+
+                const nextPage = document.createElement('button');
+                nextPage.id = "next";
+                nextPage.innerHTML = "→";
+                paginationDiv.appendChild(nextPage);
+
+                const prevPage = document.createElement('button');
+                prevPage.id = "prev";
+                prevPage.innerHTML = "←";
+                paginationDiv.appendChild(prevPage);
+
+                if(index == 1) { prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+                else if(index > 1) { prevPage.style.cursor = "pointer"; prevPage.disabled = false; nextPage.disabled = false; }
+                else if(index <= 1) {prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+
+                nextPage.addEventListener("click", () =>
+                {
+                    console.log("next2" + index);
+                    let category = document.querySelector(".category").innerHTML;
+                    let type = document.querySelector(".type").innerHTML;
+                    let vendor = document.querySelector(".vendor").innerHTML;
+                    console.log(vendor);
+
+                    index = index + 1;
+
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + index, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+                        flushSync(() => 
+                        { 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            /> )) 
+                        });
+
+                    })
+                    .fail( function(xhr) { alert(xhr.responseText); });
+                    Filter_Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
+                });
+
+                prevPage.addEventListener("click", () =>
+                {
+                    console.log("prev2" + index);
+                    let category = document.querySelector(".category").innerHTML;
+                    let type = document.querySelector(".type").innerHTML;
+                    let vendor = document.querySelector(".vendor").innerHTML;
+                    console.log(vendor);
+                    index = index - 1;
+
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + index, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+                        flushSync(() => 
+                        { 
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            /> )) 
+                        });
+                        
+                    })
+                    .fail( function(xhr) { alert(xhr.responseText); });
+                    Filter_Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
+                });
+            } 
+        }
+
+        filter_button.addEventListener("click", () =>
+        {
+            Filter_Pagintation(1);
+        })
+
+
     }, []);
 
     return (

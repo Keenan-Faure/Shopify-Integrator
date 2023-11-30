@@ -129,8 +129,6 @@ function Products()
             
         });
 
-
-
         /* When the user clicks on the pan elements show info about that specified pan element */
         function DetailedView()
         {
@@ -141,7 +139,6 @@ function Products()
                 pan[i].addEventListener("click", () =>
                 {
                     let id = pan[i].querySelector(".p-d-id").innerHTML;
-                    console.log(id);
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -241,11 +238,10 @@ function Products()
         div.id = "pan-main";
         let main = document.querySelector(".main-elements");
         main.appendChild(div);
+
         
         function Pagintation(index)
         {
-            /* Create a new root */
-
             /* Check done to remove old elements if they exist */
             if(document.getElementById("next") != null && document.getElementById("prev") != null && document.getElementById("hod") != null)
             //If they exist remove them, and create new based on the new index value
@@ -350,7 +346,7 @@ function Products()
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
-                    Pagintation(index--);
+                    Pagintation(index);
                     setTimeout(() => { DetailedView();}, 200);
                 });
             }
@@ -404,7 +400,7 @@ function Products()
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
-                    Pagintation(index++);
+                    Pagintation(index);
                     setTimeout(() => { DetailedView();}, 200);
                 });
 
@@ -479,6 +475,7 @@ function Products()
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
+
         
         
 
