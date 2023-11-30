@@ -25,6 +25,33 @@ type ConfigShopify struct {
 	Valid       bool
 }
 
+// Retrieves a list of locations
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location
+func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocations, error) {
+	res, err := configShopify.FetchHelper(
+		"locations.json",
+		http.MethodGet,
+		nil,
+	)
+	if err != nil {
+		return objects.ShopifyLocations{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ShopifyLocations{}, err
+	}
+	if res.StatusCode != 200 {
+		return objects.ShopifyLocations{}, errors.New(string(respBody))
+	}
+	response := objects.ShopifyLocations{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.ShopifyLocations{}, err
+	}
+	return response, nil
+}
+
 // Retrieves a list of inventory levels
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#get-inventory-levels
 func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
