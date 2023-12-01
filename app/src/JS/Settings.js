@@ -3,7 +3,6 @@ import Page2 from '../components/Page2';
 import Detailed_order from '../components/semi-components/Order/detailed_order';
 import '../CSS/page2.css';
 
-/* Must start with a Caps letter */
 function Settings()
 {
     useEffect(()=> 

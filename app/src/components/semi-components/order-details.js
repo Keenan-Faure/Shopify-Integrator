@@ -12,7 +12,7 @@ function Order_details(props)
             for(let i = 0; i < pan.length; i ++)
             {
                 pan[i].style.display = "block";
-                pan[i].style.animation = "appear 1.2s ease-in";
+                pan[i].style.animation = "appear 0.4s ease-in";
             }
         }, 1400);
 
@@ -45,13 +45,13 @@ function Order_details(props)
         <div className = "pan">
             <div className = "pan-img"></div>
             <div className = "pan-details">
-                <a href = "/#" className = "p-d-title">{props.Order_Title}</a>
+                <a href = "/#" className = "p-d-title">{props.Order_Title}</a> 
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-code">{props.Order_Code}</a>
+                <a href = "/#" className = "p-d-code">{props.Order_WebCode}</a>
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-options">{props.Order_Options}</a> | <a href = "/#" className = "p-d-category">{props.Order_Category}</a> | <a href = "/#" className = "p-d-type">{props.Order_Type}</a> | <a href = "/#" className = "p-d-vendor">{props.Order_Vendor}</a>
+                <a href = "/#" className = "p-d-id">{props.Order_ID}</a> <a href = "/#" className = "p-d-category">{props.Order_firstName}</a> <b>|</b> <a href = "/#" className = "p-d-type">{props.Order_lastName}</a> 
             </div>
         </div>
     );
@@ -60,11 +60,10 @@ function Order_details(props)
 Order_details.defaultProps = 
 {
     Order_Title: 'Order title',
-    Order_Code: 'Order code',
-    Order_Options: 'Options',
-    Order_Category: 'Category',
-    Order_Type: 'Type',
-    Order_Vendor: 'Vendor',
-    Order_Price: 'Price'
+    Order_WebCode: 'Order WebCode',
+    Order_ID: 'Order ID',
+    Order_firstName: 'firstName',
+    Order_lastName: 'lastName'
+
 }
 export default Order_details;

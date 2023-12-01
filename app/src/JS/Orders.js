@@ -4,6 +4,7 @@ import {useEffect, useState} from 'react';
 import Page1 from '../components/Page1';
 import $ from 'jquery';
 import Order_details from '../components/semi-components/order-details';
+import Detailed_order from '../components/semi-components/Order/detailed_order';
 import '../CSS/page1.css';
 
 /* Must start with a Caps letter */
@@ -17,24 +18,11 @@ function Orders()
         const value = event.target.value;
         setInputs(values => ({...values, [name]: value}))
     }
-    const [data, setData] = useState([]);
 
     const SearchOrder = (event) =>
     {
         event.preventDefault();
-        console.log(inputs);
 
-        /*
-        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
-        .done(function( _data) 
-        {
-            console.log(_data);
-        })
-        .fail( function(xhr) 
-        {
-            alert(xhr.responseText);
-        });
-        */
     }
 
     useEffect(()=> 
@@ -50,7 +38,6 @@ function Orders()
             main.style.animation = "SlideUp3 1.2s ease-in";
         }
 
-
         /*  API  */
         const api_key = localStorage.getItem('api_key');
         $.ajaxSetup
@@ -61,69 +48,207 @@ function Orders()
         .done(function( _data) 
         {
             console.log(_data);
+
+            let root;
+            let pan_main = document.querySelector(".pan-main");
+            let div = document.createElement("div");
+            pan_main.appendChild(div);
+
+            root = createRoot(div);
+            root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
+            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
+            />))
+
+
         })
         .fail( function(xhr) 
         {
             alert(xhr.responseText);
         });
 
-        /* When the user clicks on the pan elements show info about that specified pan element */
-        let pan = document.querySelectorAll(".pan");
-        for(let i = 0; i < pan.length; i++)
+        /* SEARCH */
+        document.getElementById("search").addEventListener("submit", function(e)
         {
-            pan[i].addEventListener("click", () =>
+
+            $.get("http://localhost:8080/api/orders/search?q=" + document.getElementsByName("search")[0].value,[],[], 'json')
+            .done(function( _data) 
             {
-                
-                //var img = pan[i].querySelector(".pan-img").innerHTML; 
-                document.getElementById("img").style.backgroundImage = pan[i].querySelector(".pan-img").style.backgroundImage;
-                document.getElementById("te").innerHTML = pan[i].querySelector(".p-d-title").innerHTML;
-                document.getElementById("co").innerHTML = pan[i].querySelector(".p-d-code").innerHTML;
-                document.getElementById("op").innerHTML = pan[i].querySelector(".p-d-options").innerHTML; 
-                document.getElementById("ca").innerHTML = pan[i].querySelector(".p-d-category").innerHTML;
-                document.getElementById("ty").innerHTML = pan[i].querySelector(".p-d-type").innerHTML; 
-                document.getElementById("ve").innerHTML = pan[i].querySelector(".p-d-vendor").innerHTML;
+                console.log(_data);
 
-                /* Get the filter & main elements */
-                let filter = document.querySelector(".filter");
-                let main = document.querySelector(".main");
-                let navbar = document.getElementById("navbar");
-                let details = document.querySelector(".details");
-                let close = document.querySelector(".close-button");
+                document.querySelector(".pan-main").remove();
+                let div = document.createElement("div");
+                div.className = "pan-main";
+                div.id = "pan-main";
+                let main = document.querySelector(".main-elements");
+                main.appendChild(div);
+                let root = createRoot(div);
 
-                filter.style.animation = "Fadeout 0.5s ease-out";
-                main.style.animation = "Fadeout 0.5s ease-out";
-                navbar.style.animation = "Fadeout 0.5s ease-out";
+                root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
+            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
+            />)) 
 
-                setTimeout(() => 
+                setTimeout(() =>
                 {
-                    filter.style.display = "none";
-                    main.style.display = "none";
-                    navbar.style.display = "none";
+                    DetailedView();
+                }, 100);
+            })
+            .fail( function(xhr) { alert(xhr.responseText); });
+        });
 
-                    details.style.animation = "FadeIn ease-in 0.5s";
-                    details.style.display = "block";
-                    close.style.display = "block";
-                }, 500);
-            });
-
-            /* When the user clicks on the return button */
-            let close = document.querySelector(".close-button");
-            let filter = document.querySelector(".filter");
-            let main = document.querySelector(".main");
-            let navbar = document.getElementById("navbar");
-            let details = document.querySelector(".details");
-            close.addEventListener("click", ()=> 
+        /* When the user clicks the X on the search bar */
+        document.getElementById("search").addEventListener("search", function(event) 
+        {
+            if(document.getElementsByName("search")[0].value == "")
             {
-                close.style.display = "none";
-                details.style.animation = "Fadeout 0.5s ease-out";
-                main.style.animation = "FadeIn ease-in 0.5s";
-                filter.style.animation = "FadeIn ease-in 0.5s";
-                navbar.style.animation = "FadeIn ease-in 0.5s";
+                const api_key = localStorage.getItem('api_key');
+                $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                $.get("http://localhost:8080/api/orders?page=1", [], [])
+                .done(function( _data) 
+                {
+                    console.log(_data);
+                    let filter_button = document.getElementById("_filter");
+                    let C_filter = document.getElementById("clear_filter");
+                    filter_button.disabled = true;
+                    C_filter.disabled = true;
+                    filter_button.style.cursor = "not-allowed";
+                    C_filter.style.cursor = "not-allowed";
 
-                details.style.display = "none";
-                navbar.style.display = "block";
-                main.style.display = "block";
-            });
+                    let root;
+                    let pan_main;
+                    document.querySelector(".pan-main").remove();
+                    pan_main = document.createElement('div');
+                    let main_elements = document.querySelector(".main-elements");
+                    pan_main.className = "pan-main";
+                    main_elements.appendChild(pan_main);
+                    root = createRoot(pan_main);
+                    root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
+                    Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
+                    />))
+                    DetailedView();
+                    Pagintation(1);
+                })
+                .fail( function(xhr) { alert(xhr.responseText); });
+            }
+        });
+
+        /* When the user clicks on the return button */
+        let close = document.querySelector(".close-button");
+        let filter = document.querySelector(".filter");
+        let navbar = document.getElementById("navbar");
+        let details = document.querySelector(".details");
+
+        close.addEventListener("click", ()=> 
+        {
+            close.style.display = "none";
+            details.style.animation = "Fadeout 0.5s ease-out";
+            main.style.animation = "FadeIn ease-in 0.5s";
+            filter.style.animation = "FadeIn ease-in 0.5s";
+            navbar.style.animation = "FadeIn ease-in 0.5s";
+
+            details.style.display = "none";
+            navbar.style.display = "block";
+            main.style.display = "block";
+        });
+
+        /* When the user clicks on the pan elements show info about that specified pan element */
+        function DetailedView()
+        {
+            let orders = document.querySelector(".orders");
+            let pan = document.querySelectorAll(".pan");
+            for(let i = 0; i < pan.length; i++)
+            {
+                pan[i].addEventListener("click", () =>
+                {
+                    let id = pan[i].querySelector(".p-d-id").innerHTML;
+                    console.log(id);
+                    /*  API  */
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/orders/" + id, [], [], 'json')
+                    .done(function(_data) 
+                    {   
+                        console.log(_data);
+                        if(document.querySelector(".details") != null)
+                        //div already exists, remove it, and create another
+                        {
+
+                            document.querySelector(".details").remove();
+                            let details = document.createElement('div');
+                            details.className = "details";
+                            orders.appendChild(details);
+
+                            let rot = createRoot(details);
+                            rot.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
+                            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
+                            />))
+ 
+                            /* For some reason it wont pick up the element unless it throw it here 
+                            setTimeout(() =>
+                            {
+                                let _div = details.querySelectorAll(".auto-slideshow-container");
+                                for(let i = 0; i < _div.length; i++)
+                                {
+                                    let _root = createRoot(_div[i]);
+                                    if(i == 0) { _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
+                                    else { _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
+                                }
+                                let new_div = details.querySelector(".variants"); 
+                                let rt = createRoot(new_div);
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
+                            }, 0);
+                            */
+                            
+                        }
+                        else 
+                        //create new div
+                        {
+                            let details = document.createElement('details');
+                            orders.appendChild(details);
+                            let rot = createRoot(details);
+                            rot.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
+                            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
+                            />))
+                            /* For some reason it wont pick up the element unless it throw it here 
+                            setTimeout(() =>
+                            {
+                                let _div = details.querySelectorAll(".auto-slideshow-container");
+                                for(let i = 0; i < _div.length; i++)
+                                {
+                                    let _root = createRoot(_div[i]);
+                                    if(i == 0)
+                                    {
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> ))
+                                    }
+                                    else 
+                                    {
+                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> ))
+                                    }
+                                }
+                                let new_div = details.querySelector(".variants"); 
+                                let rt = createRoot(new_div);
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
+                            }, 0);
+                            */
+                        }
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+                    setTimeout(() =>
+                    {
+                        let main = document.querySelector(".main");
+                        let navbar = document.getElementById("navbar");
+                        let details = document.querySelector(".details");
+
+                        main.style.animation = "Fadeout 0.5s ease-out";
+                        navbar.style.animation = "Fadeout 0.5s ease-out";
+                        main.style.display = "none";
+                        navbar.style.display = "none";
+                        details.style.display = "block";
+                    }, 50);
+                });
+            } 
         }
 
         /* Script to automatically format the number of elements on each page */
@@ -133,11 +258,31 @@ function Orders()
         paginationContainer.classList.add('pagination');
         content.appendChild(paginationContainer);
 
-        let div = document.getElementById("pan-main");
-        let root = createRoot(div);
+        document.querySelector(".pan-main").remove();
+        let div = document.createElement("div");
+        div.className = "pan-main";
+        div.id = "pan-main";
+        let _main = document.querySelector(".main-elements");
+        _main.appendChild(div);
 
         function Pagintation(index)
         {
+
+            let ahead = index + 1;
+            /*  API  */
+            $.get('http://localhost:8080/api/orders?page=' + ahead, [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+                if(_data == "")
+                {
+                    let next = document.getElementById("next");
+                    next.style.cursor = "not-allowed";
+                    next.disabled = true;
+                } 
+            })
+            .fail( function(xhr) { alert(xhr.responseText); });
+
             /* Check done to remove old elements if they exist */
             if(document.getElementById("next") != null && document.getElementById("prev") != null && document.getElementById("hod") != null)
             //If they exist remove them, and create new based on the new index value
@@ -161,22 +306,9 @@ function Orders()
                 prevPage.id = "prev";
                 prevPage.innerHTML = "←";
                 paginationDiv.appendChild(prevPage);
-                if(index == 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
-                else if(index > 1)
-                {
-                    prevPage.style.cursor = "pointer";
-                    prevPage.disabled = false;
-                    nextPage.disabled = false;
-                }
-                else if(index <= 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
+                if(index == 1) { prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+                else if(index > 1) { prevPage.style.cursor = "pointer"; prevPage.disabled = false; nextPage.disabled = false; }
+                else if(index <= 1) {prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
 
                 nextPage.addEventListener("click", () =>
                 {
@@ -185,36 +317,43 @@ function Orders()
                     const page = "http://localhost:8080/api/orders?page=" + index;
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+                        flushSync(() => 
+                        { 
+                            root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} 
+                            /> )) 
+                        });
+                    })
+                    .fail( function(xhr) { alert(xhr.responseText); });
+
+                    let ahead = index + 1;
+                    /*  API  */
+                    $.get('http://localhost:8080/api/orders?page=' + ahead, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
                         if(_data == "")
                         {
-
-                            let main = document.getElementById("pan-main");
-                            main.innerHTML = "No data";
-                        }
-                        else 
-                        {
-                            flushSync(() => 
-                            {
-                                root.render(_data.map((el, i) => 
-                                    <Order_details key={`${el.title}_${i}`} Product_Title={el.title}/>
-                                ))
-                            });
-                        }
-                        
+                            let next = document.getElementById("next");
+                            next.style.cursor = "not-allowed";
+                            next.disabled = true;
+                        } 
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
+                    .fail( function(xhr) { alert(xhr.responseText); });
+
                     Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
 
                 prevPage.addEventListener("click", () =>
@@ -225,27 +364,29 @@ function Orders()
 
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
+
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+
                         flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => 
-                                <Order_details key={`${el.title}_${i}`}/>
-                            ))
+                        { 
+                            root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} 
+                            /> )) 
                         });
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
-
-                    Pagintation(index--);
+                    .fail( function(xhr) { alert(xhr.responseText); });
+                    Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
             }
             else 
@@ -266,63 +407,40 @@ function Orders()
                 prevPage.id = "prev";
                 prevPage.innerHTML = "←";
                 paginationDiv.appendChild(prevPage);
-                
-                
-                if(index == 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
-                else if(index > 1)
-                {
-                    prevPage.style.cursor = "pointer";
-                    prevPage.disabled = false;
-                    nextPage.disabled = false;
-                }
-                else if(index <= 1)
-                {
-                    prevPage.disabled = true;
-                    prevPage.style.cursor = "not-allowed";
-                }
 
+                if(index == 1) { prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+                else if(index > 1) { prevPage.style.cursor = "pointer"; prevPage.disabled = false; nextPage.disabled = false; }
+                else if(index <= 1) {prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
                 nextPage.addEventListener("click", () =>
                 {
                     index = index + 1;
                     /* Fetches the data from page, based on the page / index value */
                     const page = "http://localhost:8080/api/orders?page=" + index;
-
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        /* Check if pan elements exist and remove + update if it does*/
-                        let pan = document.querySelectorAll(".pan");
-                        pan.forEach(pan => 
-                        {
-                            pan.remove();
-                        });
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
 
                         flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => 
-                                <Order_details key={`${el.title}_${i}`} Product_Title={el.title}/>
-                            ))
+                        { 
+                            root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} 
+                            /> )) 
                         });
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
-
+                    .fail( function(xhr) { alert(xhr.responseText); });
                     Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
-
                 prevPage.addEventListener("click", () =>
                 {
                     index = index - 1;
@@ -331,38 +449,35 @@ function Orders()
 
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
-                    $.ajaxSetup
-                    ({
-                        headers: { 'Authorization': 'ApiKey ' + api_key}
-                    });
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get(page, [], [])
                     .done(function( _data) 
                     {
                         console.log(_data);
-                        /* Check if pan elements exist and remove + update if it does*/
-                        let pan = document.querySelectorAll(".pan");
-                        pan.forEach(pan => 
-                        {
-                            pan.remove();
-                        });
+                        document.querySelector(".pan-main").remove();
+                        let div = document.createElement("div");
+                        div.className = "pan-main";
+                        div.id = "pan-main";
+                        let main = document.querySelector(".main-elements");
+                        main.appendChild(div);
+                        let root = createRoot(div);
+
                         flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => 
-                                <Order_details key={`${el.title}_${i}`} Product_Title={el.title}/>
-                            ))
+                        { 
+                            root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} 
+                            /> )) 
                         });
                     })
-                    .fail( function(xhr) 
-                    {
-                        alert(xhr.responseText);
-                    });
-
-                    Pagintation(index--);
+                    .fail( function(xhr) { alert(xhr.responseText); });
+                    Pagintation(index);
+                    setTimeout(() => { DetailedView();}, 200);
                 });
             } 
         }
         Pagintation(1);
-        
+        setTimeout(() => { DetailedView();}, 200);
+
+ 
     }, []);
 
     return (
@@ -371,7 +486,7 @@ function Orders()
                                         height: '90%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in'}}>
 
                 <div className = "search" onSubmit={(event) => SearchOrder(event)}>
-                    <form className = "search-area" autoComplete='off'>
+                    <form id = "search" className = "search-area" autoComplete='off'>
                     <input className ="search-area" type="search" placeholder="Search..." 
                         name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
@@ -384,16 +499,9 @@ function Orders()
                 <div className = "center" id = "pag"></div>
             </div>
 
-            <Page1 filter_display = "none"/><div className = "details">
+            <Page1 filter_display = "none"/>
+            <div className = "details">
                 <div className = 'close-button'>&times;</div>
-                <div id = "img" className = "details-image">
-                    <div id = "te" className = "details-details details-title"></div>
-                    <div id = "co" className = "details-details details-code"></div>
-                    <div id = "op" className = "details-details details-options"></div>
-                    <div id = "ca" className = "details-details details-category"></div>
-                    <div id = "ty" className = "details-details details-type"></div>
-                    <div id = "ve" className = "details-details details-vendor"></div>
-                </div>
                 
             </div>
             

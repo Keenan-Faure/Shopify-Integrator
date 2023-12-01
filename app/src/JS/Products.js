@@ -124,9 +124,6 @@ function Products()
                 })
                 .fail( function(xhr) { alert(xhr.responseText); });
             }
-
-
-            
         });
 
         /* When the user clicks on the pan elements show info about that specified pan element */
@@ -268,6 +265,7 @@ function Products()
                 if(index == 1) { prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
                 else if(index > 1) { prevPage.style.cursor = "pointer"; prevPage.disabled = false; nextPage.disabled = false; }
                 else if(index <= 1) {prevPage.disabled = true; prevPage.style.cursor = "not-allowed"; }
+                
 
                 nextPage.addEventListener("click", () =>
                 {
@@ -495,7 +493,7 @@ function Products()
                 <div className = "center" id = "pag"></div>
             </div>
 
-            <Page1 image = {product} title = "Products"/>
+            <Page1 title = "Products"/>
             <div className = "details">
                 <div className = 'close-button'>&times;</div>
             </div>
