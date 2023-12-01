@@ -59,7 +59,7 @@
     margin-bottom: 15px;
     display: block;
     width: 70%;
-    height: 160px;
+    height: 170px;
     left: 50%;
     transform: translate(-50%);
     background-color:rgb(240, 248, 255, 0.6);
@@ -70,7 +70,7 @@
 .setting:hover 
 {
     box-shadow: 5px 10px rgb(0, 5, 5, 0.1);
-    background-color:rgb(240, 248, 255, 0.8);
+    background-color:rgb(240, 248, 255, 0.9);
 }
 .setting-title
 {
@@ -87,7 +87,7 @@
 {
     position: relative;
     text-align: left;
-    width: 80%;
+    width: 100%;
     height: auto;
     padding: 5px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -106,8 +106,7 @@
 {
     position: absolute;
     width: 70px;
-    height: 30px;
-    padding: 8px;
+    height: 36px;
     right: 15px;
     top: 55%;
     transition-duration: 0.4s;
@@ -118,6 +117,7 @@
     text-align: center;
     border-radius: 5px;
     transform: translate(0%, -45%);
+    border: none;
 }
 .button-on-off:hover
 {
@@ -192,4 +192,114 @@
     width: 50%;
     height: auto;
     cursor: pointer;
+    transition-duration: 0.4s;
 }
+.mini-setting:hover
+{
+    color: white;
+    background-color: rgb(17, 17, 17);
+}
+
+/* Webhook div */
+.webhook_div {
+    margin: 0;
+    max-width: 270px;
+}
+
+.webhook_div input[type=text] {
+    position: relative;
+    padding: 10px;
+    font-size: 13px;
+    float: left;
+    border-left: 1px solid grey;
+    border-top: 1px solid grey;
+    border-bottom: 1px solid grey;
+    border-right: 1px solid grey;
+    width: 70%;
+    background: transparent;
+    color: white;
+    left: 50%;
+    transform: translate(-50%);
+}
+
+.create_webhook {
+    width: 22%;
+    position: relative;
+    display: inline-block;
+    font-size: 13px;
+    height: 37px;
+}
+
+.webhook_configuration {
+    position: relative;
+    width: 20%;
+    height: auto;
+    border-width: 1px;
+    border-style: inset;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+h3 {
+    text-align: center;
+    font-weight: lighter;
+    margin: 0;
+}
+
+.info_icon {
+    background-image: url(../media/info.png);
+    background-position: center;
+    background-size: cover;
+    width: 30px;
+    height: 30px;
+    position: relative;
+    display: inline-block;
+    top: 7px;
+    left: 7px;
+    transition-duration: 2s;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.info_icon:hover {
+    background-color: #c5c5c5;
+}
+
+/* Location_Warehouse CSS */
+
+.shopify_locations_list_container {
+    position: relative;
+    left: 50%;
+    width: max-content;
+    transform: translate(-50%, 0);
+    top: 10%;
+    border-radius: 10px;
+}
+
+.shopify_locations_item {
+    position: relative;
+    margin: 10px;
+    padding: 5px;
+    border-radius: 15px;
+    border: 1px solid black;
+    background-color: white;
+    color: black;
+    text-align: center;
+}
+
+select {
+    padding: 5px;
+    color: white;
+    font-weight: lighter;
+    font-size: 12px;
+    background-color: #444444;
+    border-radius: 25px;
+    text-align: center;
+    cursor: pointer;
+}
+.settings tr:nth-child(even)
+{
+    background-color: transparent;
+    cursor: initial;
+}
+
