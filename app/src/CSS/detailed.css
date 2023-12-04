@@ -16,7 +16,8 @@
 }
 .tablink:hover 
 {
-    background-color: #b6b6b6;
+    background-color: rgb(72, 101, 128);
+    color: aliceblue;
 }
 
 .tabcontent 
@@ -67,7 +68,6 @@
     overflow: auto;
     filter: blur(1px);
     width: 29%;
-    height: 100%;
     object-fit: cover;
     object-position: 38% 25%;
 }

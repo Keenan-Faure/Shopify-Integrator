@@ -75,6 +75,22 @@ input[type = text], input[type = password], input[type = email]
     background-color: transparent;
     border-radius: 0px;
 }
+input[type = _text]
+{
+	padding: 10px;
+    border-top: transparent;
+    border-left: transparent;
+    border-right: transparent;
+    border-bottom: transparent;
+	display: inline-block;
+	box-sizing: border-box;
+    background-color: transparent;
+    border-radius: 0px;
+}
+input[type = _text]::-webkit-input-placeholder 
+{
+    text-align: center;
+}
 input[type = return]
 {
     width: auto;
@@ -91,6 +107,15 @@ input[type = return]
     text-align: left;
     height: 100px;
     overflow: auto;
+}
+.modal-content textarea 
+{
+    background-color: transparent;
+    font-size: 14px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    color: black;
+    padding: 5px;
+
 }
 .pre 
 {
@@ -220,6 +245,97 @@ input[type = return]
 	0%{opacity: 0; }
 	50% { opacity: 1; }
 	100% { opacity: 0; }
+}
+
+/* Output Image CSS */
+
+output
+{
+    width: 100%;
+    min-height: 150px;
+    display: block;
+    gap: 15px;
+    position: relative;
+    border-radius: 5px;
+    top: 10px;
+}
+  
+output .image img
+{
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 100%;
+    overflow: auto;
+    width: 95%;
+    object-fit: cover;
+    object-position: 38% 25%;
+}
+  
+#delete
+{
+    position: absolute;
+    top: 6px;
+    right: 11px;
+    cursor: pointer;
+    font-size: 22px;
+    color: red;
+    z-index: 1;
+}
+
+output .image span:hover 
+{
+    opacity: 0.8;
+}
+  
+output .span--hidden
+{
+    visibility: hidden;
+}
+label 
+{
+    background-color: rgb(238, 238, 238);
+    color: rgb(43, 43, 43);
+    padding: 0.5rem;
+    font-family: sans-serif;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    position: relative;
+    top: 40%;
+    transform: translate(-50%, -50%);
+    transition-duration: 0.4s;
+    z-index: 1;
+}
+label:hover 
+{
+    background-color: rgb(72, 101, 128);
+    color: aliceblue;
+}
+.submiit 
+{
+    background-color: #fcfafa;
+    color: rgb(37, 37, 37);
+    background-color: rgb(72, 101, 128);
+    color: aliceblue;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 8px;
+    margin: 2px;
+    font-size: 15px;
+    width: 130px;
+    position: relative;
+    transition-duration: 0.4s;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    top: 1%;
+    left: 50%;
+    transform: translate(-60%, -2%);
+    transition-duration: 0.4s;
+}
+.submiit:hover 
+{
+    background-color: rgb(29, 74, 116);
+    color: aliceblue;
 }
 /* Rain droplets */
 .rain 

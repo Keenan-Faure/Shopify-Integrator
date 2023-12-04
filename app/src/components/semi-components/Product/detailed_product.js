@@ -20,7 +20,8 @@ function Detailed_product(props)
             }
 
             document.getElementById("_" + pageName).style.display = "block";
-            document.getElementById(pageName).style.backgroundColor = "#e7e7e7";
+            document.getElementById(pageName).style.backgroundColor = "rgb(72, 101, 128)";
+            document.getElementById(pageName).style.color = "black";
             
         }
 
@@ -96,13 +97,13 @@ function Detailed_product(props)
                                     <th>Product_Category</th>
                                     <th>Product_Code</th>
                                     <th>Product_Type</th>
-                                    <th>Product_Price</th>
+                                    <th>Product_Vendor</th>
                                 </tr>
                                 <tr>
                                     <td>{props.Product_Category}</td>
                                     <td>{props.Product_Code}</td>
                                     <td>{props.Product_Type}</td>
-                                    <td>{props.Product_Price}</td>
+                                    <td>{props.Product_Vendor}</td>
                                 </tr>
                             </tbody>
                         </table> 

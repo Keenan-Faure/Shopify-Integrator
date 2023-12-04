@@ -2,7 +2,6 @@ import {useEffect} from 'react';
 import {useState} from "react";
 import $ from 'jquery';
 import '../../CSS/login.css';
-
 import Background from '../../components/Background';
 
 
@@ -104,6 +103,90 @@ function Add_Product()
             makeItRain();
         });
 
+        function openPage(pageName) 
+        {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) 
+            {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablink");
+            for (i = 0; i < tablinks.length; i++) 
+            {
+                tablinks[i].style.backgroundColor = "";
+            }
+
+            document.getElementById("_" + pageName).style.display = "block";
+            document.getElementById(pageName).style.backgroundColor = "rgb(72, 101, 128)";
+            document.getElementById(pageName).style.color = "black";
+            
+        }
+
+        let home = document.getElementById("Product");
+        home.addEventListener("click", () =>
+        {
+            openPage('Product');
+        });
+
+        let defaul = document.getElementById("Variants");
+        defaul.addEventListener("click", () =>
+        {
+            openPage('Variants');
+        });
+
+        document.getElementById("Product").click();
+
+        /* When the user clicks on the return button */
+        let close = document.querySelector(".rtn-button");
+        let navbar = document.getElementById("navbar");
+        let details = document.getElementById("detailss");
+        navbar.style.display = "none";
+        close.addEventListener("click", ()=> 
+        {
+            close.style.display = "none";
+            details.style.animation = "Fadeout 0.5s ease-out";
+            
+            window.location.href = "/products";
+        });
+
+        const input = document.getElementById("image_Input");
+        const output = document.getElementById("image_Output");
+        let label = document.getElementById("label");
+        let del = document.getElementById("delete");
+        let imagesArray = []
+        del.style.display = "none";
+
+        input.addEventListener("change", () => 
+        {
+            const file = input.files
+            imagesArray.push(file[0]);
+            displayImages();
+            label.style.display = "none";
+            del.style.display = "block";
+        });
+
+        function displayImages() 
+        {
+            let images = "";
+            imagesArray.forEach((image, index) => 
+            {
+              images += `<div class="image" id = "imgg">
+                          <img class = "detailed-image" src="${URL.createObjectURL(image)}">
+                        </div>`
+            })
+            output.innerHTML = images;
+        }
+
+        del.addEventListener("click", () =>
+        {
+            document.getElementById("imgg").remove();
+            label.style.display = "";
+            del.style.display = "none";
+        });
+
+
+
 
     }, []);
 
@@ -119,29 +202,124 @@ function Add_Product()
                     </div>
                 </div>
 
-                <form className = 'modal-content' method = 'post' onSubmit={(event) => AddProduct(event)} autoComplete='off' id = 'form1'>
-                    <div className = 'modal-container' id = "main">
-                        <label style = {{fontSize: '18px'}}><b>Add Product</b></label>
-                        <br /><br />
-                        <div className = "holder">
-                            <label><b>Product_Code</b></label>
-                            <br />
-                            <span><input type = 'text' placeholder = "Product grouping code" name = "username" value = {inputs.username || ""}  onChange = {handleChange} required></input></span>
-                            <br /><br />
-
-                            <label><b>Product_Title</b></label>
-                            <br />
-                            <span><input type = 'password' placeholder = "Title of product" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
-                            <br /><br />
-
-                            <label><b>Product_Description</b></label>
-                            <br />
-                            <span><input type = 'text' placeholder = "Description of product" name = "username" value = {inputs.username || ""}  onChange = {handleChange} required></input></span>
-                            <br /><br />
-                        </div>
-
-                        <button className = 'button' type = 'submit'>Add</button>
+                <form className = 'modal-content' style ={{opacity: '1'}}method = 'post' onSubmit={(event) => AddProduct(event)} autoComplete='off' id = 'form1' encType="multipart/form-data">
+                <div id = "detailss">
+                    <div className = 'rtn-button'></div>
+                    <div className = "button-holder" style={{backgroundColor: ''}}>
+                        <button type = "button" className="tablink" id = "Product">Product</button>
+                        <button type = "button" className="tablink" id ="Variants">Variants</button>
                     </div>
+                
+                    <div className="tabcontent" id="_Product" >
+                        <div className = "details-details">
+                            <div className = "auto-slideshow-container" />
+                            <div className = "detailed">
+                                <div className = "details-title">
+                                    <span><input type = '_text' style ={{fontSize:'20px', width: '500px'}} placeholder = "Product Title" name = "product_title" value = {inputs.product_title || ""}  
+                                    onChange = {handleChange} required></input></span>
+                                </div>
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <th>Product Category</th>
+                                            <th>Product Code</th>
+                                        </tr>
+                                        <tr>
+                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Category" name = "product_category" 
+                                            value = {inputs.product_category || ""} onChange = {handleChange} required></input></span></td>
+                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Code" name = "product_code" 
+                                            value = {inputs.product_code || ""} onChange = {handleChange} required></input></span></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Product Type</th>
+                                            <th>Product Vendor</th>
+                                        </tr>
+                                        <tr>
+                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Type" name = "product_type" 
+                                            value = {inputs.product_type || ""} onChange = {handleChange} required></input></span></td>
+                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Vendor" name = "product_vendor" 
+                                            value = {inputs.product_vendor || ""} onChange = {handleChange} required></input></span></td>
+                                        </tr>
+                                    </tbody>
+                                </table> 
+                                <div className = "details-description">Product Description</div>
+                                    <textarea type = '_text'  style = {{resize:'none'}} placeholder = "Product Description" name = "product_description" 
+                                    value = {inputs.product_description || ""} onChange = {handleChange} rows = "5" cols = "80"></textarea>
+                                <div className = "details-description">Product Warehousing</div> 
+                                <div className = "details-warehousing">
+                                    <textarea type = '_text'  style = {{resize:'none'}} placeholder = "Product Warehousing" name = "product_warehousing" 
+                                    value = {inputs.product_warehousing || ""} onChange = {handleChange} rows = "5" cols = "80"></textarea>
+                                </div>  
+                            </div>
+                            <div className = "details-left"></div>
+                            <div className = "details-right">
+                                <input id = "image_Input" name = "product_image" value = {inputs.product_image || ""} onChange = {handleChange}
+                                style = {{position: 'relative', top: '5px'}} type="file" accept="image/jpeg, image/png, image/jpg" hidden/>
+                                <label id = "label" htmlFor = "image_Input">Upload Product Image</label>
+                                <span id = "delete" >&times;</span>
+                                <output id = "image_Output"></output>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="tabcontent" id="_Variants" >
+                        <div className = "details-details">
+                            <div className = "auto-slideshow-container" />
+                            <div className = "detailed">
+                                <div className = "details-title">Product_Title Variants</div>
+                                <div className = "variants" id="_variants" >
+                                <table>
+                                        <tbody>
+                                            <tr>
+                                                <th>Variant Barcode</th>
+                                                <th>Variant ID</th>
+                                                <th>Variant SKU</th>
+                                            </tr>
+                                            <tr>
+                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Barcode" name = "variant_barcode" 
+                                                value = {inputs.variant_barcode || ""} onChange = {handleChange} required></input></td>
+                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant ID" name = "variant_id" 
+                                                value = {inputs.variant_id || ""} onChange = {handleChange} required></input></td>
+                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant SKU" name = "variant_sku" 
+                                                value = {inputs.variant_sku || ""} onChange = {handleChange} required></input></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table>
+                                        <tbody>
+                                            <tr>
+                                                <th>Option 1</th>
+                                                <th>Option 2</th>
+                                                <th>Option 3</th>
+                                            </tr>
+                                            <tr>
+                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Option 1" name = "variant_option1" 
+                                                value = {inputs.variant_option1 || ""} onChange = {handleChange} required></input></td>
+                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Option 2" name = "variant_option2" 
+                                                value = {inputs.variant_option2 || ""} onChange = {handleChange} ></input></td>
+                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Option 3" name = "variant_option3" 
+                                                value = {inputs.variant_option3 || ""} onChange = {handleChange} ></input></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div className = "vr">
+                                        <div className = "variant-updateDate">
+                                            <input type = '_text' style = {{width: '300px'}} placeholder = "Variant Update Date" name = "variant_update" 
+                                            value = {inputs.variant_update || ""} onChange = {handleChange} required></input>
+                                            </div>
+                                        <div className = "variant-price"><div className = "c">--</div><input type = '_text' style = {{width: '150px'}} placeholder = "Price High" name = "variant_pricehigh" 
+                                            value = {inputs.variant_pricehigh || ""} onChange = {handleChange} required></input></div><div className = "variant-price"><input type = '_text' style = {{width: '150px'}} placeholder = "Price Low" name = "variant_pricelow" 
+                                            value = {inputs.variant_pricelow || ""} onChange = {handleChange} required></input></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className = "details-right"></div>
+                            <div className = "details-left"></div>
+                        </div>
+                    </div>
+                </div>
+                <button type = "submit" className = "submiit">Add Product</button>
                 </form>
             </div>    
         </>

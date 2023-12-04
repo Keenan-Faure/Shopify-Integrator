@@ -19,6 +19,21 @@ function Product_Variants(props)
                     </tr>
                 </tbody>
             </table>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Option 1</th>
+                        <th>Option 2</th>
+                        <th>Option 3</th>
+                    </tr>
+                    <tr>
+                        <td>{props.Option1}</td>
+                        <td>{props.Option2}</td>
+                        <td>{props.Option3}</td>
+                    </tr>
+                </tbody>
+            </table>
+
             <div className = "vr">
                 <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
                 <div className = "variant-price"><div className = "c">--</div>{props.Price_high}</div><div className = "variant-price">{props.Price_low}</div>

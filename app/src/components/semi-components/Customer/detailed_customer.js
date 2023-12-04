@@ -18,9 +18,9 @@ function Detailed_customer(props)
             {
                 tablinks[i].style.backgroundColor = "";
             }
-
             document.getElementById("_" + pageName).style.display = "block";
-            document.getElementById(pageName).style.backgroundColor = "#e7e7e7";
+            document.getElementById(pageName).style.backgroundColor = "rgb(72, 101, 128)";
+            document.getElementById(pageName).style.color = "black";
             
         }
 
