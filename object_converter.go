@@ -374,6 +374,20 @@ func CompileOrderData(
 	if err != nil {
 		return objects.Order{}, err
 	}
+	customer_id, err := dbconfig.DB.GetCustomerByOrderID(ctx, order_id)
+	if err != nil {
+		return objects.Order{}, err
+	}
+	order_customer, err := dbconfig.DB.GetCustomerByID(ctx, customer_id)
+	if err != nil {
+		return objects.Order{}, err
+	}
+	OrderCustomer := objects.OrderCustomer{
+		FirstName: order_customer.FirstName,
+		LastName:  order_customer.LastName,
+		Address:   []objects.CustomerAddress{},
+		UpdatedAt: order_customer.UpdatedAt,
+	}
 	if ignore_ship_cust {
 		Order := objects.Order{
 			ID:                order.ID,
@@ -385,19 +399,11 @@ func CompileOrderData(
 			DiscountTotal:     order.DiscountTotal.String,
 			UpdatedAt:         order.UpdatedAt,
 			CreatedAt:         order.CreatedAt,
-			OrderCustomer:     objects.OrderCustomer{},
+			OrderCustomer:     OrderCustomer,
 			LineItems:         []objects.OrderLines{},
 			ShippingLineItems: []objects.OrderLines{},
 		}
 		return Order, nil
-	}
-	customer_id, err := dbconfig.DB.GetCustomerByOrderID(ctx, order_id)
-	if err != nil {
-		return objects.Order{}, err
-	}
-	order_customer, err := dbconfig.DB.GetCustomerByID(ctx, customer_id)
-	if err != nil {
-		return objects.Order{}, err
 	}
 	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(ctx, customer_id)
 	if err != nil {
@@ -417,7 +423,6 @@ func CompileOrderData(
 			TaxRate:  value.TaxRate.String,
 			TaxTotal: value.TaxTotal.String,
 		})
-
 	}
 	order_shipping_lines, err := dbconfig.DB.GetShippingLinesByOrder(ctx, order_id)
 	if err != nil {
@@ -437,22 +442,19 @@ func CompileOrderData(
 	OrderCustomerAddress := []objects.CustomerAddress{}
 	for _, value := range order_customer_address {
 		OrderCustomerAddress = append(OrderCustomerAddress, objects.CustomerAddress{
+			Type:       value.Name.String,
 			FirstName:  value.FirstName,
 			LastName:   value.LastName,
 			Address1:   value.Address1.String,
 			Address2:   value.Address2.String,
 			Suburb:     value.Suburb.String,
+			City:       value.City.String,
 			Province:   value.Province.String,
 			PostalCode: value.PostalCode.String,
 			Company:    value.Company.String,
 		})
 	}
-	OrderCustomer := objects.OrderCustomer{
-		FirstName: order_customer.FirstName,
-		LastName:  order_customer.LastName,
-		UpdatedAt: order_customer.UpdatedAt,
-		Address:   OrderCustomerAddress,
-	}
+	OrderCustomer.Address = OrderCustomerAddress
 	Order := objects.Order{
 		ID:                order_id,
 		Notes:             order.Notes.String,

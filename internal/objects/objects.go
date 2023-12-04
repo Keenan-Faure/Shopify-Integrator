@@ -7,7 +7,6 @@ import (
 )
 
 type RequestWebhookURL struct {
-	ApiKey        string `json:"api_key"`
 	ForwardingURL string `json:"forwarding_url"`
 }
 
@@ -499,7 +498,7 @@ type OrderAddress struct {
 type OrderCustomer struct {
 	FirstName string            `json:"first_name"`
 	LastName  string            `json:"last_name"`
-	Address   []CustomerAddress `json:"shipping_address"`
+	Address   []CustomerAddress `json:"addresses"`
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 type Customer struct {
@@ -508,7 +507,7 @@ type Customer struct {
 	LastName  string            `json:"last_name"`
 	Email     string            `json:"email"`
 	Phone     string            `json:"phone"`
-	Address   []CustomerAddress `json:"shipping_address"`
+	Address   []CustomerAddress `json:"addresses"`
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 type CustomerAddress struct {

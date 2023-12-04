@@ -88,7 +88,7 @@ SELECT
     tax_total,
     updated_at
 FROM order_lines
-WHERE order_id = $1 AND line_type = 'line'
+WHERE order_id = $1 AND line_type = 'product'
 `
 
 type GetOrderLinesByOrderRow struct {

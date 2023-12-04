@@ -28,22 +28,8 @@ func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, 
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	if body.ApiKey == "" {
-		RespondWithError(w, http.StatusBadRequest, "data validation error")
-		return
-	}
-	// check if a user exists
-	db_user, err := dbconfig.DB.GetUserByApiKey(r.Context(), body.ApiKey)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "invalid api_key")
-		return
-	}
-	if db_user.ApiKey != body.ApiKey {
-		RespondWithError(w, http.StatusInternalServerError, "invalid api_key")
-		return
-	}
 	// create webhook url
-	webhook_url := body.ForwardingURL + "/api/orders?token=" + db_user.WebhookToken + "&api_key=" + db_user.ApiKey
+	webhook_url := body.ForwardingURL + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: webhook_url,
 	})

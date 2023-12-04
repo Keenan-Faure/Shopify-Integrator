@@ -92,6 +92,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 const getAddressByCustomer = `-- name: GetAddressByCustomer :many
 SELECT
     id,
+    "name",
     first_name,
     last_name,
     address1,
@@ -108,6 +109,7 @@ WHERE customer_id = $1
 
 type GetAddressByCustomerRow struct {
 	ID         uuid.UUID      `json:"id"`
+	Name       sql.NullString `json:"name"`
 	FirstName  string         `json:"first_name"`
 	LastName   string         `json:"last_name"`
 	Address1   sql.NullString `json:"address1"`
@@ -131,6 +133,7 @@ func (q *Queries) GetAddressByCustomer(ctx context.Context, customerID uuid.UUID
 		var i GetAddressByCustomerRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.Name,
 			&i.FirstName,
 			&i.LastName,
 			&i.Address1,
