@@ -144,6 +144,7 @@ function Add_Customer()
         let close = document.querySelector(".rtn-button");
         let navbar = document.getElementById("navbar");
         let details = document.getElementById("detailss");
+        navbar.style.display = "none";
         close.addEventListener("click", ()=> 
         {
             close.style.display = "none";

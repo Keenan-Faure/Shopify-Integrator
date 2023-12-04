@@ -291,7 +291,7 @@ output .span--hidden
 {
     visibility: hidden;
 }
-label 
+.details-right label 
 {
     background-color: rgb(238, 238, 238);
     color: rgb(43, 43, 43);
@@ -305,10 +305,14 @@ label
     transition-duration: 0.4s;
     z-index: 1;
 }
-label:hover 
+.details-right label:hover
 {
     background-color: rgb(72, 101, 128);
     color: aliceblue;
+}
+.modal-container label 
+{
+
 }
 .submiit 
 {
