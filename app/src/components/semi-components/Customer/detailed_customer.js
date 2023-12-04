@@ -91,11 +91,6 @@ function Detailed_customer(props)
                                 </tr>
                             </tbody>
                         </table> 
-                        <div className = "details-description">Customer Descriptions</div>
-                        <p id = "description">
-                            Customer Description goes here, and it will be a extremelty long piece of text, of course, this can vary
-                            but, on average, it could grow to be this large. But we'll see eyy!~
-                        </p>
                         <div className = "details-description">Customer Warehousing</div> 
                         <div className = "details-warehousing"></div>  
                     </div>

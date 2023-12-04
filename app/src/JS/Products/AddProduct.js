@@ -35,6 +35,11 @@ function Add_Product()
 
     useEffect(() =>
     {
+        window.onload = function(event)
+        {
+            let navbar = document.getElementById("navbar");
+            navbar.style.display = "none";
+        }
         /* Fix any incorrect elements */
         let navigation = document.getElementById("navbar");
         let modal = document.getElementById("model");
@@ -202,7 +207,7 @@ function Add_Product()
                     </div>
                 </div>
 
-                <form className = 'modal-content' style ={{opacity: '1'}}method = 'post' onSubmit={(event) => AddProduct(event)} autoComplete='off' id = 'form1' encType="multipart/form-data">
+                <form className = 'modal-content' style ={{opacity: '1'}} method = 'post' onSubmit={(event) => AddProduct(event)} autoComplete='off' id = 'form1' encType="multipart/form-data">
                 <div id = "detailss">
                     <div className = 'rtn-button'></div>
                     <div className = "button-holder" style={{backgroundColor: ''}}>
@@ -215,8 +220,8 @@ function Add_Product()
                             <div className = "auto-slideshow-container" />
                             <div className = "detailed">
                                 <div className = "details-title">
-                                    <span><input type = '_text' style ={{fontSize:'20px', width: '500px'}} placeholder = "Product Title" name = "product_title" value = {inputs.product_title || ""}  
-                                    onChange = {handleChange} required></input></span>
+                                    <input type = '_text' style ={{fontSize:'20px', width: '500px'}} placeholder = "Product Title" name = "product_title" value = {inputs.product_title || ""}  
+                                    onChange = {handleChange} required></input>
                                 </div>
                                 <table>
                                     <tbody>
@@ -225,20 +230,20 @@ function Add_Product()
                                             <th>Product Code</th>
                                         </tr>
                                         <tr>
-                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Category" name = "product_category" 
-                                            value = {inputs.product_category || ""} onChange = {handleChange} required></input></span></td>
-                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Code" name = "product_code" 
-                                            value = {inputs.product_code || ""} onChange = {handleChange} required></input></span></td>
+                                            <td><input type = '_text' style = {{width: '300px'}} placeholder = "Product Category" name = "product_category" 
+                                            value = {inputs.product_category || ""} onChange = {handleChange} required></input></td>
+                                            <td><input type = '_text' style = {{width: '300px'}} placeholder = "Product Code" name = "product_code" 
+                                            value = {inputs.product_code || ""} onChange = {handleChange} required></input></td>
                                         </tr>
                                         <tr>
                                             <th>Product Type</th>
                                             <th>Product Vendor</th>
                                         </tr>
                                         <tr>
-                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Type" name = "product_type" 
-                                            value = {inputs.product_type || ""} onChange = {handleChange} required></input></span></td>
-                                            <td><span><input type = '_text' style = {{width: '300px'}} placeholder = "Product Vendor" name = "product_vendor" 
-                                            value = {inputs.product_vendor || ""} onChange = {handleChange} required></input></span></td>
+                                            <td><input type = '_text' style = {{width: '300px'}} placeholder = "Product Type" name = "product_type" 
+                                            value = {inputs.product_type || ""} onChange = {handleChange} required></input></td>
+                                            <td><input type = '_text' style = {{width: '300px'}} placeholder = "Product Vendor" name = "product_vendor" 
+                                            value = {inputs.product_vendor || ""} onChange = {handleChange} required></input></td>
                                         </tr>
                                     </tbody>
                                 </table> 
