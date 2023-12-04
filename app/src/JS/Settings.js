@@ -1,7 +1,8 @@
 import {useEffect} from 'react';
 import Page2 from '../components/Page2';
-import Detailed_order from '../components/semi-components/Order/detailed_order';
+
 import '../CSS/page2.css';
+import Detailed_customer from '../components/semi-components/Customer/detailed_customer';
 
 function Settings()
 {
@@ -21,7 +22,7 @@ function Settings()
     return (
         <>
             
-            <Page2 />
+            <Detailed_customer />
         </>
     );
 }

@@ -38,17 +38,6 @@ function Detailed_customer(props)
 
         document.getElementById("Customer").click();
 
-        let activity = document.querySelector(".details-title").innerHTML;
-        let status = document.querySelector(".inactive");
-        if(activity != "1")
-        {
-            status.className = "inactive";
-        }
-        else 
-        {
-            status.className = "activee";
-        }
-
         /* When the user clicks on the return button */
         let close = document.querySelector(".rtn-button");
         let filter = document.querySelector(".filter");
@@ -63,12 +52,10 @@ function Detailed_customer(props)
             setTimeout(() => 
             {
                 main.style.animation = "FadeIn ease-in 0.6s";
-                filter.style.animation = "FadeIn ease-in 0.6s";
                 navbar.style.animation = "FadeIn ease-in 0.6s";
                 details.style.display = "none";
                 navbar.style.display = "block";
                 main.style.display = "block";
-                filter.style.display = "block";
             }, 500);
         });
 
@@ -80,29 +67,27 @@ function Detailed_customer(props)
             <div className = 'rtn-button'></div>
             <div className = "button-holder">
                 <button className="tablink" id = "Customer">Customer</button>
-                <button className="tablink" id ="Variants">Variants</button>
+                <button className="tablink" id ="Variants">Shipping</button>
             </div>
         
             <div className="tabcontent" id="_Customer" >
                 <div className = "details-details">
                     <div className = "detailed-image" />
                     <div className = "detailed">
-                        <div className = "details-title">{props.Product_Title}</div>
-                        <i className = "inactive"/>
-                        <span id = "activity">Activity</span>
+                        <div className = "details-title">{props.Customer_ID}</div>
                         <table>
                             <tbody>
                                 <tr>
-                                    <th>Product_Category</th>
-                                    <th>Product_Code</th>
-                                    <th>Product_Type</th>
-                                    <th>Product_Price</th>
+                                    <th>Customer Email</th>
+                                    <th>Customer Firstname</th>
+                                    <th>Customer Lastname</th>
+                                    <th>Customer Phone</th>
                                 </tr>
                                 <tr>
-                                    <td>{props.Product_Category}</td>
-                                    <td>{props.Product_Code}</td>
-                                    <td>{props.Product_Type}</td>
-                                    <td>{props.Product_Price}</td>
+                                    <td>{props.Customer_Email}</td>
+                                    <td>{props.Customer_firstName}</td>
+                                    <td>{props.Customer_lastName}</td>
+                                    <td>{props.Customer_Phone}</td>
                                 </tr>
                             </tbody>
                         </table> 
@@ -123,7 +108,7 @@ function Detailed_customer(props)
                 <div className = "details-details">
                 <div className = "detailed-image" />
                     <div className = "detailed">
-                        <div className = "details-title"> {props.Product_Title} Variants</div>
+                        <div className = "details-title"> {props.Customer_firstName} Shipping Addresses</div>
                         <div className = "variants" id="_variants" ></div>
                     </div>
                     <div className = "details-right"></div>
@@ -136,12 +121,12 @@ function Detailed_customer(props)
 
 Detailed_customer.defaultProps = 
 {
-    Customer_Title: 'Customer title',
-    Customer_Code: 'Customer code',
-    Customer_Options: 'Options',
-    Customert_Category: 'Category',
-    Customer_Type: 'Type',
+    Customer_ID: 'Customer ID',
+    Customer_Email: 'Customer code',
+    Customer_firstName: 'Options',
+    Customer_lastName: 'Category',
+    Customer_Phone: 'Type',
     Customer_Vendor: 'Vendor',
-    Customer_Price: 'Price'
+    Customer_Updated: 'Price'
 }
 export default Detailed_customer;

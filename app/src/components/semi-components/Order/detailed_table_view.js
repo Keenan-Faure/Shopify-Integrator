@@ -1,7 +1,7 @@
 import {useEffect} from 'react';
 import '../../../CSS/detailed.css';
 
-function Detailed_Table_View()
+function Detailed_Table_View(props)
 {
     useEffect(()=> 
     {

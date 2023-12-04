@@ -46,13 +46,13 @@ function Customer_details(props)
         <div className = "pan">
             <div className = "pan-img"></div>
             <div className = "pan-details">
-                <a href = "/#" className = "p-d-title">{props.Customer_Title}</a>
+                <a href = "/#" className = "p-d-title">{props.Customer_ID}</a>
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-code">{props.Customer_Code}</a>
+                <a href = "/#" className = "p-d-code">{props.Customer_firstName}</a>
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-options">{props.Customer_Options}</a> | <a href = "/#" className = "p-d-category">{props.Customer_Category}</a> | <a href = "/#" className = "p-d-type">{props.Customer_Type}</a> | <a href = "/#" className = "p-d-vendor">{props.Customer_Vendor}</a>
+                <a href = "/#" className = "p-d-options">{props.Customer_lastName}</a>
             </div>
         </div>
     );
@@ -60,12 +60,8 @@ function Customer_details(props)
 
 Customer_details.defaultProps = 
 {
-    Customer_Title: 'Customer title',
-    Customer_Code: 'Customer code',
-    Customer_Options: 'Options',
-    Customer_Category: 'Category',
-    Customer_Type: 'Type',
-    Customer_Vendor: 'Vendor',
-    Customer_Price: 'Price'
+    Customer_ID: 'Customer ID',
+    Customer_firstName: 'Customer firstName',
+    Customer_lastName: 'Customer lastName',
 }
 export default Customer_details;

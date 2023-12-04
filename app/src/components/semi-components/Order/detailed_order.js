@@ -93,19 +93,19 @@ function Detailed_order(props)
                         <div className="customer_data_container">
                             <div className="customer_data_row">
                                 <div className="customer_data_header">First Name</div>
-                                <textarea className="customer_data_tiles">{props.firstName}</textarea>
+                                <div className="customer_data_tiles">{props.firstName}</div>
                             </div>
                             <div className="customer_data_row">
                                 <div className="customer_data_header">Last Name</div>
-                                <textarea className="customer_data_tiles">{props.lastName}</textarea>
+                                <div className="customer_data_tiles">{props.lastName}</div>
                             </div>
                             <div className="customer_data_row">
                                 <div className="customer_data_header">Email</div>
-                                <textarea className="customer_data_tiles">{props.shippingAddress}</textarea>
+                                <div className="customer_data_tiles">{props.shippingAddress}</div>
                             </div>
                             <div className="customer_data_row">
                                 <div className="customer_data_header">Phone number</div>
-                                <textarea className="customer_data_tiles">{props.PhoneNum}</textarea>
+                                <div className="customer_data_tiles">{props.PhoneNum}</div>
                             </div>
                         </div>
                     </div>

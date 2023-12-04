@@ -5,6 +5,8 @@ import Page1 from '../components/Page1';
 import $ from 'jquery';
 import Order_details from '../components/semi-components/order-details';
 import Detailed_order from '../components/semi-components/Order/detailed_order';
+import Detailed_Table_View from '../components/semi-components/Order/detailed_table_view';
+import Detailed_table from '../components/semi-components/Order/detailed_table';
 import '../CSS/page1.css';
 
 /* Must start with a Caps letter */
@@ -84,8 +86,8 @@ function Orders()
                 let root = createRoot(div);
 
                 root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
-            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
-            />)) 
+                Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
+                />)) 
 
                 setTimeout(() =>
                 {
@@ -178,25 +180,21 @@ function Orders()
                             orders.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
-                            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
-                            />))
+                            rot.render(<Detailed_order key={`${_data.title}_${i}`}
+                            firstName={_data.customer.first_name} lastName={_data.customer.last_name}
+                            />)
  
-                            /* For some reason it wont pick up the element unless it throw it here 
+                            /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
-                                let _div = details.querySelectorAll(".auto-slideshow-container");
-                                for(let i = 0; i < _div.length; i++)
-                                {
-                                    let _root = createRoot(_div[i]);
-                                    if(i == 0) { _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
-                                    else { _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
-                                }
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
+                                let _div = details.querySelector("#detailed_table_view");
+                                let div_ = details.querySelector("#detailed_table");
+                                let rt = createRoot(_div);
+                                let _rt = createRoot(div_);
+                                rt.render(<Detailed_Table_View Total_Heading = {_data.order_total}/> )
+                                _rt.render(<Detailed_table Order_Title = {_data.web_code}/> )
                             }, 0);
-                            */
+                            
                             
                         }
                         else 
@@ -205,9 +203,10 @@ function Orders()
                             let details = document.createElement('details');
                             orders.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
-                            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
-                            />))
+
+                            rot.render(<Detailed_order key={`${_data.title}_${i}`}
+                            Order_firstName={_data.customer.firstName} Order_lastName={_data.customer.lastLame}
+                            />)
                             /* For some reason it wont pick up the element unless it throw it here 
                             setTimeout(() =>
                             {
