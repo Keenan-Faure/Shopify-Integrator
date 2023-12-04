@@ -23,7 +23,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
 	customer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
 		ID:        uuid.New(),
 		FirstName: order_body.Customer.FirstName,
-		LastName:  order_body.Customer.FirstName,
+		LastName:  order_body.Customer.LastName,
 		Email:     utils.ConvertStringToSQL(order_body.Customer.Email),
 		Phone:     utils.ConvertStringToSQL(order_body.Customer.Phone),
 		CreatedAt: time.Now().UTC(),

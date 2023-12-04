@@ -55,6 +55,7 @@ customer_id = $13;
 -- name: GetAddressByCustomer :many
 SELECT
     id,
+    "name",
     first_name,
     last_name,
     address1,
