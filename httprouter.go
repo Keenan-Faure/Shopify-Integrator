@@ -21,6 +21,26 @@ import (
 	"github.com/google/uuid"
 )
 
+// GET /api/stats/fetch
+func (dbconfig *DbConfig) GetFetchStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+
+}
+
+// POST /api/stats/fetch
+func (dbconfig *DbConfig) CreateFetchStat(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+
+}
+
+// GET /api/stats/orders
+func (dbconfig *DbConfig) GetOrderStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+
+}
+
+// POST /api/stats/orders
+func (dbconfig *DbConfig) CreateOrderStat(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+
+}
+
 // POST /api/settings/webhook
 func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	body, err := DecodeWebhookURL(r)
