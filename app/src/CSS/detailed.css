@@ -19,6 +19,20 @@
     background-color: rgb(72, 101, 128);
     color: aliceblue;
 }
+.description ul 
+{
+    list-style-type: disc;
+    padding: 10px 0;
+    background-color: transparent;
+}
+.description li 
+{
+    color: black;
+    float: none;
+    left: initial;
+    top: initial;
+    padding: 4px;
+}
 
 .tabcontent 
 {
@@ -285,6 +299,11 @@ tr:hover
     bottom: 5%;
     width: auto;
     height: auto;
+}
+.Prices, .updateDate 
+{
+    font-weight: bold;
+    font-size: 14px;
 }
 p{ padding: 10px 60px; margin: 0;}
 .c 

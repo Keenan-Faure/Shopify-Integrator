@@ -94,10 +94,10 @@ function Detailed_product(props)
                         <table>
                             <tbody>
                                 <tr>
-                                    <th>Product_Category</th>
-                                    <th>Product_Code</th>
-                                    <th>Product_Type</th>
-                                    <th>Product_Vendor</th>
+                                    <th>Product Category</th>
+                                    <th>Product Code</th>
+                                    <th>Product Type</th>
+                                    <th>Product Vendor</th>
                                 </tr>
                                 <tr>
                                     <td>{props.Product_Category}</td>
@@ -108,10 +108,9 @@ function Detailed_product(props)
                             </tbody>
                         </table> 
                         <div className = "details-description">Product Description</div>
-                        <p id = "description">
-                            Product Description goes here, and it will be a extremelty long piece of text, of course, this can vary
-                            but, on average, it could grow to be this large. But we'll see eyy!~
-                        </p>
+                        <div className = "description">
+                            {props.Product_Description}
+                        </div>
                         <div className = "details-description">Product Warehousing</div> 
                         <div className = "details-warehousing"></div>  
                     </div>

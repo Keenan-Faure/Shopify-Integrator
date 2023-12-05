@@ -9,12 +9,10 @@ function Product_Variants(props)
                 <tbody>
                     <tr>
                         <th>Variant Barcode</th>
-                        <th>Variant ID</th>
                         <th>Variant SKU</th>
                     </tr>
                     <tr>
                         <td>{props.Variant_Barcode}</td>
-                        <td>{props.Variant_ID}</td>
                         <td>{props.Variant_SKU}</td>
                     </tr>
                 </tbody>
@@ -35,8 +33,11 @@ function Product_Variants(props)
             </table>
 
             <div className = "vr">
+                <div className = "updateDate">Variant Update Date:</div>
                 <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
-                <div className = "variant-price"><div className = "c">--</div>{props.Price_high}</div><div className = "variant-price">{props.Price_low}</div>
+                <br />
+                <div className = "Prices">Variant Prices:</div>
+                <div id = "price">R{props.Price}</div>
             </div>
         </div>
     );
@@ -49,7 +50,6 @@ Product_Variants.defaultProps =
     Variant_ID: 'Variant ID',
     Variant_SKU: 'Variant SKU',
     Variant_UpdateDate: 'Variant Update Date',
-    Price_high: 'High Price',
-    Price_low: 'Low Price'
+    Price: 'High Price',
 }
 export default Product_Variants;

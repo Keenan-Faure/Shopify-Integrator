@@ -1,37 +1,4 @@
-ul
-{
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background-color: #333;
-    opacity: 0.85;
-    transition-duration: 0.56s;
-}
-ul:hover 
-{
-    opacity: 1;
-}
-li 
-{
-    float: left;
-    position: relative;
-    left: 30%;
-    position: relative;
-    top: 50%;
-}
-li a 
-{
-    display: block;
-    color: white;
-    text-align: center;
-    padding: 22px 25px;
-    text-decoration: none;
-}
-li a:hover 
-{
-    background-color: #111;
-}
+
 
 .avatar 
 {

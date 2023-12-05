@@ -8,7 +8,7 @@ import Detailed_product from '../components/semi-components/Product/detailed_pro
 import Product_Variants from '../components/semi-components/Product/product_variants';
 import Detailed_Images from '../components/semi-components/Product/detailed_images';
 import Detailed_Images2 from '../components/semi-components/Product/detailed_images2';
-import product from '../media/products.png';
+import Detailed_Price from '../components/semi-components/Product/detailed_prices';
 
 import '../CSS/page1.css';
 
@@ -153,10 +153,14 @@ function Products()
                             products.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} />)
+                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} 
+                            />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
+                                details.querySelector(".description").innerHTML = _data.body_html;
+
                                 let _div = details.querySelectorAll(".auto-slideshow-container");
                                 for(let i = 0; i < _div.length; i++)
                                 {
@@ -166,8 +170,12 @@ function Products()
                                 }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
-                            }, 0);
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
+                                Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
+                                Option1={el.option1} Option2={el.option2} Option3={el.option3} Price={<Detailed_Price key={`${el.title}_${i}`} 
+                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price={el.value}/>)}/>}
+                                /> ))
+                            }, 10);
                             
                         }
                         else 
@@ -176,10 +184,13 @@ function Products()
                             let details = document.createElement('details');
                             products.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} />)
+                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} 
+                            />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
+                                details.querySelector(".description").innerHTML = _data.body_html;
                                 let _div = details.querySelectorAll(".auto-slideshow-container");
                                 for(let i = 0; i < _div.length; i++)
                                 {
@@ -195,7 +206,11 @@ function Products()
                                 }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
+                                Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
+                                Option1={el.option1} Option2={el.option2} Option3={el.option3} Price={<Detailed_Price key={`${el.title}_${i}`} 
+                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price={el.value}/>)}/>}
+                                /> ))
                             }, 0);
                         }
                     })
