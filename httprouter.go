@@ -21,6 +21,28 @@ import (
 	"github.com/google/uuid"
 )
 
+// GET /api/stats/fetch
+func (dbconfig *DbConfig) GetFetchStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	data, err := dbconfig.DB.GetFetchStats(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	// convert data to include missing dates, and convert dates to appropriate values
+	RespondWithJSON(w, http.StatusOK, ParseFetchStats(data))
+}
+
+// GET /api/stats/orders
+func (dbconfig *DbConfig) GetOrderStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	data, err := dbconfig.DB.FetchOrderStats(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	// convert data to include missing dates, and convert dates to appropriate values
+	RespondWithJSON(w, http.StatusOK, ParseOrderStats(data))
+}
+
 // POST /api/settings/webhook
 func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	body, err := DecodeWebhookURL(r)

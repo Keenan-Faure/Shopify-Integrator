@@ -56,6 +56,13 @@ type Customerorder struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+type FetchStat struct {
+	ID               uuid.UUID `json:"id"`
+	AmountOfProducts int32     `json:"amount_of_products"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
 type InventoryLocation struct {
 	ID                uuid.UUID `json:"id"`
 	ShopifyLocationID string    `json:"shopify_location_id"`
@@ -89,6 +96,13 @@ type OrderLine struct {
 	TaxRate   sql.NullString `json:"tax_rate"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
+}
+
+type OrderStat struct {
+	ID         uuid.UUID `json:"id"`
+	OrderTotal int32     `json:"order_total"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type Product struct {
