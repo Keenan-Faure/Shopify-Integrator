@@ -123,6 +123,10 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Delete("/queue/{id}", dbconfig.middlewareAuth(dbconfig.ClearQueueByID))
 	api.Delete("/queue", dbconfig.middlewareAuth(dbconfig.ClearQueueByFilter))
 
+	// not visible endpoints
+	api.Get("/stats/fetch", dbconfig.middlewareAuth(dbconfig.GetFetchStats))
+	api.Get("/stats/orders", dbconfig.middlewareAuth(dbconfig.GetOrderStats))
+
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))

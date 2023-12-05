@@ -521,6 +521,17 @@ func LoopJSONShopify(
 					}
 				}
 			}
+			// insert here
+			err = dbconfig.DB.CreateFetchStat(context.Background(), database.CreateFetchStatParams{
+				ID:               uuid.New(),
+				AmountOfProducts: int32(len(shopifyProds.Products)),
+				CreatedAt:        time.Now().UTC(),
+				UpdatedAt:        time.Now().UTC(),
+			})
+			if err != nil {
+				log.Println(err)
+				break
+			}
 			log.Printf("From Shopify %d products were collected", len(shopifyProds.Products))
 			fetch_url = utils.GetNextURL(next)
 		}
