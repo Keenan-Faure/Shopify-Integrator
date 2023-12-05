@@ -15,18 +15,44 @@ import (
 
 // Parses the data and fills in the missing hourly values
 // with a 0 value if it does not exist.
-func ParseFetchStats(data []database.GetFetchStatsRow) {
+func ParseFetchStats(data []database.GetFetchStatsRow) objects.FetchAmountResponse {
 	// get the last record (24 hrs back) of time using the first record
 	// which should be the latest
 
-	// TODO should I return the missing values
+	hours := []string{}
+	amount := []int64{}
+	for _, fsr := range data {
+		splited := strings.Split(fsr.Hour, " ")
+		if len(splited) > 1 {
+			hours = append(hours, splited[1])
+		} else {
+			hours = append(hours, "00")
+		}
+		amount = append(amount, fsr.Amount)
+	}
+	return objects.FetchAmountResponse{
+		Amounts: amount,
+		Hours:   hours,
+	}
+
+	// TODO should I return the missing values as well?
 }
 
 // Parses the data and fills in the missing daily values
 // with a 0 value if it does not exist.
-func ParseOrderStats(data []database.GetOrderStatsRow) {
+func ParseOrderStats(data []database.FetchOrderStatsRow) objects.OrderAmountResponse {
 	// TODO should I return the missing values
 	// if it has 2023-12-05 07, but skips 09 should I make it
+	days := []string{}
+	count := []int64{}
+	for _, pos := range data {
+		days = append(days, pos.Day)
+		count = append(count, pos.Count)
+	}
+	return objects.OrderAmountResponse{
+		Count: count,
+		Days:  days,
+	}
 }
 
 // Checks if the VID exists internally.

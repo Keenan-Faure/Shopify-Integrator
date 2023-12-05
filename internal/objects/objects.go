@@ -7,14 +7,15 @@ import (
 )
 
 // invisible endpoints
-type FetchAmountResponse []struct {
-	Amount int    `json:"amount"`
-	Hour   string `json:"hour"`
+
+type FetchAmountResponse struct {
+	Amounts []int64  `json:"amounts"`
+	Hours   []string `json:"hours"`
 }
 
-type OrderAmountResponse []struct {
-	Count int    `json:"count"`
-	Day   string `json:"day"`
+type OrderAmountResponse struct {
+	Count []int64  `json:"count"`
+	Days  []string `json:"days"`
 }
 
 type RequestWebhookURL struct {

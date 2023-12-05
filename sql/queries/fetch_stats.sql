@@ -20,7 +20,7 @@ WHERE id = $1;
 -- name: GetFetchStats :many
 SELECT
 	SUM(amount_of_products) AS "amount",
-	to_char(created_at, 'YYYY-MM-DD HH24') AS "hour"
+	to_char(created_at, 'YYYY-MM-DD HH24:00') AS "hour"
 FROM fetch_stats
 WHERE created_at > current_date at time zone 'UTC' - interval '1 day'
 GROUP BY "hour"

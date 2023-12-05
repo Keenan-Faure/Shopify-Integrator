@@ -98,6 +98,13 @@ type OrderLine struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 }
 
+type OrderStat struct {
+	ID         uuid.UUID `json:"id"`
+	OrderTotal int32     `json:"order_total"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
 type Product struct {
 	ID          uuid.UUID      `json:"id"`
 	Active      string         `json:"active"`

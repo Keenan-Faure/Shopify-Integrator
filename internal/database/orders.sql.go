@@ -69,6 +69,44 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 	return i, err
 }
 
+const fetchOrderStats = `-- name: FetchOrderStats :many
+SELECT
+	COUNT(id) AS "count",
+	to_char(created_at, 'YYYY-MM-DD') AS "day"
+FROM orders
+WHERE created_at > current_date at time zone 'UTC' - interval '7 day'
+GROUP BY "day"
+ORDER BY "day" DESC
+`
+
+type FetchOrderStatsRow struct {
+	Count int64  `json:"count"`
+	Day   string `json:"day"`
+}
+
+func (q *Queries) FetchOrderStats(ctx context.Context) ([]FetchOrderStatsRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchOrderStats)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FetchOrderStatsRow
+	for rows.Next() {
+		var i FetchOrderStatsRow
+		if err := rows.Scan(&i.Count, &i.Day); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getOrderByCustomer = `-- name: GetOrderByCustomer :many
 SELECT
     o.id,
@@ -212,44 +250,6 @@ func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode sql.NullString)
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const getOrderStats = `-- name: GetOrderStats :many
-SELECT
-	COUNT(id) AS "count",
-	to_char(created_at, 'YYYY-MM-DD HH24') AS "day"
-FROM orders
-WHERE created_at > current_date at time zone 'UTC' - interval '7 day'
-GROUP BY "day"
-ORDER BY "day" DESC
-`
-
-type GetOrderStatsRow struct {
-	Count int64  `json:"count"`
-	Day   string `json:"day"`
-}
-
-func (q *Queries) GetOrderStats(ctx context.Context) ([]GetOrderStatsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getOrderStats)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetOrderStatsRow
-	for rows.Next() {
-		var i GetOrderStatsRow
-		if err := rows.Scan(&i.Count, &i.Day); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getOrders = `-- name: GetOrders :many

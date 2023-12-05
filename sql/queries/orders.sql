@@ -117,10 +117,10 @@ WHERE o.id in (
     OR c.last_name LIKE $1
 );
 
--- name: GetOrderStats :many
+-- name: FetchOrderStats :many
 SELECT
 	COUNT(id) AS "count",
-	to_char(created_at, 'YYYY-MM-DD HH24') AS "day"
+	to_char(created_at, 'YYYY-MM-DD') AS "day"
 FROM orders
 WHERE created_at > current_date at time zone 'UTC' - interval '7 day'
 GROUP BY "day"
