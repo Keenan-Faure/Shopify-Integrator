@@ -21,7 +21,7 @@ function Detailed_order(props)
 
             document.getElementById("_" + pageName).style.display = "block";
             document.getElementById(pageName).style.backgroundColor = "rgb(72, 101, 128)";
-            document.getElementById(pageName).style.color = "aliceblue";
+            document.getElementById(pageName).style.color = "black";
             
         }
 
@@ -29,6 +29,12 @@ function Detailed_order(props)
         home.addEventListener("click", () =>
         {
             openPage('Order');
+        });
+
+        let defaul = document.getElementById("Variants");
+        defaul.addEventListener("click", () =>
+        {
+            openPage('Variants');
         });
 
         document.getElementById("Order").click();
@@ -59,6 +65,7 @@ function Detailed_order(props)
             <div className = 'rtn-button'></div>
             <div className = "button-holder">
                 <button className="tablink" id = "Order">Order</button>
+                <button className="tablink" id ="Variants">Addresses</button>
             </div>
         
             <div className="tabcontent" id="_Order" >
@@ -66,14 +73,41 @@ function Detailed_order(props)
                     <div className = "detailed-image" />
                     <div className = "detailed">
                         <div className = "details-title">Customer Orders</div>
+
+                        <div className="order_header_div">
+                            <div className="view_order_title">
+                                {props.Order_Title}
+                                <div className="view_order_status"></div>
+                            </div>
+                            <div>{props.Created_At}</div>
+                        </div>
+                        <div>
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Updated At</th>
+                                    </tr>
+                                    <tr>
+                                        <td>{props.firstName}</td>
+                                        <td>{props.lastName}</td>
+                                        <td>{props.updatedAt}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
                         <div className="order_lines_view">
+                            <div className = "view_order_title">Order View</div>
                             <table className="order_table" style = {{left: '', transform: '', marginBottom: ''}}>
                                 <tbody id = "detailed_table">
-                                    
+
                                 </tbody>
                             </table>
                         </div>
                         <div className="order_totals_view">
+                        <div className = "view_order_title">Order Totals</div>
                             <table className="order_totals_table">
                                 <tbody id = "detailed_table_view">
                                 
@@ -82,66 +116,21 @@ function Detailed_order(props)
                         </div>
                           
                     </div>
-                    <div className = "details-right">
-                        <div className="order_header_div">
-                            <div className="view_order_title">
-                                #13551 - Paid
-                                <b style= {{fontSize: '26px'}}>•</b>
-                                <div className="view_order_status"></div>
-                            </div>
-                            <div className="view_order_title_date">{props.Created_At}</div>
-                        </div>
-                        <div className="customer_data_container">
-                            <div className="customer_data_row">
-                                <div className="customer_data_header">First Name</div>
-                                <div className="customer_data_tiles">{props.firstName}</div>
-                            </div>
-                            <div className="customer_data_row">
-                                <div className="customer_data_header">Last Name</div>
-                                <div className="customer_data_tiles">{props.lastName}</div>
-                            </div>
-                            <div className="customer_data_row">
-                                <div className="customer_data_header">Email</div>
-                                <div className="customer_data_tiles">{props.shippingAddress}</div>
-                            </div>
-                            <div className="customer_data_row">
-                                <div className="customer_data_header">Phone number</div>
-                                <div className="customer_data_tiles">{props.PhoneNum}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className = "details-left">
-
-                    <div className="order_data_customer_address_view">
-                        <div className="customer_address_title">Shipping Address</div>
-                        <hr />
-                        <div className="customer_address_header">Address1</div>
-                        <div className="customer_address_tiles">{props.S_Address1}</div>
-                        <div className="customer_address_header">Address2</div>
-                        <div className="customer_address_tiles">{props.S_Address2}</div>
-                        <div className="customer_address_header">City</div>
-                        <div className="customer_address_tiles">{props.S_Address3}</div>
-                        <div className="customer_address_header">Suburb</div>
-                        <div className="customer_address_tiles">{props.S_Address4}</div>
-                        <div className="customer_address_header">Postal Code</div>
-                        <div className="customer_address_tiles">{props.S_Address5}</div>
-                    </div>
-                    <div className="order_data_customer_address_view">
-                        <div className="customer_address_title">Billing Address</div>
-                        <hr />
-                        <div className="customer_address_header">Address1</div>
-                        <div className="customer_address_tiles">{props.B_Address1}</div>
-                        <div className="customer_address_header">Address2</div>
-                        <div className="customer_address_tiles">{props.B_Address2}</div>
-                        <div className="customer_address_header">City</div>
-                        <div className="customer_address_tiles">{props.B_Address3}</div>
-                        <div className="customer_address_header">Suburb</div>
-                        <div className="customer_address_tiles">{props.B_Address4}</div>
-                        <div className="customer_address_header">Postal Code</div>
-                        <div className="customer_address_tiles">{props.B_Address5}</div>
-                    </div>
+                    <div className = "details-right"></div>
+                    <div id = "address" className = "details-left">
 
                     </div>
+                </div>
+            </div>
+            <div className="tabcontent" id="_Variants" >
+                <div className = "details-details">
+                    <div className = "auto-slideshow-container" />
+                    <div className = "detailed">
+                        <div className = "details-title">Addresses</div>
+                        <div className = "variants"></div>
+                    </div>
+                    <div className = "details-right"></div>
+                    <div className = "details-left"></div>
                 </div>
             </div>
         </div>
@@ -156,6 +145,7 @@ Detailed_order.defaultProps =
     Order_Category: 'Category',
     Order_Type: 'Type',
     Order_Vendor: 'Vendor',
-    Order_Price: 'Price'
+    Order_Price: 'Price', 
+    updatedAt: 'Updated'
 }
 export default Detailed_order;

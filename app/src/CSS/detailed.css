@@ -44,10 +44,11 @@
 }
 .button-holder 
 {
-    position: relative;
+    position: absolute;
     width: 100%;
     text-align: center;
     background-color: rgba(238, 243, 248, 1);
+    z-index: 1;
 }
 
 .details 
@@ -60,7 +61,7 @@
     background-color: rgba(61, 61, 61, 0.5);
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
 }    
 .details-details 
 {
@@ -135,7 +136,7 @@
     font-weight: bold;
     text-decoration: underline;
     padding-bottom: 45px;
-    padding-top: 45px;
+    padding-top: 60px;
 }
 .details-activity 
 {
@@ -416,16 +417,15 @@ a:hover {
 }
 
 .view_order_title {
-    top: 4%;
-    left: 3%;
+    left: 50%;
     position: relative;
     width: max-content;
-    padding: 2 10px;
     transition-duration: 0.2s;
     border-radius: 5px;
     font-size: 25px;
     font-weight: lighter;
     margin: 12px;
+    transform: translate(-50%);
 }
 
 .view_order_status {
@@ -474,6 +474,10 @@ a:hover {
     left: 50%;
     transform: translate(-50%);
 }
+.order_data_customer_address_view:first-child
+{
+    margin-top: 30px;
+}
 
 .customer_address_title {
     width: auto;
@@ -497,7 +501,7 @@ a:hover {
 }
 
 .customer_address_tiles {
-    background-color: #c5c4c4;
+    background-color: transparent;
     cursor: pointer;
     padding: 8px 0px 8px 0px;
     width: 92.5%;
@@ -509,7 +513,6 @@ a:hover {
     left: 50%;
     transform: translate(-50%, -0%);
     position: relative;
-    border-left: 2px solid black;
     transition-duration: 0.2s
 }
 
@@ -571,65 +574,57 @@ a:hover {
     left: 50%;
     transform: translate(-48%);
     width: 90%;
-    height: 290px;
-    margin-bottom: 20px;
+    height: auto;
 }
 
 .order_table {
     position: relative;
     text-align: center;
-    width: 100%;
+    width: 91%;
+    left: 49%;
 }
 
 .order_line:nth-child(even) {
     position: relative;
     background-color: transparent;
     padding: 10px;
-    display: flex;
     justify-content: center;
 }
 
 .order_line:nth-child(odd) {
     position: relative;
     padding: 10px;
-    display: flex;
     justify-content: center;
 }
 
 .order_line_image {
-    position: relative;
-    display: inline-block;
     width: 100px;
     height: 45px;
     background-image: url(../media/orders.png);
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
-    border: 1px solid grey;
-    border-radius: 10px;
     max-width: 45px;
 }
 
 .order_line_title {
-    width: 60%;
     font-size: 14px;
-    margin-left: 20px;
     text-align: left;
-    display: inline-block;
 }
 
 .order_line_qty {
-    width: 10%;
     font-size: 14px;
     text-align: center;
-    display: inline-block;
 }
 
 .order_line_price {
-    width: 50%;
     font-size: 14px;
     text-align: right;
-    display: inline-block;
+}
+.order_table p 
+{
+   padding: 0px;
+   margin: 0px; 
 }
 
 /** Order Lines end */
@@ -648,8 +643,9 @@ a:hover {
 .order_totals_table {
     position: relative;
     text-align: center;
-    width: 100%;
+    width: 91%;
     margin-bottom: 0px;
+    left: 49%;
 }
 
 .order_totals_line:nth-child(even) {

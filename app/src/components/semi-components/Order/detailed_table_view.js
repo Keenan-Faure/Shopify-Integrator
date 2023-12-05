@@ -11,12 +11,12 @@ function Detailed_Table_View(props)
 
     return (
         <>
-            <tr className="order_totals_line">
-                <td className="order_totals_headers">
+            <tr>
+                <td >
                     {props.Total_Heading}
                 </td>
-                <td className="order_totals_middle">{props.Total_Middle}</td>
-                <td className="order_totals_value">{props.subTotal}</td>
+                <td>{props.Total_Middle}</td>
+                <td>{props.subTotal}</td>
             </tr>
         </>
     );

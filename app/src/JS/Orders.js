@@ -7,6 +7,7 @@ import Order_details from '../components/semi-components/order-details';
 import Detailed_order from '../components/semi-components/Order/detailed_order';
 import Detailed_Table_View from '../components/semi-components/Order/detailed_table_view';
 import Detailed_table from '../components/semi-components/Order/detailed_table';
+import Detailed_Address from '../components/semi-components/Order/detailed_address';
 import '../CSS/page1.css';
 
 /* Must start with a Caps letter */
@@ -162,7 +163,6 @@ function Orders()
                 pan[i].addEventListener("click", () =>
                 {
                     let id = pan[i].querySelector(".p-d-id").innerHTML;
-                    console.log(id);
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -193,6 +193,14 @@ function Orders()
                                 let _rt = createRoot(div_);
                                 rt.render(<Detailed_Table_View Total_Heading = {_data.order_total}/> )
                                 _rt.render(<Detailed_table Order_Title = {_data.web_code}/> )
+
+                                let address = document.getElementById("address");
+                                console.log(address);
+                                let rt_ = createRoot(address);
+                                rt_.render(_data.customer.addresses.map((el, i) => <Detailed_Address key={`${_data.title}_${i}`}
+                                Address_Name={el.address_type.charAt(0).toUpperCase() + el.address_type.slice(1)} Address1={el.address_1} Address2={el.address_2} 
+                                Address3 ={el.city} Address4={el.suburb} Address5={el.postal_code}
+                                />))
                             }, 0);
                             
                             
@@ -207,27 +215,13 @@ function Orders()
                             rot.render(<Detailed_order key={`${_data.title}_${i}`}
                             Order_firstName={_data.customer.firstName} Order_lastName={_data.customer.lastLame}
                             />)
-                            /* For some reason it wont pick up the element unless it throw it here 
-                            setTimeout(() =>
-                            {
-                                let _div = details.querySelectorAll(".auto-slideshow-container");
-                                for(let i = 0; i < _div.length; i++)
-                                {
-                                    let _root = createRoot(_div[i]);
-                                    if(i == 0)
-                                    {
-                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> ))
-                                    }
-                                    else 
-                                    {
-                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> ))
-                                    }
-                                }
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
-                            }, 0);
-                            */
+                            let address = document.getElementById("address");
+                            console.log(address);
+                            let rt_ = createRoot(address);
+                            rt_.render(_data.customer.addresses.map((el, i) => <Detailed_Address key={`${_data.title}_${i}`}
+                            Address_Name={el.address_type} Address1={el.address_1} Address2={el.address_2} Address3 ={el.city}
+                            Address4={el.suburb} Address5={el.postal_code}
+                            />))
                         }
                     })
                     .fail( function(xhr) 

@@ -79,9 +79,9 @@ function Detailed_product(props)
         
         <div id = "detailss" style = {{display: props.Display}}>
             <div className = 'rtn-button'></div>
-            <div className = "button-holder">
-                <button className="tablink" id = "Product">Product</button>
-                <button className="tablink" id ="Variants">Variants</button>
+            <div className = "button-holder" style = {{position: 'absolute', width: '71%', zIndex:'1', left:'29%'}}>
+                <button className="tablink" id = "Product" style ={{left: '-14%', width:'95px'}}>Product</button>
+                <button className="tablink" id ="Variants" style ={{left: '-14%', width:'95px'}}>Variants</button>
             </div>
         
             <div className="tabcontent" id="_Product" >
