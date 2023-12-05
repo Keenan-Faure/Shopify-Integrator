@@ -181,7 +181,7 @@ function Orders()
 
                             let rot = createRoot(details);
                             rot.render(<Detailed_order key={`${_data.title}_${i}`}
-                            firstName={_data.customer.first_name} lastName={_data.customer.last_name}
+                            firstName={_data.customer.first_name} lastName={_data.customer.last_name} Order_Title={_data.web_code} 
                             />)
  
                             /* For some reason it wont pick up the element unless it throw it here */
@@ -191,11 +191,14 @@ function Orders()
                                 let div_ = details.querySelector("#detailed_table");
                                 let rt = createRoot(_div);
                                 let _rt = createRoot(div_);
-                                rt.render(<Detailed_Table_View Total_Heading = {_data.order_total}/> )
-                                _rt.render(<Detailed_table Order_Title = {_data.web_code}/> )
+                                rt.render(<Detailed_Table_View key={`${_data.title}_${i}`} Total_Heading={_data.discount_total} 
+                                Total_Middle ={_data.tax_total} subTotal={_data.order_total}/>)
+
+                                _rt.render(_data.line_items.map((el, i) => <Detailed_table  key={`${_data.title}_${i}`}Order_SKU={el.sku} 
+                                Quantity={el.qty} Barcode={el.barcode} Order_Price={el.price}
+                                />))
 
                                 let address = document.getElementById("address");
-                                console.log(address);
                                 let rt_ = createRoot(address);
                                 rt_.render(_data.customer.addresses.map((el, i) => <Detailed_Address key={`${_data.title}_${i}`}
                                 Address_Name={el.address_type.charAt(0).toUpperCase() + el.address_type.slice(1)} Address1={el.address_1} Address2={el.address_2} 
@@ -208,19 +211,22 @@ function Orders()
                         else 
                         //create new div
                         {
-                            let details = document.createElement('details');
-                            orders.appendChild(details);
-                            let rot = createRoot(details);
+                            let _div = details.querySelector("#detailed_table_view");
+                            let div_ = details.querySelector("#detailed_table");
+                            let rt = createRoot(_div);
+                            let _rt = createRoot(div_);
+                            rt.render(<Detailed_Table_View key={`${_data.title}_${i}`} Total_Heading={_data.discount_total} 
+                            Total_Middle ={_data.tax_total} subTotal={_data.order_total}/>)
 
-                            rot.render(<Detailed_order key={`${_data.title}_${i}`}
-                            Order_firstName={_data.customer.firstName} Order_lastName={_data.customer.lastLame}
-                            />)
+                            _rt.render(_data.line_items.map((el, i) => <Detailed_table  key={`${_data.title}_${i}`}Order_SKU={el.sku} 
+                            Quantity={el.qty} Barcode={el.barcode} Order_Price={el.price}
+                            />))
+
                             let address = document.getElementById("address");
-                            console.log(address);
                             let rt_ = createRoot(address);
                             rt_.render(_data.customer.addresses.map((el, i) => <Detailed_Address key={`${_data.title}_${i}`}
-                            Address_Name={el.address_type} Address1={el.address_1} Address2={el.address_2} Address3 ={el.city}
-                            Address4={el.suburb} Address5={el.postal_code}
+                            Address_Name={el.address_type.charAt(0).toUpperCase() + el.address_type.slice(1)} Address1={el.address_1} Address2={el.address_2} 
+                            Address3 ={el.city} Address4={el.suburb} Address5={el.postal_code}
                             />))
                         }
                     })

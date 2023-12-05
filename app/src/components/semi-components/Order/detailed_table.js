@@ -17,8 +17,9 @@ function Detailed_Table(props)
                     <a>{props.Order_Title}</a>
                     <p><b>{props.Order_SKU}</b></p>
                 </td>
-                <td className="order_line_qty">{props.Quantity}</td>
-                <td className="order_line_price">{props.Order_Price}</td>
+                <td className="order_line_qty">x{props.Quantity}</td>
+                <td className="order_line_qty">#{props.Barcode}</td>
+                <td className="order_line_price">R{props.Order_Price}</td>
             </tr>
         </>
     );
