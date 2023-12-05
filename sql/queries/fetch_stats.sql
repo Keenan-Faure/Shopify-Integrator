@@ -18,9 +18,10 @@ FROM fetch_stats
 WHERE id = $1;
 
 -- name: GetFetchStats :many
-SELECT 
-    amount_of_products
+SELECT
+	SUM(amount_of_products) AS "amount",
+	to_char(created_at, 'YYYY-MM-DD HH24') AS "hour"
 FROM fetch_stats
-WHERE 
-    "created_at" BETWEEN NOW() - INTERVAL '24 HOURS' AND NOW()
-ORDER BY "created_at" DESC;
+WHERE created_at > current_date at time zone 'UTC' - interval '1 day'
+GROUP BY "hour"
+ORDER BY "hour";

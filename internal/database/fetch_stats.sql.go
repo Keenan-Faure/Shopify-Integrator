@@ -63,27 +63,33 @@ func (q *Queries) GetFetchStat(ctx context.Context, id uuid.UUID) (FetchStat, er
 }
 
 const getFetchStats = `-- name: GetFetchStats :many
-SELECT 
-    amount_of_products
+SELECT
+	SUM(amount_of_products) AS "amount",
+	to_char(created_at, 'YYYY-MM-DD HH24') AS "hour"
 FROM fetch_stats
-WHERE 
-    "created_at" BETWEEN NOW() - INTERVAL '24 HOURS' AND NOW()
-ORDER BY "created_at" DESC
+WHERE created_at > current_date at time zone 'UTC' - interval '1 day'
+GROUP BY "hour"
+ORDER BY "hour"
 `
 
-func (q *Queries) GetFetchStats(ctx context.Context) ([]int32, error) {
+type GetFetchStatsRow struct {
+	Amount int64  `json:"amount"`
+	Hour   string `json:"hour"`
+}
+
+func (q *Queries) GetFetchStats(ctx context.Context) ([]GetFetchStatsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getFetchStats)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int32
+	var items []GetFetchStatsRow
 	for rows.Next() {
-		var amount_of_products int32
-		if err := rows.Scan(&amount_of_products); err != nil {
+		var i GetFetchStatsRow
+		if err := rows.Scan(&i.Amount, &i.Hour); err != nil {
 			return nil, err
 		}
-		items = append(items, amount_of_products)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

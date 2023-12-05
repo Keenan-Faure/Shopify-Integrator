@@ -13,6 +13,18 @@ import (
 	"github.com/google/uuid"
 )
 
+// Parses the data and fills in the missing hourly values
+// with a 0 value if it does not exist.
+func ParseFetchStats([]database.GetFetchStatsRow) {
+
+}
+
+// Parses the data and fills in the missing daily values
+// with a 0 value if it does not exist.
+func ParseOrderStats([]database.GetFetchStatsRow) {
+
+}
+
 // Checks if the VID exists internally.
 // Returns an empty string if it doesn't
 // and the VID if it does
