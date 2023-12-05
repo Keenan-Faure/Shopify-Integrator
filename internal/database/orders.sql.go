@@ -214,6 +214,44 @@ func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode sql.NullString)
 	return i, err
 }
 
+const getOrderStats = `-- name: GetOrderStats :many
+SELECT
+	COUNT(id) AS "count",
+	to_char(created_at, 'YYYY-MM-DD HH24') AS "day"
+FROM orders
+WHERE created_at > current_date at time zone 'UTC' - interval '7 day'
+GROUP BY "day"
+ORDER BY "day" DESC
+`
+
+type GetOrderStatsRow struct {
+	Count int64  `json:"count"`
+	Day   string `json:"day"`
+}
+
+func (q *Queries) GetOrderStats(ctx context.Context) ([]GetOrderStatsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOrderStats)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetOrderStatsRow
+	for rows.Next() {
+		var i GetOrderStatsRow
+		if err := rows.Scan(&i.Count, &i.Day); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getOrders = `-- name: GetOrders :many
 SELECT
     id,
@@ -385,44 +423,6 @@ func (q *Queries) GetOrdersSearchWebCode(ctx context.Context, similarToEscape st
 			&i.DiscountTotal,
 			&i.UpdatedAt,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const orderStats = `-- name: OrderStats :many
-SELECT
-	COUNT(id) AS "count",
-	to_char(created_at, 'YYYY-MM-DD HH24') AS "hour"
-FROM orders
-WHERE created_at > current_date at time zone 'UTC' - interval '7 day'
-GROUP BY "hour"
-ORDER BY "hour"
-`
-
-type OrderStatsRow struct {
-	Count int64  `json:"count"`
-	Hour  string `json:"hour"`
-}
-
-func (q *Queries) OrderStats(ctx context.Context) ([]OrderStatsRow, error) {
-	rows, err := q.db.QueryContext(ctx, orderStats)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []OrderStatsRow
-	for rows.Next() {
-		var i OrderStatsRow
-		if err := rows.Scan(&i.Count, &i.Hour); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

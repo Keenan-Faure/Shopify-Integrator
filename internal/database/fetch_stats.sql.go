@@ -69,7 +69,7 @@ SELECT
 FROM fetch_stats
 WHERE created_at > current_date at time zone 'UTC' - interval '1 day'
 GROUP BY "hour"
-ORDER BY "hour"
+ORDER BY "hour" DESC
 `
 
 type GetFetchStatsRow struct {

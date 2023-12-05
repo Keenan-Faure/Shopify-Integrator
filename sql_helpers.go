@@ -15,14 +15,18 @@ import (
 
 // Parses the data and fills in the missing hourly values
 // with a 0 value if it does not exist.
-func ParseFetchStats([]database.GetFetchStatsRow) {
+func ParseFetchStats(data []database.GetFetchStatsRow) {
+	// get the last record (24 hrs back) of time using the first record
+	// which should be the latest
 
+	// TODO should I return the missing values
 }
 
 // Parses the data and fills in the missing daily values
 // with a 0 value if it does not exist.
-func ParseOrderStats([]database.GetFetchStatsRow) {
-
+func ParseOrderStats(data []database.GetOrderStatsRow) {
+	// TODO should I return the missing values
+	// if it has 2023-12-05 07, but skips 09 should I make it
 }
 
 // Checks if the VID exists internally.

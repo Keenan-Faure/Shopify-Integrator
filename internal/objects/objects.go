@@ -6,6 +6,17 @@ import (
 	"github.com/google/uuid"
 )
 
+// invisible endpoints
+type FetchAmountResponse []struct {
+	Amount int    `json:"amount"`
+	Hour   string `json:"hour"`
+}
+
+type OrderAmountResponse []struct {
+	Count int    `json:"count"`
+	Day   string `json:"day"`
+}
+
 type RequestWebhookURL struct {
 	ForwardingURL string `json:"forwarding_url"`
 }
