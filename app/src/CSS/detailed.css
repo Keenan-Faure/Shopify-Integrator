@@ -406,6 +406,16 @@ a:hover {
     background-color: rgba(0, 0, 0, 0.6);
     position: absolute;
 }
+.confirm-line 
+{
+    position: absolute;
+    display: none;
+    width: 100%;
+    height: 42px;
+    bottom: 0%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
 
 /** End Background properties */
 

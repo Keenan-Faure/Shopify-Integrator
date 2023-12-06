@@ -73,6 +73,33 @@ function Detailed_product(props)
             }, 500);
         });
 
+        /* Edit Feature */
+        let edit = document.getElementById("Edit");
+        let confirm = document.querySelector(".confirm-line");
+        edit.addEventListener("click", () =>
+        {
+            let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
+            let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.getElementById("price");
+            confirm.style.display = "block";
+            for(let i = 0; i< td_list.length; i++)
+            {
+                td_list[i].contentEditable = "true";
+            }
+            description.contentEditable = "true"; variant_updateDate.contentEditable = "true"; price.contentEditable = "true";
+
+        });
+        confirm.addEventListener("click", () =>
+        {
+            let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
+            let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.getElementById("price");
+            confirm.style.display = "none";
+            for(let i = 0; i< td_list.length; i++)
+            {
+                td_list[i].contentEditable = "false";
+            }
+            description.contentEditable = "false"; variant_updateDate.contentEditable = "false"; price.contentEditable = "false";
+        })
+
     }, []);
 
     return (
@@ -82,6 +109,7 @@ function Detailed_product(props)
             <div className = "button-holder" style = {{position: 'absolute', width: '71%', zIndex:'1', left:'29%'}}>
                 <button className="tablink" id = "Product" style ={{left: '-14%', width:'95px'}}>Product</button>
                 <button className="tablink" id ="Variants" style ={{left: '-14%', width:'95px'}}>Variants</button>
+                <button className="tablink" id = "Edit" style ={{left: '-14%', width:'95px'}}>Edit</button>
             </div>
         
             <div className="tabcontent" id="_Product" >
@@ -108,9 +136,8 @@ function Detailed_product(props)
                             </tbody>
                         </table> 
                         <div className = "details-description">Product Description</div>
-                        <div className = "description">
-                            {props.Product_Description}
-                        </div>
+                        <div className = "description" id = "description" style = {{resize:'none'}} rows = "5" cols = "80">{props.Product_Description}</div>
+
                         <div className = "details-description">Product Warehousing</div> 
                         <div className = "details-warehousing"></div>  
                     </div>
@@ -129,6 +156,9 @@ function Detailed_product(props)
                     <div className = "details-right"></div>
                     <div className = "details-left"></div>
                 </div>
+            </div>
+            <div className = "confirm-line">
+                <button className="tablink" id = "confirm" style ={{left: '50%', transform: 'translate(-50%)'}}>Save</button>
             </div>
         </div>
     );

@@ -295,11 +295,11 @@ function Add_Product()
                                     </tbody>
                                 </table> 
                                 <div className = "details-description">Product Description</div>
-                                    <textarea type = '_text'  style = {{resize:'none'}} placeholder = "Product Description" name = "product_description" 
+                                    <textarea type = '_text' style = {{resize:'none'}} placeholder = "Product Description" name = "product_description" 
                                     value = {inputs.product_description || ""} onChange = {handleChange} rows = "5" cols = "80"></textarea>
                                 <div className = "details-description">Product Warehousing</div> 
                                 <div className = "details-warehousing">
-                                    <textarea type = '_text'  style = {{resize:'none'}} placeholder = "Product Warehousing" name = "product_warehousing" 
+                                    <textarea type = '_text' style = {{resize:'none'}} placeholder = "Product Warehousing" name = "product_warehousing" 
                                     value = {inputs.product_warehousing || ""} onChange = {handleChange} rows = "5" cols = "80"></textarea>
                                 </div>  
                             </div>
