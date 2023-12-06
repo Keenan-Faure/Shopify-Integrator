@@ -19,55 +19,110 @@ function Add_Customer()
         event.preventDefault();
         console.log(inputs);
 
-        let Object = 
+        let Object = {};
+        let check = document.getElementById("check");
+        if(check.checked)
         {
-            first_name: inputs.customer_firstname,
-            last_name: inputs.customer_lastname,
-            email: inputs.customer_email,
-            phone: inputs.customer_phone,
-            address: [
-                {
-                    address_type: "default",
-                    first_name: inputs.customer_firstname,
-                    last_name: inputs.customer_lastname,
-                    address1: inputs.shipping_address_1,
-                    address2: inputs.shipping_address_2,
-                    suburb: inputs.shipping_address_3,
-                    city: inputs.shipping_address_4,
-                    province: inputs.shipping_address_5,
-                    postal_code: inputs.shipping_address_6,
-                    company: inputs.shipping_address_7
-                },
-                {
-                    address_type: "shipping",
-                    first_name: inputs.customer_firstname,
-                    last_name: inputs.customer_lastname,
-                    address1: inputs.default_address_1,
-                    address2: inputs.default_address_2,
-                    suburb: inputs.default_address_3,
-                    city: inputs.default_address_4,
-                    province: inputs.default_address_5,
-                    postal_code: inputs.default_address_6,
-                    company: inputs.default_address_7
-                },
-                {
-                    address_type: "billing",
-                    first_name: inputs.customer_firstname,
-                    last_name: inputs.customer_lastname,
-                    address1: inputs.billing_address_1,
-                    address2: inputs.billing_address_2,
-                    suburb: inputs.billing_address_3,
-                    city: inputs.billing_address_4,
-                    province: inputs.billing_address_5,
-                    postal_code: inputs.billing_address_6,
-                    company: inputs.billing_address_7
-                }
-            ]
+            Object = 
+            {
+                first_name: inputs.customer_firstname,
+                last_name: inputs.customer_lastname,
+                email: inputs.customer_email,
+                phone: inputs.customer_phone,
+                address: [
+                    {
+                        address_type: "default",
+                        first_name: inputs.customer_firstname,
+                        last_name: inputs.customer_lastname,
+                        address1: inputs.default_address_1,
+                        address2: inputs.default_address_2,
+                        suburb: inputs.default_address_3,
+                        city: inputs.default_address_4,
+                        province: inputs.default_address_5,
+                        postal_code: inputs.default_address_6,
+                        company: inputs.default_address_7
+                    },
+                    {
+                        address_type: "shipping",
+                        first_name: inputs.customer_firstname,
+                        last_name: inputs.customer_lastname,
+                        address1: inputs.default_address_1,
+                        address2: inputs.default_address_2,
+                        suburb: inputs.default_address_3,
+                        city: inputs.default_address_4,
+                        province: inputs.default_address_5,
+                        postal_code: inputs.default_address_6,
+                        company: inputs.default_address_7
+                    },
+                    {
+                        address_type: "billing",
+                        first_name: inputs.customer_firstname,
+                        last_name: inputs.customer_lastname,
+                        address1: inputs.default_address_1,
+                        address2: inputs.default_address_2,
+                        suburb: inputs.default_address_3,
+                        city: inputs.default_address_4,
+                        province: inputs.default_address_5,
+                        postal_code: inputs.default_address_6,
+                        company: inputs.default_address_7
+                    }
+                ]
+            }
         }
+        else 
+        {
+            Object = 
+            {
+                first_name: inputs.customer_firstname,
+                last_name: inputs.customer_lastname,
+                email: inputs.customer_email,
+                phone: inputs.customer_phone,
+                address: [
+                    {
+                        address_type: "default",
+                        first_name: inputs.customer_firstname,
+                        last_name: inputs.customer_lastname,
+                        address1: inputs.shipping_address_1,
+                        address2: inputs.shipping_address_2,
+                        suburb: inputs.shipping_address_3,
+                        city: inputs.shipping_address_4,
+                        province: inputs.shipping_address_5,
+                        postal_code: inputs.shipping_address_6,
+                        company: inputs.shipping_address_7
+                    },
+                    {
+                        address_type: "shipping",
+                        first_name: inputs.customer_firstname,
+                        last_name: inputs.customer_lastname,
+                        address1: inputs.default_address_1,
+                        address2: inputs.default_address_2,
+                        suburb: inputs.default_address_3,
+                        city: inputs.default_address_4,
+                        province: inputs.default_address_5,
+                        postal_code: inputs.default_address_6,
+                        company: inputs.default_address_7
+                    },
+                    {
+                        address_type: "billing",
+                        first_name: inputs.customer_firstname,
+                        last_name: inputs.customer_lastname,
+                        address1: inputs.billing_address_1,
+                        address2: inputs.billing_address_2,
+                        suburb: inputs.billing_address_3,
+                        city: inputs.billing_address_4,
+                        province: inputs.billing_address_5,
+                        postal_code: inputs.billing_address_6,
+                        company: inputs.billing_address_7
+                    }
+                ]
+            }
+        }
+        console.log(Object);
 
+        
         const api_key = localStorage.getItem('api_key');
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-        $.post("http://localhost:8080/api/products", JSON.stringify(Object),[], 'json')
+        $.post("http://localhost:8080/api/customers", JSON.stringify(Object),[], 'json')
         .done(function( _data) 
         {
             console.log(_data);
@@ -76,6 +131,8 @@ function Add_Customer()
         {
             alert(xhr.responseText);
         });
+
+        
     }
 
     useEffect(() =>
@@ -199,6 +256,21 @@ function Add_Customer()
             window.location.href = "/customers";
         });
 
+        let check = document.getElementById("check");
+        check.addEventListener("change", () =>
+        {
+            if(check.checked)
+            {
+                document.getElementById("shipping").style.display = "none";
+                document.getElementById("billing").style.display = "none";
+            }
+            else 
+            {
+                document.getElementById("shipping").style.display = "";
+                document.getElementById("billing").style.display = "";
+            }
+        });
+
 
     }, []);
 
@@ -219,7 +291,7 @@ function Add_Customer()
                     <div className = 'rtn-button'></div>
                     <div className = "button-holder">
                         <button type = "button" className="tablink" id = "Customer">Customer</button>
-                        <button type = "button" className="tablink" id ="Variants">Shipping</button>
+                        <button type = "button" className="tablink" id ="Variants">Address</button>
                     </div>
                 
                     <div className="tabcontent" id="_Customer" >
@@ -262,7 +334,67 @@ function Add_Customer()
                             <div className = "detailed">
                                 <div className = "details-title">Address Details</div>
                                 <div className = "variants" id="_variants"> 
-                                <table>
+                                <input type="checkbox" id="check" name="vehicle1" value="Bike" />
+                                <label style = {{position: 'relative', top: '-3px'}}htmlFor ="check">Use same Address for Shipping/Billing?</label><br></br>
+                                
+                                <table id = "default">
+                                    <tbody>
+                                        <tr>
+                                            <th>Default Address 1</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 1" name = "default_address_1" 
+                                            value = {inputs.default_address_1 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                        <th>Default Address 2</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 2" name = "default_address_2" 
+                                            value = {inputs.default_address_2 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                        <th>Suburb</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 3" name = "default_address_3" 
+                                            value = {inputs.default_address_3 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                        <th>City</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 4" name = "default_address_4" 
+                                            value = {inputs.default_address_4 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                        <th>Province</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 5" name = "default_address_5" 
+                                            value = {inputs.default_address_5 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Postal Code</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 6" name = "default_address_6" 
+                                            value = {inputs.default_address_6 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Company</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 7" name = "default_address_7" 
+                                            value = {inputs.default_address_7 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <table id = "shipping">
                                     <tbody>
                                         <tr>
                                             <th>Shipping Address 1</th>
@@ -318,66 +450,9 @@ function Add_Customer()
                                         </tr>
                                         
                                     </tbody>
-                                </table> 
+                                </table>  
 
-                                <table>
-                                    <tbody>
-                                        <tr>
-                                            <th>Default Address 1</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 1" name = "default_address_1" 
-                                            value = {inputs.default_address_1 || ""} onChange = {handleChange} required></input></td>
-                                        </tr>
-
-                                        <tr>
-                                        <th>Default Address 2</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 2" name = "default_address_2" 
-                                            value = {inputs.default_address_2 || ""} onChange = {handleChange} required></input></td>
-                                        </tr>
-
-                                        <tr>
-                                        <th>Suburb</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 3" name = "default_address_3" 
-                                            value = {inputs.default_address_3 || ""} onChange = {handleChange} required></input></td>
-                                        </tr>
-
-                                        <tr>
-                                        <th>City</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 4" name = "default_address_4" 
-                                            value = {inputs.default_address_4 || ""} onChange = {handleChange} required></input></td>
-                                        </tr>
-                                        <tr>
-                                        <th>Province</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 5" name = "default_address_5" 
-                                            value = {inputs.default_address_5 || ""} onChange = {handleChange} required></input></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Postal Code</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 6" name = "default_address_6" 
-                                            value = {inputs.default_address_6 || ""} onChange = {handleChange} required></input></td>
-                                        </tr>
-                                        <tr>
-                                            <th>Company</th>
-                                        </tr>
-                                        <tr>
-                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 7" name = "default_address_7" 
-                                            value = {inputs.default_address_7 || ""} onChange = {handleChange} required></input></td>
-                                        </tr>
-                                    </tbody>
-                                </table> 
-
-                                <table>
+                                <table id = "billing">
                                     <tbody>
                                         <tr>
                                             <th>Billing Address 1</th>

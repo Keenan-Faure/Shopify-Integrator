@@ -53,9 +53,6 @@ const Layout = () => {
 
             <div className = "dropdown">
                 <button onClick = {navigateToCustomers} className = "dropbtn">Customers</button>
-                <div className = "dropdown-content">
-                    <Link to="/addCustomer">Add Customer</Link>
-                </div>
             </div>
 
             <div className = "dropdown">

@@ -82,7 +82,6 @@ function Navigation_Bar(props)
                         <Route path = "importProducts" element = {<Import_Product />}></Route>
                         <Route path = "exportProducts" element = {<Export_Product />}></Route>
                         <Route path = "addProduct" element = {<Add_Product />}></Route>
-                        <Route path = "addCustomer" element = {<Add_Customer />}></Route>
 
 
                         <Route path = "*" element = {<NoPage />}></Route>

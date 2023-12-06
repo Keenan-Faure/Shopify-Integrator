@@ -182,19 +182,6 @@ function Customers()
                             rot.render( <Detailed_customer key={`${_data.title}_${i}`} Customer_ID={_data.id}
                             Customer_firstName={_data.first_name} Customer_lastName={_data.last_name}
                             />)
-                
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                let _div = details.querySelector("#_variants");
-                                let rt = createRoot(_div);
-                                rt.render( _data.shipping_address.map((el, i) => <Detailed_shipping key={`${el.title}_${i}`} 
-                                    Shipping1={el.address_1} Shipping2={el.address_2} Shipping3={el.city} Shipping4={el.postal_code} Shipping5={el.province}
-                                        Customer_firstName={el.first_name} Customer_lastName={el.last_name} Customer_company={el.company}
-                                />))    
-                            }, 0);
-                            
-                            
                         }
                         else 
                         //create new div
@@ -205,17 +192,6 @@ function Customers()
                             rot.render( <Detailed_customer key={`${_data.title}_${i}`} Customer_ID={_data.id}
                             Customer_firstName={_data.first_name} Customer_lastName={_data.last_name}
                             />)
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                let _div = details.querySelector("#_variants");
-                                let rt = createRoot(_div);
-                                rt.render( _data.shipping_address.map((el, i) => <Detailed_shipping key={`${el.title}_${i}`} 
-                                    Shipping1={el.address_1} Shipping2={el.address_2} Shipping3={el.city} Shipping4={el.postal_code} Shipping5={el.province}
-                                        Customer_firstName={el.first_name} Customer_lastName={el.last_name} Customer_company={el.company}
-                                />)) 
-                            }, 0);
-                            
                         }
                     })
                     .fail( function(xhr) 

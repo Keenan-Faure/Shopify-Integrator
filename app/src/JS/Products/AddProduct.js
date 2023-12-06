@@ -33,8 +33,9 @@ function Add_Product()
                 {
                     sku: inputs.variant_sku, 
                     option1: inputs.variant_option1, 
-                    option1: inputs.variant_option2, 
-                    option1: inputs.variant_option3, 
+                    option2: inputs.variant_option2, 
+                    option3: inputs.variant_option3, 
+                    barcode: inputs.variant_barcode,
                     variant_price_tiers: [
                         {
                             name: inputs.price_tier_name,
@@ -61,6 +62,7 @@ function Add_Product()
         console.log(Object);
 
 
+        /*
         const api_key = localStorage.getItem('api_key');
         
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -73,6 +75,7 @@ function Add_Product()
         {
             alert(xhr.responseText);
         });
+        */
         
         
     }
