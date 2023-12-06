@@ -46,6 +46,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
 	}
 	order, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
 		ID:            uuid.New(),
+		Status:        order_body.FinancialStatus,
 		Notes:         utils.ConvertStringToSQL(""),
 		WebCode:       utils.ConvertStringToSQL(order_body.Name),
 		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),

@@ -392,6 +392,7 @@ func CompileOrderData(
 		Order := objects.Order{
 			ID:                order.ID,
 			Notes:             order.Notes.String,
+			Status:            order.Status,
 			WebCode:           order.WebCode.String,
 			TaxTotal:          order.TaxTotal.String,
 			OrderTotal:        order.OrderTotal.String,
@@ -458,6 +459,7 @@ func CompileOrderData(
 	Order := objects.Order{
 		ID:                order_id,
 		Notes:             order.Notes.String,
+		Status:            order.Status,
 		WebCode:           order.WebCode.String,
 		TaxTotal:          order.TaxTotal.String,
 		OrderTotal:        order.OrderTotal.String,

@@ -475,6 +475,7 @@ type RequestBodyValidateToken struct {
 // object_converter.go
 type SearchOrder struct {
 	Notes         string    `json:"notes"`
+	Status        string    `json:"status"`
 	WebCode       string    `json:"web_code"`
 	TaxTotal      string    `json:"tax_total"`
 	OrderTotal    string    `json:"order_total"`
@@ -485,6 +486,7 @@ type SearchOrder struct {
 type Order struct {
 	ID                uuid.UUID     `json:"id"`
 	Notes             string        `json:"notes"`
+	Status            string        `json:"status"`
 	WebCode           string        `json:"web_code"`
 	TaxTotal          string        `json:"tax_total"`
 	OrderTotal        string        `json:"order_total"`
