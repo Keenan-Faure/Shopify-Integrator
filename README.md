@@ -11,9 +11,10 @@ Pushes and pulls data from Shopify with some additional features.
    5. Installing Docker
    6. Creating Ngrok account and authtoken
 3. Configuring custom [ngrok](https://ngrok.com/) URL for orders
-4. How to run the project
-5. List of features
-6. What is next (inc)
+4. How to run the application
+5. How to run a fresh install of the application
+6. List of features
+7. What is next (inc)
 
 ## Description of project
 
@@ -81,7 +82,7 @@ It is required to have a valid docker installation. Please see a guide on how to
 
 ### Creating Ngrok account and authtoken
 
-To use ngrok, an account needs to be created on their [website](https://dashboard.ngrok.com). You can either link you github account or create a new one.
+To use ngrok, an account needs to be created on their [website](https://dashboard.ngrok.com). You can either link you github account or create a new account.
 
 After successfully creating an account, an `authtoken` needs to be retrieved and saved into the ngrok config file located in
 
@@ -106,7 +107,13 @@ you can just retrieve it in the dashboard of the application.
 To run the application simply open the (cloned) local version of the application in your favorite command line interface, then run:
 
 ```bash
-./scripts/run.sh
+./scripts/install.sh
+```
+
+## How to run a fresh install of the application
+
+```bash
+./scripts/reset.sh
 ```
 
 ## List of features
@@ -114,13 +121,16 @@ To run the application simply open the (cloned) local version of the application
 A friendly list of features currently supported and available:
 
 - Adding, removing, updating, and viewing products from the application.
-- Adding, updating, and viewing order and customer data.
-- Adding, updating, and viewing of customer data.
+- Adding, updating, and viewing order data. Note that this is only via the API.
+- Viewing of customer data.
 - Import/export function available for products.
-- Filter search for products, orders and customers.
+- Filter & search features for products, orders and customers.
 - Automatic customer creation from orders.
-- RESTful API endpoint and documentation.
+- RESTful API (JSON) endpoint and documentation.
 - Workers that automatically fetch products from Shopify at a set interval to keep constant syncronization of product data.
-- Adjustable settings via the API or on the app.
+- Adjustable settings via the API or on the app front-end.
+- Neat and easy to follow front-end design using Popular HTML Framework React.
+- Dockerized for portibility - _If it works on your PC, then we'll ship your PC_.
+- Queue feature (coming soon) with support to view and retry queue items.
 
 [def]: https://github.com/keenan-faure/learn-cicd-starter/actions/workflows/ci.yml/badge.svg
