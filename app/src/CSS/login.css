@@ -331,7 +331,7 @@ output .span--hidden
     transition-duration: 0.4s;
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     position: relative;
-    top: 1%;
+    top: 6%;
     left: 50%;
     transform: translate(-60%, -2%);
     transition-duration: 0.4s;

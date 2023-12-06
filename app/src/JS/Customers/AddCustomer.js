@@ -19,8 +19,55 @@ function Add_Customer()
         event.preventDefault();
         console.log(inputs);
 
-        /*
-        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
+        let Object = 
+        {
+            first_name: inputs.customer_firstname,
+            last_name: inputs.customer_lastname,
+            email: inputs.customer_email,
+            phone: inputs.customer_phone,
+            address: [
+                {
+                    address_type: "default",
+                    first_name: inputs.customer_firstname,
+                    last_name: inputs.customer_lastname,
+                    address1: inputs.shipping_address_1,
+                    address2: inputs.shipping_address_2,
+                    suburb: inputs.shipping_address_3,
+                    city: inputs.shipping_address_4,
+                    province: inputs.shipping_address_5,
+                    postal_code: inputs.shipping_address_6,
+                    company: inputs.shipping_address_7
+                },
+                {
+                    address_type: "shipping",
+                    first_name: inputs.customer_firstname,
+                    last_name: inputs.customer_lastname,
+                    address1: inputs.default_address_1,
+                    address2: inputs.default_address_2,
+                    suburb: inputs.default_address_3,
+                    city: inputs.default_address_4,
+                    province: inputs.default_address_5,
+                    postal_code: inputs.default_address_6,
+                    company: inputs.default_address_7
+                },
+                {
+                    address_type: "billing",
+                    first_name: inputs.customer_firstname,
+                    last_name: inputs.customer_lastname,
+                    address1: inputs.billing_address_1,
+                    address2: inputs.billing_address_2,
+                    suburb: inputs.billing_address_3,
+                    city: inputs.billing_address_4,
+                    province: inputs.billing_address_5,
+                    postal_code: inputs.billing_address_6,
+                    company: inputs.billing_address_7
+                }
+            ]
+        }
+
+        const api_key = localStorage.getItem('api_key');
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+        $.post("http://localhost:8080/api/products", JSON.stringify(Object),[], 'json')
         .done(function( _data) 
         {
             console.log(_data);
@@ -29,7 +76,6 @@ function Add_Customer()
         {
             alert(xhr.responseText);
         });
-        */
     }
 
     useEffect(() =>
@@ -168,7 +214,7 @@ function Add_Customer()
                     </div>
                 </div>
 
-                <form className = 'modal-content' style ={{opacity: '1'}} method = 'post' onSubmit={(event) => AddCustomer(event)} autoComplete='off' id = 'form1' encType="multipart/form-data">
+                <form className = 'modal-content' style ={{opacity: '1'}} method = 'post' onSubmit={(event) => AddCustomer(event)} autoComplete='off' id = 'form1' encType="multipart/form-data" noValidate>
                 <div id = "detailss">
                     <div className = 'rtn-button'></div>
                     <div className = "button-holder">
@@ -193,13 +239,13 @@ function Add_Customer()
                                             <th>Customer Phone</th>
                                         </tr>
                                         <tr>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder = "Customer Email" name = "customer_email" 
+                                            <td><input type = 'email' style = {{width: '100%', borderBottom: 'none'}} placeholder = "Customer Email" name = "customer_email" 
                                             value = {inputs.customer_email || ""} onChange = {handleChange} required></input></td>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder = "Customer First name" name = "customer_firstname" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder = "Customer First name" name = "customer_firstname" 
                                             value = {inputs.customer_firstname || ""} onChange = {handleChange} required></input></td>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder = "Customer Last name" name = "customer_lastname" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder = "Customer Last name" name = "customer_lastname" 
                                             value = {inputs.customer_lastname || ""} onChange = {handleChange} required></input></td>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder = "Customer Phone" name = "customer_phone" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder = "Customer Phone" name = "customer_phone" 
                                             value = {inputs.customer_phone || ""} onChange = {handleChange} required></input></td>
                                         </tr>
                                     </tbody>
@@ -214,7 +260,7 @@ function Add_Customer()
                         <div className = "details-details">
                         <div className = "detailed-image" />
                             <div className = "detailed">
-                                <div className = "details-title">Shipping Details</div>
+                                <div className = "details-title">Address Details</div>
                                 <div className = "variants" id="_variants"> 
                                 <table>
                                     <tbody>
@@ -222,7 +268,7 @@ function Add_Customer()
                                             <th>Shipping Address 1</th>
                                         </tr>
                                         <tr>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder =  "Shipping Address line 1" name = "shipping_address_1" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Shipping Address line 1" name = "shipping_address_1" 
                                             value = {inputs.shipping_address_1 || ""} onChange = {handleChange} required></input></td>
                                         </tr>
 
@@ -230,32 +276,162 @@ function Add_Customer()
                                             <th>Shipping Address 2</th>
                                         </tr>
                                         <tr>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder =  "Shipping Address line 2" name = "shipping_address_2" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Shipping Address line 2" name = "shipping_address_2" 
                                             value = {inputs.shipping_address_2 || ""} onChange = {handleChange} required></input></td>
                                         </tr>
 
                                         <tr>
-                                            <th>Shipping Address 3</th>
+                                            <th>Suburb</th>
                                         </tr>
                                         <tr>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder =  "Shipping Address line 3" name = "shipping_address_3" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Shipping Address line 3" name = "shipping_address_3" 
                                             value = {inputs.shipping_address_3 || ""} onChange = {handleChange} required></input></td>
                                         </tr>
 
                                         <tr>
-                                            <th>Shipping Address 4</th>
+                                            <th>City</th>
                                         </tr>
                                         <tr>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder =  "Shipping Address line 4" name = "shipping_address_4" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Shipping Address line 4" name = "shipping_address_4" 
                                             value = {inputs.shipping_address_4 || ""} onChange = {handleChange} required></input></td>
                                         </tr>
                                         <tr>
-                                            <th>Shipping Address 5</th>
+                                            <th>Province</th>
                                         </tr>
                                         <tr>
-                                            <td><input type = '_text' style = {{width: '150px'}} placeholder =  "Shipping Address line 5" name = "shipping_address_5" 
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Shipping Address line 5" name = "shipping_address_5" 
                                             value = {inputs.shipping_address_5 || ""} onChange = {handleChange} required></input></td>
                                         </tr>
+                                        <tr>
+                                            <th>Postal Code</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Shipping Address line 6" name = "shipping_address_6" 
+                                            value = {inputs.shipping_address_6 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Company</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Shipping Address line 7" name = "shipping_address_7" 
+                                            value = {inputs.shipping_address_7 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        
+                                    </tbody>
+                                </table> 
+
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <th>Default Address 1</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 1" name = "default_address_1" 
+                                            value = {inputs.default_address_1 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                        <th>Default Address 2</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 2" name = "default_address_2" 
+                                            value = {inputs.default_address_2 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                        <th>Suburb</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 3" name = "default_address_3" 
+                                            value = {inputs.default_address_3 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                        <th>City</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 4" name = "default_address_4" 
+                                            value = {inputs.default_address_4 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                        <th>Province</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 5" name = "default_address_5" 
+                                            value = {inputs.default_address_5 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Postal Code</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 6" name = "default_address_6" 
+                                            value = {inputs.default_address_6 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Company</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Default Address line 7" name = "default_address_7" 
+                                            value = {inputs.default_address_7 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                    </tbody>
+                                </table> 
+
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <th>Billing Address 1</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Billing Address line 1" name = "billing_address_1" 
+                                            value = {inputs.billing_address_1 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                            <th>Billing Address 2</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Billing Address line 2" name = "billing_address_2" 
+                                            value = {inputs.billing_address_2 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                            <th>Suburb</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Billing Address line 3" name = "billing_address_3" 
+                                            value = {inputs.billing_address_3 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+
+                                        <tr>
+                                            <th>City</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Billing Address line 4" name = "billing_address_4" 
+                                            value = {inputs.billing_address_4 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Province</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Billing Address line 5" name = "billing_address_5" 
+                                            value = {inputs.billing_address_5 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Postal Code</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Billing Address line 6" name = "billing_address_6" 
+                                            value = {inputs.billing_address_6 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Company</th>
+                                        </tr>
+                                        <tr>
+                                            <td><input type = '_text' style = {{width: '100%'}} placeholder =  "Billing Address line 7" name = "billing_address_7" 
+                                            value = {inputs.billing_address_7 || ""} onChange = {handleChange} required></input></td>
+                                        </tr>
+                                        
                                     </tbody>
                                 </table> 
                                 </div>

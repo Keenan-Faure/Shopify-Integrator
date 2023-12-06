@@ -1,5 +1,5 @@
 import {useEffect} from 'react';
-import {useState} from "react";
+import React, { useState } from "react";
 import $ from 'jquery';
 import '../../CSS/login.css';
 import Background from '../../components/Background';
@@ -15,56 +15,22 @@ function Add_Product()
         const value = event.target.value;
         setInputs(values => ({...values, [name]: value}))
     }
+
+    const [file, setFile] = useState();
+    function handleChange2(e) 
+    {
+        console.log(e.target.files);
+        setFile(URL.createObjectURL(e.target.files[0]));
+    }
+
     const AddProduct = (event) =>
     {
         event.preventDefault();
         console.log(inputs);
+        console.log(document.querySelector(".details-left").style.background);
 
-        let Object = 
-        {
-            product_code: inputs.product_code, 
-            title: inputs.product_title, 
-            body_html: inputs.product_description, 
-            category: inputs.product_category, 
-            vendor: inputs.product_vendor,
-            product_type: inputs.product_type, 
-            variants: 
-            [
-                {
-                    sku: inputs.variant_sku, 
-                    option1: inputs.variant_option1, 
-                    option1: inputs.variant_option2, 
-                    option1: inputs.variant_option3, 
-                    variant_price_tiers: [
-                        {
-                            name: inputs.price_tier_name,
-                            value: inputs.price_tier_value
-                        },
-                    ],
-                    variant_quantities: [
-                        {
-                            name: inputs.quantity_warehouse_name,
-                            value: parseInt(inputs.warehouse_quantity)
-                        }
-                    ]
-
-                }
-            ],
-            options: 
-            [
-                {
-                    value: inputs.product_options
-                }
-            ]
-        };
-
-        console.log(Object);
-
-
-        const api_key = localStorage.getItem('api_key');
-        
-        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-        $.post("http://localhost:8080/api/products", JSON.stringify(Object),[], 'json')
+        /*
+        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
         .done(function( _data) 
         {
             console.log(_data);
@@ -73,8 +39,7 @@ function Add_Product()
         {
             alert(xhr.responseText);
         });
-        
-        
+        */
     }
 
     useEffect(() =>
@@ -300,9 +265,11 @@ function Add_Product()
                                     value = {inputs.product_warehousing || ""} onChange = {handleChange} rows = "5" cols = "80"></textarea>
                                 </div>  
                             </div>
-                            <div className = "details-left"></div>
+                            <div className = "details-left">
+                                <img src={file} />
+                            </div>
                             <div className = "details-right">
-                                <input id = "image_Input" name = "product_image" value = {inputs.product_image || ""} onChange = {handleChange}
+                                <input id = "image_Input" name = "product_image" value = {inputs.product_image || ""} onChange={handleChange2}
                                 style = {{position: 'relative', top: '5px'}} type="file" accept="image/jpeg, image/png, image/jpg" hidden/>
                                 <label id = "label" htmlFor = "image_Input">Upload Product Image</label>
                                 <span id = "delete" >&times;</span>
@@ -360,10 +327,10 @@ function Add_Product()
                                                     <th>Value</th>
                                                 </tr>
                                                 <tr>
-                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Price Tier Name" name = "price_tier_name" 
-                                                    value = {inputs.price_tier_name || ""} onChange = {handleChange} required></input></td>
-                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Price Tier Price" name = "price_tier_value" 
-                                                    value = {inputs.price_tier_value || ""} onChange = {handleChange} ></input></td>
+                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Price Tier 1" name = "price_tier1" 
+                                                    value = {inputs.price_tier1 || ""} onChange = {handleChange} required></input></td>
+                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Price Tier 2" name = "price_tier2" 
+                                                    value = {inputs.price_tier2 || ""} onChange = {handleChange} ></input></td>
                                                 </tr>
                                             </tbody>
                                         </table>

@@ -191,9 +191,10 @@ function Orders()
                                 let div_ = details.querySelector("#detailed_table");
                                 let rt = createRoot(_div);
                                 let _rt = createRoot(div_);
-                                rt.render(<Detailed_Table_View key={`${_data.title}_${i}`} Total_Heading={_data.discount_total} 
-                                Total_Middle ={_data.tax_total} subTotal={_data.order_total}/>)
-
+                                rt.render(<Detailed_Table_View key={`${_data.title}_${i}`} Sub_Total={_data.order_total} Tax_Percent={((_data.tax_total)/(_data.order_total))*100}
+                                Tax_Amount={_data.tax_total} Shipping_Type={_data.shipping_lines[0].sku} Shipping_Amount={_data.shipping_lines[0].price} 
+                                Total={parseFloat(_data.order_total) + parseFloat(_data.tax_total) + parseFloat(_data.shipping_lines[0].price)}
+                                />)
                                 _rt.render(_data.line_items.map((el, i) => <Detailed_table  key={`${_data.title}_${i}`}Order_SKU={el.sku} 
                                 Quantity={el.qty} Barcode={el.barcode} Order_Price={el.price}
                                 />))
@@ -215,8 +216,10 @@ function Orders()
                             let div_ = details.querySelector("#detailed_table");
                             let rt = createRoot(_div);
                             let _rt = createRoot(div_);
-                            rt.render(<Detailed_Table_View key={`${_data.title}_${i}`} Total_Heading={_data.discount_total} 
-                            Total_Middle ={_data.tax_total} subTotal={_data.order_total}/>)
+                            rt.render(<Detailed_Table_View key={`${_data.title}_${i}`} Sub_Total={_data.order_total} Tax_Percent={((_data.tax_total)/(_data.order_total))*100}
+                            Tax_Amount={_data.tax_total} Shipping_Type={_data.shipping_lines[0].sku} Shipping_Amount={_data.shipping_lines[0].price} 
+                            Total={parseFloat(_data.order_total) + parseFloat(_data.tax_total) + parseFloat(_data.shipping_lines[0].price)}
+                            />)
 
                             _rt.render(_data.line_items.map((el, i) => <Detailed_table  key={`${_data.title}_${i}`}Order_SKU={el.sku} 
                             Quantity={el.qty} Barcode={el.barcode} Order_Price={el.price}
