@@ -16,6 +16,7 @@ import (
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders(
     id,
+    status,
     notes,
     web_code,
     tax_total,
@@ -25,13 +26,14 @@ INSERT INTO orders(
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
-RETURNING id, notes, web_code, tax_total, order_total, shipping_total, discount_total, created_at, updated_at
+RETURNING id, notes, web_code, tax_total, order_total, shipping_total, discount_total, created_at, updated_at, status
 `
 
 type CreateOrderParams struct {
 	ID            uuid.UUID      `json:"id"`
+	Status        string         `json:"status"`
 	Notes         sql.NullString `json:"notes"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
@@ -45,6 +47,7 @@ type CreateOrderParams struct {
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
 	row := q.db.QueryRowContext(ctx, createOrder,
 		arg.ID,
+		arg.Status,
 		arg.Notes,
 		arg.WebCode,
 		arg.TaxTotal,
@@ -65,34 +68,77 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order
 		&i.DiscountTotal,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Status,
 	)
 	return i, err
 }
 
-const fetchOrderStats = `-- name: FetchOrderStats :many
+const fetchOrderStatsNotPaid = `-- name: FetchOrderStatsNotPaid :many
 SELECT
 	COUNT(id) AS "count",
 	to_char(created_at, 'YYYY-MM-DD') AS "day"
 FROM orders
-WHERE created_at > current_date at time zone 'UTC' - interval '7 day'
+WHERE
+    created_at > current_date at time zone 'UTC' - interval '7 day' AND
+    "status" != 'paid'
 GROUP BY "day"
 ORDER BY "day" DESC
 `
 
-type FetchOrderStatsRow struct {
+type FetchOrderStatsNotPaidRow struct {
 	Count int64  `json:"count"`
 	Day   string `json:"day"`
 }
 
-func (q *Queries) FetchOrderStats(ctx context.Context) ([]FetchOrderStatsRow, error) {
-	rows, err := q.db.QueryContext(ctx, fetchOrderStats)
+func (q *Queries) FetchOrderStatsNotPaid(ctx context.Context) ([]FetchOrderStatsNotPaidRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchOrderStatsNotPaid)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FetchOrderStatsRow
+	var items []FetchOrderStatsNotPaidRow
 	for rows.Next() {
-		var i FetchOrderStatsRow
+		var i FetchOrderStatsNotPaidRow
+		if err := rows.Scan(&i.Count, &i.Day); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchOrderStatsPaid = `-- name: FetchOrderStatsPaid :many
+SELECT
+	COUNT(id) AS "count",
+	to_char(created_at, 'YYYY-MM-DD') AS "day"
+FROM orders
+WHERE
+    created_at > current_date at time zone 'UTC' - interval '7 day' AND
+    "status" = 'paid'
+GROUP BY "day"
+ORDER BY "day" DESC
+`
+
+type FetchOrderStatsPaidRow struct {
+	Count int64  `json:"count"`
+	Day   string `json:"day"`
+}
+
+func (q *Queries) FetchOrderStatsPaid(ctx context.Context) ([]FetchOrderStatsPaidRow, error) {
+	rows, err := q.db.QueryContext(ctx, fetchOrderStatsPaid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FetchOrderStatsPaidRow
+	for rows.Next() {
+		var i FetchOrderStatsPaidRow
 		if err := rows.Scan(&i.Count, &i.Day); err != nil {
 			return nil, err
 		}
@@ -111,6 +157,7 @@ const getOrderByCustomer = `-- name: GetOrderByCustomer :many
 SELECT
     o.id,
     o.notes,
+    o.status,
     o.web_code,
     o.tax_total,
     o.order_total,
@@ -127,6 +174,7 @@ WHERE orders.id in (
 type GetOrderByCustomerRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
+	Status        string         `json:"status"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
@@ -147,6 +195,7 @@ func (q *Queries) GetOrderByCustomer(ctx context.Context, customerID uuid.UUID) 
 		if err := rows.Scan(
 			&i.ID,
 			&i.Notes,
+			&i.Status,
 			&i.WebCode,
 			&i.TaxTotal,
 			&i.OrderTotal,
@@ -171,6 +220,7 @@ const getOrderByID = `-- name: GetOrderByID :one
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -185,6 +235,7 @@ WHERE id = $1
 type GetOrderByIDRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
+	Status        string         `json:"status"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
@@ -200,6 +251,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id uuid.UUID) (GetOrderByIDR
 	err := row.Scan(
 		&i.ID,
 		&i.Notes,
+		&i.Status,
 		&i.WebCode,
 		&i.TaxTotal,
 		&i.OrderTotal,
@@ -215,6 +267,7 @@ const getOrderByWebCode = `-- name: GetOrderByWebCode :one
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -228,6 +281,7 @@ WHERE web_code = $1
 type GetOrderByWebCodeRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
+	Status        string         `json:"status"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
@@ -242,6 +296,7 @@ func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode sql.NullString)
 	err := row.Scan(
 		&i.ID,
 		&i.Notes,
+		&i.Status,
 		&i.WebCode,
 		&i.TaxTotal,
 		&i.OrderTotal,
@@ -256,6 +311,7 @@ const getOrders = `-- name: GetOrders :many
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -274,6 +330,7 @@ type GetOrdersParams struct {
 type GetOrdersRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
+	Status        string         `json:"status"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
@@ -294,6 +351,7 @@ func (q *Queries) GetOrders(ctx context.Context, arg GetOrdersParams) ([]GetOrde
 		if err := rows.Scan(
 			&i.ID,
 			&i.Notes,
+			&i.Status,
 			&i.WebCode,
 			&i.TaxTotal,
 			&i.OrderTotal,
@@ -318,6 +376,7 @@ const getOrdersSearchByCustomer = `-- name: GetOrdersSearchByCustomer :many
 SELECT
     o.id,
     o.notes,
+    o.status,
     o.web_code,
     o.tax_total,
     o.order_total,
@@ -338,6 +397,7 @@ WHERE o.id in (
 type GetOrdersSearchByCustomerRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
+	Status        string         `json:"status"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
@@ -358,6 +418,7 @@ func (q *Queries) GetOrdersSearchByCustomer(ctx context.Context, similarToEscape
 		if err := rows.Scan(
 			&i.ID,
 			&i.Notes,
+			&i.Status,
 			&i.WebCode,
 			&i.TaxTotal,
 			&i.OrderTotal,
@@ -382,6 +443,7 @@ const getOrdersSearchWebCode = `-- name: GetOrdersSearchWebCode :many
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -396,6 +458,7 @@ LIMIT 10
 type GetOrdersSearchWebCodeRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
+	Status        string         `json:"status"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
@@ -416,6 +479,7 @@ func (q *Queries) GetOrdersSearchWebCode(ctx context.Context, similarToEscape st
 		if err := rows.Scan(
 			&i.ID,
 			&i.Notes,
+			&i.Status,
 			&i.WebCode,
 			&i.TaxTotal,
 			&i.OrderTotal,
@@ -450,18 +514,20 @@ const updateOrder = `-- name: UpdateOrder :one
 UPDATE orders
 SET
     notes = $1,
-    web_code = $2,
-    tax_total = $3,
-    order_total = $4,
-    shipping_total = $5,
-    discount_total = $6,
-    updated_at = $7
-WHERE id = $8
-RETURNING id, notes, web_code, tax_total, order_total, shipping_total, discount_total, created_at, updated_at
+    status = $2,
+    web_code = $3,
+    tax_total = $4,
+    order_total = $5,
+    shipping_total = $6,
+    discount_total = $7,
+    updated_at = $8
+WHERE id = $9
+RETURNING id, notes, web_code, tax_total, order_total, shipping_total, discount_total, created_at, updated_at, status
 `
 
 type UpdateOrderParams struct {
 	Notes         sql.NullString `json:"notes"`
+	Status        string         `json:"status"`
 	WebCode       sql.NullString `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
@@ -474,6 +540,7 @@ type UpdateOrderParams struct {
 func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
 	row := q.db.QueryRowContext(ctx, updateOrder,
 		arg.Notes,
+		arg.Status,
 		arg.WebCode,
 		arg.TaxTotal,
 		arg.OrderTotal,
@@ -493,6 +560,7 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		&i.DiscountTotal,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Status,
 	)
 	return i, err
 }
