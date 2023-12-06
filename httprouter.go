@@ -32,15 +32,29 @@ func (dbconfig *DbConfig) GetFetchStats(w http.ResponseWriter, r *http.Request, 
 	RespondWithJSON(w, http.StatusOK, ParseFetchStats(data))
 }
 
-// GET /api/stats/orders
+// GET /api/stats/orders?status=paid
 func (dbconfig *DbConfig) GetOrderStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	data, err := dbconfig.DB.FetchOrderStats(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+	status := r.URL.Query().Get("status")
+	if status == "paid" {
+		data, err := dbconfig.DB.FetchOrderStatsPaid(r.Context())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+			return
+		}
+		// convert data to include missing dates, and convert dates to appropriate values
+		RespondWithJSON(w, http.StatusOK, ParseOrderStatsPaid(data))
+	} else if status == "not_paid" {
+		data, err := dbconfig.DB.FetchOrderStatsNotPaid(r.Context())
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+			return
+		}
+		// convert data to include missing dates, and convert dates to appropriate values
+		RespondWithJSON(w, http.StatusOK, ParseOrderStatsNotPaid(data))
+	} else {
+		RespondWithError(w, http.StatusBadRequest, "invalid status type")
 		return
 	}
-	// convert data to include missing dates, and convert dates to appropriate values
-	RespondWithJSON(w, http.StatusOK, ParseOrderStats(data))
 }
 
 // POST /api/settings/webhook

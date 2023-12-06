@@ -82,6 +82,7 @@ type Order struct {
 	DiscountTotal sql.NullString `json:"discount_total"`
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
+	Status        string         `json:"status"`
 }
 
 type OrderLine struct {

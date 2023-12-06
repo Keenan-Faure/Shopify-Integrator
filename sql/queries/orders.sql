@@ -1,6 +1,7 @@
 -- name: CreateOrder :one
 INSERT INTO orders(
     id,
+    status,
     notes,
     web_code,
     tax_total,
@@ -10,7 +11,7 @@ INSERT INTO orders(
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING *;
 
@@ -18,19 +19,21 @@ RETURNING *;
 UPDATE orders
 SET
     notes = $1,
-    web_code = $2,
-    tax_total = $3,
-    order_total = $4,
-    shipping_total = $5,
-    discount_total = $6,
-    updated_at = $7
-WHERE id = $8
+    status = $2,
+    web_code = $3,
+    tax_total = $4,
+    order_total = $5,
+    shipping_total = $6,
+    discount_total = $7,
+    updated_at = $8
+WHERE id = $9
 RETURNING *;
 
 -- name: GetOrderByID :one
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -45,6 +48,7 @@ WHERE id = $1;
 SELECT
     o.id,
     o.notes,
+    o.status,
     o.web_code,
     o.tax_total,
     o.order_total,
@@ -61,6 +65,7 @@ WHERE orders.id in (
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -74,6 +79,7 @@ LIMIT $1 OFFSET $2;
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -87,6 +93,7 @@ WHERE web_code = $1;
 SELECT
     id,
     notes,
+    status,
     web_code,
     tax_total,
     order_total,
@@ -101,6 +108,7 @@ LIMIT 10;
 SELECT
     o.id,
     o.notes,
+    o.status,
     o.web_code,
     o.tax_total,
     o.order_total,
@@ -117,12 +125,25 @@ WHERE o.id in (
     OR c.last_name LIKE $1
 );
 
--- name: FetchOrderStats :many
+-- name: FetchOrderStatsPaid :many
 SELECT
 	COUNT(id) AS "count",
 	to_char(created_at, 'YYYY-MM-DD') AS "day"
 FROM orders
-WHERE created_at > current_date at time zone 'UTC' - interval '7 day'
+WHERE
+    created_at > current_date at time zone 'UTC' - interval '7 day' AND
+    "status" = 'paid'
+GROUP BY "day"
+ORDER BY "day" DESC;
+
+-- name: FetchOrderStatsNotPaid :many
+SELECT
+	COUNT(id) AS "count",
+	to_char(created_at, 'YYYY-MM-DD') AS "day"
+FROM orders
+WHERE
+    created_at > current_date at time zone 'UTC' - interval '7 day' AND
+    "status" != 'paid'
 GROUP BY "day"
 ORDER BY "day" DESC;
 

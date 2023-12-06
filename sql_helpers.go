@@ -40,7 +40,24 @@ func ParseFetchStats(data []database.GetFetchStatsRow) objects.FetchAmountRespon
 
 // Parses the data and fills in the missing daily values
 // with a 0 value if it does not exist.
-func ParseOrderStats(data []database.FetchOrderStatsRow) objects.OrderAmountResponse {
+func ParseOrderStatsNotPaid(data []database.FetchOrderStatsNotPaidRow) objects.OrderAmountResponse {
+	// TODO should I return the missing values
+	// if it has 2023-12-05 07, but skips 09 should I make it
+	days := []string{}
+	count := []int64{}
+	for _, pos := range data {
+		days = append(days, pos.Day)
+		count = append(count, pos.Count)
+	}
+	return objects.OrderAmountResponse{
+		Count: count,
+		Days:  days,
+	}
+}
+
+// Parses the data and fills in the missing daily values
+// with a 0 value if it does not exist.
+func ParseOrderStatsPaid(data []database.FetchOrderStatsPaidRow) objects.OrderAmountResponse {
 	// TODO should I return the missing values
 	// if it has 2023-12-05 07, but skips 09 should I make it
 	days := []string{}
