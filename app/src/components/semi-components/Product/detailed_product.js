@@ -80,24 +80,73 @@ function Detailed_product(props)
         {
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
             let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.getElementById("price");
+            let title = document.getElementById("_title");
             confirm.style.display = "block";
             for(let i = 0; i< td_list.length; i++)
             {
                 td_list[i].contentEditable = "true";
             }
-            description.contentEditable = "true"; variant_updateDate.contentEditable = "true"; price.contentEditable = "true";
-
+            description.contentEditable = "true"; variant_updateDate.contentEditable = "true";
+            
         });
+
         confirm.addEventListener("click", () =>
         {
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
-            let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.getElementById("price");
+            let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.querySelectorAll(".variant-price");
             confirm.style.display = "none";
+            let title = document.querySelector(".details-title");
             for(let i = 0; i< td_list.length; i++)
             {
                 td_list[i].contentEditable = "false";
             }
-            description.contentEditable = "false"; variant_updateDate.contentEditable = "false"; price.contentEditable = "false";
+            description.contentEditable = "false"; variant_updateDate.contentEditable = "false";
+
+            let bigg = {};
+
+            for(let i = 0; i < price.length; i++)
+            {
+                console.log([i]);
+                let _price =
+                [
+                    {
+                        name: [i] + "Kyle",
+                        value: [i] + "price"
+                    },
+                ];
+
+                Object.assign(bigg, _price);
+            }
+            console.log(bigg);
+
+            let object = 
+            {
+                product_code: td_list[1].innerHTML, 
+                title: title.innerHTML, 
+                body_html: description.innerHTML, 
+                category: td_list[0].innerHTML, 
+                vendor: td_list[3].innerHTML,
+                product_type: td_list[2].innerHTML, 
+                variants: 
+                [
+                    {
+                        sku: td_list[5].innerHTML, 
+                        option1: td_list[6].innerHTML, 
+                        option2: td_list[7].innerHTML, 
+                        option3: td_list[8].innerHTML, 
+                        barcode: td_list[4].innerHTML,
+                        variant_price_tiers: 
+                        [
+                            {
+                                name: "",
+                                value: price.innerHTML
+                            },
+                        ],
+                    }
+                ],
+            };
+            let id = document.querySelector("._id").innerHTML;
+            console.log(object);
         })
 
     }, []);
@@ -116,7 +165,11 @@ function Detailed_product(props)
                 <div className = "details-details">
                     <div className = "auto-slideshow-container" />
                     <div className = "detailed">
-                        <div className = "details-title">{props.Product_Title}<i className = "inactive"/></div>
+                        <div className = "details-title"><div id ="_title" style={{position: 'relative',top: '10px',display: 'inline-block'}}>
+                            {props.Product_Title}</div>
+                            <i className = "inactive"/>
+                        </div>
+                        <div className = "_id" style ={{display: 'none'}}>{props.Product_ID}</div>
                         
                         <span id = "activity">Activity</span>
                         <table>
@@ -158,7 +211,7 @@ function Detailed_product(props)
                 </div>
             </div>
             <div className = "confirm-line">
-                <button className="tablink" id = "confirm" style ={{left: '50%', transform: 'translate(-50%)'}}>Save</button>
+                <button className="tablink" id = "confirm" style ={{left: '50%'/*, transform: 'translate(-50%)'*/}}>Save</button>
             </div>
         </div>
     );

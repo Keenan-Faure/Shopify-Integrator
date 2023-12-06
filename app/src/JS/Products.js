@@ -154,7 +154,7 @@ function Products()
 
                             let rot = createRoot(details);
                             rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} 
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
                             />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
@@ -172,9 +172,10 @@ function Products()
                                 let rt = createRoot(new_div);
                                 rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
                                 Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
-                                Option1={el.option1} Option2={el.option2} Option3={el.option3} Price={<Detailed_Price key={`${el.title}_${i}`} 
-                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price={el.value}/>)}/>}
-                                /> ))
+                                Option1={el.option1} Option2={el.option2} Option3={el.option3} 
+                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
+                                />))
+
                             }, 10);
                             
                         }
@@ -185,7 +186,7 @@ function Products()
                             products.appendChild(details);
                             let rot = createRoot(details);
                             rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} 
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
                             />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
@@ -208,9 +209,19 @@ function Products()
                                 let rt = createRoot(new_div);
                                 rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
                                 Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
-                                Option1={el.option1} Option2={el.option2} Option3={el.option3} Price={<Detailed_Price key={`${el.title}_${i}`} 
-                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price={el.value}/>)}/>}
+                                Option1={el.option1} Option2={el.option2} Option3={el.option3} 
+                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
                                 /> ))
+
+                                setTimeout(() => 
+                                {
+                                    let price = details.querySelector(".price");
+                                    let _root = createRoot(price);
+                                    console.log(_data.variants);
+                                    _root.render(_data.variants.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} name={el.name} value={el.value} />))
+                                }, 10)
+                                
+
                             }, 0);
                         }
                     })
@@ -480,7 +491,7 @@ function Products()
                 root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                 Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
                 /> ))
-                DetailedView();
+                setTimeout(() => { DetailedView();}, 200);
                 Pagintation(1);
             })
             .fail( function(xhr) { alert(xhr.responseText); });

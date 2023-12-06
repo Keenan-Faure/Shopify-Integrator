@@ -33,11 +33,14 @@ function Product_Variants(props)
             </table>
 
             <div className = "vr">
+                <div className = "Prices" style = {{textAlign: 'center'}}>Variant Prices:</div>
+                <div className = "price">{props.Price}</div>
+
                 <div className = "updateDate">Variant Update Date:</div>
                 <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
                 <br />
-                <div className = "Prices">Variant Prices:</div>
-                <div id = "price">R{props.Price}</div>
+                
+                
             </div>
         </div>
     );
