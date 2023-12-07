@@ -70,7 +70,6 @@ function Detailed_order(props)
         
             <div className="tabcontent" id="_Order" >
                 <div className = "details-details">
-                    <div className = "detailed-image" />
                     <div className = "detailed">
                         <div className = "details-title">Customer Orders</div>
 
@@ -116,10 +115,10 @@ function Detailed_order(props)
                         </div>
                           
                     </div>
-                    <div className = "details-right"></div>
-                    <div id = "address" className = "details-left">
-
+                    <div className = "details-right">
+                        
                     </div>
+                    <div id = "address" className = "details-left"></div>
                 </div>
             </div>
             <div className="tabcontent" id="_Variants" >

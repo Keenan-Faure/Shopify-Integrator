@@ -1,6 +1,6 @@
 import {useEffect} from 'react';
 import Background from './Background';
-
+import Setting_details from './semi-components/settings-details';
 import '../CSS/page2.css';
 
 
@@ -87,14 +87,7 @@ function Page2(props)
                 <div className = "main-container">
                     <div className = "settings">
                         <div className = "app-settings">
-                            <div className = "title">{props.Title1}</div>
-                            <div className = "setting">
-                                <div className = "setting-title">{props.subTitle1}</div>
-                                <div className = "setting-details description">{props.Description1}</div>
-                                <div className = "setting-details value">{props.Value1}</div>
-                                <button className = "button-on-off">Turn on</button>
-                            </div>
-
+                            <div className = "title">App Settings</div>
                             <div className = "setting">
                                 <div className = "setting-title" style ={{top: '-6px'}}>Webhook Configuration
                                     <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
@@ -129,30 +122,26 @@ function Page2(props)
                                     </tbody> 
                                 </table>
                             </div>
+                            
+                            <Setting_details />
+                            <Setting_details />
                         </div>
                         <div className = "shopify-settings">
-                            <div className = "title">{props.Title2}</div>
-                            <div className = "setting">
-                                <div className = "setting-title">{props.subTitle2}</div>
-                                <div className = "setting-details description">{props.Description2}</div>
-                                <div className = "setting-details value">{props.Value2}</div>
-                                <div className = "button-on-off">Turn on </div>
-                            </div>
+                            <div className = "title">Shopify Settings</div>
+                            <Setting_details />
+                            <Setting_details />
                         </div>
                     </div>    
                 </div>
                 <div className = "side-container">
                     <div className = "settings-2">
                         <div className = "application"><i className = "a"/>Application Settings:</div>
-                        <div className = "mini-setting">Setting1</div>
-                        <div className = "mini-setting">Webhook Config</div>
-                        <div className = "mini-setting">Warehouse Location</div>
+                        <div id = "app_settings"></div>
 
                     </div>
                     <div className = "settings-2">
                         <div className = "application"><i className = "b"/>Spotify Settings:</div>
-                        <div className = "mini-setting">Setting1</div>
-                        <div className = "mini-setting">Setting2</div>
+                        <div id = "shopify_settings"></div>
                     </div>
                 </div>
                 
@@ -162,16 +151,5 @@ function Page2(props)
     );    
 
 }    
-Page2.defaultProps = 
-{
-    Title1: 'App Settings', 
-    Title2: 'Shopify Settings',
-    subTitle1: 'Sub Title of setting',
-    Description1: 'Description of product goes here, as well as any additional information',
-    Value1: 'Value of setting currently in the api',
-    subTitle2: 'Sub Title of setting 2',
-    Description2: 'Description of product goes here, as well as any additional information',
-    Value2: 'Value of setting 2 currently in the api',
 
-}
 export default Page2;

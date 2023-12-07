@@ -236,6 +236,7 @@ tr
 tr:hover 
 {
     border-left: 1px solid black;
+    background-color: white;
 }
 
 .activee
@@ -389,35 +390,17 @@ a:hover {
     color: #30b2e1;
 }
 
-/** Background properties */
-.background {
-    background-image: url();
-    background-position: relative;
-    background-size: cover;
-    background-repeat: no-repeat;
-    width: 100%;
-    height: 100%;
-}
-
-.background-cover {
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    position: absolute;
-}
-.confirm-line 
+.order-image
 {
     position: absolute;
-    display: none;
     width: 100%;
-    height: 42px;
-    bottom: 0%;
-    background-color: rgba(0, 0, 0, 0.7);
+    height: 100%;
+    background-image: url(../media/order-image.jpg);
+    background-position: center;
+    background-size: cover;
 }
 
 
-/** End Background properties */
 
 .view {
     z-index: 1;
@@ -580,7 +563,6 @@ a:hover {
 /** Order Lines */
 .order_lines_view {
     position: relative;
-    background-color: transparent;
     left: 50%;
     transform: translate(-48%);
     width: 90%;
@@ -596,7 +578,6 @@ a:hover {
 
 .order_line:nth-child(even) {
     position: relative;
-    background-color: transparent;
     padding: 10px;
     justify-content: center;
 }
@@ -645,7 +626,6 @@ a:hover {
     z-index: 1;
     position: relative;
     width: 90%;
-    background-color: transparent;
     left: 50%;
     transform: translate(-48%);
 }
@@ -660,8 +640,8 @@ a:hover {
 
 .order_totals_line:nth-child(even) {
     position: relative;
-    background-color: transparent;
     padding: 0px 8px 0px 8px;
+    background-color: transparent;
     display: flex;
     justify-content: center;
 }
