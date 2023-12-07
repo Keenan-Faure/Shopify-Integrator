@@ -132,10 +132,10 @@ function Import_Product()
 
                 <form className = 'modal-content' method = 'post' autoComplete='off' id = 'form1'>
 
-                    <div style = {{position: 'relative', top: '50%'}}>
+                    <div style = {{position: 'relative', top: '40%'}}>
 
                         <input type={"file"} id = "file-upload-button" accept={".csv"} onChange={handleOnChange}/>
-                        <br /><br /><br />
+                        <br /><br />
                         <button className = "button" onClick={(e) => { handleOnSubmit(e); }}> IMPORT CSV </button>
                     </div>
                     

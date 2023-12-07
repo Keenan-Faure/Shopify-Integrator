@@ -460,6 +460,8 @@ function Products()
         let C_filter = document.getElementById("clear_filter");
         C_filter.addEventListener("click", () => 
         {
+            document.querySelector("empty-message").style.display = "none";
+            
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.get("http://localhost:8080/api/products?page=1", [], [])
@@ -505,8 +507,9 @@ function Products()
                     </form>    
                 </div>
                 <div className = "main-elements">
+                    <div className = "empty-message">No results found.</div>
                     <div className = "pan-main" id = "pan-main">
-                
+
                     </div>
                 </div>
                 <div className = "center" id = "pag"></div>

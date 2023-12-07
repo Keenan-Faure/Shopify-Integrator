@@ -65,7 +65,7 @@ function Detailed_product(props)
         edit.addEventListener("click", () =>
         {
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
-            let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.getElementById("price");
+            let variant_updateDate = document.querySelector(".variant-updateDate");
             confirm.style.display = "block";
             for(let i = 0; i< td_list.length; i++)
             {
@@ -83,7 +83,7 @@ function Detailed_product(props)
             let option1 = document.querySelectorAll(".option1"); let option2 = document.querySelectorAll(".option2"); let option3 = document.querySelectorAll(".option3");
             confirm.style.display = "none";
 
-            let title = document.querySelector(".details-title");
+            let title = document.getElementById("title");
             for(let i = 0; i< td_list.length; i++)
             {
                 td_list[i].contentEditable = "false";
@@ -103,8 +103,6 @@ function Detailed_product(props)
 
                 ],
             };
-
-            console.log(td_list);
             let quantities = {};
             
             let _quantities = document.querySelectorAll(".quantities");
@@ -186,7 +184,7 @@ function Detailed_product(props)
                     <div className = "auto-slideshow-container" />
                     <div className = "detailed">
                         <div className = "details-title"><div id ="_title" style={{position: 'relative',top: '10px',display: 'inline-block'}}>
-                            {props.Product_Title}</div>
+                            <div id = "title">{props.Product_Title}</div></div>
                             <i className = "inactive"/>
                         </div>
                         <div className = "_id" style ={{display: 'none'}}>{props.Product_ID}</div>
