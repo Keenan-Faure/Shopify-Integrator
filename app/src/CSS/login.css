@@ -341,6 +341,27 @@ output .span--hidden
     background-color: rgb(29, 74, 116);
     color: aliceblue;
 }
+/*
+#csv 
+{
+    padding: 10px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100px;
+    position: relative;
+    color: black;
+    border: 1px solid #000000;
+    border-radius: 4px;
+    color: white;
+    transition-duration: 0.4s;
+    background: linear-gradient(to bottom, #202020, #111119);
+    left: 50%;
+    transform: translate(-50%);
+}
+*/
 /* Rain droplets */
 .rain 
 {

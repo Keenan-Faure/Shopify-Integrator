@@ -301,7 +301,7 @@ tr:hover
     width: auto;
     height: auto;
 }
-.Prices, .updateDate 
+.Prices, .updateDate, .Quantities
 {
     font-weight: bold;
     font-size: 14px;

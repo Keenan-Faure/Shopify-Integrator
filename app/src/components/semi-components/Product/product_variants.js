@@ -12,8 +12,8 @@ function Product_Variants(props)
                         <th>Variant SKU</th>
                     </tr>
                     <tr>
-                        <td>{props.Variant_Barcode}</td>
-                        <td>{props.Variant_SKU}</td>
+                        <td className = "barcode">{props.Variant_Barcode}</td>
+                        <td className = "sku">{props.Variant_SKU}</td>
                     </tr>
                 </tbody>
             </table>
@@ -25,22 +25,24 @@ function Product_Variants(props)
                         <th>Option 3</th>
                     </tr>
                     <tr>
-                        <td>{props.Option1}</td>
-                        <td>{props.Option2}</td>
-                        <td>{props.Option3}</td>
+                        <td className = "option1">{props.Option1}</td>
+                        <td className = "option2">{props.Option2}</td>
+                        <td className = "option3">{props.Option3}</td>
                     </tr>
                 </tbody>
             </table>
 
             <div className = "vr">
                 <div className = "Prices" style = {{textAlign: 'center'}}>Variant Prices:</div>
+                <br />
                 <div className = "price">{props.Price}</div>
+
+                <div className = "Quantities">Quantities</div>
+                <br />
+                <div className = "quantities">{props.Quantities}</div>
 
                 <div className = "updateDate">Variant Update Date:</div>
                 <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
-                <br />
-                
-                
             </div>
         </div>
     );
@@ -48,11 +50,16 @@ function Product_Variants(props)
 
 Product_Variants.defaultProps = 
 {
-    Variant_Title: 'Variant Title',
-    Variant_Barcode: 'Variant Barcode',
-    Variant_ID: 'Variant ID',
-    Variant_SKU: 'Variant SKU',
-    Variant_UpdateDate: 'Variant Update Date',
-    Price: 'High Price',
+    Variant_Title: 'N/A',
+    Variant_Barcode: 'N/A',
+    Variant_ID: 'N/A',
+    Variant_SKU: 'N/A',
+    Variant_UpdateDate: 'N/A',
+    Price: 'N/A',
+    Quantities: 'N/A',
+    Option1: 'N/A',
+    Option2: 'N/A',
+    Option3: 'N/A',
+    
 }
 export default Product_Variants;

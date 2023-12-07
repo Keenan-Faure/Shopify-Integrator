@@ -18,7 +18,6 @@ function Add_Product()
     const AddProduct = (event) =>
     {
         event.preventDefault();
-        console.log(inputs);
 
         let Object = 
         {
@@ -48,7 +47,6 @@ function Add_Product()
                             value: parseInt(inputs.warehouse_quantity)
                         }
                     ]
-
                 }
             ],
             options: 
@@ -61,8 +59,6 @@ function Add_Product()
 
         console.log(Object);
 
-
-        /*
         const api_key = localStorage.getItem('api_key');
         
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -75,9 +71,6 @@ function Add_Product()
         {
             alert(xhr.responseText);
         });
-        */
-        
-        
     }
 
     useEffect(() =>
@@ -236,10 +229,6 @@ function Add_Product()
             label.style.display = "";
             del.style.display = "none";
         });
-
-
-
-
     }, []);
 
     return (

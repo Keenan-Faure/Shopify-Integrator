@@ -120,25 +120,10 @@ function Export_Product()
                 <form className = 'modal-content' method = 'post' onSubmit={(event) => ExportProduct(event)} autoComplete='off' id = 'form1'>
                     <div className = 'modal-container' id = "main">
                         <label style = {{fontSize: '18px'}}><b>Export Product</b></label>
-                        <br /><br />
-                        <div className = "holder">
-                            <label><b>Product_Code</b></label>
-                            <br />
-                            <span><input type = 'text' placeholder = "Product grouping code" name = "username" value = {inputs.username || ""}  onChange = {handleChange} required></input></span>
-                            <br /><br />
-
-                            <label><b>Product_Title</b></label>
-                            <br />
-                            <span><input type = 'password' placeholder = "Title of product" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
-                            <br /><br />
-
-                            <label><b>Product_Description</b></label>
-                            <br />
-                            <span><input type = 'text' placeholder = "Description of product" name = "username" value = {inputs.username || ""}  onChange = {handleChange} required></input></span>
-                            <br /><br />
-                        </div>
-
-                        <button className = 'button' type = 'submit'>Add</button>
+                        <br /><br /><br />
+                        <label><b>Exports to a CSV File</b></label>
+                        <br /><br /><br />
+                        <button className = 'button' type = 'submit'>Export</button>
                     </div>
                 </form>
             </div>    

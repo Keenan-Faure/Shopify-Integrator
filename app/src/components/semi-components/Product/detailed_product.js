@@ -18,37 +18,23 @@ function Detailed_product(props)
             {
                 tablinks[i].style.backgroundColor = "";
             }
-
             document.getElementById("_" + pageName).style.display = "block";
             document.getElementById(pageName).style.backgroundColor = "rgb(72, 101, 128)";
             document.getElementById(pageName).style.color = "black";
-            
         }
 
         let home = document.getElementById("Product");
-        home.addEventListener("click", () =>
-        {
-            openPage('Product');
-        });
+        home.addEventListener("click", () => { openPage('Product'); });
 
         let defaul = document.getElementById("Variants");
-        defaul.addEventListener("click", () =>
-        {
-            openPage('Variants');
-        });
-
+        defaul.addEventListener("click", () => { openPage('Variants'); });
         document.getElementById("Product").click();
 
+        /* Activity of the product */
         let activity = document.querySelector(".details-title").innerHTML;
         let status = document.querySelector(".inactive");
-        if(activity != "1")
-        {
-            status.className = "inactive";
-        }
-        else 
-        {
-            status.className = "activee";
-        }
+        if(activity != "1") { status.className = "inactive"; }
+        else { status.className = "activee"; }
 
         /* When the user clicks on the return button */
         let close = document.querySelector(".rtn-button");
@@ -80,7 +66,6 @@ function Detailed_product(props)
         {
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
             let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.getElementById("price");
-            let title = document.getElementById("_title");
             confirm.style.display = "block";
             for(let i = 0; i< td_list.length; i++)
             {
@@ -93,31 +78,17 @@ function Detailed_product(props)
         confirm.addEventListener("click", () =>
         {
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
-            let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.querySelectorAll(".variant-price");
+            let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.querySelectorAll(".price");
+            let barcode = document.querySelectorAll(".barcode"); let sku = document.querySelectorAll(".sku"); 
+            let option1 = document.querySelectorAll(".option1"); let option2 = document.querySelectorAll(".option2"); let option3 = document.querySelectorAll(".option3");
             confirm.style.display = "none";
+
             let title = document.querySelector(".details-title");
             for(let i = 0; i< td_list.length; i++)
             {
                 td_list[i].contentEditable = "false";
             }
             description.contentEditable = "false"; variant_updateDate.contentEditable = "false";
-
-            let bigg = {};
-
-            for(let i = 0; i < price.length; i++)
-            {
-                console.log([i]);
-                let _price =
-                [
-                    {
-                        name: [i] + "Kyle",
-                        value: [i] + "price"
-                    },
-                ];
-
-                Object.assign(bigg, _price);
-            }
-            console.log(bigg);
 
             let object = 
             {
@@ -129,24 +100,73 @@ function Detailed_product(props)
                 product_type: td_list[2].innerHTML, 
                 variants: 
                 [
-                    {
-                        sku: td_list[5].innerHTML, 
-                        option1: td_list[6].innerHTML, 
-                        option2: td_list[7].innerHTML, 
-                        option3: td_list[8].innerHTML, 
-                        barcode: td_list[4].innerHTML,
-                        variant_price_tiers: 
-                        [
-                            {
-                                name: "",
-                                value: price.innerHTML
-                            },
-                        ],
-                    }
+
                 ],
             };
+
+            console.log(td_list);
+            let quantities = {};
+            
+            let _quantities = document.querySelectorAll(".quantities");
+            let price_name = document.querySelectorAll(".price_name");
+            let price_value = document.querySelectorAll(".price_value");
+
+            for(let i = 0; i < price.length; i++)
+            {
+                /* Keep variants variable inside, so it can start fresh when the for loop restarts */
+                let variants = {};
+                if(_quantities[i].childNodes.length <= 1)
+                {
+                    quantities =
+                    {
+                        
+                        name: "",
+                        value: ""
+                    };
+                }
+                else 
+                {
+                    quantities =
+                    {
+                        
+                        name: _quantities[i].childNodes[0].innerHTML,
+                        value: _quantities[i].childNodes[1].innerHTML
+                    };
+                }
+
+                variants.sku = sku[i].innerHTML; 
+                variants.barcode = barcode[i].innerHTML;
+                variants.option1 = option1[i].innerHTML; 
+                variants.option2 = option2[i].innerHTML; 
+                variants.option3 = option3[i].innerHTML;
+
+                variants.variant_quantities = quantities;
+                variants.variant_price_tiers = 
+                {
+                    name: price_name[i].innerHTML,
+                    value: price_value[i].innerHTML
+                };
+                object.variants[i] = variants;
+            }
+            
             let id = document.querySelector("._id").innerHTML;
+            console.log(id)
             console.log(object);
+
+            /*
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.post("http://localhost:8080/api/products", JSON.stringify(object),[], 'json')
+            .done(function( _data) 
+            {
+                console.log(_data);
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+            */
+
         })
 
     }, []);

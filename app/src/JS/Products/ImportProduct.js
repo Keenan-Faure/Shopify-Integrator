@@ -122,15 +122,10 @@ function Import_Product()
 
                         <label style = {{fontSize: '18px'}}><b>Import Products</b></label>
                         <br /><br /><br />
-                        <label><b>Username</b></label>
-                        <br />
-                        <span><input type = 'text' placeholder = "Name" name = "username" value = {inputs.username || ""}  onChange = {handleChange} required></input></span>
+                        <label><b>Only CSV Files are allowed</b></label>
                         <br /><br /><br />
-                        <label><b>Api Key</b></label>
-                        <br />
-                        <span><input type = 'password' placeholder = "Api-Key" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
-                        <br /><br />
-                        <button className = 'button' type = 'submit'>Add</button>
+                        <input type={"file"} id = "csv" accept={".csv"} />
+
                     </div>
                 </form>
             </div>    

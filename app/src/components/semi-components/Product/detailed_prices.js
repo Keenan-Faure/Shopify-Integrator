@@ -11,8 +11,8 @@ function Detailed_Price(props)
                         <th>Price</th>
                     </tr>
                     <tr>
-                        <td>{props.Price_Name}</td>
-                        <td>{props.Price_Value}</td>
+                        <td className = "price_name">{props.Price_Name}</td>
+                        <td className = "price_value">{props.Price_Value}</td>
                     </tr>
                 </tbody>
             </table>
@@ -22,7 +22,7 @@ function Detailed_Price(props)
 
 Detailed_Price.defaultProps = 
 {
-    Price_Name: 'Name',
-    Price_Value: 'Value'
+    Price_Name: 'N/A',
+    Price_Value: 'N/A'
 }
 export default Detailed_Price;
