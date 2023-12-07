@@ -6,31 +6,44 @@ import Background from '../../components/Background';
 
 function Import_Product()
 {
-    const[inputs, setInputs] = useState({});
+    const [file, setFile] = useState();
 
-    const handleChange = (event) =>
-    {
-        const name = event.target.name;
-        const value = event.target.value;
-        setInputs(values => ({...values, [name]: value}))
-    }
-    const ImportProduct = (event) =>
-    {
-        event.preventDefault();
-        console.log(inputs);
+    const fileReader = new FileReader();
 
-        /*
-        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
-        .done(function( _data) 
+    const handleOnChange = (e) => 
+    {
+        setFile(e.target.files[0]);
+    };
+
+    const handleOnSubmit = (e) => 
+    {
+        e.preventDefault();
+
+        if (file) 
         {
-            console.log(_data);
-        })
-        .fail( function(xhr) 
-        {
-            alert(xhr.responseText);
-        });
-        */
-    }
+            fileReader.onload = function (event) 
+            {
+                const csvOutput = event.target.result;
+                console.log(csvOutput);
+            };
+
+            
+            fileReader.readAsText(file);
+            console.log(file);
+
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.post("http://localhost:8080/api/products/import?file_name=" + file, [], [], 'json')
+            .done(function( _data) 
+            {
+                console.log(_data);
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+        }
+    };
 
     useEffect(() =>
     {
@@ -117,16 +130,15 @@ function Import_Product()
                     </div>
                 </div>
 
-                <form className = 'modal-content' method = 'post' onSubmit={(event) => ImportProduct(event)} autoComplete='off' id = 'form1'>
-                    <div className = 'modal-container' id = "main">
+                <form className = 'modal-content' method = 'post' autoComplete='off' id = 'form1'>
 
-                        <label style = {{fontSize: '18px'}}><b>Import Products</b></label>
-                        <br /><br /><br />
-                        <label><b>Only CSV Files are allowed</b></label>
-                        <br /><br /><br />
-                        <input type={"file"} id = "csv" accept={".csv"} />
+                    <div style = {{position: 'relative', top: '50%'}}>
 
+                        <input type={"file"} id = "file-upload-button" accept={".csv"} onChange={handleOnChange}/>
+                        <br /><br /><br />
+                        <button className = "button" onClick={(e) => { handleOnSubmit(e); }}> IMPORT CSV </button>
                     </div>
+                    
                 </form>
             </div>    
         </>

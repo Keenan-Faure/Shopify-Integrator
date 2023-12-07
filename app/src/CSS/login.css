@@ -341,8 +341,8 @@ output .span--hidden
     background-color: rgb(29, 74, 116);
     color: aliceblue;
 }
-/*
-#csv 
+
+input #file-upload-button 
 {
     padding: 10px;
     display: block;
@@ -361,7 +361,7 @@ output .span--hidden
     left: 50%;
     transform: translate(-50%);
 }
-*/
+
 /* Rain droplets */
 .rain 
 {

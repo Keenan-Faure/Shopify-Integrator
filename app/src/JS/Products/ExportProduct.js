@@ -17,10 +17,8 @@ function Export_Product()
     const ExportProduct = (event) =>
     {
         event.preventDefault();
-        console.log(inputs);
 
-        /*
-        $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
+        $.post("http://localhost:8080/api/products/export", [], [], 'json')
         .done(function( _data) 
         {
             console.log(_data);
@@ -29,7 +27,7 @@ function Export_Product()
         {
             alert(xhr.responseText);
         });
-        */
+        
     }
 
     useEffect(() =>
