@@ -50,6 +50,10 @@ function Pan_details(props)
             {
                 option[i].className = "p-d-true";
             }
+            else if(activity[i].innerHTML == "")
+            {
+                option[i].className = "p-d-unknown";
+            }
             else
             {
                 option[i].className = "p-d-false";

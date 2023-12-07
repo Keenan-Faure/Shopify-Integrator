@@ -43,20 +43,13 @@ function Page1(props)
         vendor.innerHTML = inputs.vendor;
 
         let filter_input = document.querySelectorAll(".filter-selection-main");
-        let navbar = document.querySelector(".navbar");
-        let main = document.querySelector(".main");
+        let navbar = document.querySelector(".navbar"); let main = document.querySelector(".main"); 
         let filter = document.querySelector(".filter");
         for(let i = 0; i < filter_input.length; i++) { filter_input[i].style.display = "none"; }
-        let filter_button = document.getElementById("_filter");
-        let C_filter = document.getElementById("clear_filter");
-        filter_button.disabled = false;
-        C_filter.disabled = false;
-        filter_button.style.cursor = "pointer";
-        C_filter.style.cursor = "pointer";
-
-        navbar.style.display = "block";
-        main.style.display = "block";
-        filter.style.display = "block";
+        let filter_button = document.getElementById("_filter"); let C_filter = document.getElementById("clear_filter");
+        filter_button.disabled = false; C_filter.disabled = false;
+        filter_button.style.cursor = "pointer"; C_filter.style.cursor = "pointer"; navbar.style.display = "block";
+        main.style.display = "block"; filter.style.display = "block";
     }
 
 
@@ -269,6 +262,7 @@ function Page1(props)
             .done(function( _data) 
             {
                 console.log(_data);
+                
                 if(_data.length < 10)
                 {
                     next.disabled = true;
@@ -316,6 +310,7 @@ function Page1(props)
                     }
                 }
                 
+                
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
@@ -339,7 +334,6 @@ function Page1(props)
                 $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + ahead, [], [])
                 .done(function( _data) 
                 {
-                    console.log(_data);
                     if(_data == "") { let next = document.getElementById("next"); next.style.cursor = "not-allowed"; next.disabled = true; } 
                 })
                 .fail( function(xhr) { alert(xhr.responseText); });
@@ -420,7 +414,6 @@ function Page1(props)
 
                 prevPage.addEventListener("click", () =>
                 {
-                    console.log("prev1" + index);
                     let category = document.querySelector(".category").innerHTML;
                     let type = document.querySelector(".type").innerHTML;
                     let vendor = document.querySelector(".vendor").innerHTML;
@@ -477,11 +470,9 @@ function Page1(props)
 
                 nextPage.addEventListener("click", () =>
                 {
-                    console.log("next2" + index);
                     let category = document.querySelector(".category").innerHTML;
                     let type = document.querySelector(".type").innerHTML;
                     let vendor = document.querySelector(".vendor").innerHTML;
-                    console.log(vendor);
 
                     index = index + 1;
 
@@ -514,11 +505,9 @@ function Page1(props)
 
                 prevPage.addEventListener("click", () =>
                 {
-                    console.log("prev2" + index);
                     let category = document.querySelector(".category").innerHTML;
                     let type = document.querySelector(".type").innerHTML;
                     let vendor = document.querySelector(".vendor").innerHTML;
-                    console.log(vendor);
                     index = index - 1;
 
                     const api_key = localStorage.getItem('api_key');
