@@ -312,6 +312,7 @@ func CompileCustomerData(
 	CustomerAddress := []objects.CustomerAddress{}
 	for _, value := range customer_address {
 		CustomerAddress = append(CustomerAddress, objects.CustomerAddress{
+			Type:       value.Type.String,
 			FirstName:  value.FirstName,
 			LastName:   value.LastName,
 			Address1:   value.Address1.String,
@@ -443,7 +444,7 @@ func CompileOrderData(
 	OrderCustomerAddress := []objects.CustomerAddress{}
 	for _, value := range order_customer_address {
 		OrderCustomerAddress = append(OrderCustomerAddress, objects.CustomerAddress{
-			Type:       value.Name.String,
+			Type:       value.Type.String,
 			FirstName:  value.FirstName,
 			LastName:   value.LastName,
 			Address1:   value.Address1.String,

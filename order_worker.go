@@ -171,7 +171,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 		if err != nil {
 			return nil
 		}
-		err = dbconfig.DB.UpdateAddressByNameAndCustomer(context.Background(), database.UpdateAddressByNameAndCustomerParams{
+		err = dbconfig.DB.UpdateAddressByTypeAndCustomer(context.Background(), database.UpdateAddressByTypeAndCustomerParams{
 			CustomerID:   customer,
 			FirstName:    order_body.Customer.DefaultAddress.FirstName,
 			LastName:     order_body.Customer.DefaultAddress.LastName,
@@ -181,13 +181,13 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 			PostalCode:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Zip),
 			Company:      utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Company),
 			UpdatedAt:    time.Now().UTC(),
-			Name:         utils.ConvertStringToSQL("default"),
+			Type:         utils.ConvertStringToSQL("default"),
 			CustomerID_2: customer,
 		})
 		if err != nil {
 			return nil
 		}
-		err = dbconfig.DB.UpdateAddressByNameAndCustomer(context.Background(), database.UpdateAddressByNameAndCustomerParams{
+		err = dbconfig.DB.UpdateAddressByTypeAndCustomer(context.Background(), database.UpdateAddressByTypeAndCustomerParams{
 			CustomerID:   customer,
 			FirstName:    order_body.Customer.DefaultAddress.FirstName,
 			LastName:     order_body.Customer.DefaultAddress.LastName,
@@ -199,13 +199,13 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 			PostalCode:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Zip),
 			Company:      utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Company),
 			UpdatedAt:    time.Now().UTC(),
-			Name:         utils.ConvertStringToSQL("billing"),
+			Type:         utils.ConvertStringToSQL("billing"),
 			CustomerID_2: customer,
 		})
 		if err != nil {
 			return nil
 		}
-		err = dbconfig.DB.UpdateAddressByNameAndCustomer(context.Background(), database.UpdateAddressByNameAndCustomerParams{
+		err = dbconfig.DB.UpdateAddressByTypeAndCustomer(context.Background(), database.UpdateAddressByTypeAndCustomerParams{
 			CustomerID:   customer,
 			FirstName:    order_body.ShippingAddress.FirstName,
 			LastName:     order_body.ShippingAddress.LastName,
@@ -217,7 +217,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 			PostalCode:   utils.ConvertStringToSQL(order_body.ShippingAddress.Zip),
 			Company:      utils.ConvertStringToSQL(order_body.ShippingAddress.Company),
 			UpdatedAt:    time.Now().UTC(),
-			Name:         utils.ConvertStringToSQL("shipping"),
+			Type:         utils.ConvertStringToSQL("shipping"),
 			CustomerID_2: customer,
 		})
 		if err != nil {
