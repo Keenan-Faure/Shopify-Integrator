@@ -395,7 +395,6 @@ a:hover {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-image: url(../media/order-image.jpg);
     background-position: center;
     background-size: cover;
 }
