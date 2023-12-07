@@ -58,9 +58,6 @@ func LoopJSONShopify(
 				fetch_shopify_product_count = 0
 			}
 		}
-		fmt.Println(local_product_fetch_count)
-		fmt.Println(fetch_shopify_product_count)
-		fmt.Println(fetch_url)
 		log.Println("running fetch worker...")
 		fetch_enabled := false
 		fetch_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_fetch")
