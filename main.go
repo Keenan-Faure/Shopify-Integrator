@@ -1,6 +1,7 @@
 package main
 
 import (
+	execscripts "exec_scripts"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -53,6 +54,10 @@ func main() {
 		QueueWorker(&dbCon)
 	}
 	fmt.Println("starting API")
+	err = execscripts.RunShellCommand()
+	if err != nil {
+		log.Fatal(err)
+	}
 	setupAPI(dbCon, shopifyConfig)
 }
 
@@ -94,7 +99,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
 
 	// Configure warehouse-locations
-	api.Get("/inventory/config", dbconfig.middlewareAuth(dbconfig.ConfigLocationMap))
+	api.Get("/inventory/map", dbconfig.middlewareAuth(dbconfig.ConfigLocationMap))
 	api.Get("/inventory", dbconfig.middlewareAuth(dbconfig.GetWarehouseLocations))
 	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
 	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))

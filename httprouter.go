@@ -118,7 +118,7 @@ func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http
 
 // Returns all locations on Shopify and all warehouses in the app
 
-// GET /api/inventory/config
+// GET /api/inventory/map
 func (dbconfig *DbConfig) ConfigLocationMap(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	shopifyConfig := shopify.InitConfigShopify()
 	if !shopifyConfig.Valid {
