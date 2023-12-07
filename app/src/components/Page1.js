@@ -274,10 +274,10 @@ function Page1(props)
                     next.disabled = true;
                     next.style.cursor = "not-allowed";
                 }
-                if(_data == null)
+                if(_data == "")
                 {
-                    console.log("null");
-                    document.querySelector("empty-message").style.display = "block";
+                    document.querySelector(".pan-main").remove();
+                    document.querySelector(".empty-message").style.display = "block";
                 }
                 else 
                 {

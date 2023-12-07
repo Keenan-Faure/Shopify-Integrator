@@ -478,7 +478,6 @@ a
     left: 32px;
     display: block;
     background-size: cover;
-    background-size: cover;
     background-image: url(../media/add.png);
 }
 .empty-message 
@@ -487,11 +486,14 @@ a
     display: none;
     left: 50%;
     top: 50%;
+    padding: 15px;
+    border-radius: 5px;
     transform: translate(-50%, -50%);
     color: white;
     font-size: 16px;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    background-color: rgba(61, 61, 61, 0.4);
+    background-color: rgba(61, 61, 61, 0.8);
+    user-select: none;
 }
 
 

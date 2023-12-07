@@ -460,8 +460,8 @@ function Products()
         let C_filter = document.getElementById("clear_filter");
         C_filter.addEventListener("click", () => 
         {
-            document.querySelector("empty-message").style.display = "none";
-            
+            document.querySelector(".empty-message").style.display = "none";
+
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.get("http://localhost:8080/api/products?page=1", [], [])
@@ -477,7 +477,8 @@ function Products()
 
                 let root;
                 let pan_main;
-                document.querySelector(".pan-main").remove();
+                if(document.querySelector(".pan-main") != null){ document.querySelector(".pan-main").remove(); }
+            
                 pan_main = document.createElement('div');
                 let main_elements = document.querySelector(".main-elements");
                 pan_main.className = "pan-main";
