@@ -2,7 +2,7 @@
 INSERT INTO address(
     id,
     customer_id,
-    name,
+    "type",
     first_name,
     last_name,
     address1,
@@ -35,7 +35,7 @@ SET
     updated_at = $11
 WHERE id = $12;
 
--- name: UpdateAddressByNameAndCustomer :exec
+-- name: UpdateAddressByTypeAndCustomer :exec
 UPDATE address
 SET
     customer_id = $1,
@@ -49,13 +49,13 @@ SET
     postal_code = $9,
     company = $10,
     updated_at = $11
-WHERE name = $12 AND
+WHERE type = $12 AND
 customer_id = $13;
 
 -- name: GetAddressByCustomer :many
 SELECT
     id,
-    "name",
+    "type",
     first_name,
     last_name,
     address1,

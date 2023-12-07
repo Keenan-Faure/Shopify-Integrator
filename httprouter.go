@@ -483,7 +483,7 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 		_, err := dbconfig.DB.CreateAddress(r.Context(), database.CreateAddressParams{
 			ID:         uuid.New(),
 			CustomerID: customer.ID,
-			Name:       utils.ConvertStringToSQL("default"),
+			Type:       utils.ConvertStringToSQL(customer_body.Address[key].Type),
 			FirstName:  customer_body.Address[key].FirstName,
 			LastName:   customer_body.Address[key].LastName,
 			Address1:   utils.ConvertStringToSQL(customer_body.Address[key].Address1),

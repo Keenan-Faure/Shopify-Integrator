@@ -2,7 +2,7 @@
 CREATE TABLE address(
     id UUID UNIQUE PRIMARY KEY,
     customer_id UUID NOT NULL,
-    name VARCHAR(16),
+    type VARCHAR(16),
     first_name VARCHAR(32) NOT NULL,
     last_name VARCHAR(32) NOT NULL,
     address1 VARCHAR(64) DEFAULT '',
