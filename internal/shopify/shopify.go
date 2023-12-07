@@ -25,6 +25,33 @@ type ConfigShopify struct {
 	Valid       bool
 }
 
+// Retrieves a count of products on Shopify
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/product#get-products-count
+func (configShopify *ConfigShopify) GetShopifyProductCount() (objects.ShopifyProductCount, error) {
+	res, err := configShopify.FetchHelper(
+		"products/count.json",
+		http.MethodGet,
+		nil,
+	)
+	if err != nil {
+		return objects.ShopifyProductCount{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ShopifyProductCount{}, err
+	}
+	if res.StatusCode != 200 {
+		return objects.ShopifyProductCount{}, errors.New(string(respBody))
+	}
+	response := objects.ShopifyProductCount{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.ShopifyProductCount{}, err
+	}
+	return response, nil
+}
+
 // Retrieves a list of locations
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/location
 func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocations, error) {

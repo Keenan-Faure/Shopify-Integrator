@@ -19,22 +19,46 @@ func LoopJSONShopify(
 	dbconfig *DbConfig,
 	shopifyConfig shopify.ConfigShopify) {
 	fetch_url := ""
-	fetch_time := 1
+	fetch_shopify_product_count := 0
+	local_product_fetch_count := 0
+	fetch_time := 3
 	fetch_time_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_shopify_fetch_time")
 	if err != nil {
-		fetch_time = 1
+		fetch_time = 3
 	}
 	fetch_time, err = strconv.Atoi(fetch_time_db.Value)
 	if err != nil {
-		fetch_time = 1
+		fetch_time = 3
 	}
-	// do not allow fetch time lower than 5 minutes
-	if fetch_time < 1 {
-		fetch_time = 1
+	// do not allow fetch time lower than 3 minutes
+	if fetch_time < 3 {
+		fetch_time = 3
 	}
 	ticker := time.NewTicker(time.Duration(fetch_time) * time.Minute)
 	for ; ; <-ticker.C {
-		fmt.Println("running fetch worker...")
+		// loops each interval and retrieves the amount of products on Shopify
+		// it should only re-do the fetch from scratch if the count of products on Shopify and counted are the same
+
+		// during the first iteration it should fetch the count from shopify and update the counter
+		if fetch_shopify_product_count == 0 {
+			fetch_shopify_product_count_object, err := shopifyConfig.GetShopifyProductCount()
+			if err != nil {
+				log.Fatal("Shopify > Error fetching next products to process:", err)
+				break
+			}
+			// sets it to the counter
+			fetch_shopify_product_count = fetch_shopify_product_count_object.Count
+		} else {
+			// otherwise if the value is non-zero (it has been set already)
+			// then we check if the local counter equals the shopify count
+			if fetch_shopify_product_count == local_product_fetch_count {
+				// resets the url and the counters
+				fetch_url = ""
+				local_product_fetch_count = 0
+				fetch_shopify_product_count = 0
+			}
+		}
+		log.Println("running fetch worker...")
 		fetch_enabled := false
 		fetch_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_fetch")
 		if err != nil {
@@ -521,7 +545,6 @@ func LoopJSONShopify(
 					}
 				}
 			}
-			// insert here
 			err = dbconfig.DB.CreateFetchStat(context.Background(), database.CreateFetchStatParams{
 				ID:               uuid.New(),
 				AmountOfProducts: int32(len(shopifyProds.Products)),
@@ -533,6 +556,7 @@ func LoopJSONShopify(
 				break
 			}
 			log.Printf("From Shopify %d products were collected", len(shopifyProds.Products))
+			local_product_fetch_count = local_product_fetch_count + len(shopifyProds.Products)
 			fetch_url = utils.GetNextURL(next)
 		}
 	}

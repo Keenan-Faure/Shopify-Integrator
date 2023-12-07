@@ -134,7 +134,7 @@ func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.
 	return database.CreateAddressParams{
 		ID:         uuid.New(),
 		CustomerID: customer_id,
-		Name:       utils.ConvertStringToSQL("default"),
+		Type:       utils.ConvertStringToSQL("default"),
 		FirstName:  order_body.Customer.DefaultAddress.FirstName,
 		LastName:   order_body.Customer.DefaultAddress.LastName,
 		Address1:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
@@ -154,7 +154,7 @@ func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid
 	return database.CreateAddressParams{
 		ID:         uuid.New(),
 		CustomerID: customer_id,
-		Name:       utils.ConvertStringToSQL("shipping"),
+		Type:       utils.ConvertStringToSQL("shipping"),
 		FirstName:  order_body.ShippingAddress.FirstName,
 		LastName:   order_body.ShippingAddress.LastName,
 		Address1:   utils.ConvertStringToSQL(order_body.ShippingAddress.FirstName),
@@ -174,7 +174,7 @@ func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.
 	return database.CreateAddressParams{
 		ID:         uuid.New(),
 		CustomerID: customer_id,
-		Name:       utils.ConvertStringToSQL("billing"),
+		Type:       utils.ConvertStringToSQL("billing"),
 		FirstName:  order_body.BillingAddress.FirstName,
 		LastName:   order_body.BillingAddress.LastName,
 		Address1:   utils.ConvertStringToSQL(order_body.BillingAddress.FirstName),

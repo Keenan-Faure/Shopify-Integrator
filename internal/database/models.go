@@ -15,7 +15,7 @@ import (
 type Address struct {
 	ID         uuid.UUID      `json:"id"`
 	CustomerID uuid.UUID      `json:"customer_id"`
-	Name       sql.NullString `json:"name"`
+	Type       sql.NullString `json:"type"`
 	FirstName  string         `json:"first_name"`
 	LastName   string         `json:"last_name"`
 	Address1   sql.NullString `json:"address1"`

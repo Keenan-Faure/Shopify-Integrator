@@ -17,7 +17,7 @@ const createAddress = `-- name: CreateAddress :one
 INSERT INTO address(
     id,
     customer_id,
-    name,
+    "type",
     first_name,
     last_name,
     address1,
@@ -32,13 +32,13 @@ INSERT INTO address(
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
 )
-RETURNING id, customer_id, name, first_name, last_name, address1, address2, suburb, city, province, postal_code, company, created_at, updated_at
+RETURNING id, customer_id, type, first_name, last_name, address1, address2, suburb, city, province, postal_code, company, created_at, updated_at
 `
 
 type CreateAddressParams struct {
 	ID         uuid.UUID      `json:"id"`
 	CustomerID uuid.UUID      `json:"customer_id"`
-	Name       sql.NullString `json:"name"`
+	Type       sql.NullString `json:"type"`
 	FirstName  string         `json:"first_name"`
 	LastName   string         `json:"last_name"`
 	Address1   sql.NullString `json:"address1"`
@@ -56,7 +56,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 	row := q.db.QueryRowContext(ctx, createAddress,
 		arg.ID,
 		arg.CustomerID,
-		arg.Name,
+		arg.Type,
 		arg.FirstName,
 		arg.LastName,
 		arg.Address1,
@@ -73,7 +73,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 	err := row.Scan(
 		&i.ID,
 		&i.CustomerID,
-		&i.Name,
+		&i.Type,
 		&i.FirstName,
 		&i.LastName,
 		&i.Address1,
@@ -92,7 +92,7 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 const getAddressByCustomer = `-- name: GetAddressByCustomer :many
 SELECT
     id,
-    "name",
+    "type",
     first_name,
     last_name,
     address1,
@@ -109,7 +109,7 @@ WHERE customer_id = $1
 
 type GetAddressByCustomerRow struct {
 	ID         uuid.UUID      `json:"id"`
-	Name       sql.NullString `json:"name"`
+	Type       sql.NullString `json:"type"`
 	FirstName  string         `json:"first_name"`
 	LastName   string         `json:"last_name"`
 	Address1   sql.NullString `json:"address1"`
@@ -133,7 +133,7 @@ func (q *Queries) GetAddressByCustomer(ctx context.Context, customerID uuid.UUID
 		var i GetAddressByCustomerRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.Type,
 			&i.FirstName,
 			&i.LastName,
 			&i.Address1,
@@ -218,7 +218,7 @@ func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) er
 	return err
 }
 
-const updateAddressByNameAndCustomer = `-- name: UpdateAddressByNameAndCustomer :exec
+const updateAddressByTypeAndCustomer = `-- name: UpdateAddressByTypeAndCustomer :exec
 UPDATE address
 SET
     customer_id = $1,
@@ -232,11 +232,11 @@ SET
     postal_code = $9,
     company = $10,
     updated_at = $11
-WHERE name = $12 AND
+WHERE type = $12 AND
 customer_id = $13
 `
 
-type UpdateAddressByNameAndCustomerParams struct {
+type UpdateAddressByTypeAndCustomerParams struct {
 	CustomerID   uuid.UUID      `json:"customer_id"`
 	FirstName    string         `json:"first_name"`
 	LastName     string         `json:"last_name"`
@@ -248,12 +248,12 @@ type UpdateAddressByNameAndCustomerParams struct {
 	PostalCode   sql.NullString `json:"postal_code"`
 	Company      sql.NullString `json:"company"`
 	UpdatedAt    time.Time      `json:"updated_at"`
-	Name         sql.NullString `json:"name"`
+	Type         sql.NullString `json:"type"`
 	CustomerID_2 uuid.UUID      `json:"customer_id_2"`
 }
 
-func (q *Queries) UpdateAddressByNameAndCustomer(ctx context.Context, arg UpdateAddressByNameAndCustomerParams) error {
-	_, err := q.db.ExecContext(ctx, updateAddressByNameAndCustomer,
+func (q *Queries) UpdateAddressByTypeAndCustomer(ctx context.Context, arg UpdateAddressByTypeAndCustomerParams) error {
+	_, err := q.db.ExecContext(ctx, updateAddressByTypeAndCustomer,
 		arg.CustomerID,
 		arg.FirstName,
 		arg.LastName,
@@ -265,7 +265,7 @@ func (q *Queries) UpdateAddressByNameAndCustomer(ctx context.Context, arg Update
 		arg.PostalCode,
 		arg.Company,
 		arg.UpdatedAt,
-		arg.Name,
+		arg.Type,
 		arg.CustomerID_2,
 	)
 	return err
