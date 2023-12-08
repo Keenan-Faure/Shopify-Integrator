@@ -12,13 +12,9 @@ function Settings()
     {
         /* Ensures the page elements are set correctly */
         let navigation = document.getElementById("navbar");
-        window.onload = function(event)
-        {
-            navigation.style.left = "25%";
-            navigation.style.position = "absolute";
-            navigation.style.width = "75%";
-            navigation.style.animation = "MoveLeft2 0.8s ease";
-        }
+        navigation.style.left = "25%";
+        navigation.style.position = "absolute";
+        navigation.style.width = "75%";
 
 
         /* Onclick for the Warehouse setting */
@@ -117,7 +113,15 @@ function Settings()
             {
                 app_button[i].addEventListener("click", () =>
                 {
-                    a_settings[i].scrollIntoView();
+                    a_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                    setTimeout(() =>
+                    {
+                        a_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                        setTimeout(() =>
+                        {
+                            a_settings[i].style.boxShadow = "";
+                        }, 1200)
+                    }, 50);
                 });
             }
             
@@ -159,7 +163,16 @@ function Settings()
             {
                 shop_button[i].addEventListener("click", () =>
                 {
-                    s_settings[i].scrollIntoView();
+                    s_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                    setTimeout(() =>
+                    {
+                        s_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                        setTimeout(() =>
+                        {
+                            s_settings[i].style.boxShadow = "";
+                        }, 1200)
+                    }, 50);
+                    
                 });
             }
             
@@ -216,71 +229,69 @@ function Settings()
     return (
         <>
             <Background />
-            <div className = "component1">
-                <div className = "main-container">
-                    <div className = "settings">
-                        <button className = "submiit" id = "edit" style = {{zIndex: '2'}}>Edit Settings</button>
-                        <div className = "app-settings">
-                            <div className = "title">App Settings</div>
-                            <div className = "_app">
-                                <div className = "setting">
-                                    <div className = "setting-title" style ={{top: '-6px'}}>Webhook Configuration
-                                        <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
-                                    </div>
-                                    <div className = "setting-details description" style = {{textAlign: 'left'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
-                                    <div className="webhook_div" action="/action_page.php" style= {{margin:  'auto',maxWidth: '300px'}}>
-                                        <input type="text" placeholder = "Forwarding url..." name = "search2" />
-                                        <button className = "button-on-off" type="submit">Create</button>
-                                    </div>
+            <div className = "main-container">
+                <div className = "settings">
+                    <button className = "submiit" id = "edit" style = {{zIndex: '2', top: '55px'}}>Edit Settings</button>
+                    <div className = "app-settings" style= {{position: 'relative', top:'15px'}}>
+                        <div className = "title">App Settings</div>
+                        <div className = "_app">
+                            <div className = "setting">
+                                <div className = "setting-title" style ={{top: '-6px'}}>Webhook Configuration
+                                    <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
                                 </div>
-
-                                <div className = "setting" style = {{height: '240px', fontSize: '12px'}}>
-                                    <div className = "setting-title">Warehouse Location</div>
-                                    <div className = "setting-details description" style = {{textAlign: 'left'}}>Configures the location warehousing required for the products displayed</div>
-                                    <button className = "button-on-off" style = {{width: '90px'}}id="fetch-button">Fetch shopify locations</button>
-                                    <table style = {{left: '40%',top: '17px', marginBottom: '0px',fontSize: '13px'}}>
-                                        <tbody>
-                                            <tr>
-                                                <th>Warehouse</th>
-                                                <th>Shopify Location</th>
-                                            </tr>
-                                            <tr>
-                                                <td>Cape Town Warehouse</td>
-                                                <td className = "fill-able">
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Japan Warehouse</td>
-                                                <td className = "fill-able">
-                                                </td>
-                                            </tr>
-                                        </tbody> 
-                                    </table>
+                                <div className = "setting-details description" style = {{textAlign: 'left'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
+                                <div className="webhook_div" action="/action_page.php" style= {{margin:  'auto',maxWidth: '300px'}}>
+                                    <input type="text" placeholder = "Forwarding url..." name = "search2" />
+                                    <button className = "button-on-off" type="submit">Create</button>
                                 </div>
                             </div>
-                            
-                        </div>
-                        <div className = "shopify-settings">
-                            <div className = "title">Shopify Settings</div>
-                            <div className = "_shopify"></div>
-                        </div>   
-                    </div> 
-                    
-                </div>
-                <div className = "side-container">
-                    <div className = "settings-2">
-                        <div className = "application"><i className = "a"/>Application Settings:</div>
-                        <div id = "app_settings"></div>
 
+                            <div className = "setting" style = {{height: '240px', fontSize: '12px'}}>
+                                <div className = "setting-title">Warehouse Location</div>
+                                <div className = "setting-details description" style = {{textAlign: 'left'}}>Configures the location warehousing required for the products displayed</div>
+                                <button className = "button-on-off" style = {{width: '90px'}}id="fetch-button">Fetch shopify locations</button>
+                                <table style = {{left: '40%',top: '17px', marginBottom: '0px',fontSize: '13px'}}>
+                                    <tbody>
+                                        <tr>
+                                            <th>Warehouse</th>
+                                            <th>Shopify Location</th>
+                                        </tr>
+                                        <tr>
+                                            <td>Cape Town Warehouse</td>
+                                            <td className = "fill-able">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Japan Warehouse</td>
+                                            <td className = "fill-able">
+                                            </td>
+                                        </tr>
+                                    </tbody> 
+                                </table>
+                            </div>
+                        </div>
+                        
                     </div>
-                    <div className = "settings-2">
-                        <div className = "application"><i className = "b"/>Spotify Settings:</div>
-                        <div id = "shopify_settings"></div>
-                    </div>
+                    <div className = "shopify-settings">
+                        <div className = "title">Shopify Settings</div>
+                        <div className = "_shopify"></div>
+                    </div>   
+                </div> 
+                
+            </div>
+            <div className = "side-container">
+                <div className = "settings-2">
+                    <div className = "application"><i className = "a"/>Application Settings:</div>
+                    <div id = "app_settings"></div>
+
                 </div>
-                <div className = "confirm-line">
-                    <button className="tablink" id = "confirm" style ={{left: '50%'/*, transform: 'translate(-50%)'*/}}>Save</button>
+                <div className = "settings-2">
+                    <div className = "application"><i className = "b"/>Spotify Settings:</div>
+                    <div id = "shopify_settings"></div>
                 </div>
+            </div>
+            <div className = "confirm-line">
+                <button className="tablink" id = "confirm" style ={{left: '50%'/*, transform: 'translate(-50%)'*/}}>Save</button>
             </div>
             
         </>
