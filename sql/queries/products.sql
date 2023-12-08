@@ -27,6 +27,18 @@ SET
     updated_at = $7
 WHERE product_code = $8;
 
+-- name: UpdateProductByID :exec
+UPDATE products
+SET
+    active = $1,
+    title = $2,
+    body_html = $3,
+    category = $4,
+    vendor = $5,
+    product_type = $6,
+    updated_at = $7
+WHERE id = $8;
+
 -- name: UpdateProductBySKU :exec
 UPDATE products
 SET

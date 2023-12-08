@@ -435,6 +435,7 @@ type RequestBodyUser struct {
 	Token string `json:"token"`
 }
 type RequestBodyProduct struct {
+	Active         string               `json:"active"`
 	ProductCode    string               `json:"product_code"`
 	Title          string               `json:"title"`
 	BodyHTML       string               `json:"body_html"`
