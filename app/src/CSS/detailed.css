@@ -22,8 +22,7 @@
 .description ul 
 {
     list-style-type: disc;
-    padding: 10px 0;
-    background-color: transparent;
+    padding: 0px 0;
 }
 .description li 
 {
@@ -127,6 +126,10 @@
 {
     padding: 10px;
     position: relative;
+}
+#title 
+{
+    text-decoration: underline;
 }
 .details-title 
 {

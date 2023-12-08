@@ -64,7 +64,6 @@ function Detailed_product(props)
         let confirm = document.querySelector(".confirm-line");
         edit.addEventListener("click", () =>
         {
-            console.log("xD");
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
             let variant_updateDate = document.querySelector(".variant-updateDate");
             confirm.style.display = "block";

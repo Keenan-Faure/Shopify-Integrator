@@ -25,9 +25,9 @@ function Product_Variants(props)
                         <th>Option 3</th>
                     </tr>
                     <tr>
-                        <td className = "option1">{props.Option1}</td>
-                        <td className = "option2">{props.Option2}</td>
-                        <td className = "option3">{props.Option3}</td>
+                        <td className = "option1" >{props.Option1}</td>
+                        <td className = "option2" >{props.Option2}</td>
+                        <td className = "option3" >{props.Option3}</td>
                     </tr>
                 </tbody>
             </table>

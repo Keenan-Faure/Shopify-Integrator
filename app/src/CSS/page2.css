@@ -103,7 +103,20 @@
     word-wrap: break-word;
     overflow: auto;
     text-align: center;
+    transition-duration: 0.4s;
+    background-color: transparent;
+    width: 80%;
+    position: relative;
+    left: 50%;
+    transform: translate(-50%);
+    border-left: transparent;
 }
+.description:hover
+{
+    border-left: 1px solid#5f5f5f;
+}
+
+
 .value, .id
 {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
