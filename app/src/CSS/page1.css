@@ -361,6 +361,11 @@ input.search-area
     from {position: relative; z-index: 1; width: 100%; left: 0%;}
     to {z-index: 1; width: 70%; left: 30%;}
 }
+@keyframes MoveLeft2
+{
+    from {position: relative; z-index: 1; width: 100%; left: 0%;}
+    to {z-index: 1; width: 75%; left: 25%;}
+}
 
 @keyframes MoveRight
 {

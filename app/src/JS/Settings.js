@@ -10,15 +10,16 @@ function Settings()
 {
     useEffect(()=> 
     {
-        /* Ensure the model is shown */
-        let navbar = document.getElementById("navbar");
-        navbar.style.display = "block";
-
+        /* Ensures the page elements are set correctly */
+        let navigation = document.getElementById("navbar");
         window.onload = function(event)
         {
-            navbar.style.position = "relative";
-            navbar.style.width =  "100%";
+            navigation.style.left = "25%";
+            navigation.style.position = "absolute";
+            navigation.style.width = "75%";
+            navigation.style.animation = "MoveLeft2 0.8s ease";
         }
+
 
         /* Onclick for the Warehouse setting */
         let info_icon = document.querySelector(".info_icon");
@@ -116,7 +117,7 @@ function Settings()
             {
                 app_button[i].addEventListener("click", () =>
                 {
-                    a_settings.scrollIntoView();
+                    a_settings[i].scrollIntoView();
                 });
             }
             
