@@ -41,6 +41,7 @@ function Login()
 
             /* Sets the user information for this session */
             localStorage.setItem('api_key', inputs.password);
+            localStorage.setItem('username', inputs.username);
 
             message.innerHTML = "Login Sucessful";
             message.style.backgroundColor = "rgb(6, 133, 6)";
