@@ -18,7 +18,9 @@ function Export_Product()
     {
         event.preventDefault();
 
-        $.post("http://localhost:8080/api/products/export", [], [], 'json')
+        const api_key = localStorage.getItem('api_key');
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+        $.get("http://localhost:8080/api/products/export", [], [], 'json')
         .done(function( _data) 
         {
             console.log(_data);
@@ -106,6 +108,7 @@ function Export_Product()
     return (
         <>
             <Background />
+
             <div className = 'modal1' id = "model">
                 <div className = "back-row-toggle splat-toggle">
                     <div className = "rain front-row"></div>
@@ -122,6 +125,7 @@ function Export_Product()
                         <label><b>Exports to a CSV File</b></label>
                         <br /><br /><br />
                         <button className = 'button' type = 'submit'>Export</button>
+                        <a href="/images/myw3schoolsimage.jpg" download="w3logo">Downlaod</a>
                     </div>
                 </form>
             </div>    
