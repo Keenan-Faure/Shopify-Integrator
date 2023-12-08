@@ -1,7 +1,6 @@
 package main
 
 import (
-	execscripts "exec_scripts"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -54,10 +53,6 @@ func main() {
 		QueueWorker(&dbCon)
 	}
 	fmt.Println("starting API")
-	err = execscripts.RunShellCommand()
-	if err != nil {
-		log.Fatal(err)
-	}
 	setupAPI(dbCon, shopifyConfig)
 }
 

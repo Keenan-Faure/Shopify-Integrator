@@ -177,7 +177,7 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 		}
 		return "", nil
 	}
-	csv_name := "product_export-" + time.Now().UTC().String() + ".csv"
+	csv_name := "product_export-" + time.Now().UTC().Format("01-02-2006") + ".csv"
 	f, err := os.Create(filepath.Clean(csv_name))
 	if err != nil {
 		return "", err

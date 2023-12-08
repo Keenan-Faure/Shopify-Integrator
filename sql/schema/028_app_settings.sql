@@ -88,7 +88,7 @@ INSERT INTO app_settings(
     NOW()
 ), (
     uuid_generate_v4(),
-    'app_default_export_direectory',
+    'app_default_export_directory',
     'Absolute directory to which to place any exported data from the application',
     '/',
     NOW(),
