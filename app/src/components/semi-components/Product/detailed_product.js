@@ -209,8 +209,19 @@ function Detailed_product(props)
                         <div className = "details-description">Product Description</div>
                         <div className = "description" id = "description" style = {{resize:'none'}} rows = "5" cols = "80">{props.Product_Description}</div>
 
-                        <div className = "details-description">Product Warehousing</div> 
-                        <div className = "details-warehousing"></div>  
+                        <div className = "details-description">Product Options</div> 
+                        <div className = "details-options">
+                            <table>
+                                <tbody>
+                                <tr>
+                                    {props.Option_Name}
+                                </tr>
+                                <tr>
+                                    {props.Option_Value}
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div className = "details-right"></div>
                     <div className = "details-left"></div>
@@ -237,13 +248,14 @@ function Detailed_product(props)
 
 Detailed_product.defaultProps = 
 {
-    Product_Title: 'Product title',
-    Product_Code: 'Product code',
-    Product_Options: 'Options',
-    Product_Category: 'Category',
-    Product_Type: 'Type',
-    Product_Vendor: 'Vendor',
-    Product_Image: '#ccc',
-    Product_Price: 'Price',
+    Product_Title: 'N/A',
+    Product_Code: 'N/A',
+    Product_Options: 'N/A',
+    Product_Category: 'N/A',
+    Product_Type: 'N/A',
+    Product_Vendor: 'N/A',
+    Product_Image: 'N/A',
+    Product_Price: 'N/A',
+    Product_Options: 'N/A'
 }
 export default Detailed_product;

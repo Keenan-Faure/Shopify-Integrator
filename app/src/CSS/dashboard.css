@@ -30,6 +30,10 @@
 }
 
 /* KEENAN CSS */
+#shopify_fetch_graph, #shopify_order_graph
+{
+    display: none;
+}
 .fetch_status {
     position: relative;
     width: max-content;
@@ -47,7 +51,7 @@
     position: relative;
     width: 250px;
     float: left;
-    top: 37px;
+    top: 18px;
 }
 
 .enabled_status {
@@ -109,20 +113,23 @@
 }
 
 .graph {
-    width: 45%;
+    width: 38%;
     height: 45%;
 }
 
 .g1 {
     position: relative;
     left: 1%;
-
+    top: 12%;
+    display: none;
 }
 
 .g2 {
     position: relative;
     left: 75%;
+    top: -5%;
     transform: translate(-50%, 0);
+    display: none;
 }
 
 .header {
@@ -130,7 +137,6 @@
     text-align: center;
     width: 100%;
     height: max-content;
-    background-color: rgb(0 0 0 / 14%);
     border-width: 1px;
     font-size: 20px;
     top: 50px;
@@ -145,21 +151,31 @@
     height: max-content;
     padding: 5px;
     left: -50px;
+    margin: 10px;
 }
 
 .logout_button {
-    position: relative;
-    width: max-content;
-    height: max-content;
+    background-color: #fcfafa;
+    color: rgb(37, 37, 37);
+    border: none;
+    outline: none;
     cursor: pointer;
-    background-color: aquamarine;
-    border-width: 1px;
-    border-style: dashed;
-    border-radius: 4px;
-    top: 30px;
+    padding: 8px 16px;
+    margin: 2px;
+    font-size: 15px;
+    width: 7%;
+    position: relative;
+    transition-duration: 0.4s;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    top: 17px;
     right: 20px;
     padding: 10px;
     float: right;
+}
+.logout_button:hover 
+{
+    background-color: rgb(72, 101, 128);
+    color: aliceblue;
 }
 
 .footer {

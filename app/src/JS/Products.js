@@ -10,6 +10,7 @@ import Detailed_Images from '../components/semi-components/Product/detailed_imag
 import Detailed_Images2 from '../components/semi-components/Product/detailed_images2';
 import Detailed_Price from '../components/semi-components/Product/detailed_prices';
 import Detailed_Quantities from '../components/semi-components/Product/detailed_quantities';
+import Detailed_Options from '../components/semi-components/Product/detailed_options';
 
 import '../CSS/page1.css';
 
@@ -156,7 +157,9 @@ function Products()
                             let rot = createRoot(details);
                             rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
                                 Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
-                            />)
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options Option_Value={el.value} Option_Name = {el.position} />)}
+                                
+                            />) 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
@@ -178,6 +181,7 @@ function Products()
                                 Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
                                 />))
 
+
                             }, 10);
                             
                         }
@@ -189,6 +193,7 @@ function Products()
                             let rot = createRoot(details);
                             rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
                                 Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options />)}
                             />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
