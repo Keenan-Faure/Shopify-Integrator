@@ -92,27 +92,58 @@ function Detailed_product(props)
 
             let object = 
             {
-                product_code: td_list[1].innerHTML, 
-                title: title.innerHTML, 
                 body_html: description.innerHTML, 
                 category: td_list[0].innerHTML, 
-                vendor: td_list[3].innerHTML,
+                options:
+                [
+
+                ],
+                product_code: td_list[1].innerHTML, 
                 product_type: td_list[2].innerHTML, 
+                title: title.innerHTML, 
                 variants: 
                 [
 
                 ],
+                vendor: td_list[3].innerHTML
             };
             let quantities = {};
+            let options = {};
             
             let _quantities = document.querySelectorAll(".quantities");
             let price_name = document.querySelectorAll(".price_name");
             let price_value = document.querySelectorAll(".price_value");
+            let _options = document.querySelectorAll(".product_options");
 
+            /* Options object */
+            for(let i = 0; i < _options.length; i++)
+            {
+                if(_options[i].childNodes.length <= 1)
+                {
+                    options =
+                    {         
+                        name: "",
+                        value: ""
+                    };
+                }
+                else 
+                {
+                    options =
+                    {
+                        name: _options[i].childNodes[0].innerHTML,
+                        value: _options[i].childNodes[1].innerHTML
+                    };
+                }
+                object.options[i] = options;
+            }
+
+
+            /* Quantities object + rest of it */
             for(let i = 0; i < price.length; i++)
             {
                 /* Keep variants variable inside, so it can start fresh when the for loop restarts */
                 let variants = {};
+
                 if(_quantities[i].childNodes.length <= 1)
                 {
                     quantities =
@@ -126,12 +157,10 @@ function Detailed_product(props)
                 {
                     quantities =
                     {
-                        
                         name: _quantities[i].childNodes[0].innerHTML,
                         value: _quantities[i].childNodes[1].innerHTML
                     };
                 }
-
                 variants.sku = sku[i].innerHTML; 
                 variants.barcode = barcode[i].innerHTML;
                 variants.option1 = option1[i].innerHTML; 
@@ -210,18 +239,19 @@ function Detailed_product(props)
                         <div className = "description" id = "description" style = {{resize:'none'}} rows = "5" cols = "80">{props.Product_Description}</div>
 
                         <div className = "details-description">Product Options</div> 
-                        <div className = "details-options">
+                        <div className = "details-options" style={{marginBottom: '15px'}}>
                             <table>
                                 <tbody>
-                                <tr>
-                                    {props.Option_Name}
-                                </tr>
-                                <tr>
-                                    {props.Option_Value}
-                                </tr>
+                                    <tr>
+                                        <th style= {{width: '50%'}}>Value</th>
+                                        <th style= {{width: '50%'}}>Position</th>
+                                    </tr>
+                                    <>
+                                        {props.Product_Options}
+                                    </>
                                 </tbody>
                             </table>
-                        </div>
+                            </div>
                     </div>
                     <div className = "details-right"></div>
                     <div className = "details-left"></div>

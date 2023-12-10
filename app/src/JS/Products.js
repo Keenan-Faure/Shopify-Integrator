@@ -87,7 +87,7 @@ function Products()
                 setTimeout(() =>
                 {
                     DetailedView();
-                }, 100);
+                }, 200);
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
@@ -121,7 +121,11 @@ function Products()
                     root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                     Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
                     /> ))
-                    DetailedView();
+
+                    setTimeout(() =>
+                    {
+                        DetailedView();
+                    }, 200);
                     Pagintation(1);
                 })
                 .fail( function(xhr) { alert(xhr.responseText); });
@@ -155,9 +159,9 @@ function Products()
                             products.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                            rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
                                 Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
-                                Product_Options={_data.options.map((el, i) => <Detailed_Options Option_Value={el.value} Option_Name = {el.position} />)}
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
                                 
                             />) 
                             /* For some reason it wont pick up the element unless it throw it here */
@@ -191,10 +195,11 @@ function Products()
                             let details = document.createElement('details');
                             products.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                            rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
                                 Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
-                                Product_Options={_data.options.map((el, i) => <Detailed_Options />)}
-                            />)
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
+                                
+                            />) 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
