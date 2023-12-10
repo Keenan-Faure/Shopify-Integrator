@@ -19,7 +19,7 @@ type OrderAmountResponse struct {
 }
 
 type RequestWebhookURL struct {
-	ForwardingURL string `json:"forwarding_url"`
+	Domain string `json:"domain"`
 }
 
 type ResponseWarehouseLocation struct {
@@ -435,6 +435,7 @@ type RequestBodyUser struct {
 	Token string `json:"token"`
 }
 type RequestBodyProduct struct {
+	Active         string               `json:"active"`
 	ProductCode    string               `json:"product_code"`
 	Title          string               `json:"title"`
 	BodyHTML       string               `json:"body_html"`

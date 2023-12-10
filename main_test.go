@@ -167,6 +167,7 @@ func CreateOrdr() objects.RequestBodyOrder {
 
 func CreateProd() objects.RequestBodyProduct {
 	return objects.RequestBodyProduct{
+		Active:         "1",
 		ProductCode:    "ABC123",
 		Title:          "TestProduct",
 		BodyHTML:       "",
