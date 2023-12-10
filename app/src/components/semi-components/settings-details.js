@@ -12,7 +12,7 @@ function Setting_details(props)
         <>
             <div className = "setting_main">
                 <div className = "_title">{props.Key}</div>
-                <div className = "setting-details description">{props.Description}</div>
+                <div className = "setting-details description" style={{backgroundColor: 'transparent'}}>{props.Description}</div>
                 <div className = "setting-details id" style = {{display: 'none'}}>{props.id}</div>
                 <div className = "setting-details value">
                     Currently Set to:<div style ={{fontWeight:'bold'}}className = "_value">{props.Value}</div>

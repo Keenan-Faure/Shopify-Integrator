@@ -80,7 +80,8 @@ function Dashboard()
             },
             options: {
                 scales: {
-                    y: {
+                    y: 
+                    {
                         beginAtZero: true
                     }
                 }

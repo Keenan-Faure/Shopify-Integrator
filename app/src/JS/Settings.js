@@ -239,7 +239,7 @@ function Settings()
                                 <div className = "setting-title" style ={{top: '-6px'}}>Webhook Configuration
                                     <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
                                 </div>
-                                <div className = "setting-details description" style = {{textAlign: 'left'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
+                                <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
                                 <div className="webhook_div" action="/action_page.php" style= {{margin:  'auto',maxWidth: '300px'}}>
                                     <input type="text" placeholder = "Forwarding url..." name = "search2" />
                                     <button className = "button-on-off" type="submit">Create</button>
@@ -248,7 +248,7 @@ function Settings()
 
                             <div className = "setting" style = {{height: '240px', fontSize: '12px'}}>
                                 <div className = "setting-title">Warehouse Location</div>
-                                <div className = "setting-details description" style = {{textAlign: 'left'}}>Configures the location warehousing required for the products displayed</div>
+                                <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the location warehousing required for the products displayed</div>
                                 <button className = "button-on-off" style = {{width: '90px'}}id="fetch-button">Fetch shopify locations</button>
                                 <table style = {{left: '40%',top: '17px', marginBottom: '0px',fontSize: '13px'}}>
                                     <tbody>
