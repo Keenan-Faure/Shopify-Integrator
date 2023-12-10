@@ -21,9 +21,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// PUT /api/products/{{id}}
+// PUT /api/products/{id}
 func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// retrieve the product id from the url
 	product_id := chi.URLParam(r, "id")
 	err := IDValidation(product_id)
 	if err != nil {
@@ -53,9 +52,6 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// update product
-	// update variant
-
 	params, err := DecodeProductRequestBody(r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
@@ -71,11 +67,6 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	err = ValidateDuplicateSKU(params, dbconfig, r)
-	if err != nil {
-		RespondWithError(w, http.StatusConflict, utils.ConfirmError(err))
-		return
-	}
 	err = DuplicateOptionValues(params)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
@@ -86,10 +77,10 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 	err = dbconfig.DB.UpdateProductByID(r.Context(), database.UpdateProductByIDParams{
 		Active:      params.Active,
 		Title:       utils.ConvertStringToSQL(params.Title),
-		BodyHtml:    utils.ConvertStringToSQL(params.Title),
-		Category:    utils.ConvertStringToSQL(params.Title),
-		Vendor:      utils.ConvertStringToSQL(params.Title),
-		ProductType: utils.ConvertStringToSQL(params.Title),
+		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
+		Category:    utils.ConvertStringToSQL(params.Category),
+		Vendor:      utils.ConvertStringToSQL(params.Vendor),
+		ProductType: utils.ConvertStringToSQL(params.ProductType),
 		UpdatedAt:   time.Now().UTC(),
 		ID:          product_uuid,
 	})
@@ -102,16 +93,15 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 		// TODO Should we use the position in the POST Body or the key that is it inside the array?
 		_, err = dbconfig.DB.UpdateProductOption(r.Context(), database.UpdateProductOptionParams{
 			Name:       params.ProductOptions[key].Value,
-			Position:   int32(key),
+			Position:   int32(key + 1),
 			ProductID:  product_uuid,
-			Position_2: int32(key),
+			Position_2: int32(key + 1),
 		})
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
-
 	for _, variant := range params.Variants {
 		err = dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
 			Option1:   utils.ConvertStringToSQL(variant.Option1),
@@ -153,10 +143,11 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 			}
 		}
 	}
-
-	// loop throguh all variations and add them
-	// loop through all variant pricing and qty and add them
-
+	updated_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, updated_data)
 }
 
 // GET /api/stats/fetch
@@ -203,11 +194,10 @@ func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	// create webhook url
-	webhook_url := body.ForwardingURL + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
+	webhook_url := body.Domain + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: webhook_url,
 	})
-	// TODO how we going to get the ngrok forwarding url??
 }
 
 // GET /api/inventory
