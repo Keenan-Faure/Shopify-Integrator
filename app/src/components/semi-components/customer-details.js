@@ -43,7 +43,7 @@ function Customer_details(props)
     }, []);
 
     return (
-        <div className = "pan">
+        <div className = "pan" >
             <div className = "pan-img"></div>
             <div className = "pan-details">
                 <a href = "/#" className = "p-d-title">{props.Customer_ID}</a>

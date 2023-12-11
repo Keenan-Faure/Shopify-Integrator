@@ -168,7 +168,7 @@ function Dashboard()
             {
                 let bubble = document.createElement("div");
                 bubble.className = "bubble bub1";
-                bubble.innerHTML = "Warehouse has not been set, proceed to settings to set";
+                bubble.innerHTML = "Warehouse has not been set, proceed to 'Settings' to set";
                 bubble.setAttribute("onclick", "window.location.href = '/settings'");
                 main.appendChild(bubble);
 
@@ -189,7 +189,7 @@ function Dashboard()
             {
                 for(let i = 0; i < bubble.length; i++){ bubble[i].style.display = "none"; }
             }, 4000);
-        }, 1200);
+        }, 2200);
 
 
     }, []);

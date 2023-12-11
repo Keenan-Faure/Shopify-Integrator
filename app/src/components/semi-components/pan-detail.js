@@ -59,18 +59,6 @@ function Pan_details(props)
                 option[i].className = "p-d-false";
             }
         }
-        let pan_img = document.querySelector(".pan-img");
-        setTimeout(() =>
-        {
-            if(pan_img.style.backgroundImage == "")
-            {
-                console.log(":(");
-            }
-            else 
-            {
-                console.log(":)");
-            }
-        },100)
         
     }, []);
 

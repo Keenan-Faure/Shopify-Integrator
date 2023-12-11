@@ -192,7 +192,7 @@
     cursor: pointer;
     z-index: 2;
     color: rgb(184, 11, 11);
-    font-size: 45px;
+    font-size: 40px;
     text-align: center;
 }
 .rtn-button
@@ -310,7 +310,6 @@ tr:hover
 {
     font-weight: bold;
     font-size: 15px;
-    text-decoration: underline;
 }
 p{ padding: 10px 60px; margin: 0;}
 .c 

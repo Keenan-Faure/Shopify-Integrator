@@ -4,7 +4,6 @@ function Product_Variants(props)
 {
     return (
         <div style={{marginBottom: '5px'}}>
-            <div className = "variant-title">{props.Variant_Title}</div>
             <table style={{marginBottom: '25px'}}>
                 <tbody>
                     <tr>
@@ -41,7 +40,6 @@ function Product_Variants(props)
                 <br />
                 <div className = "quantities">{props.Quantities}</div>
 
-                <div className = "updateDate">Variant Update Date:</div>
                 <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
             </div>
         </div>

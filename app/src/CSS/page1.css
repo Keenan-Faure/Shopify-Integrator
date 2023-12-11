@@ -51,12 +51,11 @@ body
     overflow: auto;
     padding: 15px;
     cursor: pointer;
-    /*
-    border-left: 2px solid beige;
-    border-right: 2px solid rgb(214, 214, 90);
-    border-top: 2px solid rgb(174, 204, 149);
-    border-bottom: 2px solid rgb(157, 207, 99);
-    */
+
+}
+.filter-elements:hover 
+{
+    background-color: rgba(61, 61, 61, 0.9);
 }
 .filter-img 
 {
@@ -98,7 +97,7 @@ body
 .filter-selection-main 
 {
     display: none;
-    background-color: rgb(137 137 137 / 25%);
+    background-color: rgb(137 137 137 / 90%);
     position: absolute;
     width: 100%;
     height: 100%;
@@ -248,6 +247,7 @@ input.search-area
     user-select: none;
     cursor: pointer;
     overflow: hidden;
+    background: linear-gradient(to left, #202020, #818181);
 }
 .pan:hover 
 {
@@ -281,25 +281,12 @@ input.search-area
     text-align: left;
     padding: 4px;
     transition-duration: 0.4s;
-}
-.pan-price
-{
-    position: fixed;
-    right: 10px;
-    float: left;
-    height: auto;
-    width: 20%;
-    font-size: 14px;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    text-align: right;
-    padding: 4px;
-    transition-duration: 0.4s;
+    pointer-events: none;
 }
 .p-d-id, .p-d-activity
 {
     display: none;
+    pointer-events: none;
 }
 .p-d-false 
 {
