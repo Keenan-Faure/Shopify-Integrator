@@ -98,7 +98,6 @@ function Page2(props)
         let filter_input = document.querySelectorAll(".filter-selection-main");
         let close = document.querySelectorAll(".close-filter");
         let main = document.querySelector(".main");
-        let filter_main = document.querySelector(".filter");
 
         filter_button.disabled = true;
         C_filter.disabled = true;
@@ -111,11 +110,6 @@ function Page2(props)
                 filter_img[i].style.display = "block";
                 filter[i].style.backgroundColor = "rgba(64, 165, 24, 0.7)";
                 filter_input[i].style.display = "block";
-                /*
-                navbar.style.display = "none";
-                main.style.display = "none";
-                filter_main.style.display = "none";
-                */
             });
 
             /* Filter Close button onclick */
@@ -124,11 +118,6 @@ function Page2(props)
                 filter_img[i].style.display = "none";
                 filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
                 filter_input[i].style.display = "none";
-                /*
-                navbar.style.display = "block";
-                main.style.display = "block";
-                filter_main.style.display = "block";
-                */
             });
 
             /* Clear Filter */
@@ -140,10 +129,9 @@ function Page2(props)
             
         }
 
-        /* When the user clicks on the pan elements show info about that specified pan element */
         function DetailedView()
         {
-            let products = document.querySelector(".products");
+            let queue = document.querySelector(".queue");
             let pan = document.querySelectorAll(".pan");
             for(let i = 0; i < pan.length; i++)
             {
@@ -153,7 +141,7 @@ function Page2(props)
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-                    $.get("http://localhost:8080/api/products/" + id, [], [], 'json')
+                    $.get("http://localhost:8080/api/queue/" + id, [], [], 'json')
                     .done(function(_data) 
                     {   
                         console.log(_data);
@@ -164,33 +152,18 @@ function Page2(props)
                             document.querySelector(".details").remove();
                             let details = document.createElement('div');
                             details.className = "details";
-                            products.appendChild(details);
+                            queue.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
-                            />)
+                            rot.render( ); 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
                                 details.querySelector(".description").innerHTML = _data.body_html;
 
-                                let _div = details.querySelectorAll(".auto-slideshow-container");
-                                for(let i = 0; i < _div.length; i++)
-                                {
-                                    let _root = createRoot(_div[i]);
-                                    if(i == 0) { _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
-                                    else { _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
-                                }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
-                                Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
-                                Option1={el.option1} Option2={el.option2} Option3={el.option3} 
-                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
-                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
-                                />))
-
+                                rt.render( )
                             }, 10);
                             
                         }
@@ -198,36 +171,17 @@ function Page2(props)
                         //create new div
                         {
                             let details = document.createElement('details');
-                            products.appendChild(details);
+                            queue.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
-                            />)
+                            rot.render( ) 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
                                 details.querySelector(".description").innerHTML = _data.body_html;
-                                let _div = details.querySelectorAll(".auto-slideshow-container");
-                                for(let i = 0; i < _div.length; i++)
-                                {
-                                    let _root = createRoot(_div[i]);
-                                    if(i == 0)
-                                    {
-                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> ))
-                                    }
-                                    else 
-                                    {
-                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> ))
-                                    }
-                                }
+
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
-                                Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
-                                Option1={el.option1} Option2={el.option2} Option3={el.option3} 
-                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
-                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
-                                /> ))
+                                rt.render( )
                             }, 0);
                         }
                     })
@@ -586,9 +540,9 @@ function Page2(props)
             <div className = "filter-selection-main">
                 <div className = "filter-input">
                     <div className = 'close-filter'>&times;</div>
-                    <div className = "filter-selection-title">Filter Type</div>
+                    <div className = "filter-selection-title">Filter by Order</div>
                     <form method = 'post' onSubmit={(event) => Filter(event)} autoComplete='off'>
-                        <span><input type = 'type' placeholder = "Enter Type" name = "type" value = {inputs.type || ""} onChange = {handleChange} required></input></span>
+                        <span><input type = 'type' placeholder = "Enter Order" name = "order" value = {inputs.order || ""} onChange = {handleChange} required></input></span>
                         <br/><br/><br/>
                         <button className = 'button' type = 'submit'>Confirm</button>
                     </form>
@@ -598,9 +552,9 @@ function Page2(props)
             <div className = "filter-selection-main">
                 <div className = "filter-input">
                     <div className = 'close-filter'>&times;</div>
-                    <div className = "filter-selection-title">Filter Vendor</div>
+                    <div className = "filter-selection-title">Filter by Product</div>
                     <form method = 'post' onSubmit={(event) => Filter(event)} autoComplete='off'>
-                        <span><input type = 'vendor' placeholder = "Enter Vendor" name = "vendor" value = {inputs.vendor || ""} onChange = {handleChange} required></input></span>
+                        <span><input type = 'vendor' placeholder = "Enter VeProductndor" name = "product" value = {inputs.product || ""} onChange = {handleChange} required></input></span>
                         <br/><br/><br/>
                         <button className = 'button' type = 'submit'>Confirm</button>
                     </form>
@@ -609,9 +563,9 @@ function Page2(props)
             <div className = "filter-selection-main">
                 <div className = "filter-input">
                     <div className = 'close-filter'>&times;</div>
-                    <div className = "filter-selection-title">Filter Category</div>
+                    <div className = "filter-selection-title">Filter by Customer</div>
                     <form method = 'post' onSubmit={(event) => Filter(event)} autoComplete='off'>
-                        <span><input type = 'type' placeholder = "Enter Category" name = "category" value = {inputs.category || ""} onChange = {handleChange} required></input></span>
+                        <span><input type = 'type' placeholder = "Enter Customer" name = "customer" value = {inputs.customer || ""} onChange = {handleChange} required></input></span>
                         <br/><br/><br/>
                         <button className = 'button' type = 'submit'>Confirm</button>
                     </form>

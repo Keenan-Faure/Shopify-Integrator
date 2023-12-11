@@ -111,11 +111,6 @@ function Page1(props)
                 filter_img[i].style.display = "block";
                 filter[i].style.backgroundColor = "rgba(64, 165, 24, 0.7)";
                 filter_input[i].style.display = "block";
-                /*
-                navbar.style.display = "none";
-                main.style.display = "none";
-                filter_main.style.display = "none";
-                */
             });
 
             /* Filter Close button onclick */
@@ -124,11 +119,6 @@ function Page1(props)
                 filter_img[i].style.display = "none";
                 filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
                 filter_input[i].style.display = "none";
-                /*
-                navbar.style.display = "block";
-                main.style.display = "block";
-                filter_main.style.display = "block";
-                */
             });
 
             /* Clear Filter */

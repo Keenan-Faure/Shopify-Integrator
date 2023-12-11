@@ -240,11 +240,6 @@ function Settings()
                 count += 1;
             }
 
-            console.log(app_object);
-            console.log(_shopify_object);
-
-            
-            
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.post("http://localhost:8080/api/settings", JSON.stringify(app_object),[], 'json')
@@ -257,8 +252,6 @@ function Settings()
                 alert(xhr.responseText);
             });
 
-            /*
-
             $.post("http://localhost:8080/api/shopify/settings", JSON.stringify(_shopify_object),[], 'json')
             .done(function( _data) 
             {
@@ -268,11 +261,6 @@ function Settings()
             {
                 alert(xhr.responseText);
             });
-
-            */
-            
-            
-            
         });
         
 
