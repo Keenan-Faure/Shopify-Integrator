@@ -80,7 +80,6 @@
     height: 100%;
     position: absolute;
     overflow: auto;
-    filter: blur(1px);
     width: 29%;
     object-fit: cover;
     object-position: 38% 25%;

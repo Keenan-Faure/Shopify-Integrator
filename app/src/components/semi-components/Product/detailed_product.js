@@ -253,7 +253,7 @@ function Detailed_product(props)
                             </table>
                             </div>
                     </div>
-                    <div className = "details-right"></div>
+                    <div className = "details-right" style ={{backgroundColor: 'transparent'}}></div>
                     <div className = "details-left"></div>
                 </div>
             </div>
@@ -265,7 +265,7 @@ function Detailed_product(props)
                         <div className = "details-title"> {props.Product_Title} Variants</div>
                         <div className = "variants" id="_variants" ></div>
                     </div>
-                    <div className = "details-right"></div>
+                    <div className = "details-right" style ={{backgroundColor: 'transparent'}}></div>
                     <div className = "details-left"></div>
                 </div>
             </div>
