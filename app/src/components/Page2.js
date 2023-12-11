@@ -95,9 +95,6 @@ function Page2(props)
         let filter = document.querySelectorAll(".filter-elements");
         let filter_img = document.querySelectorAll(".filter-img");
         let C_filter = document.getElementById("clear_filter");
-        let filter_input = document.querySelectorAll(".filter-selection-main");
-        let close = document.querySelectorAll(".close-filter");
-        let main = document.querySelector(".main");
 
         filter_button.disabled = true;
         C_filter.disabled = true;
@@ -109,15 +106,17 @@ function Page2(props)
             {
                 filter_img[i].style.display = "block";
                 filter[i].style.backgroundColor = "rgba(64, 165, 24, 0.7)";
-                filter_input[i].style.display = "block";
-            });
 
-            /* Filter Close button onclick */
-            close[i].addEventListener("click", () =>
-            {
-                filter_img[i].style.display = "none";
-                filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
-                filter_input[i].style.display = "none";
+                filter_button.disabled = false;
+                C_filter.disabled = false;
+                filter_button.style.cursor = "pointer";
+                C_filter.style.cursor = "pointer";
+
+                for(let i = 0; i < filter.length; i++)
+                {
+                    filter[i].style.pointerEvents = "none";
+                    filter[i].style.cursor = "not-allowed";
+                } 
             });
 
             /* Clear Filter */
@@ -125,9 +124,82 @@ function Page2(props)
             {
                 filter_img[i].style.display = "none";
                 filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
+
+                filter_button.disabled = true;
+                C_filter.disabled = true;
+                filter_button.style.cursor = "not-allowed";
+                C_filter.style.cursor = "not-allowed";
+
+                for(let i = 0; i < filter.length; i++)
+                {
+                    filter[i].style.pointerEvents = "";
+                    filter[i].style.cursor = "pointer";
+                }
             });
-            
         }
+
+        filter_button.addEventListener("click", () =>
+        {
+            let next = document.getElementById("next");
+            for(let i = 0; i < filter_img.length; i++)
+            {
+                if(filter_img[i].style.display == "block")
+                {
+                    let type = filter_img[i].nextSibling.className;
+                    const api_key = localStorage.getItem('api_key');
+                    $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                    $.get("http://localhost:8080/api/queue/filter?type=" + type, [], [], 'json')
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                        if(_data.length < 10)
+                        {
+                            next.disabled = true;
+                            next.style.cursor = "not-allowed";
+                        }
+                        if(_data == "")
+                        {
+                            document.querySelector(".pan-main").remove();
+                            document.querySelector(".empty-message").style.display = "block";
+                        }
+                        else 
+                        {
+                            if(document.querySelector(".pan-main") != null)
+                            {
+                                document.querySelector(".pan-main").remove();
+                                let pan_main = document.createElement('div');
+                                let main_elements = document.querySelector(".main-elements");
+                                pan_main.className = "pan-main";
+                                main_elements.appendChild(pan_main);
+
+                                let root = createRoot(pan_main);
+                                flushSync(() => 
+                                {
+                                    root.render() 
+                                });
+                                setTimeout(() => { DetailedView();}, 200);
+                            }
+                            else 
+                            {
+                                let pan_main = document.createElement('div');
+                                let main_elements = document.querySelector(".main-elements");
+                                pan_main.className = "pan-main";
+                                main_elements.appendChild(pan_main);
+
+                                let root = createRoot(pan_main);
+                                flushSync(() => 
+                                {
+                                    root.render() 
+                                });
+                                setTimeout(() => { DetailedView();}, 200);
+                            }
+                        }
+                    })
+                    .fail( function(xhr) { alert(xhr.responseText); });
+                }
+            }
+            Filter_Pagintation(1);
+        });
 
         function DetailedView()
         {
@@ -207,73 +279,6 @@ function Page2(props)
                 });
             } 
         }
-
-        /* Filter */
-        filter_button.addEventListener("click", () =>
-        {
-            let category = document.querySelector(".category").innerHTML;
-            let type = document.querySelector(".type").innerHTML;
-            let vendor = document.querySelector(".vendor").innerHTML;
-            let next = document.getElementById("next");
-
-            $.get("http://localhost:8080/api/products/filter?type=" +type + "&" + "vendor="+ vendor +"&category="+category,[], [], 'json')
-            .done(function( _data) 
-            {
-                console.log(_data);
-                
-                if(_data.length < 10)
-                {
-                    next.disabled = true;
-                    next.style.cursor = "not-allowed";
-                }
-                if(_data == "")
-                {
-                    document.querySelector(".pan-main").remove();
-                    document.querySelector(".empty-message").style.display = "block";
-                }
-                else 
-                {
-                    if(document.querySelector(".pan-main") != null)
-                    {
-                        document.querySelector(".pan-main").remove();
-                        let pan_main = document.createElement('div');
-                        let main_elements = document.querySelector(".main-elements");
-                        pan_main.className = "pan-main";
-                        main_elements.appendChild(pan_main);
-
-                        let root = createRoot(pan_main);
-                        flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            Product_Image={el.product_images.map((el, i) => el.src)}
-                            /> )) 
-                        });
-                        setTimeout(() => { DetailedView();}, 200);
-                    }
-                    else 
-                    {
-                        let pan_main = document.createElement('div');
-                        let main_elements = document.querySelector(".main-elements");
-                        pan_main.className = "pan-main";
-                        main_elements.appendChild(pan_main);
-
-                        let root = createRoot(pan_main);
-                        flushSync(() => 
-                        {
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            Product_Image={el.product_images.map((el, i) => el.src)}
-                            /> )) 
-                        });
-                        setTimeout(() => { DetailedView();}, 200);
-                    }
-                }
-                
-                
-            })
-            .fail( function(xhr) { alert(xhr.responseText); });
-        });
 
         /* Script to automatically format the number of elements on each page */
         const content = document.querySelector('.center'); 
@@ -502,10 +507,6 @@ function Page2(props)
             } 
         }
 
-        filter_button.addEventListener("click", () =>
-        {
-            Filter_Pagintation(1);
-        })
 
 
     }, []);
@@ -518,26 +519,43 @@ function Page2(props)
                 <div className = "filter-elements">
                     Filter By Order
                     <div className = "filter-img"/>
-                    <div className = "type"></div>
+                    <div className = "order"></div>
                 </div>
-                <div className = "filter-elements">
+                <div className = "filter-elements" disabled>
                     Filter By Product
                     <div className = "filter-img"/>
-                    <div className = "vendor"></div>
+                    <div className = "product"></div>
                 </div>
-                <div className = "filter-elements">
+                <div className = "filter-elements" disabled>
                     Filter By Customer
                     <div className = "filter-img"/>
-                    <div className = "category"></div>
+                    <div className = "customer"></div>
                 </div>
                 <br />
-                <div className = "vendor"></div>
-                <div className = "type"></div>
-                <div className = "category"></div>
                 <button id = "clear_filter"className = "filter-button">Clear Filter</button>
                 <button id = "_filter"className = "filter-button">Filter Results</button>
             </div>
-            <div className = "filter-selection-main">
+            
+        </>
+    );
+}
+Page2.defaultProps = 
+{
+    filter_display: 'block', 
+    main_display: 'block',
+    main_bgc: '',
+    main_top: '13%',
+    main_left: '51%',
+    transform: 'translate(-30%, -6%)',
+    width: '70%',
+    height: '96%', 
+    animation: 'SlideUp2 0.8s ease-in'
+};
+
+export default Page2;
+
+/*
+<div className = "filter-selection-main">
                 <div className = "filter-input">
                     <div className = 'close-filter'>&times;</div>
                     <div className = "filter-selection-title">Filter by Order</div>
@@ -571,24 +589,4 @@ function Page2(props)
                     </form>
                 </div>
             </div>
-        </>
-    );
-}
-Page2.defaultProps = 
-{
-    filter_display: 'block', 
-    main_display: 'block',
-    main_bgc: '',
-    main_top: '13%',
-    main_left: '51%',
-    transform: 'translate(-30%, -6%)',
-    width: '70%',
-    height: '96%', 
-    animation: 'SlideUp2 0.8s ease-in'
-};
-
-export default Page2;
-
-/*
-
 */
