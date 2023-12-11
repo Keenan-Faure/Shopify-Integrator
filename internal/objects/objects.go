@@ -553,11 +553,14 @@ type SearchCustomer struct {
 	LastName  string `json:"last_name"`
 }
 type SearchProduct struct {
-	ID          uuid.UUID `json:"id"`
-	Title       string    `json:"title"`
-	Category    string    `json:"category"`
-	ProductType string    `json:"product_type"`
-	Vendor      string    `json:"vendor"`
+	ID          uuid.UUID       `json:"id"`
+	Active      string          `json:"active"`
+	Title       string          `json:"title"`
+	Category    string          `json:"category"`
+	ProductType string          `json:"product_type"`
+	Vendor      string          `json:"vendor"`
+	Images      []ProductImages `json:"product_images"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 type Product struct {
 	ID             uuid.UUID        `json:"id"`

@@ -1062,7 +1062,12 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, CompileSearchResult(sku_search, title_search))
+	compiled, err := CompileSearchResult(dbconfig, r.Context(), sku_search, title_search)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, compiled)
 }
 
 // GET /api/products/{id}
