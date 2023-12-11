@@ -2,7 +2,6 @@ import {useEffect} from 'react';
 import {useState} from "react";
 import $ from 'jquery';
 
-import Background from "../components/Background";
 import '../CSS/login.css';
 
 function Login()
@@ -306,7 +305,6 @@ function Login()
 
     return (
     <>
-    <Background />
     <div>
         <div className = 'modal1' id = "model" style = {{display: 'block'}}>
             <div className = "back-row-toggle splat-toggle">

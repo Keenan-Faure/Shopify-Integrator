@@ -65,7 +65,6 @@ function Dashboard()
             console.log(_data);
             graph_data = _data;
 
-            console.log(graph_data);
         })
         .fail( function(xhr) 
         {

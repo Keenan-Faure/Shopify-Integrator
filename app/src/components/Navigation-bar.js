@@ -27,7 +27,6 @@ function Navigation_Bar(props)
         /* Change the style of navigation bar */
         let navigation = document.getElementById("navbar");
         let navbar = document.querySelectorAll(".dropbtn");
-        console.log(navbar);
 
         /* The user clicks on 'Products' button */
         navbar[1].onclick = function(event)
