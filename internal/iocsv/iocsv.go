@@ -159,11 +159,18 @@ func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []st
 
 // Writes data to a file
 func WriteFile(data [][]string, file_name string) (string, error) {
-	if file_name != "" {
-		path, err := os.Getwd()
-		if err != nil {
+	path, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	path = path + "/app/export/"
+	err = os.Mkdir(path, os.FileMode(int(0777)))
+	if err != nil {
+		if err.Error()[len(err.Error())-11:] != "file exists" {
 			return "", err
 		}
+	}
+	if file_name != "" {
 		f, err := os.Create(filepath.Clean(path+"/"+file_name) + ".csv")
 		if err != nil {
 			return "", err
@@ -177,8 +184,8 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 		}
 		return "", nil
 	}
-	csv_name := "product_export-" + time.Now().UTC().Format("01-02-2006") + ".csv"
-	f, err := os.Create(filepath.Clean(csv_name))
+	csv_name := "product_export-" + time.Now().UTC().String() + ".csv"
+	f, err := os.Create(filepath.Clean(path + csv_name))
 	if err != nil {
 		return "", err
 	}
@@ -188,7 +195,7 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return csv_name, nil
+	return "http://localhost:8080/app/export/" + csv_name, nil
 }
 
 // Reads a csv file contents
@@ -296,7 +303,18 @@ func GetKeysByMatcher(headers []string, match string) map[int]string {
 func LoopRemoveCSV() {
 	ticker := time.NewTicker(csv_remove_time)
 	for ; ; <-ticker.C {
-		files, err := filepath.Glob("product_export*")
+		path, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+		}
+		path = path + "/app/export/"
+		err = os.Mkdir(path, os.FileMode(int(0777)))
+		if err != nil {
+			if err.Error()[len(err.Error())-11:] != "file exists" {
+				log.Println(err)
+			}
+		}
+		files, err := filepath.Glob(path + "product_export*")
 		if err != nil {
 			log.Println(err)
 		}

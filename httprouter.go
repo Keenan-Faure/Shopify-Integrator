@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	execscripts "exec_scripts"
 	"fmt"
 	"integrator/internal/database"
 	"iocsv"
@@ -239,24 +238,9 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 	if test == "true" {
 		defer os.Remove(file_name)
 	}
-	directory, err := dbconfig.DB.GetAppSettingByKey(r.Context(), "app_default_export_directory")
-	if directory.Value == "/" {
-		RespondWithError(w, http.StatusInternalServerError, "invalid download")
-		return
-	}
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	err = execscripts.CopyFileLocally(directory.Value, file_name)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: file_name,
 	})
-	// use javascript to return that file to be sent on the browser
 }
 
 // POST /api/products/import?file_name={{file}}&test=true
