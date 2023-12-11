@@ -288,6 +288,7 @@ function Page1(props)
                         {
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                         setTimeout(() => { DetailedView();}, 200);
@@ -304,6 +305,7 @@ function Page1(props)
                         {
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                         setTimeout(() => { DetailedView();}, 200);
@@ -392,6 +394,7 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                         
@@ -435,6 +438,7 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
 
@@ -494,6 +498,7 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
 
@@ -528,7 +533,8 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            /> )) 
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> ))  
                         });
                         
                     })

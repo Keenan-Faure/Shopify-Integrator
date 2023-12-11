@@ -28,7 +28,6 @@ function Products()
     const SearchProduct = (event) =>
     {
         event.preventDefault();
-
     }
 
     useEffect(()=> 
@@ -56,8 +55,11 @@ function Products()
             pan_main.appendChild(div);
 
             root = createRoot(div);
-            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} 
+            Product_Activity={el.active} Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category}
+            Product_Vendor={el.vendor} Product_Image={el.product_images.map((el, i) => el.src)}
+
+
             />))
             
         })
@@ -82,6 +84,7 @@ function Products()
 
                 root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                 Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                Product_Image={el.product_images.map((el, i) => el.src)}
                 /> )) 
 
                 setTimeout(() =>
@@ -120,6 +123,7 @@ function Products()
                     root = createRoot(pan_main);
                     root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                     Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                    Product_Image={el.product_images.map((el, i) => el.src)}
                     /> ))
 
                     setTimeout(() =>
@@ -319,6 +323,7 @@ function Products()
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                     })
@@ -367,9 +372,10 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            /> ))
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -423,7 +429,8 @@ function Products()
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            /> )) 
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> ))  
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -455,6 +462,7 @@ function Products()
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                     })
@@ -496,7 +504,8 @@ function Products()
                 root = createRoot(pan_main);
                 root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                 Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                /> ))
+                Product_Image={el.product_images.map((el, i) => el.src)}
+                /> )) 
                 setTimeout(() => { DetailedView();}, 200);
                 Pagintation(1);
             })

@@ -266,7 +266,7 @@ input.search-area
     transform: translate(0%, -50%);
     background-size: cover;
     background-position: center;
-    background-color: rgb(41, 136, 136);
+    background-color: rgb(177 177 177);
 }
 .pan-details
 {

@@ -190,39 +190,64 @@ function Settings()
             let setting_main_value = document.querySelectorAll("._input");
             let setting_default_value = document.querySelectorAll("._value");
 
-            let object = [];
+            let app_object = [];
+            let _shopify_object = [];
             let _setting = {};
-            for(let i = 0; i < setting_main_title.length; i++)
+            for(let i = 0; i < setting_main_title.length - 3; i++)
             {
                 if(setting_main_value[i].value == "")
                 {
-                    console.log("empty");
                     _setting = 
                     {
                         key : setting_main_title[i].innerHTML,
                         value : setting_default_value[i].innerHTML
                     }
-                    object[i] = _setting;
+                    app_object[i] = _setting;
                 }
                 else 
                 {
-                    console.log("not empty");
                     _setting = 
                     {
                         key : setting_main_title[i].innerHTML,
                         value : setting_main_value[i].value
                     }
-                    object[i] = _setting;
+                    app_object[i] = _setting;
                 }
                 
             }
 
-            console.log(object);
+            let count = 0;
+            for(let i = setting_main_title.length - 3; i < setting_main_title.length; i++)
+            {
+                if(setting_main_value[count].value == "")
+                {
+                    _setting = 
+                    {
+                        key : setting_main_title[i].innerHTML,
+                        value : setting_default_value[i].innerHTML
+                    }
+                    _shopify_object[count] = _setting;
+                }
+                else 
+                {
+                    _setting = 
+                    {
+                        key : setting_main_title[i].innerHTML,
+                        value : setting_main_value[i].value
+                    }
+                    _shopify_object[count] = _setting;
+                }
+                count += 1;
+            }
 
+            console.log(app_object);
+            console.log(_shopify_object);
+
+            
             
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-            $.post("http://localhost:8080/api/settings", JSON.stringify(object),[], 'json')
+            $.post("http://localhost:8080/api/settings", JSON.stringify(app_object),[], 'json')
             .done(function( _data) 
             {
                 console.log(_data);
@@ -231,6 +256,21 @@ function Settings()
             {
                 alert(xhr.responseText);
             });
+
+            /*
+
+            $.post("http://localhost:8080/api/shopify/settings", JSON.stringify(_shopify_object),[], 'json')
+            .done(function( _data) 
+            {
+                console.log(_data);
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+
+            */
+            
             
             
         });
