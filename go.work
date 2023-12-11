@@ -1,8 +1,7 @@
-go 1.21.4
+go 1.21
 
 use (
 	.
-	./internal/exec_scripts
 	./internal/iocsv
 	./internal/objects
 	./internal/shopify
