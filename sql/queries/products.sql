@@ -86,12 +86,14 @@ WHERE product_code = $1;
 -- name: GetProductsByCategory :many
 SELECT
     id,
+    active,
     product_code,
     title,
     body_html,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE category LIKE $1
 LIMIT $2 OFFSET $3;
@@ -99,12 +101,14 @@ LIMIT $2 OFFSET $3;
 -- name: GetProductsByVendor :many
 SELECT
     id,
+    active,
     product_code,
     title,
     body_html,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE vendor LIKE $1
 LIMIT $2 OFFSET $3;
@@ -112,12 +116,14 @@ LIMIT $2 OFFSET $3;
 -- name: GetProductsByType :many
 SELECT
     id,
+    active,
     product_code,
     title,
     body_html,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE product_type LIKE $1
 LIMIT $2 OFFSET $3;
@@ -125,12 +131,14 @@ LIMIT $2 OFFSET $3;
 -- name: GetProductByCategoryAndType :many
 SELECT
     id,
+    active,
     product_code,
     title,
     body_html,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE category LIKE $1
 AND product_type LIKE $2
@@ -139,12 +147,14 @@ LIMIT $3 OFFSET $4;
 -- name: GetProductsByTypeAndVendor :many
 SELECT
     id,
+    active,
     product_code,
     title,
     body_html,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE product_type LIKE $1
 AND vendor LIKE $2
@@ -153,12 +163,14 @@ LIMIT $3 OFFSET $4;
 -- name: GetProductsByVendorAndCategory :many
 SELECT
     id,
+    active,
     product_code,
     title,
     body_html,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE vendor LIKE $1
 AND category LIKE $2
@@ -167,12 +179,14 @@ LIMIT $3 OFFSET $4;
 -- name: GetProductsFilter :many
 SELECT
     id,
+    active,
     product_code,
     title,
     body_html,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE category LIKE $1
 AND product_type LIKE $2
@@ -182,11 +196,13 @@ LIMIT $4 OFFSET $5;
 -- name: GetProductsSearchSKU :many
 SELECT
     p.id,
+    p.active,
     p.product_code,
     p.title,
     p.category,
     p.vendor,
-    p.product_type
+    p.product_type,
+    p.updated_at
 FROM products p
 INNER JOIN variants v
     ON p.id = v.product_id
@@ -196,11 +212,13 @@ LIMIT 5;
 -- name: GetProductsSearchTitle :many
 SELECT
     id,
+    active,
     product_code,
     title,
     category,
     vendor,
-    product_type
+    product_type,
+    updated_at
 FROM products
 WHERE title LIKE $1
 LIMIT 5;
