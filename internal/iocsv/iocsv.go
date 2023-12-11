@@ -178,7 +178,7 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 		return "", nil
 	}
 	path = path + "/app/export/"
-	err = os.Mkdir(path, os.FileMode(int(0777)))
+	err = os.MkdirAll(path, os.FileMode(int(0777)))
 	if err != nil {
 		if err.Error()[len(err.Error())-11:] != "file exists" {
 			return "", err
@@ -308,7 +308,7 @@ func LoopRemoveCSV() {
 			log.Println(err)
 		}
 		path = path + "/app/export/"
-		err = os.Mkdir(path, os.FileMode(int(0777)))
+		err = os.MkdirAll(path, os.FileMode(int(0777)))
 		if err != nil {
 			if err.Error()[len(err.Error())-11:] != "file exists" {
 				log.Println(err)
