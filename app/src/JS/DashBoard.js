@@ -35,9 +35,14 @@ function Dashboard()
         /* Sets the initial Look of the Page */
         setTimeout(() => 
         {
-            header.style.animation = "appear 1s ease-in"; header.style.display = "block"; graph1.style.animation = "appear 1s ease-in";
+            graph1.style.animation = "appear 1s ease-in";
             graph1.style.display = "block"; graph2.style.animation = "appear 1s ease-in"; graph2.style.display = "block";
         }, 1200);
+
+        setTimeout(() =>
+        {
+            header.style.animation = "appear 1s ease-in"; header.style.display = "block"; 
+        }, 500)
 
 
         const userName = localStorage.getItem('username');
