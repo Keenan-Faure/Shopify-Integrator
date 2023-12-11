@@ -163,13 +163,6 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	path = path + "/app/export/"
-	err = os.Mkdir(path, os.FileMode(int(0777)))
-	if err != nil {
-		if err.Error()[len(err.Error())-11:] != "file exists" {
-			return "", err
-		}
-	}
 	if file_name != "" {
 		f, err := os.Create(filepath.Clean(path+"/"+file_name) + ".csv")
 		if err != nil {
@@ -183,6 +176,13 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 			return "", err
 		}
 		return "", nil
+	}
+	path = path + "/app/export/"
+	err = os.Mkdir(path, os.FileMode(int(0777)))
+	if err != nil {
+		if err.Error()[len(err.Error())-11:] != "file exists" {
+			return "", err
+		}
 	}
 	csv_name := "product_export-" + time.Now().UTC().String() + ".csv"
 	f, err := os.Create(filepath.Clean(path + csv_name))

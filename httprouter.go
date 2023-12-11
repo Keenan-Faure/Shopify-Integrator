@@ -260,11 +260,13 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 	}
 	wd, err := os.Getwd()
 	if err != nil {
+		fmt.Println(err)
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	csv_products, err := iocsv.ReadFile(wd + "/" + file_name)
 	if err != nil {
+		fmt.Println(err)
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
