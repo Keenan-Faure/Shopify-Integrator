@@ -18,6 +18,8 @@ function Export_Product()
     {
         event.preventDefault();
 
+
+        /*
         const api_key = localStorage.getItem('api_key');
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
         $.get("http://localhost:8080/api/products/export", [], [], 'json')
@@ -29,11 +31,22 @@ function Export_Product()
         {
             alert(xhr.responseText);
         });
+        */
+
+        let a_tag = document.createElement("a");
+        a_tag.className = "tablink";
+        a_tag.setAttribute("href", "http://localhost:8080/");
+        a_tag.setAttribute("target", "_blank");
+        a_tag.click();
         
     }
 
     useEffect(() =>
     {
+        
+
+
+
         /* Fix any incorrect elements */
         let navigation = document.getElementById("navbar");
         let modal = document.getElementById("model");
@@ -101,8 +114,6 @@ function Export_Product()
             $('.single-toggle.toggle').toggleClass('active');
             makeItRain();
         });
-
-
     }, []);
 
     return (
@@ -131,10 +142,5 @@ function Export_Product()
             </div>    
         </>
     );
-};
-  
-Export_Product.defaultProps = 
-{
-
 };
 export default Export_Product;

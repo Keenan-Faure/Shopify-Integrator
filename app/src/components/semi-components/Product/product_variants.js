@@ -3,21 +3,21 @@ import '../../../CSS/detailed.css';
 function Product_Variants(props)
 {
     return (
-        <div>
+        <div style={{marginBottom: '5px'}}>
             <div className = "variant-title">{props.Variant_Title}</div>
-            <table>
+            <table style={{marginBottom: '25px'}}>
                 <tbody>
                     <tr>
-                        <th>Variant Barcode</th>
-                        <th>Variant SKU</th>
+                        <th style= {{width: '50%'}}>Variant Barcode</th>
+                        <th style= {{width: '50%'}}>Variant SKU</th>
                     </tr>
                     <tr>
-                        <td className = "barcode">{props.Variant_Barcode}</td>
-                        <td className = "sku">{props.Variant_SKU}</td>
+                        <td style= {{width: '50%'}} className = "barcode">{props.Variant_Barcode}</td>
+                        <td style= {{width: '50%'}} className = "sku">{props.Variant_SKU}</td>
                     </tr>
                 </tbody>
             </table>
-            <table>
+            <table style={{marginBottom: '15px'}}>
                 <tbody>
                     <tr>
                         <th>Option 1</th>

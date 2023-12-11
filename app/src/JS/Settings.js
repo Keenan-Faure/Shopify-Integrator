@@ -45,7 +45,6 @@ function Settings()
                     let option = createOptions(false, locations[j]);
                     drop_down.appendChild(option);
                 }
-                console.log(drop_down);
                 elements[i].appendChild(drop_down);
             }
         }
@@ -106,8 +105,6 @@ function Settings()
             /* Scroll into View Button Event */
             let a_settings = document.getElementById("a_settings").childNodes;
             let app_button = document.getElementById("app_settings").children;
-            console.log(app_button);
-            console.log(a_settings);
 
             for(let i = 0; i < app_button.length; i++)
             {
@@ -157,8 +154,6 @@ function Settings()
             /* Scroll into View Button Event */
             let s_settings = document.getElementById("s_settings").childNodes;
             let shop_button = document.getElementById("shopify_settings").children;
-            console.log(shop_button);
-            console.log(s_settings);
             for(let i = 0; i < shop_button.length; i++)
             {
                 shop_button[i].addEventListener("click", () =>
@@ -193,22 +188,38 @@ function Settings()
             confirm_line.style.display = "none";
             let setting_main_title = document.querySelectorAll("._title");
             let setting_main_value = document.querySelectorAll("._input");
+            let setting_default_value = document.querySelectorAll("._value");
 
-            let object = {};
+            let object = [];
             let _setting = {};
             for(let i = 0; i < setting_main_title.length; i++)
             {
-                _setting = 
+                if(setting_main_value[i].value == "")
                 {
-                    key : setting_main_title[i].innerHTML,
-                    value : setting_main_value[i].innerHTML
+                    console.log("empty");
+                    _setting = 
+                    {
+                        key : setting_main_title[i].innerHTML,
+                        value : setting_default_value[i].innerHTML
+                    }
+                    object[i] = _setting;
                 }
-                object[i] = _setting;
+                else 
+                {
+                    console.log("not empty");
+                    _setting = 
+                    {
+                        key : setting_main_title[i].innerHTML,
+                        value : setting_main_value[i].value
+                    }
+                    object[i] = _setting;
+                }
+                
             }
 
             console.log(object);
 
-            /*
+            
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.post("http://localhost:8080/api/settings", JSON.stringify(object),[], 'json')
@@ -220,7 +231,8 @@ function Settings()
             {
                 alert(xhr.responseText);
             });
-            */
+            
+            
         });
         
 

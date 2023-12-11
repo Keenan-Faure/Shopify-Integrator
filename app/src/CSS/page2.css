@@ -157,7 +157,7 @@ input[type = setting]
     border-right: 1px solid grey;
     width: 30%;
     background: transparent;
-    color: white;
+    color: rgb(17, 17, 17);
     left: 50%;
     transform: translate(-50%);
 }
@@ -295,13 +295,14 @@ h3 {
     display: inline-block;
     top: 7px;
     left: 7px;
-    transition-duration: 2s;
+    transition-duration: 0.4s;
     border-radius: 15px;
     cursor: pointer;
+    background-color: #c5c5c5;
 }
 
 .info_icon:hover {
-    background-color: #c5c5c5;
+    background-color: #7a7a7a;
 }
 
 /* Location_Warehouse CSS */

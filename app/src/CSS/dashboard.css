@@ -33,6 +33,13 @@
 #shopify_fetch_graph, #shopify_order_graph
 {
     display: none;
+    transition-duration: 0.4s;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+}
+#shopify_fetch_graph:hover, #shopify_order_graph:hover
+{
+    background-color: rgba(0, 0, 0, 0.4);
 }
 .fetch_status {
     position: relative;
@@ -117,6 +124,7 @@
     height: 45%;
 }
 
+
 .g1 {
     position: relative;
     left: 1%;
@@ -155,7 +163,7 @@
 }
 
 .logout_button {
-    background-color: #fcfafa;
+    background-color: rgba(165, 165, 165, 0.95);
     color: rgb(37, 37, 37);
     border: none;
     outline: none;
@@ -225,4 +233,45 @@ table {
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
+}
+
+/* Bubble notifications */
+.bubble 
+{
+    position: absolute;
+    display: none;
+    left: 1%;
+    padding: 10px 15px;
+    font-size: 12px;
+    animation: bubble 1s ease-in-out;
+    background-color: rgba(165, 165, 165, 0.95);
+    color: rgb(37, 37, 37);
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition-duration: 0.4s;
+    border-radius: 10px;
+}
+.bubble:hover 
+{
+    background-color: rgb(72, 101, 128);
+    color: aliceblue;
+}
+.bub1 
+{
+    top: 68%;
+}
+.bub2
+{
+    top: 75%;
+}
+.bub3 
+{
+    top: 82%;
+}
+
+@keyframes bubble 
+{
+    from {left: -10%; opacity: 0;}
+    to {left: 1%; opacity: 1;}
 }

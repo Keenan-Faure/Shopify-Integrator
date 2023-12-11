@@ -309,7 +309,8 @@ tr:hover
 .Prices, .updateDate, .Quantities
 {
     font-weight: bold;
-    font-size: 14px;
+    font-size: 15px;
+    text-decoration: underline;
 }
 p{ padding: 10px 60px; margin: 0;}
 .c 

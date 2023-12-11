@@ -1,30 +1,30 @@
 import {useEffect} from 'react';
+import {useState} from "react";
+import $ from 'jquery';
+import Chart from "chart.js/auto";
 import '../CSS/dashboard.css';
 import image from '../media/icons8-shopify-50.png';
-import Chart from "chart.js/auto";
+
 
 
 function Dashboard()
 {
+
     useEffect(()=> 
     {
         /* Ensures the navbar + model is set correctly */
         let navigation = document.getElementById("navbar");
         let logout = document.getElementById("logout");
         let header = document.querySelector('.header');
-        let footer = document.querySelector('.footer');
 
         let ctx = document.getElementById('shopify_fetch_graph');
         let order_ctx = document.getElementById('shopify_order_graph');
         let graph1 = document.querySelector('.g1');
         let graph2 = document.querySelector('.g2');
-
-        console.log(graph1);
-
+        let main = document.querySelector(".container");
 
         window.onload = function(event)
         {
-            
             navigation.style.left = "0%";
             navigation.style.position = "absolute";
             navigation.style.width = "100%";
@@ -35,22 +35,13 @@ function Dashboard()
         /* Sets the initial Look of the Page */
         setTimeout(() => 
         {
-            footer.style.display = "block";
-            header.style.animation = "appear 1s ease-in";
-            header.style.display = "block";
-
-            
-            graph1.style.animation = "appear 1s ease-in";
-            graph1.style.display = "block";
-
-            graph2.style.animation = "appear 1s ease-in";
-            graph2.style.display = "block";
-            
+            header.style.animation = "appear 1s ease-in"; header.style.display = "block"; graph1.style.animation = "appear 1s ease-in";
+            graph1.style.display = "block"; graph2.style.animation = "appear 1s ease-in"; graph2.style.display = "block";
         }, 1200);
 
 
         const userName = localStorage.getItem('username');
-        document.querySelector(".welcome_text").innerHTML = "Welcome back " + userName;
+        document.querySelector(".welcome_text").innerHTML = "Welcome back, " + userName;
 
         /* logout */
         logout.addEventListener("click", () =>
@@ -58,75 +49,150 @@ function Dashboard()
             logout.style.display = "none";
             navigation.style.display = "none";
             header.style.display = "none";
-            footer.style.display = "none";
 
             /* Session Destroy */
             window.location.href = '/';
         });
 
         //Fetch Graph
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                datasets: [{
-                    label: '# of products fetched from Shopify',
-                    data: [0, 20, 20, 10, 7, 0, 50],
-                    borderWidth: 1,
-                    borderColor: "rgba(255, 94, 0, 0.5)",
-                    backgroundColor: "orange",
-                    pointRadius: "5",
-                }]
-            },
-            options: {
-                scales: {
-                    y: 
-                    {
-                        beginAtZero: true
-                    }
-                }
-            }
+        
+        let graph_data = {};
+        const api_key = localStorage.getItem('api_key');
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+        $.get("http://localhost:8080/api/stats/fetch", [], [], 'json')
+        .done(function( _data) 
+        {
+            console.log(_data);
+            graph_data = _data;
+
+            console.log(graph_data);
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
         });
 
         //Order Graph
-        new Chart(order_ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                datasets: [{
-                    label: 'Paid orders from Shopify (totals)',
-                    data: [3400, 6100, 10000, 3456, 214, 0, 90],
-                    borderWidth: 1,
-                    borderColor: "rgba(85, 0, 255, 0.5);",
-                    backgroundColor: "purple",
-                    pointRadius: "5",
-                    tension: 0.1,
-                    fill: false
-                },
-                {
-                    label: 'Unpaid orders from Shopify (totals)',
-                    data: [800, 0, 2400, 4322, 100, 0, 40],
-                    borderWidth: 1,
-                    borderColor: "rgba(255,0,0,0.5);",
-                    backgroundColor: "red",
-                    pointRadius: "5",
-                    tension: 0.1,
-                    fill: false
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+        let graph_data2 = {};
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+        $.get("http://localhost:8080/api/stats/orders?status=not_paid", [], [], 'json')
+        .done(function(_data) 
+        {
+            console.log(_data);
+            graph_data2 = _data;
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
         });
 
-    
+        let graph_data3 = {};
+        $.get("http://localhost:8080/api/stats/orders?status=paid", [], [], 'json')
+        .done(function(_data) 
+        {
+            console.log(_data);
+            graph_data3 = _data;
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+        });
+
+        setTimeout(() =>
+        {
+            /* FETCH GRAPH */
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: graph_data.hours,
+                    datasets: [{
+                        label: '# of products fetched from Shopify',
+                        data: graph_data.amounts,
+                        borderWidth: 1,
+                        borderColor: "rgba(255, 94, 0, 0.5)",
+                        backgroundColor: "orange",
+                        pointRadius: "5",
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: 
+                        {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            /* ORDER GRAPH */
+            new Chart(order_ctx, {
+                type: 'bar',
+                data: {
+                    labels: graph_data2.days,
+                    datasets: [{
+                        label: 'Paid orders from Shopify (totals)',
+                        data: graph_data3.count,
+                        borderWidth: 1,
+                        borderColor: "rgba(85, 0, 255, 0.5);",
+                        backgroundColor: "purple",
+                        pointRadius: "5",
+                        tension: 0.1,
+                        fill: false
+                    },
+                    {
+                        label: 'Unpaid orders from Shopify (totals)',
+                        data: graph_data2.count,
+                        borderWidth: 1,
+                        borderColor: "rgba(255,0,0,0.5);",
+                        backgroundColor: "red",
+                        pointRadius: "5",
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }, 100);
+
+        /* Settings Notifications */
+        $.get("http://localhost:8080/api/inventory?page=1", [], [], 'json')
+        .done(function(_data) 
+        {
+            console.log(_data);
+            if(_data == "")
+            {
+                let bubble = document.createElement("div");
+                bubble.className = "bubble bub1";
+                bubble.innerHTML = "Warehouse has not been set, proceed to settings to set";
+                bubble.setAttribute("onclick", "window.location.href = '/settings'");
+                main.appendChild(bubble);
+
+            }
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+        });
+
         
-        
-        
+        setTimeout(() => 
+        {
+            let bubble = document.querySelectorAll(".bubble");
+            for(let i = 0; i < bubble.length; i++){ bubble[i].style.display = "block"; }
+
+            setTimeout(() => 
+            {
+                for(let i = 0; i < bubble.length; i++){ bubble[i].style.display = "none"; }
+            }, 4000);
+        }, 1200);
+
+
     }, []);
 
     return (
@@ -141,7 +207,7 @@ function Dashboard()
                             <div className="logo_text">active</div>
                         </div>
                     </div>
-                    <h2 className="welcome_text">Welcome back [Username]</h2>
+                    <h2 className="welcome_text"></h2>
                     <div className = "logout_button" id = "logout">Logout</div>
                 </div>
 
@@ -152,103 +218,11 @@ function Dashboard()
                 <div className="graph g2">
                     <canvas id="shopify_order_graph"></canvas>
                 </div>
-                <div className="footer">
-                    <p>Notifications</p>
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td id="tr_logos">
-                                    <div className="warning_logo"></div>
-                                </td>
-                                <td>Location-warehouse map needs to be configured</td>
-                            </tr>
-                            <tr>
-                                <td id="tr_logos">
-                                    <div className="warning_logo"></div>
-                                </td>
-                                <td>Queue needs to be enabled</td>
-                            </tr>
-                            <tr>
-                                <td id="tr_logos">
-                                    <div className="warning_logo"></div>
-                                </td>
-                                <td>Please visit settings</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
                 
     );
 }
 
-
 export default Dashboard;
-
-/*
-
-const ctx = document.getElementById('shopify_fetch_graph');
-        const order_ctx = document.getElementById('shopify_order_graph');
-
-        //Fetch Graph
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                datasets: [{
-                    label: '# of products fetched from Shopify',
-                    data: [0, 20, 20, 10, 7, 0, 50],
-                    borderWidth: 1,
-                    borderColor: "rgba(255, 94, 0, 0.5)",
-                    backgroundColor: "orange",
-                    pointRadius: "5",
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        //Order Graph
-        new Chart(order_ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                datasets: [{
-                    label: 'Paid orders from Shopify (totals)',
-                    data: [3400, 6100, 10000, 3456, 214, 0, 90],
-                    borderWidth: 1,
-                    borderColor: "rgba(85, 0, 255, 0.5);",
-                    backgroundColor: "purple",
-                    pointRadius: "5",
-                    tension: 0.1,
-                    fill: false
-                },
-                {
-                    label: 'Unpaid orders from Shopify (totals)',
-                    data: [800, 0, 2400, 4322, 100, 0, 40],
-                    borderWidth: 1,
-                    borderColor: "rgba(255,0,0,0.5);",
-                    backgroundColor: "red",
-                    pointRadius: "5",
-                    tension: 0.1,
-                    fill: false
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-
-*/
 
