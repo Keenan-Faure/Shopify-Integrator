@@ -21,6 +21,135 @@ import (
 	"github.com/google/uuid"
 )
 
+// PUT /api/products/{id}
+func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	product_id := chi.URLParam(r, "id")
+	err := IDValidation(product_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	product_uuid, err := uuid.Parse(product_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode product id: "+product_id)
+		return
+	}
+	found := false
+	_, err = dbconfig.DB.GetProductByID(r.Context(), product_uuid)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			found = false
+		} else {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	} else {
+		found = true
+	}
+
+	if !found {
+		RespondWithError(w, http.StatusNotFound, "could not find product id: "+product_id)
+		return
+	}
+
+	params, err := DecodeProductRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	validation := ProductValidation(params)
+	if validation != nil {
+		RespondWithError(w, http.StatusBadRequest, validation.Error())
+		return
+	}
+	err = ValidateDuplicateOption(params)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	err = DuplicateOptionValues(params)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+
+	// update product
+	err = dbconfig.DB.UpdateProductByID(r.Context(), database.UpdateProductByIDParams{
+		Active:      params.Active,
+		Title:       utils.ConvertStringToSQL(params.Title),
+		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
+		Category:    utils.ConvertStringToSQL(params.Category),
+		Vendor:      utils.ConvertStringToSQL(params.Vendor),
+		ProductType: utils.ConvertStringToSQL(params.ProductType),
+		UpdatedAt:   time.Now().UTC(),
+		ID:          product_uuid,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+
+	for key := range params.ProductOptions {
+		// TODO Should we use the position in the POST Body or the key that is it inside the array?
+		_, err = dbconfig.DB.UpdateProductOption(r.Context(), database.UpdateProductOptionParams{
+			Name:       params.ProductOptions[key].Value,
+			Position:   int32(key + 1),
+			ProductID:  product_uuid,
+			Position_2: int32(key + 1),
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
+	}
+	for _, variant := range params.Variants {
+		err = dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
+			Option1:   utils.ConvertStringToSQL(variant.Option1),
+			Option2:   utils.ConvertStringToSQL(variant.Option2),
+			Option3:   utils.ConvertStringToSQL(variant.Option3),
+			Barcode:   utils.ConvertStringToSQL(variant.Barcode),
+			UpdatedAt: time.Now().UTC(),
+			Sku:       variant.Sku,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			return
+		}
+		// update variant pricing and qty here
+		for _, price_lists := range variant.VariantPricing {
+			err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
+				Name:      price_lists.Name,
+				Value:     utils.ConvertStringToSQL(price_lists.Value),
+				Isdefault: price_lists.IsDefault,
+				Sku:       variant.Sku,
+				Name_2:    price_lists.Name,
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+				return
+			}
+		}
+		for _, warehouses := range variant.VariantQuantity {
+			err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
+				Name:      warehouses.Name,
+				Value:     utils.ConvertIntToSQL(warehouses.Value),
+				Isdefault: warehouses.IsDefault,
+				Sku:       variant.Sku,
+				Name_2:    warehouses.Name,
+			})
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+				return
+			}
+		}
+	}
+	updated_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	RespondWithJSON(w, http.StatusOK, updated_data)
+}
+
 // GET /api/stats/fetch
 func (dbconfig *DbConfig) GetFetchStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	data, err := dbconfig.DB.GetFetchStats(r.Context())
@@ -65,11 +194,10 @@ func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	// create webhook url
-	webhook_url := body.ForwardingURL + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
+	webhook_url := body.Domain + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: webhook_url,
 	})
-	// TODO how we going to get the ngrok forwarding url??
 }
 
 // GET /api/inventory
@@ -280,7 +408,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 			ID:          uuid.New(),
 			ProductCode: csv_product.ProductCode,
-			Active:      "1",
+			Active:      csv_product.Active,
 			Title:       utils.ConvertStringToSQL(csv_product.Title),
 			BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
 			Category:    utils.ConvertStringToSQL(csv_product.Category),
@@ -293,7 +421,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
 				product_exists = true
 				err := dbconfig.DB.UpdateProduct(r.Context(), database.UpdateProductParams{
-					Active:      "1",
+					Active:      csv_product.Active,
 					ProductCode: csv_product.ProductCode,
 					Title:       utils.ConvertStringToSQL(csv_product.Title),
 					BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
@@ -667,7 +795,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	// add product to database
 	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 		ID:          uuid.New(),
-		Active:      "1",
+		Active:      params.Active,
 		ProductCode: params.ProductCode,
 		Title:       utils.ConvertStringToSQL(params.Title),
 		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"objects"
@@ -419,6 +420,7 @@ func TokenValidation(key string) error {
 
 // Product: data validation
 func IDValidation(id string) error {
+	fmt.Println(id)
 	if id == "" || len(id) <= 0 || len(id) > 36 {
 		return errors.New("invalid product id")
 	}
@@ -444,11 +446,12 @@ func ProductValidation(product objects.RequestBodyProduct) error {
 	if product.Variants[0].Sku == "" {
 		return errors.New("empty SKU codes not allowed")
 	}
-	if product.Variants[0].VariantPricing[0].Name == "" {
-		return errors.New("empty price tier name not allowed")
-	}
-	if product.Variants[0].VariantQuantity[0].Name == "" {
-		return errors.New("empty warehouse name not allowed")
+	if len(product.Variants[0].VariantPricing) > 0 {
+		if product.Variants[0].VariantPricing[0].Name == "" {
+			return errors.New("empty price tier name not allowed")
+		}
+	} else {
+		return errors.New("product must have a price")
 	}
 	return nil
 }
