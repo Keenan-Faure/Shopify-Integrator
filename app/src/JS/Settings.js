@@ -277,6 +277,50 @@ function Settings()
                 alert(xhr.responseText);
             });
         });
+
+        /* Webhook Setting */
+        let button = document.getElementById("_webhook");
+        button.addEventListener("click", () =>
+        {
+            button.remove();
+            let webhook_button = document.createElement("button");
+            webhook_button.className = "webhook-button";
+            webhook_button.innerHTML = "Copy Webhook";
+
+            let setting = document.getElementById("setting1");
+            setting.appendChild(webhook_button);
+            let domain =  
+            {
+                domain: "https://190-92384-123/ngrok.io"
+            }
+            console.log(JSON.stringify(domain));
+            
+            let copyText;
+            let data;
+
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.post("http://localhost:8080/api/settings/webhook", JSON.stringify(domain), [], 'json')
+            .done(function( _data) 
+            {
+                console.log(_data);
+                data = _data.message;
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+
+
+
+            webhook_button.addEventListener("click", () =>
+            { 
+                copyText = data;
+                navigator.clipboard.writeText(copyText);
+                webhook_button.innerHTML = "Copied!";
+            });
+            
+        })
         
 
     }, []);
@@ -290,14 +334,14 @@ function Settings()
                     <div className = "app-settings" style= {{position: 'relative', top:'15px'}}>
                         <div className = "title">App Settings</div>
                         <div className = "_app">
-                            <div className = "setting">
+                            <div className = "setting" id = "setting1">
                                 <div className = "setting-title" style ={{top: '-6px'}}>Webhook Configuration
                                     <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
                                 </div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
                                 <div className="webhook_div" action="/action_page.php" style= {{margin:  'auto',maxWidth: '300px'}}>
-                                    <input type="text" placeholder = "Forwarding url..." name = "search2" />
-                                    <button className = "button-on-off" type="submit">Create</button>
+                                    <input type="text" placeholder = "Domain Name..." name = "search2" />
+                                    <button id = "_webhook" className = "button-on-off" type="button">Create</button>
                                 </div>
                             </div>
 

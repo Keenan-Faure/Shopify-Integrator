@@ -153,7 +153,6 @@ function Login()
                 message.innerHTML = "";
                 message.style.backgroundColor = "transparent";
                 message.style.display = "none";
-                //window.location.reload();
             }, 1000);
         }); 
     }
