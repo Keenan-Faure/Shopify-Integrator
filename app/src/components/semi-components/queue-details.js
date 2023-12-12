@@ -18,12 +18,12 @@ function Queue_details(props)
 
         /* Hover brightens the color of the pan element details */
         let pan_details = document.querySelectorAll(".pan-details");
-        for(let i = 0; i < pan.length; i++)
+        for(let i = 0; i < pan.length ; i++)
         {
             pan[i].onmouseover = function(event)
             {
                 let a_class = pan[i].querySelectorAll('a');
-                for(let p = 0; p <a_class.length; p++)
+                for(let p = 0; p < a_class.length; p++)
                 {
                     a_class[p].style.color = "rgb(240, 248, 255, 0.8)"
                 }
@@ -32,13 +32,21 @@ function Queue_details(props)
             pan[i].onmouseout = function(event)
             {
                 let a_class = pan[i].querySelectorAll('a');
-                for(let p = 0; p <a_class.length - 1; p++)
+                for(let p = 0; p < a_class.length - 1; p++)
                 {
                     a_class[p].style.color = "black";
                 }
                 pan_details[i].style.color = "black";
+
+
+                for(let p = a_class.length - 1; p < a_class.length; p++)
+                {
+                    a_class[p].style.color = "#afafaf";
+                }
+                pan_details[i].style.color = "#afafaf";
             }
         }
+
 
         /* Activity of pan elements */
         let activity = document.querySelectorAll(".status");
@@ -67,7 +75,7 @@ function Queue_details(props)
                 <a href = "/#" className = "p-d-title"><b>Queue Title:  </b>{props.Queue_Instruction} <i id = "options" href = "/#" className = "p-d-options" /></a> 
                 <br/><br/>
 
-                <a href = "/#" className = "p-d-type"><b>Queue Type:  </b>{props.Queue_Type}</a> <a href = "/#" className = "p-d-id">{props.Queue_ID}</a> <b>|</b> <a href = "/#" className = "p-d-status" style={{color: 'grey'}}>Queue Status:  <div className = "status">{props.Queue_Status}</div></a> 
+                <a href = "/#" className = "p-d-type"><b>Queue Type:  </b>{props.Queue_Type}</a> <a href = "/#" className = "p-d-id">{props.Queue_ID}</a> <a href = "/#" className = "p-d-status" style={{color: '#afafaf'}}><b>Queue Status:</b>  <div className = "status">{props.Queue_Status}</div></a> 
             </div>
         </div>
     );

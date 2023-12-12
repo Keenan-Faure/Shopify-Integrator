@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-
+import Chart from "chart.js/auto";
 import Queue_details from './semi-components/queue-details';
 import Detailed_queue from './semi-components/Queue/detailed_queue';
 import Background from './Background';
@@ -12,42 +12,6 @@ import '../CSS/page1.css';
 
 function Page2(props)
 {
-    const[inputs, setInputs] = useState({});
-
-    const handleChange = (event) => 
-    {
-        const name = event.target.name;
-        const value = event.target.value;
-        setInputs(values => ({...values, [name]: value}))
-      }
-
-    const Filter = (event) =>
-    {
-        event.preventDefault();
-
-        let category = document.querySelector(".category");
-        let type = document.querySelector(".type");
-        let vendor = document.querySelector(".vendor");
-
-        if(inputs.category == undefined) {inputs.category = "";}
-        if(inputs.vendor == undefined){inputs.vendor = ""; }
-        if(inputs.type == undefined){inputs.type = ""; }
-
-        category.innerHTML = inputs.category;
-        type.innerHTML = inputs.type;
-        vendor.innerHTML = inputs.vendor;
-
-        let filter_input = document.querySelectorAll(".filter-selection-main");
-        let navbar = document.querySelector(".navbar"); let main = document.querySelector(".main"); 
-        let filter = document.querySelector(".filter");
-        for(let i = 0; i < filter_input.length; i++) { filter_input[i].style.display = "none"; }
-        let filter_button = document.getElementById("_filter"); let C_filter = document.getElementById("clear_filter");
-        filter_button.disabled = false; C_filter.disabled = false;
-        filter_button.style.cursor = "pointer"; C_filter.style.cursor = "pointer"; navbar.style.display = "block";
-        main.style.display = "block"; filter.style.display = "block";
-    }
-
-
     useEffect(()=> 
     {
         /* Ensure the model is shown */
@@ -539,6 +503,62 @@ function Page2(props)
                 });
             } 
         }
+
+        /* Queue Information Requests */
+        let graph_data = {};
+        const api_key = localStorage.getItem('api_key');
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+        $.get("http://localhost:8080/api/queue/view", [], [], 'json')
+        .done(function(_data) 
+        {
+            let value = [];
+            console.log(_data);
+            graph_data = _data;
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+        });
+
+        let ctx = document.getElementById("queue-graph");
+        setTimeout(() =>
+        {
+            
+            // FETCH GRAPH
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(graph_data),
+                    datasets: [{
+                        label: 'Queue View',
+                        data: Object.values(graph_data),
+                        borderWidth: 1,
+                        borderColor: "rgb(70 201 159)",
+                        backgroundColor: "rgb(70 201 159)",
+                        pointRadius: "5",
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: 
+                        {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+        }, 100);
+
+        setTimeout(() =>
+        {
+            let graph = document.querySelector(".graph");
+            graph.style.animation = "SlideUp2 0.8s ease-in";
+            graph.style.display = "block";
+        }, 1200);
+        
+        
+
     }, []);
 
     return (
@@ -564,8 +584,13 @@ function Page2(props)
                 <br />
                 <button id = "clear_filter"className = "filter-button">Clear Filter</button>
                 <button id = "_filter"className = "filter-button">Filter Results</button>
+                <br /><br /><br /><br /><br />
+                <div className = "queue-view">
+                    <div className="graph g1" style = {{width: '95%'}}>
+                        <canvas id="queue-graph"></canvas>
+                    </div>
+                </div>
             </div>
-            
         </>
     );
 }
@@ -583,40 +608,3 @@ Page2.defaultProps =
 };
 
 export default Page2;
-
-/*
-<div className = "filter-selection-main">
-                <div className = "filter-input">
-                    <div className = 'close-filter'>&times;</div>
-                    <div className = "filter-selection-title">Filter by Order</div>
-                    <form method = 'post' onSubmit={(event) => Filter(event)} autoComplete='off'>
-                        <span><input type = 'type' placeholder = "Enter Order" name = "order" value = {inputs.order || ""} onChange = {handleChange} required></input></span>
-                        <br/><br/><br/>
-                        <button className = 'button' type = 'submit'>Confirm</button>
-                    </form>
-
-                </div>
-            </div>
-            <div className = "filter-selection-main">
-                <div className = "filter-input">
-                    <div className = 'close-filter'>&times;</div>
-                    <div className = "filter-selection-title">Filter by Product</div>
-                    <form method = 'post' onSubmit={(event) => Filter(event)} autoComplete='off'>
-                        <span><input type = 'vendor' placeholder = "Enter VeProductndor" name = "product" value = {inputs.product || ""} onChange = {handleChange} required></input></span>
-                        <br/><br/><br/>
-                        <button className = 'button' type = 'submit'>Confirm</button>
-                    </form>
-                </div>
-            </div>
-            <div className = "filter-selection-main">
-                <div className = "filter-input">
-                    <div className = 'close-filter'>&times;</div>
-                    <div className = "filter-selection-title">Filter by Customer</div>
-                    <form method = 'post' onSubmit={(event) => Filter(event)} autoComplete='off'>
-                        <span><input type = 'type' placeholder = "Enter Customer" name = "customer" value = {inputs.customer || ""} onChange = {handleChange} required></input></span>
-                        <br/><br/><br/>
-                        <button className = 'button' type = 'submit'>Confirm</button>
-                    </form>
-                </div>
-            </div>
-*/

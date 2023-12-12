@@ -1,5 +1,4 @@
 import {useEffect} from 'react';
-import {useState} from "react";
 import $ from 'jquery';
 import Chart from "chart.js/auto";
 import '../CSS/dashboard.css';
@@ -78,7 +77,6 @@ function Dashboard()
 
         //Order Graph
         let graph_data2 = {};
-        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
         $.get("http://localhost:8080/api/stats/orders?status=not_paid", [], [], 'json')
         .done(function(_data) 
         {

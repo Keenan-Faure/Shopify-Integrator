@@ -1,5 +1,6 @@
 import '../../../CSS/detailed.css';
 
+const userName = localStorage.getItem('username').toUpperCase();
 function Product_Variants(props)
 {
     return (
@@ -40,7 +41,7 @@ function Product_Variants(props)
                 <br />
                 <div className = "quantities">{props.Quantities}</div>
 
-                <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
+                <div className = "variant-updateDate">Updated by <b>{userName}</b> at: <b>{props.Variant_UpdateDate}</b></div>
             </div>
         </div>
     );
