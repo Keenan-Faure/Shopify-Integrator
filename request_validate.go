@@ -502,6 +502,9 @@ func ValidateDuplicateSKU(
 
 // Product: Duplicate Option value validation (variations)
 func DuplicateOptionValues(product objects.RequestBodyProduct) error {
+	if len(product.ProductOptions) == 0 {
+		return nil
+	}
 	if len(product.ProductOptions) == 1 {
 		option_values := []string{}
 		for _, value := range product.Variants {
@@ -528,7 +531,7 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 				}
 			}
 		}
-	} else if len(product.ProductOptions) != 3 {
+	} else if len(product.ProductOptions) > 3 {
 		return errors.New("too many option values")
 	}
 	option_1_values := []string{}
