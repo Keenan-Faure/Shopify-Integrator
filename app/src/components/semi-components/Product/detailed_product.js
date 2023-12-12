@@ -1,4 +1,5 @@
 import {useEffect} from 'react';
+import $ from 'jquery';
 import '../../../CSS/detailed.css';
 
 function Detailed_product(props)
@@ -147,19 +148,19 @@ function Detailed_product(props)
                 if(_quantities[i].childNodes.length <= 1)
                 {
                     quantities =
-                    {
+                    [{
                         
                         name: "",
-                        value: ""
-                    };
+                        value: 0
+                    }];
                 }
                 else 
                 {
                     quantities =
-                    {
+                    [{
                         name: _quantities[i].childNodes[0].innerHTML,
-                        value: _quantities[i].childNodes[1].innerHTML
-                    };
+                        value: parseInt(_quantities[i].childNodes[1].innerHTML)
+                    }];
                 }
                 variants.sku = sku[i].innerHTML; 
                 variants.barcode = barcode[i].innerHTML;
@@ -169,10 +170,12 @@ function Detailed_product(props)
 
                 variants.variant_quantities = quantities;
                 variants.variant_price_tiers = 
-                {
+                [{
+
+                
                     name: price_name[i].innerHTML,
                     value: price_value[i].innerHTML
-                };
+                }];
                 object.variants[i] = variants;
             }
             
@@ -180,10 +183,25 @@ function Detailed_product(props)
             console.log(id)
             console.log(object);
 
-            /*
+            
             const api_key = localStorage.getItem('api_key');
-            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-            $.post("http://localhost:8080/api/products", JSON.stringify(object),[], 'json')
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, type: 'PUT' });
+
+            $.ajax({ type: 'PUT', url: "http://localhost:8080/api/products/" + id, 
+            contentType: 'application/json', data: JSON.stringify(object)})
+            .done(function (_data) 
+            {
+                console.log(_data);
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+            
+
+
+            /*
+            $.put("http://localhost:8080/api/products/" + id, JSON.stringify(object),[], 'json')
             .done(function( _data) 
             {
                 console.log(_data);
@@ -193,6 +211,7 @@ function Detailed_product(props)
                 alert(xhr.responseText);
             });
             */
+            
 
         })
 

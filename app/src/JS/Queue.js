@@ -45,16 +45,22 @@ function Queue()
         .done(function( _data) 
         {
             console.log(_data);
-            let root;
-            let pan_main = document.querySelector(".pan-main");
-            let div = document.createElement("div");
-            pan_main.appendChild(div);
+            if(_data == "")
+            {
+                document.querySelector(".empty-message").style.display = "block";
+            }
+            else 
+            {
+                let root;
+                let pan_main = document.querySelector(".pan-main");
+                let div = document.createElement("div");
+                pan_main.appendChild(div);
 
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
-            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
-            />))
-            
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                />))
+            } 
         })
         .fail( function(xhr) { alert(xhr.responseText); });
 

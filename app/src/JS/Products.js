@@ -49,18 +49,24 @@ function Products()
         .done(function( _data) 
         {
             console.log(_data);
-            let root;
-            let pan_main = document.querySelector(".pan-main");
-            let div = document.createElement("div");
-            pan_main.appendChild(div);
+            if(_data == "")
+            {
+                document.querySelector(".empty-message").style.display = "block";
+            }
+            else 
+            {
+                let root;
+                let pan_main = document.querySelector(".pan-main");
+                let div = document.createElement("div");
+                pan_main.appendChild(div);
 
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} 
-            Product_Activity={el.active} Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category}
-            Product_Vendor={el.vendor} Product_Image={el.product_images.map((el, i) => el.src)}
-
-
-            />))
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} 
+                Product_Activity={el.active} Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category}
+                Product_Vendor={el.vendor} Product_Image={el.product_images.map((el, i) => el.src)}
+                />))
+            }
+            
             
         })
         .fail( function(xhr) { alert(xhr.responseText); });

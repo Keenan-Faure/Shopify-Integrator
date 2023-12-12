@@ -27,9 +27,24 @@ function Settings()
 
         function fetchShopify() 
         {
-            let shopify_locations = ["Japan", "Cape Town"];
-            createLocationsDOM(shopify_locations);
-            document.getElementById('fetch-button').disabled = true;
+            
+            const api_key = localStorage.getItem('api_key');
+            let shopify_locations  = [];
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.get('http://localhost:8080/api/inventory/config', [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+                for(let i = 0; i < _data.shopify_locations.locations.length; i++)
+                {
+                    shopify_locations [i] = _data.shopify_locations.locations[i].city;
+                }
+
+                /* Api-Request for warehouse locations */
+                createLocationsDOM(shopify_locations);
+                document.getElementById('fetch-button').disabled = true;
+            })
+            .fail( function(xhr) { alert(xhr.responseText); });
         }
     
         function createLocationsDOM(locations) 
@@ -87,7 +102,7 @@ function Settings()
             _main.appendChild(div);
 
             root = createRoot(div);
-            root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.key} Description={el.description}
+            root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
             Value={el.value} id={el.id}
             />))
             
@@ -97,7 +112,7 @@ function Settings()
             {
                 let div = document.createElement("button");
                 div.className = "mini-setting";
-                div.innerHTML = _data[i].key;
+                div.innerHTML = _data[i].field_name;
                 setting_2.appendChild(div);
             }
             
@@ -138,7 +153,7 @@ function Settings()
             _main.appendChild(div);
 
             root = createRoot(div);
-            root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.key} Description={el.description}
+            root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
             Value={el.value} id={el.id}
             />))
 
@@ -147,7 +162,7 @@ function Settings()
             {
                 let div = document.createElement("button");
                 div.className = "mini-setting";
-                div.innerHTML = _data[i].key;
+                div.innerHTML = _data[i].field_name;
                 setting_2.appendChild(div);
             }
 

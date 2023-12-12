@@ -4,7 +4,6 @@ import {useEffect, useState} from 'react';
 import $ from 'jquery';
 import Customer_details from '../components/semi-components/customer-details';
 import Detailed_customer from '../components/semi-components/Customer/detailed_customer';
-import Detailed_shipping from '../components/semi-components/Customer/detailed_shipping';
 import Page1 from '../components/Page1';
 import '../CSS/page1.css';
 
@@ -50,16 +49,24 @@ function Customers()
         .done(function( _data) 
         {
             console.log(_data);
+            if(_data == "")
+            {
+                document.querySelector(".empty-message").style.display = "block";
+            }
+            else 
+            {
+                let root;
+                let pan_main = document.querySelector(".pan-main");
+                let div = document.createElement("div");
+                pan_main.appendChild(div);
 
-            let root;
-            let pan_main = document.querySelector(".pan-main");
-            let div = document.createElement("div");
-            pan_main.appendChild(div);
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Customer_details key={`${el.title}_${i}`} Customer_ID={el.id}
+                Customer_firstName={el.first_name} Customer_lastName={el.last_name}
+                />))
+            }
 
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Customer_details key={`${el.title}_${i}`} Customer_ID={el.id}
-            Customer_firstName={el.first_name} Customer_lastName={el.last_name}
-            />))
+            
 
         })
         .fail( function(xhr) 
@@ -457,6 +464,7 @@ function Customers()
                     </form>    
                 </div>
                 <div className = "main-elements">
+                    <div className = "empty-message">No results found.</div>
                     <div className = "pan-main" id = "pan-main">
 
                     </div>

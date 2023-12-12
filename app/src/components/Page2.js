@@ -511,7 +511,6 @@ function Page2(props)
         $.get("http://localhost:8080/api/queue/view", [], [], 'json')
         .done(function(_data) 
         {
-            let value = [];
             console.log(_data);
             graph_data = _data;
         })
