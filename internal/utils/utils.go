@@ -131,7 +131,7 @@ func GetAppSettings(key string) map[string]string {
 		"APP_FETCH_CREATE_PRICE_TIER_ENABLED",
 		"APP_FETCH_SYNC_IMAGES"}
 	shopify_keys := []string{"SHOPIFY_DEFAULT_PRICE_TIER", "SHOPIFY_DEFAULT_COMPARE_AT_PRICE_TIER",
-		"SHOPIFY_DISABLE_DYNAMIC_SKU_SEARCH"}
+		"SHOPIFY_ENABLE_DYNAMIC_SKU_SEARCH"}
 	if key == "app" {
 		for iterator, value := range app_keys {
 			result[app_keys[iterator]] = LoadEnv(value)

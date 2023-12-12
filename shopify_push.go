@@ -188,22 +188,22 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		_, err := configShopify.UpdateProductShopify(shopifyProduct, product_id)
 		return err
 	}
-	is_dynamic_search_disabled := true
-	dynamic_search_disabled, err := dbconfig.DB.GetAppSettingByKey(
+	dynamic_search_enabled := false
+	dynamic_search, err := dbconfig.DB.GetAppSettingByKey(
 		context.Background(),
-		"shopify_disable_dynamic_sku_search",
+		"shopify_enable_dynamic_sku_search",
 	)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			return err
 		}
-		dynamic_search_disabled.Value = "true"
+		dynamic_search.Value = "false"
 	}
-	is_dynamic_search_disabled, err = strconv.ParseBool(dynamic_search_disabled.Value)
+	dynamic_search_enabled, err = strconv.ParseBool(dynamic_search.Value)
 	if err != nil {
 		return err
 	}
-	if is_dynamic_search_disabled {
+	if !dynamic_search_enabled {
 		ids, err := configShopify.GetProductBySKU(product.Variants[0].Sku)
 		if err != nil {
 			return err
