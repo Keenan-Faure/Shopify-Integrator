@@ -2,12 +2,13 @@
 INSERT INTO app_settings(
     id,
     key,
+    field_name,
     description,
     value,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 );
 
 -- name: UpdateAppSetting :exec
@@ -22,6 +23,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM app_settings
@@ -32,6 +34,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM app_settings;

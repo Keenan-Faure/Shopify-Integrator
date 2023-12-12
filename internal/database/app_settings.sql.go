@@ -16,18 +16,20 @@ const addAppSetting = `-- name: AddAppSetting :exec
 INSERT INTO app_settings(
     id,
     key,
+    field_name,
     description,
     value,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 `
 
 type AddAppSettingParams struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
+	FieldName   string    `json:"field_name"`
 	Description string    `json:"description"`
 	Value       string    `json:"value"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -38,6 +40,7 @@ func (q *Queries) AddAppSetting(ctx context.Context, arg AddAppSettingParams) er
 	_, err := q.db.ExecContext(ctx, addAppSetting,
 		arg.ID,
 		arg.Key,
+		arg.FieldName,
 		arg.Description,
 		arg.Value,
 		arg.CreatedAt,
@@ -51,6 +54,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM app_settings
@@ -61,6 +65,7 @@ type GetAppSettingByKeyRow struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
+	FieldName   string    `json:"field_name"`
 	Value       string    `json:"value"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -72,6 +77,7 @@ func (q *Queries) GetAppSettingByKey(ctx context.Context, key string) (GetAppSet
 		&i.ID,
 		&i.Key,
 		&i.Description,
+		&i.FieldName,
 		&i.Value,
 		&i.UpdatedAt,
 	)
@@ -83,6 +89,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM app_settings
@@ -92,6 +99,7 @@ type GetAppSettingsRow struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
+	FieldName   string    `json:"field_name"`
 	Value       string    `json:"value"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -109,6 +117,7 @@ func (q *Queries) GetAppSettings(ctx context.Context) ([]GetAppSettingsRow, erro
 			&i.ID,
 			&i.Key,
 			&i.Description,
+			&i.FieldName,
 			&i.Value,
 			&i.UpdatedAt,
 		); err != nil {

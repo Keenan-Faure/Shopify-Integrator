@@ -33,6 +33,7 @@ type AppSetting struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
+	FieldName   string    `json:"field_name"`
 	Value       string    `json:"value"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -194,6 +195,7 @@ type ShopifySetting struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Value       string    `json:"value"`
+	FieldName   string    `json:"field_name"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	Description string    `json:"description"`
