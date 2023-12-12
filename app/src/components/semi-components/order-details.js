@@ -1,5 +1,6 @@
 import {useEffect} from 'react';
 import '../../CSS/page1.css';
+import image from '../../media/orders.png';
 
 
 function Order_details(props)
@@ -43,7 +44,7 @@ function Order_details(props)
 
     return (
         <div className = "pan" >
-            <div className = "pan-img"></div>
+            <div className = "pan-img img-2"></div>
             <div className = "pan-details">
                 <a href = "/#" className = "p-d-title">{props.Order_Title}</a> 
                 <br/><br/>

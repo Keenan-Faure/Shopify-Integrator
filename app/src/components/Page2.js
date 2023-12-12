@@ -550,9 +550,9 @@ function Page2(props)
 
         }, 100);
 
+        let graph = document.querySelector(".graph");
         setTimeout(() =>
         {
-            let graph = document.querySelector(".graph");
             graph.style.animation = "SlideUp2 0.8s ease-in";
             graph.style.display = "block";
         }, 1200);

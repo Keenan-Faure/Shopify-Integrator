@@ -225,16 +225,6 @@ table {
     font-size: 14px;
 }
 
-.warning_logo {
-    position: relative;
-    width: 30px;
-    height: 30px;
-    background-image: url(../media/warning.png);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-}
-
 /* Bubble notifications */
 .bubble 
 {
