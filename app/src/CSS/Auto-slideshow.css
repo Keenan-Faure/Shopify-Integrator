@@ -1,13 +1,8 @@
-* {box-sizing: border-box;}
-body 
-{
-    font-family: Verdana, sans-serif;
-}
 .auto-slideshow-container .mySlides 
 {
     display: none;
 }
-img 
+.auto-slideshow-container img 
 {
 	vertical-align: middle;
 	width: 100%;

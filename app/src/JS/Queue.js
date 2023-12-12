@@ -4,6 +4,7 @@ import {useEffect, useState} from 'react';
 import $ from 'jquery';
 import Page2 from '../components/Page2';
 import Queue_details from '../components/semi-components/queue-details';
+import Detailed_queue from '../components/semi-components/Queue/detailed_queue';
 
 
 import '../CSS/page1.css';
@@ -51,6 +52,7 @@ function Queue()
 
             root = createRoot(div);
             root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
             />))
             
         })
@@ -83,17 +85,10 @@ function Queue()
                             queue.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( ); 
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                details.querySelector(".description").innerHTML = _data.body_html;
-
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( )
-                            }, 10);
-                            
+                            rot.render( <Detailed_queue key={`${_data.title}_${i}`} Queue_Status={_data.status} Queue_Description={_data.description}
+                            Queue_Type={_data.queue_type} Queue_Instruction={_data.instruction} Queue_ID={_data.id} Created_At={_data.created_at} 
+                            Updated_At={_data.updated_at}
+                            />)
                         }
                         else 
                         //create new div
@@ -101,16 +96,10 @@ function Queue()
                             let details = document.createElement('details');
                             queue.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render( ) 
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                details.querySelector(".description").innerHTML = _data.body_html;
-
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( )
-                            }, 0);
+                            rot.render( <Detailed_queue key={`${_data.title}_${i}`} Queue_Status={_data.status} Queue_Description={_data.description}
+                            Queue_Type={_data.queue_type} Queue_Instruction={_data.instruction} Queue_ID={_data.id} Created_At={_data.created_at} 
+                            Updated_At={_data.updated_at}
+                            />)
                         }
                     })
                     .fail( function(xhr) 
@@ -216,7 +205,9 @@ function Queue()
                         let root = createRoot(div);
                         flushSync(() => 
                         { 
-
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id} 
+                            />))
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -264,7 +255,9 @@ function Queue()
 
                         flushSync(() => 
                         { 
-
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`} 
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                            />))
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -316,7 +309,9 @@ function Queue()
 
                         flushSync(() => 
                         { 
-
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                            />))
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -346,7 +341,9 @@ function Queue()
 
                         flushSync(() => 
                         { 
-
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                            />))
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -385,7 +382,9 @@ function Queue()
                 pan_main.className = "pan-main";
                 main_elements.appendChild(pan_main);
                 root = createRoot(pan_main);
-                root.render(  ) 
+                root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`} Queue_Updated_At={el.updated_at} Queue_Creation_Date={el.created_at} 
+                Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                />))
                 setTimeout(() => { DetailedView();}, 200);
                 Pagintation(1);
             })

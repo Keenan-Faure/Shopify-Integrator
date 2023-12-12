@@ -2,16 +2,11 @@ import {useEffect, useState} from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
-import Detailed_Images from './semi-components/Product/detailed_images';
-import Detailed_Images2 from './semi-components/Product/detailed_images2';
-import Detailed_product from './semi-components/Product/detailed_product';
-import Product_Variants from './semi-components/Product/product_variants';
-import Detailed_Price from '../components/semi-components/Product/detailed_prices';
-import Detailed_Quantities from '../components/semi-components/Product/detailed_quantities';
-
+import Queue_details from './semi-components/queue-details';
+import Detailed_queue from './semi-components/Queue/detailed_queue';
 import Background from './Background';
 import $ from 'jquery';
-import Pan_details from './semi-components/pan-detail';
+
 import '../CSS/page1.css';
 
 
@@ -175,7 +170,9 @@ function Page2(props)
                                 let root = createRoot(pan_main);
                                 flushSync(() => 
                                 {
-                                    root.render() 
+                                    root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                                    Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                                    />))
                                 });
                                 setTimeout(() => { DetailedView();}, 200);
                             }
@@ -189,7 +186,9 @@ function Page2(props)
                                 let root = createRoot(pan_main);
                                 flushSync(() => 
                                 {
-                                    root.render() 
+                                    root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                                    Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                                    />))
                                 });
                                 setTimeout(() => { DetailedView();}, 200);
                             }
@@ -227,16 +226,10 @@ function Page2(props)
                             queue.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( ); 
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                details.querySelector(".description").innerHTML = _data.body_html;
-
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( )
-                            }, 10);
+                            rot.render( <Detailed_queue key={`${_data.title}_${i}`} Queue_Status={_data.status} Queue_Description={_data.description}
+                            Queue_Type={_data.queue_type} Queue_Instruction={_data.instruction} Queue_ID={_data.id} Created_At={_data.created_at} 
+                            Updated_At={_data.updated_at}
+                            />)
                             
                         }
                         else 
@@ -245,16 +238,10 @@ function Page2(props)
                             let details = document.createElement('details');
                             queue.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render( ) 
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                details.querySelector(".description").innerHTML = _data.body_html;
-
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( )
-                            }, 0);
+                            rot.render( <Detailed_queue key={`${_data.title}_${i}`} Queue_Status={_data.status} Queue_Description={_data.description}
+                            Queue_Type={_data.queue_type} Queue_Instruction={_data.instruction} Queue_ID={_data.id} Created_At={_data.created_at} 
+                            Updated_At={_data.updated_at}
+                            />)
                         }
                     })
                     .fail( function(xhr) 
@@ -291,16 +278,66 @@ function Page2(props)
         {
             if(index == 1)
             {
-                let category = document.querySelector(".category").innerHTML;
-                let type = document.querySelector(".type").innerHTML;
-                let vendor = document.querySelector(".vendor").innerHTML;
+
+                let next = document.getElementById("next");
                 let ahead = index + 1;
-                $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + ahead, [], [])
-                .done(function( _data) 
+                for(let i = 0; i < filter_img.length; i++)
                 {
-                    if(_data == "") { let next = document.getElementById("next"); next.style.cursor = "not-allowed"; next.disabled = true; } 
-                })
-                .fail( function(xhr) { alert(xhr.responseText); });
+                    if(filter_img[i].style.display == "block")
+                    {
+                        let type = filter_img[i].nextSibling.className;
+                        const api_key = localStorage.getItem('api_key');
+                        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                        $.get("http://localhost:8080/api/queue/filter?type=" + type + "?page="+ ahead, [], [], 'json')
+                        .done(function( _data) 
+                        {
+                            console.log(_data);
+                            if(_data.length < 10)
+                            {
+                                next.disabled = true;
+                                next.style.cursor = "not-allowed";
+                            }
+                            if(_data == "") { let next = document.getElementById("next"); next.style.cursor = "not-allowed"; next.disabled = true; } 
+                            else 
+                            {
+                                if(document.querySelector(".pan-main") != null)
+                                {
+                                    document.querySelector(".pan-main").remove();
+                                    let pan_main = document.createElement('div');
+                                    let main_elements = document.querySelector(".main-elements");
+                                    pan_main.className = "pan-main";
+                                    main_elements.appendChild(pan_main);
+
+                                    let root = createRoot(pan_main);
+                                    flushSync(() => 
+                                    {
+                                        root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`} 
+                                        />))
+                                    });
+                                    setTimeout(() => { DetailedView();}, 200);
+                                }
+                                else 
+                                {
+                                    let pan_main = document.createElement('div');
+                                    let main_elements = document.querySelector(".main-elements");
+                                    pan_main.className = "pan-main";
+                                    main_elements.appendChild(pan_main);
+
+                                    let root = createRoot(pan_main);
+                                    flushSync(() => 
+                                    {
+                                        root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`} 
+                                        Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                                        />))
+                                    });
+                                    setTimeout(() => { DetailedView();}, 200);
+                                }
+                            }
+                        })
+                        .fail( function(xhr) { alert(xhr.responseText); });
+                    }
+                }
+                
             }
 
             /* Check done to remove old elements if they exist */
@@ -354,10 +391,9 @@ function Page2(props)
                         let root = createRoot(div);
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            Product_Image={el.product_images.map((el, i) => el.src)}
-                            /> )) 
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                            />))
                         });
                         
                     })
@@ -398,10 +434,9 @@ function Page2(props)
                         let root = createRoot(div);
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            Product_Image={el.product_images.map((el, i) => el.src)}
-                            /> )) 
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                            />))
                         });
 
                     
@@ -458,10 +493,9 @@ function Page2(props)
                         let root = createRoot(div);
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            Product_Image={el.product_images.map((el, i) => el.src)}
-                            /> )) 
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`} Queue_Updated_At={el.updated_at} Queue_Creation_Date={el.created_at} 
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                            />)) 
                         });
 
                     })
@@ -493,10 +527,9 @@ function Page2(props)
                         let root = createRoot(div);
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            Product_Image={el.product_images.map((el, i) => el.src)}
-                            /> ))  
+                            root.render(_data.map((el, i) => <Queue_details key={`${el.title}_${i}`}
+                            Queue_Type={el.queue_type} Queue_Instruction={el.instruction} Queue_Status={el.status} Queue_ID={el.id}
+                            />))
                         });
                         
                     })
@@ -506,9 +539,6 @@ function Page2(props)
                 });
             } 
         }
-
-
-
     }, []);
 
     return (
