@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"objects"
@@ -420,7 +419,6 @@ func TokenValidation(key string) error {
 
 // Product: data validation
 func IDValidation(id string) error {
-	fmt.Println(id)
 	if id == "" || len(id) <= 0 || len(id) > 36 {
 		return errors.New("invalid product id")
 	}

@@ -17,11 +17,12 @@ INSERT INTO shopify_settings(
     id,
     key,
     description,
+    field_name,
     value,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 `
 
@@ -29,6 +30,7 @@ type AddShopifySettingParams struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
+	FieldName   string    `json:"field_name"`
 	Value       string    `json:"value"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -39,6 +41,7 @@ func (q *Queries) AddShopifySetting(ctx context.Context, arg AddShopifySettingPa
 		arg.ID,
 		arg.Key,
 		arg.Description,
+		arg.FieldName,
 		arg.Value,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -51,6 +54,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM shopify_settings
@@ -61,6 +65,7 @@ type GetShopifySettingByKeyRow struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
+	FieldName   string    `json:"field_name"`
 	Value       string    `json:"value"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -72,6 +77,7 @@ func (q *Queries) GetShopifySettingByKey(ctx context.Context, key string) (GetSh
 		&i.ID,
 		&i.Key,
 		&i.Description,
+		&i.FieldName,
 		&i.Value,
 		&i.UpdatedAt,
 	)
@@ -83,6 +89,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM shopify_settings
@@ -92,6 +99,7 @@ type GetShopifySettingsRow struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
+	FieldName   string    `json:"field_name"`
 	Value       string    `json:"value"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -109,6 +117,7 @@ func (q *Queries) GetShopifySettings(ctx context.Context) ([]GetShopifySettingsR
 			&i.ID,
 			&i.Key,
 			&i.Description,
+			&i.FieldName,
 			&i.Value,
 			&i.UpdatedAt,
 		); err != nil {
