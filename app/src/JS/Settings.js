@@ -103,7 +103,7 @@ function Settings()
 
             root = createRoot(div);
             root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
-            Value={el.value} id={el.id}
+            Value={el.value} id={el.id} Title = {el.key}
             />))
             
 
@@ -154,7 +154,7 @@ function Settings()
 
             root = createRoot(div);
             root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
-            Value={el.value} id={el.id}
+            Value={el.value} id={el.id} Title = {el.key}
             />))
 
             let setting_2 = document.getElementById("shopify_settings");
