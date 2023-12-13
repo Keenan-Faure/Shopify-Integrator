@@ -1,3 +1,7 @@
+#login
+{
+    overflow: hidden;
+}
 .modal1
 {
     display: block;
@@ -86,10 +90,6 @@ input[type = _text]
 	box-sizing: border-box;
     background-color: transparent;
     border-radius: 0px;
-}
-input[type = _text]::-webkit-input-placeholder 
-{
-    text-align: center;
 }
 input[type = return]
 {

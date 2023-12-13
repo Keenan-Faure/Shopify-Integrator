@@ -298,14 +298,14 @@ function Login()
         });
           
         /* DONT MAKE IT RAIN YET! */
-        //makeItRain();
+        makeItRain();
     }, []);
 
 
     return (
     <>
-    <div>
-        <div className = 'modal1' id = "model" style = {{display: 'block'}}>
+    <div id = "login">
+        <div className = 'modal1' id = "model" style = {{display: 'block', zIndex: '2'}}>
             <div className = "back-row-toggle splat-toggle">
                 <div className = "rain front-row"></div>
                 <div className = "rain back-row"></div>

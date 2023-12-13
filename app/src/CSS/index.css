@@ -3,15 +3,10 @@ body
 	margin: 0;
     background: linear-gradient(to bottom, #202020, #111119);
 }
-html 
-{
-    overflow: hidden;
-    scroll-behavior: smooth;
-}
 *
 {
 	box-sizing: border-box;
-	overflow: auto;
+	overflow: hidden;
 }
 /* width */
 ::-webkit-scrollbar 

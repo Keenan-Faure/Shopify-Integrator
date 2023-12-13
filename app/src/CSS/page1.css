@@ -183,14 +183,15 @@ input[type="search"]
     
 }
 
-input[type="search"]::placeholder 
+input[type = search]::-webkit-input-placeholder 
 {
-    color: #3b3b3b;
+    text-align: center;
+    color: rgb(170, 170, 170);
 }
 input.search-area
 {
     width: 260px;
-    border: 1px solid #555;
+    border: 1px solid #8d8d8d;
     display: block;
     position: relative;
     left: 50%;
