@@ -237,8 +237,8 @@ input[type = setting]
 }
 .mini-setting:hover
 {
-    color: white;
-    background-color: rgb(17, 17, 17);
+    background-color: rgb(64, 97, 128);
+    color: aliceblue;
 }
 
 /* Webhook div */
