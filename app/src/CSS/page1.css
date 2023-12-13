@@ -192,6 +192,7 @@ input.search-area
 {
     width: 260px;
     border: 1px solid #8d8d8d;
+    color: #cdcdcd;
     display: block;
     position: relative;
     left: 50%;
@@ -432,7 +433,7 @@ input.search-area
   
 .pagination button 
 {
-    color: black;
+    color: rgb(202, 202, 202);
     float: left;
     padding: 8px 16px;
     text-decoration: none;

@@ -9,7 +9,6 @@ export default function Main()
 {
     return (    
         <div>
-            <Auto_Slideshow />
             <NavigationBar Display = "block"/>
         </div>
     );
