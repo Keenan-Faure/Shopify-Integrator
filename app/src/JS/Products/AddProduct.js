@@ -243,7 +243,7 @@ function Add_Product()
     return (
         <>
             <Background />
-            <div className = 'modal1' id = "model">
+            <div className = 'modal1' id = "model" style={{zIndex: '2'}}>
                 <div className = "back-row-toggle splat-toggle">
                     <div className = "rain front-row"></div>
                     <div className = "rain back-row"></div>
@@ -255,7 +255,7 @@ function Add_Product()
                 <form className = 'modal-content' style ={{opacity: '1'}} method = 'post' onSubmit={(event) => AddProduct(event)} autoComplete='off' id = 'form1' encType="multipart/form-data" noValidate>
                 <div id = "detailss">
                     <div className = 'rtn-button'></div>
-                    <div className = "button-holder" style = {{position: 'absolute', width: '71%', zIndex:'1', left:'29%', backgroundColor: ''}}>
+                    <div className = "button-holder" style = {{position: 'absolute', width: '71%', zIndex:'3', left:'29%', backgroundColor: ''}}>
                         <button type = "button" className="tablink" id = "Product" style ={{left: '-14%', width:'95px'}}>Product</button>
                         <button type = "button" className="tablink" id ="Variants" style ={{left: '-14%', width:'95px'}}>Variants</button>
                     </div>
@@ -420,7 +420,7 @@ function Add_Product()
                         </div>
                     </div>
                 </div>
-                <button type = "submit" className = "submiit">Add Product</button>
+                <button type = "submit" className = "submiit" style={{zIndex: '2'}}>Add Product</button>
                 </form>
             </div>    
         </>

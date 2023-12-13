@@ -1,7 +1,6 @@
 import {useEffect} from 'react';
 import { createRoot } from 'react-dom/client';
 import $ from 'jquery';
-import Background from '../components/Background';
 import Setting_details from '../components/semi-components/settings-details';
 
 import '../CSS/page2.css';
@@ -310,24 +309,19 @@ function Settings()
             {
                 alert(xhr.responseText);
             });
-
-
-
             webhook_button.addEventListener("click", () =>
             { 
                 copyText = data;
                 navigator.clipboard.writeText(copyText);
                 webhook_button.innerHTML = "Copied!";
-            });
-            
+            }); 
         })
-        
+
 
     }, []);
 
     return (
         <>
-            <Background />
             <div className = "main-container">
                 <div className = "settings">
                     <button className = "submiit" id = "edit" style = {{zIndex: '2', top: '55px'}}>Edit Settings</button>

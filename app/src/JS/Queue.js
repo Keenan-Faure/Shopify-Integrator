@@ -404,12 +404,12 @@ function Queue()
         <div className = "queue">
             <div className = "main">
                 <div className = "search">
-                    <form className = "search-area" id = "search" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
+                    <form className = "search-area" style ={{top: '30px'}} id = "search" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
                         <input className ="search-area" type="search" placeholder="Search..." 
                         name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
                 </div>
-                <div className = "main-elements">
+                <div className = "main-elements" style={{top: '53%'}}>
                     <div className = "empty-message">No results found.</div>
                     <div className = "pan-main" id = "pan-main">
 

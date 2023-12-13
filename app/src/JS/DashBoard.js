@@ -5,7 +5,6 @@ import '../CSS/dashboard.css';
 import image from '../media/icons8-shopify-50.png';
 
 
-
 function Dashboard()
 {
 
@@ -36,12 +35,12 @@ function Dashboard()
         {
             graph1.style.animation = "appear 1s ease-in";
             graph1.style.display = "block"; graph2.style.animation = "appear 1s ease-in"; graph2.style.display = "block";
-        }, 1200);
+        }, 2200);
 
         setTimeout(() =>
         {
             header.style.animation = "appear 1s ease-in"; header.style.display = "block"; 
-        }, 500)
+        }, 1000)
 
 
         const userName = localStorage.getItem('username');
@@ -59,7 +58,9 @@ function Dashboard()
         });
 
         //Fetch Graph
-        
+        let status = document.querySelector(".enabled_status");
+        let message = document.querySelector(".logo_text");
+
         let graph_data = {};
         const api_key = localStorage.getItem('api_key');
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -67,6 +68,10 @@ function Dashboard()
         .done(function( _data) 
         {
             console.log(_data);
+            if(_data == "")
+            {
+                status.className = "disabled_status";
+            }
             graph_data = _data;
 
         })
@@ -81,6 +86,10 @@ function Dashboard()
         .done(function(_data) 
         {
             console.log(_data);
+            if(_data == "")
+            {
+                status.className = "disabled_status";
+            }
             graph_data2 = _data;
         })
         .fail( function(xhr) 
@@ -191,13 +200,14 @@ function Dashboard()
             setTimeout(() => 
             {
                 for(let i = 0; i < bubble.length; i++){ bubble[i].style.display = "none"; }
-            }, 4000);
-        }, 2200);
+            }, 5000);
+        }, 3200);
 
 
     }, []);
 
     return (
+        
         <div className = "dashboard" id = "dashboard">
             <div className = "container">
 
@@ -206,7 +216,6 @@ function Dashboard()
                         Fetch Status
                         <div className="enabled_status">
                             <img className="logo" src= {image} />
-                            <div className="logo_text">active</div>
                         </div>
                     </div>
                     <h2 className="welcome_text"></h2>

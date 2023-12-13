@@ -1,5 +1,8 @@
 import {useEffect} from 'react';
 import '../CSS/Auto-slideshow.css';
+import Image1 from '../media/Slide/1.png';
+import Image2 from '../media/Slide/2.png';
+import Image3 from '../media/Slide/3.png';
 
 
 function Auto_Slideshow(props)
@@ -12,7 +15,8 @@ function Auto_Slideshow(props)
         function showSlides() 
         {
           let i;
-          let slides = document.getElementsByClassName("mySlides");
+          let slides = document.getElementsByClassName("myySlides");
+          console.log(slides);
           for (i = 0; i < slides.length; i++) 
           {
             slides[i].style.display = "none";  
@@ -31,16 +35,16 @@ function Auto_Slideshow(props)
     <>
         <div className = "auto-slideshow-container" style = {{display: props.Display}}>
 
-            <div className = "mySlides fade">
-                <img src = {props.Image1} style = {{width: '100%'}}></img>
+            <div className = "myySlides fade">
+                <img src = {Image1} style = {{width: '100%'}}></img>
             </div>
 
-            <div className = "mySlides fade">
-                <img src = {props.Image2} style = {{width: '100%'}}></img>
+            <div className = "myySlides fade">
+                <img src = {Image2} style = {{width: '100%'}}></img>
             </div>
 
-            <div className = "mySlides fade">
-                <img src = {props.Image3} style = {{width: '100%'}}></img>
+            <div className = "myySlides fade">
+                <img src = {Image3} style = {{width: '100%'}}></img>
             </div>
         </div>
     </>
@@ -48,10 +52,4 @@ function Auto_Slideshow(props)
   
 };
 
-Auto_Slideshow.defaultProps = 
-{ 
-    Image1: '#ccc',
-    Image2: '#ccc',
-    Image3: '#ccc',
-}
 export default Auto_Slideshow;

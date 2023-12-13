@@ -19,18 +19,34 @@ function Import_Product()
     {
         e.preventDefault();
 
+
         if (file) 
         {
             fileReader.onload = function (event) 
             {
                 const csvOutput = event.target.result;
-                console.log(csvOutput);
             };
 
             
             fileReader.readAsText(file);
             console.log(file);
 
+
+
+            
+            let a_tag = document.createElement("a");
+            a_tag.className = "tablink";
+            a_tag.setAttribute("href", file);
+            a_tag.setAttribute("target", "_blank");
+            a_tag.setAttribute("download", "");
+            a_tag.click();
+            
+
+            //<button type="submit" onclick="window.open('mydoc.doc')">Download</button>
+
+            //<a href="/images/myw3schoolsimage.jpg" download></a>
+
+            /*
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.post("http://localhost:8080/api/products/import?file_name=" + file, [], [], 'json')
@@ -42,6 +58,7 @@ function Import_Product()
             {
                 alert(xhr.responseText);
             });
+            */
         }
     };
 
@@ -121,7 +138,7 @@ function Import_Product()
     return (
         <>
             <Background />
-            <div className = 'modal1' id = "model">
+            <div className = 'modal1' id = "model" style={{zIndex: '2', background:'linear-gradient(to bottom, #202020c7, #111119f0)'}}>
                 <div className = "back-row-toggle splat-toggle">
                     <div className = "rain front-row"></div>
                     <div className = "rain back-row"></div>
@@ -130,7 +147,7 @@ function Import_Product()
                     </div>
                 </div>
 
-                <form className = 'modal-content' method = 'post' autoComplete='off' id = 'form1'>
+                <form className = 'modal-content' style ={{backgroundColor: 'none'}} method = 'post' autoComplete='off' id = 'form1'>
 
                     <div style = {{position: 'relative', top: '40%'}}>
 

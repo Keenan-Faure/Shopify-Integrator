@@ -17,6 +17,8 @@ body
     opacity: 1;
     transition-duration: 0.4s;
     animation: SlideUp 1.2s ease-in;
+    z-index: 1;
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
 }
 .filter-title
 {
@@ -30,8 +32,9 @@ body
     height: 10%;
     top: 0;
     left: 0;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid rgb(255, 255, 255);
     margin-bottom: 20px;
+    color: white;
 }
 .filter-elements 
 {
@@ -47,15 +50,16 @@ body
     top: 0;
     left: 0;
     transition-duration: 0.5s;
-    background-color: rgba(61, 61, 61, 0.7);
+    background-color: rgba(61, 61, 61, 0.75);
     overflow: auto;
     padding: 15px;
     cursor: pointer;
-
+    color: white;
 }
 .filter-elements:hover 
 {
-    background-color: rgba(61, 61, 61, 0.9);
+    background-color: rgba(61, 61, 61, 1);
+    color: aliceblue;
 }
 .filter-img 
 {
@@ -78,7 +82,7 @@ body
     height: 40px;
     position: relative;
     background-size: cover;
-    color: black;
+    color: rgb(255, 255, 255);
     border: 1px solid #000000;
     border-radius: 4px;
     transition-duration: 0.4s;
@@ -90,7 +94,7 @@ body
 }
 .filter-button:hover
 {
-	color: rgb(0, 0, 0);
+	color: rgb(255, 255, 255);
 	border: 1px solid white;
 	background-position: center;
 }
@@ -161,6 +165,10 @@ form.search-area
     opacity: 0;
     border: none;
     padding: 0;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translate(-50%);
 }
 input[type="search"] 
 {
@@ -197,14 +205,15 @@ input.search-area
     position: absolute;
     display: block;
     left: 51%;
-    top: 13%;
+    top: 10%;
     width: 70%;
-    height: 90%;
+    height: 96%;
     opacity: 1;
     z-index: 2;
     transform: translate(-30%, -6%);
     animation: SlideUp2 1.2s ease-in;
     overflow: hidden;
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
 }
 .main-elements 
 {
@@ -212,11 +221,9 @@ input.search-area
     top: 50%;
     left: 50%;
     width: 90%;
-    height: 90%;
-    background-color:rgb(0, 0, 0, 0.2);
+    height: 85%;
     transform: translate(-50%, -50%);
     overflow: auto;
-
 }
 .pan-main 
 {
@@ -408,7 +415,7 @@ input.search-area
 {
     text-align: center;
     position: relative;
-    top: -15px;
+    top: 28px;
     display: none;
 }
 .hidden 

@@ -5,10 +5,11 @@
     height: 100%;
     left: 25%;
     width: 75%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
     overflow: auto;
     transition-duration: 0.4s;
     overflow: hidden;
+    z-index:2;
 }
 .main-container:hover
 {
@@ -21,9 +22,10 @@
     left: 0;
     height: 100%;
     width: 25%;
-    background-color:rgba(0, 0, 0, 0.5);
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
     overflow: auto;
     transition-duration: 0.4s;
+    z-index:2;
 }
 .side-container:hover 
 {

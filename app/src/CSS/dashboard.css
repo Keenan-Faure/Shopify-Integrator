@@ -22,8 +22,8 @@
 {
     position: absolute;
     display: block;
-    overflow: auto;
-    background: linear-gradient(to bottom, #202020, #111119);  
+    overflow: hidden;
+    background: linear-gradient(to bottom, #202020c7, #111119f0); 
     height: 100%;
     width: 100%;
     animation: FadeIn ease-in 1s;
@@ -77,10 +77,6 @@
     overflow: hidden;
     top: 5px;
     left: 10px;
-}
-
-.enabled_status:hover {
-    width: 80px;
 }
 
 .disabled_status {

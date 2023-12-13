@@ -19,6 +19,7 @@
 	position: absolute;
 	margin: 0px;
 	overflow: hidden;
+    z-index: 1;
 }
 
 .auto-slideshow-container .text 

@@ -120,7 +120,7 @@ function Export_Product()
         <>
             <Background />
 
-            <div className = 'modal1' id = "model">
+            <div className = 'modal1' id = "model" style={{background:'linear-gradient(to bottom, #202020c7, #111119f0)', zIndex: '2'}}>
                 <div className = "back-row-toggle splat-toggle">
                     <div className = "rain front-row"></div>
                     <div className = "rain back-row"></div>
@@ -129,7 +129,7 @@ function Export_Product()
                     </div>
                 </div>
 
-                <form className = 'modal-content' method = 'post' onSubmit={(event) => ExportProduct(event)} autoComplete='off' id = 'form1'>
+                <form className = 'modal-content' style ={{backgroundColor: 'none'}} method = 'post' onSubmit={(event) => ExportProduct(event)} autoComplete='off' id = 'form1'>
                     <div className = 'modal-container' id = "main">
                         <label style = {{fontSize: '18px'}}><b>Export Product</b></label>
                         <br /><br /><br />
