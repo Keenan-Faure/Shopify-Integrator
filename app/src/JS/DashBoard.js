@@ -59,7 +59,6 @@ function Dashboard()
 
         //Fetch Graph
         let status = document.querySelector(".enabled_status");
-        let message = document.querySelector(".logo_text");
 
         let graph_data = {};
         const api_key = localStorage.getItem('api_key');
@@ -199,11 +198,6 @@ function Dashboard()
         {
             let bubble = document.querySelectorAll(".bubble");
             for(let i = 0; i < bubble.length; i++){ bubble[i].style.display = "block"; }
-
-            setTimeout(() => 
-            {
-                for(let i = 0; i < bubble.length; i++){ bubble[i].style.display = "none"; }
-            }, 5000);
         }, 3200);
 
 
