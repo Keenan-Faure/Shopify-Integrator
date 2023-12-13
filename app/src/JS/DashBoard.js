@@ -3,7 +3,7 @@ import $ from 'jquery';
 import Chart from "chart.js/auto";
 import '../CSS/dashboard.css';
 import image from '../media/icons8-shopify-50.png';
-
+Chart.defaults.color = 'rgb(205, 205, 205)';
 
 function Dashboard()
 {
@@ -123,6 +123,7 @@ function Dashboard()
                         borderColor: "rgba(255, 94, 0, 0.5)",
                         backgroundColor: "orange",
                         pointRadius: "5",
+                        color: "red",
                     }]
                 },
                 options: {
@@ -148,6 +149,7 @@ function Dashboard()
                         backgroundColor: "purple",
                         pointRadius: "5",
                         tension: 0.1,
+                        color: "white",
                         fill: false
                     },
                     {
@@ -158,6 +160,7 @@ function Dashboard()
                         backgroundColor: "red",
                         pointRadius: "5",
                         tension: 0.1,
+                        color: "white",
                         fill: false
                     }]
                 },
