@@ -12,6 +12,28 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validate: InsertGlobalWarehouse
+func GlobalWarehouseValidation(warehouse objects.RequestGlobalWarehouse) error {
+	if warehouse.Name == "" {
+		return errors.New("invalid warehouse name")
+	}
+	return nil
+}
+
+// Decode: InsertGlobalWarehouse
+func DecodeGlobalWarehouse(dbconfig *DbConfig, r *http.Request) (objects.RequestGlobalWarehouse, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestGlobalWarehouse{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
+		return objects.RequestGlobalWarehouse{}, err
+	}
+	return params, nil
+}
+
 // Decode: WebhookURL
 func DecodeWebhookURL(r *http.Request) (objects.RequestWebhookURL, error) {
 	decoder := json.NewDecoder(r.Body)

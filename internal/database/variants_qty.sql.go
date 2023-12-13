@@ -18,8 +18,8 @@ INSERT INTO variant_qty(
     id,
     variant_id,
     name,
-    isdefault,
     value,
+    isdefault,
     created_at,
     updated_at
 ) VALUES (
@@ -32,8 +32,8 @@ type CreateVariantQtyParams struct {
 	ID        uuid.UUID     `json:"id"`
 	VariantID uuid.UUID     `json:"variant_id"`
 	Name      string        `json:"name"`
-	Isdefault bool          `json:"isdefault"`
 	Value     sql.NullInt32 `json:"value"`
+	Isdefault bool          `json:"isdefault"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
@@ -43,8 +43,8 @@ func (q *Queries) CreateVariantQty(ctx context.Context, arg CreateVariantQtyPara
 		arg.ID,
 		arg.VariantID,
 		arg.Name,
-		arg.Isdefault,
 		arg.Value,
+		arg.Isdefault,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -103,7 +103,8 @@ const getVariantQty = `-- name: GetVariantQty :many
 SELECT 
     name,
     value,
-    isdefault
+    isdefault,
+    updated_at
 FROM variant_qty
 WHERE variant_id = $1
 `
@@ -112,6 +113,7 @@ type GetVariantQtyRow struct {
 	Name      string        `json:"name"`
 	Value     sql.NullInt32 `json:"value"`
 	Isdefault bool          `json:"isdefault"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 func (q *Queries) GetVariantQty(ctx context.Context, variantID uuid.UUID) ([]GetVariantQtyRow, error) {
@@ -123,7 +125,12 @@ func (q *Queries) GetVariantQty(ctx context.Context, variantID uuid.UUID) ([]Get
 	var items []GetVariantQtyRow
 	for rows.Next() {
 		var i GetVariantQtyRow
-		if err := rows.Scan(&i.Name, &i.Value, &i.Isdefault); err != nil {
+		if err := rows.Scan(
+			&i.Name,
+			&i.Value,
+			&i.Isdefault,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -141,7 +148,8 @@ const getVariantQtyBySKU = `-- name: GetVariantQtyBySKU :many
 SELECT
     name,
     value,
-    isdefault
+    isdefault,
+    updated_at
 FROM variant_qty
 WHERE variant_id IN (
     SELECT id FROM variants
@@ -158,6 +166,7 @@ type GetVariantQtyBySKURow struct {
 	Name      string        `json:"name"`
 	Value     sql.NullInt32 `json:"value"`
 	Isdefault bool          `json:"isdefault"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 func (q *Queries) GetVariantQtyBySKU(ctx context.Context, arg GetVariantQtyBySKUParams) ([]GetVariantQtyBySKURow, error) {
@@ -169,7 +178,12 @@ func (q *Queries) GetVariantQtyBySKU(ctx context.Context, arg GetVariantQtyBySKU
 	var items []GetVariantQtyBySKURow
 	for rows.Next() {
 		var i GetVariantQtyBySKURow
-		if err := rows.Scan(&i.Name, &i.Value, &i.Isdefault); err != nil {
+		if err := rows.Scan(
+			&i.Name,
+			&i.Value,
+			&i.Isdefault,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -198,17 +212,19 @@ UPDATE variant_qty
 SET
     name = $1,
     value = $2,
-    isdefault = $3
+    isdefault = $3,
+    updated_at = $4
 WHERE variant_id IN (
     SELECT id FROM variants
-    WHERE sku = $4
-) AND name = $5
+    WHERE sku = $5
+) AND name = $6
 `
 
 type UpdateVariantQtyParams struct {
 	Name      string        `json:"name"`
 	Value     sql.NullInt32 `json:"value"`
 	Isdefault bool          `json:"isdefault"`
+	UpdatedAt time.Time     `json:"updated_at"`
 	Sku       string        `json:"sku"`
 	Name_2    string        `json:"name_2"`
 }
@@ -218,6 +234,7 @@ func (q *Queries) UpdateVariantQty(ctx context.Context, arg UpdateVariantQtyPara
 		arg.Name,
 		arg.Value,
 		arg.Isdefault,
+		arg.UpdatedAt,
 		arg.Sku,
 		arg.Name_2,
 	)

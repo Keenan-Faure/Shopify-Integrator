@@ -199,6 +199,33 @@ func (q *Queries) GetVariantIDByCode(ctx context.Context, sku string) (uuid.UUID
 	return id, err
 }
 
+const getVariants = `-- name: GetVariants :many
+SELECT id FROM variants
+`
+
+func (q *Queries) GetVariants(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getVariants)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeVariant = `-- name: RemoveVariant :exec
 DELETE FROM variants
 WHERE id = $1

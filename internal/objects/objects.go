@@ -423,6 +423,9 @@ type RequestString struct {
 }
 
 // request_validation.go
+type RequestGlobalWarehouse struct {
+	Name string `json:"name"`
+}
 
 type RequestWarehouseLocation struct {
 	LocationID           string `json:"location_id"`

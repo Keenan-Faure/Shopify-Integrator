@@ -94,11 +94,17 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
 	api.Put("/products/{id}", dbconfig.middlewareAuth(dbconfig.UpdateProductHandle))
 
-	// Configure warehouse-locations
+	// config warehouse-locations
 	api.Get("/inventory/config", dbconfig.middlewareAuth(dbconfig.ConfigLocationMap))
 	api.Get("/inventory", dbconfig.middlewareAuth(dbconfig.GetWarehouseLocations))
 	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
 	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
+
+	// warehouses
+	api.Get("/inventory/warehouse", dbconfig.middlewareAuth(dbconfig.GetInventoryWarehouses))
+	api.Get("/inventory/warehouse/{id}", dbconfig.middlewareAuth(dbconfig.GetInventoryWarehouse))
+	api.Post("/inventory/warehouse", dbconfig.middlewareAuth(dbconfig.AddInventoryWarehouse))
+	api.Delete("/inventory/warehouse/{id}", dbconfig.middlewareAuth(dbconfig.DeleteInventoryWarehouse))
 
 	// shopify settings
 	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetShopifySettingValue))

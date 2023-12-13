@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"integrator/internal/database"
 	"log"
@@ -274,6 +275,7 @@ func LoopJSONShopify(
 										Name:      warehouse_name,
 										Value:     utils.ConvertIntToSQL(available),
 										Isdefault: false,
+										UpdatedAt: time.Now().UTC(),
 										Sku:       product_variant.Sku,
 										Name_2:    warehouse_name,
 									})
@@ -660,34 +662,23 @@ func AddWarehouse(
 	variant_id uuid.UUID,
 	warehouse_name string,
 	qty int) error {
-	exists, err := CheckExistsWarehouse(dbconfig, context.Background(), sku, warehouse_name)
+	_, err := dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("warehouse " + warehouse_name + " not found")
+		}
 		return err
 	}
-	if exists {
-		err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
-			Name:      warehouse_name,
-			Value:     utils.ConvertIntToSQL(qty),
-			Isdefault: false,
-			Sku:       sku,
-			Name_2:    warehouse_name,
-		})
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err = dbconfig.DB.CreateVariantQty(context.Background(), database.CreateVariantQtyParams{
-			ID:        uuid.New(),
-			VariantID: variant_id,
-			Name:      warehouse_name,
-			Isdefault: false,
-			Value:     utils.ConvertIntToSQL(qty),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			return err
-		}
+	// if warehouse is found, we update the qty, we cannot create a new one
+	err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
+		Name:      warehouse_name,
+		Value:     utils.ConvertIntToSQL(qty),
+		Isdefault: false,
+		Sku:       sku,
+		Name_2:    warehouse_name,
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -13,6 +13,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// Inserts new warehouse for all current variations
+func InsertGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string) error {
+	variants, err := dbconfig.DB.GetVariants(ctx)
+	if err != nil {
+		return err
+	}
+	for _, variant := range variants {
+		// update ever variant to contain the new warehouse with a default value of 0
+		_, err := dbconfig.DB.CreateVariantQty(ctx, database.CreateVariantQtyParams{
+			ID:        uuid.New(),
+			VariantID: variant,
+			Name:      warehouse_name,
+			Value:     utils.ConvertIntToSQL(0),
+			Isdefault: false,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Parses the data and fills in the missing hourly values
 // with a 0 value if it does not exist.
 func ParseFetchStats(data []database.GetFetchStatsRow) objects.FetchAmountResponse {
@@ -312,6 +336,7 @@ func CheckExistsProductImage(dbconfig *DbConfig, ctx context.Context, product_id
 // Checks if a warehouse already exists
 // in the database for a certain SKU
 func CheckExistsWarehouse(dbconfig *DbConfig, ctx context.Context, sku, warehouse string) (bool, error) {
+	// checks if the SKU has the respective warehouse associated to it
 	warehouses, err := dbconfig.DB.GetVariantQtyBySKU(ctx, database.GetVariantQtyBySKUParams{
 		Sku:  sku,
 		Name: warehouse,

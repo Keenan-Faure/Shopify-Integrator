@@ -21,6 +21,115 @@ import (
 	"github.com/google/uuid"
 )
 
+// POST /api/inventory/warehouse
+func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	warehouse, err := DecodeGlobalWarehouse(dbconfig, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = GlobalWarehouseValidation(warehouse)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	// check if a warehouse already exists
+	warehouses_db, err := dbconfig.DB.GetWarehouses(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for _, warehouse_db := range warehouses_db {
+		if warehouse_db.Name == warehouse.Name {
+			RespondWithError(w, http.StatusBadRequest, "warehouse already exists")
+			return
+		}
+	}
+	err = dbconfig.DB.CreateWarehouse(r.Context(), database.CreateWarehouseParams{
+		ID:        uuid.New(),
+		Name:      warehouse.Name,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	err = InsertGlobalWarehouse(dbconfig, r.Context(), warehouse.Name)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+		Message: "success",
+	})
+}
+
+// GET /api/inventory/warehouse
+func (dbconfig *DbConfig) GetInventoryWarehouses(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	warehouses, err := dbconfig.DB.GetWarehouses(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if len(warehouses) == 0 {
+		warehouses = []database.GetWarehousesRow{}
+	}
+	RespondWithJSON(w, http.StatusOK, warehouses)
+}
+
+// GET /api/inventory/warehouse/{id}
+func (dbconfig *DbConfig) GetInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	warehouse_id := chi.URLParam(r, "id")
+	err := IDValidation(warehouse_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	warehouse_uuid, err := uuid.Parse(warehouse_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode order id: "+warehouse_id)
+		return
+	}
+	warehouse, err := dbconfig.DB.GetWarehouseByID(r.Context(), warehouse_uuid)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, warehouse)
+}
+
+// DELETE /api/inventory/warehouse/{id}
+func (dbconfig *DbConfig) DeleteInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	warehouse_id := chi.URLParam(r, "id")
+	err := IDValidation(warehouse_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	warehouse_uuid, err := uuid.Parse(warehouse_id)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, "could not decode order id: "+warehouse_id)
+		return
+	}
+	err = dbconfig.DB.RemoveWarehouse(r.Context(), warehouse_uuid)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusNotFound, "not found")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
 // PUT /api/products/{id}
 func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	product_id := chi.URLParam(r, "id")
@@ -842,13 +951,13 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		// variant pricing & variant qty
-		for key_price := range params.Variants[key].VariantPricing {
+		for key_sub := range params.Variants[key].VariantPricing {
 			_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
 				ID:        uuid.New(),
 				VariantID: variant.ID,
-				Name:      params.Variants[key].VariantPricing[key_price].Name,
-				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_price].Value),
-				Isdefault: params.Variants[key].VariantPricing[key_price].IsDefault,
+				Name:      params.Variants[key].VariantPricing[key_sub].Name,
+				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_sub].Value),
+				Isdefault: params.Variants[key].VariantPricing[key_sub].IsDefault,
 				CreatedAt: time.Now().UTC(),
 				UpdatedAt: time.Now().UTC(),
 			})
@@ -857,14 +966,26 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
-			_, err = dbconfig.DB.CreateVariantQty(r.Context(), database.CreateVariantQtyParams{
-				ID:        uuid.New(),
-				VariantID: variant.ID,
-				Name:      params.Variants[key].VariantQuantity[key_price].Name,
-				Isdefault: params.Variants[key].VariantQuantity[key_price].IsDefault,
-				Value:     utils.ConvertIntToSQL(params.Variants[key].VariantQuantity[key_price].Value),
-				CreatedAt: time.Now().UTC(),
+			// check if the warehouse exists, then we update the quantity
+			warehouse_name := params.Variants[key].VariantQuantity[key_sub].Name
+			warehouse_qty := params.Variants[key].VariantQuantity[key_sub].Value
+			_, err = dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(w, http.StatusInternalServerError, "warehouse "+warehouse_name+" not found")
+					return
+				}
+				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+				return
+			}
+			// if warehouse is found, we update the qty, we cannot create a new one
+			err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
+				Name:      warehouse_name,
+				Value:     utils.ConvertIntToSQL(warehouse_qty),
+				Isdefault: false,
 				UpdatedAt: time.Now().UTC(),
+				Sku:       variant.Sku,
+				Name_2:    warehouse_name,
 			})
 			if err != nil {
 				log.Println("5: " + err.Error())

@@ -60,6 +60,9 @@ SELECT
 FROM variants
 WHERE id = $1;
 
+-- name: GetVariants :many
+SELECT id FROM variants;
+
 -- name: RemoveVariant :exec
 DELETE FROM variants
 WHERE id = $1;

@@ -3,8 +3,8 @@ INSERT INTO variant_qty(
     id,
     variant_id,
     name,
-    isdefault,
     value,
+    isdefault,
     created_at,
     updated_at
 ) VALUES (
@@ -17,17 +17,19 @@ UPDATE variant_qty
 SET
     name = $1,
     value = $2,
-    isdefault = $3
+    isdefault = $3,
+    updated_at = $4
 WHERE variant_id IN (
     SELECT id FROM variants
-    WHERE sku = $4
-) AND name = $5;
+    WHERE sku = $5
+) AND name = $6;
 
 -- name: GetVariantQty :many
 SELECT 
     name,
     value,
-    isdefault
+    isdefault,
+    updated_at
 FROM variant_qty
 WHERE variant_id = $1;
 
@@ -35,7 +37,8 @@ WHERE variant_id = $1;
 SELECT
     name,
     value,
-    isdefault
+    isdefault,
+    updated_at
 FROM variant_qty
 WHERE variant_id IN (
     SELECT id FROM variants
