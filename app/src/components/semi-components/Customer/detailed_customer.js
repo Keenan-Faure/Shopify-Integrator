@@ -73,7 +73,7 @@ function Detailed_customer(props)
             <div className="tabcontent" id="_Customer" >
                 <div className = "details-details">
                     <div className = "detailed-image" />
-                    <div className = "detailed">
+                    <div className = "detailed" style={{backgroundColor: 'transparent'}}>
                         <div className = "details-title">{props.Customer_ID}</div>
                         <table>
                             <tbody>
@@ -94,20 +94,20 @@ function Detailed_customer(props)
                         <div className = "details-description">Customer Warehousing</div> 
                         <div className = "details-warehousing"></div>  
                     </div>
-                    <div className = "details-right"></div>
-                    <div className = "details-left"></div>
+                    <div className = "details-right" style={{backgroundColor: 'transparent'}}></div>
+                    <div className = "details-left" style={{backgroundColor: 'transparent'}}></div>
                 </div>
             </div>
 
             <div className="tabcontent" id="_Variants" >
                 <div className = "details-details">
                 <div className = "detailed-image" />
-                    <div className = "detailed">
+                    <div className = "detailed" style={{backgroundColor: 'transparent'}}>
                         <div className = "details-title"> {props.Customer_firstName} Shipping Addresses</div>
                         <div className = "variants" id="_variants" ></div>
                     </div>
-                    <div className = "details-right"></div>
-                    <div className = "details-left"></div>
+                    <div className = "details-right" style={{backgroundColor: 'transparent'}}></div>
+                    <div className = "details-left" style={{backgroundColor: 'transparent'}}></div>
                 </div>
             </div>
         </div>
