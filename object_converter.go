@@ -5,10 +5,24 @@ import (
 	"fmt"
 	"integrator/internal/database"
 	"objects"
+	"strings"
 	"utils"
 
 	"github.com/google/uuid"
 )
+
+// Convert database.warehouse into warehouses object
+func ConvertDatabaseToWarehouse(warehouses []database.GetWarehousesRow) []objects.Warehouse {
+	warehouses_object := []objects.Warehouse{}
+	for _, warehouse := range warehouses {
+		warehouses_object = append(warehouses_object, objects.Warehouse{
+			ID:        uuid.New(),
+			Name:      warehouse.Name,
+			UpdatedAt: warehouse.UpdatedAt,
+		})
+	}
+	return warehouses_object
+}
 
 // Compile Queue Filter Search into a single object (variable)
 func CompileQueueFilterSearch(
@@ -770,13 +784,13 @@ func CompileProductData(
 	if ignore_variant {
 		product_data := objects.Product{
 			ID:             product_id,
-			ProductCode:    product.ProductCode,
+			ProductCode:    strings.ReplaceAll(product.ProductCode, "\"", "'"),
 			Active:         product.Active,
-			Title:          product.Title.String,
-			BodyHTML:       product.BodyHtml.String,
-			Category:       product.Category.String,
-			Vendor:         product.Vendor.String,
-			ProductType:    product.ProductType.String,
+			Title:          strings.ReplaceAll(product.Title.String, "\"", "'"),
+			BodyHTML:       strings.ReplaceAll(product.BodyHtml.String, "\"", "'"),
+			Category:       strings.ReplaceAll(product.Category.String, "\"", "'"),
+			Vendor:         strings.ReplaceAll(product.Vendor.String, "\"", "'"),
+			ProductType:    strings.ReplaceAll(product.ProductType.String, "\"", "'"),
 			Variants:       []objects.ProductVariant{},
 			ProductOptions: options,
 			ProductImages:  images,
@@ -790,13 +804,13 @@ func CompileProductData(
 	}
 	product_data := objects.Product{
 		ID:             product_id,
-		ProductCode:    product.ProductCode,
+		ProductCode:    strings.ReplaceAll(product.ProductCode, "\"", "'"),
 		Active:         product.Active,
-		Title:          product.Title.String,
-		BodyHTML:       product.BodyHtml.String,
-		Category:       product.Category.String,
-		Vendor:         product.Vendor.String,
-		ProductType:    product.ProductType.String,
+		Title:          strings.ReplaceAll(product.Title.String, "\"", "'"),
+		BodyHTML:       strings.ReplaceAll(product.BodyHtml.String, "\"", "'"),
+		Category:       strings.ReplaceAll(product.Category.String, "\"", "'"),
+		Vendor:         strings.ReplaceAll(product.Vendor.String, "\"", "'"),
+		ProductType:    strings.ReplaceAll(product.ProductType.String, "\"", "'"),
 		Variants:       variant_data,
 		ProductOptions: options,
 		ProductImages:  images,

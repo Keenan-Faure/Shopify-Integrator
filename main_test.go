@@ -174,7 +174,7 @@ func CreateProd() objects.RequestBodyProduct {
 		Category:       "",
 		Vendor:         "",
 		ProductType:    "",
-		Variants:       []objects.RequestBodyVariant{{Sku: "Test", Option1: "", Option2: "", Option3: "", Barcode: "", VariantPricing: []objects.VariantPrice{{Name: "Test", Value: "0.00"}}, VariantQuantity: []objects.VariantQty{{Name: "Test", Value: 0, IsDefault: false}}, UpdatedAt: time.Time{}}},
+		Variants:       []objects.RequestBodyVariant{{Sku: "Test", Option1: "", Option2: "", Option3: "", Barcode: "", VariantPricing: []objects.VariantPrice{{Name: "Test", Value: "0.00"}}, VariantQuantity: []objects.VariantQty{}, UpdatedAt: time.Time{}}},
 		ProductOptions: []objects.ProductOptions{{Value: ""}},
 	}
 }

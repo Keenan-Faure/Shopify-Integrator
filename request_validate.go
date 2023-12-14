@@ -12,6 +12,28 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validate: InsertGlobalWarehouse
+func GlobalWarehouseValidation(warehouse objects.RequestGlobalWarehouse) error {
+	if warehouse.Name == "" {
+		return errors.New("invalid warehouse name")
+	}
+	return nil
+}
+
+// Decode: InsertGlobalWarehouse
+func DecodeGlobalWarehouse(dbconfig *DbConfig, r *http.Request) (objects.RequestGlobalWarehouse, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestGlobalWarehouse{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
+		return objects.RequestGlobalWarehouse{}, err
+	}
+	return params, nil
+}
+
 // Decode: WebhookURL
 func DecodeWebhookURL(r *http.Request) (objects.RequestWebhookURL, error) {
 	decoder := json.NewDecoder(r.Body)
@@ -461,7 +483,7 @@ func ValidateDuplicateOption(product objects.RequestBodyProduct) error {
 		for _, value := range product.ProductOptions {
 			if value.Value != "" && len(value.Value) > 0 {
 				if slices.Contains(options_names, value.Value) {
-					return errors.New("duplicate options not allowed: " + value.Value)
+					return errors.New("duplicate product option names not allowed: " + value.Value)
 				}
 				options_names = append(options_names, value.Value)
 			}
@@ -509,7 +531,7 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 		option_values := []string{}
 		for _, value := range product.Variants {
 			if slices.Contains(option_values, value.Option1) {
-				return errors.New("duplicate option value")
+				return errors.New("duplicate option values not allowed")
 			}
 			option_values = append(option_values, value.Option1)
 		}

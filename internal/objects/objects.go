@@ -23,8 +23,14 @@ type RequestWebhookURL struct {
 }
 
 type ResponseWarehouseLocation struct {
-	Warehouses       []string `json:"warehouses"`
-	ShopifyLocations any      `json:"shopify_locations"`
+	Warehouses       []Warehouse `json:"warehouses"`
+	ShopifyLocations any         `json:"shopify_locations"`
+}
+
+type Warehouse struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // queue.go
@@ -423,6 +429,9 @@ type RequestString struct {
 }
 
 // request_validation.go
+type RequestGlobalWarehouse struct {
+	Name string `json:"name"`
+}
 
 type RequestWarehouseLocation struct {
 	LocationID           string `json:"location_id"`

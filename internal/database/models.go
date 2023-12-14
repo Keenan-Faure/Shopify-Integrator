@@ -213,12 +213,12 @@ type ShopifyVid struct {
 
 type User struct {
 	ID           uuid.UUID `json:"id"`
-	WebhookToken string    `json:"webhook_token"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
 	ApiKey       string    `json:"api_key"`
+	WebhookToken string    `json:"webhook_token"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type Variant struct {
@@ -251,4 +251,11 @@ type VariantQty struct {
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 	Isdefault bool          `json:"isdefault"`
+}
+
+type Warehouse struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
