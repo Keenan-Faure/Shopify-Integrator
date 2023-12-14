@@ -207,6 +207,16 @@ func (q *Queries) RemoveQty(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const removeQtyByWarehouseName = `-- name: RemoveQtyByWarehouseName :exec
+DELETE FROM variant_qty
+WHERE "name" = $1
+`
+
+func (q *Queries) RemoveQtyByWarehouseName(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, removeQtyByWarehouseName, name)
+	return err
+}
+
 const updateVariantQty = `-- name: UpdateVariantQty :exec
 UPDATE variant_qty
 SET

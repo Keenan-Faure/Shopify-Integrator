@@ -21,8 +21,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// POST /api/inventory/warehouse
+// POST /api/inventory/warehouse?reindex=false
 func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	reindex := r.URL.Query().Get("reindex")
 	warehouse, err := DecodeGlobalWarehouse(dbconfig, r)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
@@ -31,6 +32,29 @@ func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.R
 	err = GlobalWarehouseValidation(warehouse)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if reindex == "true" {
+		// check if the warehouse exists internally
+		warehouse_db, err := dbconfig.DB.GetWarehouseByName(r.Context(), warehouse.Name)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, "cannot reindex an invalid warehouse")
+				return
+			}
+		}
+		// reindex warehouse that was found
+		err = InsertGlobalWarehouse(dbconfig, r.Context(), warehouse_db.Name, true)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+			Message: "success",
+		})
 		return
 	}
 	// check if a warehouse already exists
@@ -55,7 +79,7 @@ func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.R
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	err = InsertGlobalWarehouse(dbconfig, r.Context(), warehouse.Name)
+	err = InsertGlobalWarehouse(dbconfig, r.Context(), warehouse.Name, false)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -125,6 +149,8 @@ func (dbconfig *DbConfig) DeleteInventoryWarehouse(w http.ResponseWriter, r *htt
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
+	// remove all variant warehouses
+
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
 		Message: "success",
 	})
@@ -309,7 +335,7 @@ func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, 
 	})
 }
 
-// GET /api/inventory
+// GET /api/inventory/config
 func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
@@ -330,7 +356,7 @@ func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.R
 	RespondWithJSON(w, http.StatusOK, locations)
 }
 
-// DELETE /api/inventory
+// DELETE /api/inventory/config
 func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	id := chi.URLParam(r, "id")
 	err := IDValidation(id)
@@ -355,8 +381,8 @@ func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http
 
 // Returns all locations on Shopify and all warehouses in the app
 
-// GET /api/inventory/config
-func (dbconfig *DbConfig) ConfigLocationMap(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+// GET /api/inventory/map
+func (dbconfig *DbConfig) ConfigLocationWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	shopifyConfig := shopify.InitConfigShopify()
 	if !shopifyConfig.Valid {
 		RespondWithError(w, http.StatusInternalServerError, "invalid shopify config")
@@ -367,18 +393,18 @@ func (dbconfig *DbConfig) ConfigLocationMap(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	warehouses, err := dbconfig.DB.GetUniqueWarehouses(r.Context())
+	warehouses, err := dbconfig.DB.GetWarehouses(r.Context())
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseWarehouseLocation{
-		Warehouses:       warehouses,
+		Warehouses:       ConvertDatabaseToWarehouse(warehouses),
 		ShopifyLocations: locations,
 	})
 }
 
-// POST /api/inventory
+// POST /api/inventory/config
 func (dbconfig *DbConfig) AddWarehouseLocationMap(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	location_map, err := DecodeInventoryMap(r)
 	if err != nil {
@@ -488,8 +514,8 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 	if test == "true" {
 		// generate the file for the test
 		data := [][]string{
-			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price", "qty_Cape Town", "qty_Japan"},
-			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00", "10", "5"},
+			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_default"},
+			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00"},
 		}
 		_, err := iocsv.WriteFile(data, "test_import")
 		if err != nil {
@@ -951,13 +977,13 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		// variant pricing & variant qty
-		for key_sub := range params.Variants[key].VariantPricing {
+		for key_pricing := range params.Variants[key].VariantPricing {
 			_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
 				ID:        uuid.New(),
 				VariantID: variant.ID,
-				Name:      params.Variants[key].VariantPricing[key_sub].Name,
-				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_sub].Value),
-				Isdefault: params.Variants[key].VariantPricing[key_sub].IsDefault,
+				Name:      params.Variants[key].VariantPricing[key_pricing].Name,
+				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
+				Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
 				CreatedAt: time.Now().UTC(),
 				UpdatedAt: time.Now().UTC(),
 			})
@@ -966,9 +992,11 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
+		}
+		for key_qty := range params.Variants[key].VariantQuantity {
 			// check if the warehouse exists, then we update the quantity
-			warehouse_name := params.Variants[key].VariantQuantity[key_sub].Name
-			warehouse_qty := params.Variants[key].VariantQuantity[key_sub].Value
+			warehouse_name := params.Variants[key].VariantQuantity[key_qty].Name
+			warehouse_qty := params.Variants[key].VariantQuantity[key_qty].Value
 			_, err = dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
 			if err != nil {
 				if err.Error() == "sql: no rows in result set" {

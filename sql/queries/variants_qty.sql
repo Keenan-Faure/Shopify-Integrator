@@ -55,3 +55,7 @@ SELECT DISTINCT "name" FROM variant_qty;
 DELETE FROM variant_qty
 WHERE id = $1;
 
+-- name: RemoveQtyByWarehouseName :exec
+DELETE FROM variant_qty
+WHERE "name" = $1;
+

@@ -483,7 +483,7 @@ func ValidateDuplicateOption(product objects.RequestBodyProduct) error {
 		for _, value := range product.ProductOptions {
 			if value.Value != "" && len(value.Value) > 0 {
 				if slices.Contains(options_names, value.Value) {
-					return errors.New("duplicate options not allowed: " + value.Value)
+					return errors.New("duplicate product option names not allowed: " + value.Value)
 				}
 				options_names = append(options_names, value.Value)
 			}
@@ -531,7 +531,7 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 		option_values := []string{}
 		for _, value := range product.Variants {
 			if slices.Contains(option_values, value.Option1) {
-				return errors.New("duplicate option value")
+				return errors.New("duplicate option values not allowed")
 			}
 			option_values = append(option_values, value.Option1)
 		}

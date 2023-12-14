@@ -13,11 +13,36 @@ import (
 	"github.com/google/uuid"
 )
 
-// Inserts new warehouse for all current variations
-func InsertGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string) error {
-	variants, err := dbconfig.DB.GetVariants(ctx)
+// Removes all qty for the warehouse
+func RemoveGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string) error {
+	_, err := dbconfig.DB.GetVariants(ctx)
 	if err != nil {
 		return err
+	}
+	err = dbconfig.DB.RemoveQtyByWarehouseName(ctx, warehouse_name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Inserts new warehouse for all current variations
+func InsertGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string, reindex bool) error {
+	variants := []uuid.UUID{}
+	// if it should be reindex, then only retrieve the variant ids that doesn't
+	// exist in the variant_qty
+	if reindex {
+		variants_ids, err := dbconfig.DB.GetUnindexedVariants(ctx)
+		if err != nil {
+			return err
+		}
+		variants = append(variants, variants_ids...)
+	} else {
+		variants_ids, err := dbconfig.DB.GetVariants(ctx)
+		if err != nil {
+			return err
+		}
+		variants = append(variants, variants_ids...)
 	}
 	for _, variant := range variants {
 		// update ever variant to contain the new warehouse with a default value of 0

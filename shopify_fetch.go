@@ -268,8 +268,7 @@ func LoopJSONShopify(
 										total_quantity[warehouse.WarehouseName] = total_quantity[warehouse.WarehouseName] + inventory_level.Available
 									}
 								}
-								// only fetch the ones that exist locally
-								// TODO add any missing warehouses and location maps to database
+								// only update the warehouses that exist locally
 								for warehouse_name, available := range total_quantity {
 									err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
 										Name:      warehouse_name,

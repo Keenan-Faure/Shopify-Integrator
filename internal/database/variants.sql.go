@@ -123,6 +123,40 @@ func (q *Queries) GetProductVariants(ctx context.Context, productID uuid.UUID) (
 	return items, nil
 }
 
+const getUnindexedVariants = `-- name: GetUnindexedVariants :many
+SELECT
+    id
+FROM variants
+WHERE id NOT IN (
+    SELECT
+        variant_id
+    FROM variant_qty
+)
+`
+
+func (q *Queries) GetUnindexedVariants(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getUnindexedVariants)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getVariantBySKU = `-- name: GetVariantBySKU :one
 SELECT
     id,
