@@ -40,7 +40,7 @@ function Dashboard()
         setTimeout(() =>
         {
             header.style.animation = "appear 1s ease-in"; header.style.display = "block"; 
-        }, 1000)
+        }, 1200)
 
 
         const userName = localStorage.getItem('username');
