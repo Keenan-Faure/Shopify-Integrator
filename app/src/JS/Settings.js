@@ -329,7 +329,7 @@ function Settings()
                         <div className = "title">App Settings</div>
                         <div className = "_app">
                             <div className = "setting" id = "setting1">
-                                <div className = "setting-title" style ={{top: '-6px'}}>Webhook Configuration
+                                <div className = "setting-title" style ={{top: '-14px'}}>Webhook Configuration
                                     <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
                                 </div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>

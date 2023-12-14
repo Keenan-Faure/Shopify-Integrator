@@ -66,7 +66,7 @@
     left: 50%;
     transform: translate(-50%);
     background-color:rgb(240, 248, 255, 0.6);
-    border-radius: 40px;
+    border-radius: 5px;
     transition-duration: 0.4s;
     padding-top: 15px;
     padding-right: 15px;
