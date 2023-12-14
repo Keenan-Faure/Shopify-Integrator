@@ -2,7 +2,6 @@ import {useEffect} from 'react';
 import {useState} from "react";
 import $ from 'jquery';
 
-import Background from "../components/Background";
 import '../CSS/login.css';
 
 function Login()
@@ -41,6 +40,7 @@ function Login()
 
             /* Sets the user information for this session */
             localStorage.setItem('api_key', inputs.password);
+            localStorage.setItem('username', inputs.username);
 
             message.innerHTML = "Login Sucessful";
             message.style.backgroundColor = "rgb(6, 133, 6)";
@@ -153,7 +153,6 @@ function Login()
                 message.innerHTML = "";
                 message.style.backgroundColor = "transparent";
                 message.style.display = "none";
-                //window.location.reload();
             }, 1000);
         }); 
     }
@@ -299,15 +298,14 @@ function Login()
         });
           
         /* DONT MAKE IT RAIN YET! */
-        //makeItRain();
+        makeItRain();
     }, []);
 
 
     return (
     <>
-    <Background />
-    <div>
-        <div className = 'modal1' id = "model" style = {{display: 'block'}}>
+    <div id = "login">
+        <div className = 'modal1' id = "model" style = {{display: 'block', zIndex: '2'}}>
             <div className = "back-row-toggle splat-toggle">
                 <div className = "rain front-row"></div>
                 <div className = "rain back-row"></div>

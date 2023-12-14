@@ -6,6 +6,8 @@ import Detailed_Images from './semi-components/Product/detailed_images';
 import Detailed_Images2 from './semi-components/Product/detailed_images2';
 import Detailed_product from './semi-components/Product/detailed_product';
 import Product_Variants from './semi-components/Product/product_variants';
+import Detailed_Price from '../components/semi-components/Product/detailed_prices';
+import Detailed_Quantities from '../components/semi-components/Product/detailed_quantities';
 
 import Background from './Background';
 import $ from 'jquery';
@@ -41,20 +43,13 @@ function Page1(props)
         vendor.innerHTML = inputs.vendor;
 
         let filter_input = document.querySelectorAll(".filter-selection-main");
-        let navbar = document.querySelector(".navbar");
-        let main = document.querySelector(".main");
+        let navbar = document.querySelector(".navbar"); let main = document.querySelector(".main"); 
         let filter = document.querySelector(".filter");
         for(let i = 0; i < filter_input.length; i++) { filter_input[i].style.display = "none"; }
-        let filter_button = document.getElementById("_filter");
-        let C_filter = document.getElementById("clear_filter");
-        filter_button.disabled = false;
-        C_filter.disabled = false;
-        filter_button.style.cursor = "pointer";
-        C_filter.style.cursor = "pointer";
-
-        navbar.style.display = "block";
-        main.style.display = "block";
-        filter.style.display = "block";
+        let filter_button = document.getElementById("_filter"); let C_filter = document.getElementById("clear_filter");
+        filter_button.disabled = false; C_filter.disabled = false;
+        filter_button.style.cursor = "pointer"; C_filter.style.cursor = "pointer"; navbar.style.display = "block";
+        main.style.display = "block"; filter.style.display = "block";
     }
 
 
@@ -116,9 +111,6 @@ function Page1(props)
                 filter_img[i].style.display = "block";
                 filter[i].style.backgroundColor = "rgba(64, 165, 24, 0.7)";
                 filter_input[i].style.display = "block";
-                navbar.style.display = "none";
-                main.style.display = "none";
-                filter_main.style.display = "none";
             });
 
             /* Filter Close button onclick */
@@ -127,9 +119,6 @@ function Page1(props)
                 filter_img[i].style.display = "none";
                 filter[i].style.backgroundColor = "rgba(61, 61, 61, 0.7)";
                 filter_input[i].style.display = "none";
-                navbar.style.display = "block";
-                main.style.display = "block";
-                filter_main.style.display = "block";
             });
 
             /* Clear Filter */
@@ -151,13 +140,13 @@ function Page1(props)
                 pan[i].addEventListener("click", () =>
                 {
                     let id = pan[i].querySelector(".p-d-id").innerHTML;
-
                     /*  API  */
                     const api_key = localStorage.getItem('api_key');
                     $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
                     $.get("http://localhost:8080/api/products/" + id, [], [], 'json')
                     .done(function(_data) 
                     {   
+                        console.log(_data);
                         if(document.querySelector(".details") != null)
                         //div already exists, remove it, and create another
                         {
@@ -168,10 +157,46 @@ function Page1(props)
                             products.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} />)
+                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
+                            />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
+                                details.querySelector(".description").innerHTML = _data.body_html;
+
+                                let _div = details.querySelectorAll(".auto-slideshow-container");
+                                for(let i = 0; i < _div.length; i++)
+                                {
+                                    let _root = createRoot(_div[i]);
+                                    if(i == 0) { _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
+                                    else { _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/> )) }
+                                }
+                                let new_div = details.querySelector(".variants"); 
+                                let rt = createRoot(new_div);
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
+                                Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
+                                Option1={el.option1} Option2={el.option2} Option3={el.option3} 
+                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
+                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
+                                />))
+
+                            }, 10);
+                            
+                        }
+                        else 
+                        //create new div
+                        {
+                            let details = document.createElement('details');
+                            products.appendChild(details);
+                            let rot = createRoot(details);
+                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
+                            />)
+                            /* For some reason it wont pick up the element unless it throw it here */
+                            setTimeout(() =>
+                            {
+                                details.querySelector(".description").innerHTML = _data.body_html;
                                 let _div = details.querySelectorAll(".auto-slideshow-container");
                                 for(let i = 0; i < _div.length; i++)
                                 {
@@ -187,36 +212,12 @@ function Page1(props)
                                 }
                                 let new_div = details.querySelector(".variants"); 
                                 let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
-                            }, 0);
-                            
-                        }
-                        else 
-                        //create new div
-                        {
-                            let details = document.createElement('details');
-                            products.appendChild(details);
-                            let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} />)
-                            /* For some reason it wont pick up the element unless it throw it here */
-                            setTimeout(() =>
-                            {
-                                let _div = details.querySelectorAll(".auto-slideshow-container");
-                                for(let i = 0; i < _div.length; i++)
-                                {
-                                    let _root = createRoot(_div[i]);
-                                    if(i == 0)
-                                    {
-                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images key={`${el.title}_${i}`} Image1 = {el.src}/> ))
-                                    }
-                                    else 
-                                    {
-                                        _root.render( _data.product_images.map((el, i) => <Detailed_Images2 key={`${el.title}_${i}`} Image1 = {el.src}/>))
-                                    }
-                                }
-                                let new_div = details.querySelector(".variants"); 
-                                let rt = createRoot(new_div);
-                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}/> ))
+                                rt.render( _data.variants.map((el, i) => <Product_Variants key={`${el.title}_${i}`} Variant_Title = {el.id}
+                                Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
+                                Option1={el.option1} Option2={el.option2} Option3={el.option3} 
+                                Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
+                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
+                                /> ))
                             }, 0);
                         }
                     })
@@ -255,40 +256,57 @@ function Page1(props)
             .done(function( _data) 
             {
                 console.log(_data);
+                
                 if(_data.length < 10)
                 {
                     next.disabled = true;
                     next.style.cursor = "not-allowed";
                 }
-                if(document.querySelector(".pan-main") != null)
+                if(_data == "")
                 {
                     document.querySelector(".pan-main").remove();
-                    let pan_main = document.createElement('div');
-                    let main_elements = document.querySelector(".main-elements");
-                    pan_main.className = "pan-main";
-                    main_elements.appendChild(pan_main);
-
-                    let root = createRoot(pan_main);
-                    flushSync(() => 
-                    {
-                        root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
-                    });
-                    DetailedView();
+                    document.querySelector(".empty-message").style.display = "block";
                 }
                 else 
                 {
-                    let pan_main = document.createElement('div');
-                    let main_elements = document.querySelector(".main-elements");
-                    pan_main.className = "pan-main";
-                    main_elements.appendChild(pan_main);
-
-                    let root = createRoot(pan_main);
-                    flushSync(() => 
+                    if(document.querySelector(".pan-main") != null)
                     {
-                        root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id}/> ))
-                    });
-                    DetailedView();
+                        document.querySelector(".pan-main").remove();
+                        let pan_main = document.createElement('div');
+                        let main_elements = document.querySelector(".main-elements");
+                        pan_main.className = "pan-main";
+                        main_elements.appendChild(pan_main);
+
+                        let root = createRoot(pan_main);
+                        flushSync(() => 
+                        {
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> )) 
+                        });
+                        setTimeout(() => { DetailedView();}, 200);
+                    }
+                    else 
+                    {
+                        let pan_main = document.createElement('div');
+                        let main_elements = document.querySelector(".main-elements");
+                        pan_main.className = "pan-main";
+                        main_elements.appendChild(pan_main);
+
+                        let root = createRoot(pan_main);
+                        flushSync(() => 
+                        {
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> )) 
+                        });
+                        setTimeout(() => { DetailedView();}, 200);
+                    }
                 }
+                
+                
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
@@ -302,7 +320,6 @@ function Page1(props)
 
         function Filter_Pagintation(index)
         {
-
             if(index == 1)
             {
                 let category = document.querySelector(".category").innerHTML;
@@ -312,7 +329,6 @@ function Page1(props)
                 $.get("http://localhost:8080/api/products/filter?type=" + type + "&vendor=" + vendor + "&category=" + category + "&page=" + ahead, [], [])
                 .done(function( _data) 
                 {
-                    console.log(_data);
                     if(_data == "") { let next = document.getElementById("next"); next.style.cursor = "not-allowed"; next.disabled = true; } 
                 })
                 .fail( function(xhr) { alert(xhr.responseText); });
@@ -371,6 +387,7 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                         
@@ -393,7 +410,6 @@ function Page1(props)
 
                 prevPage.addEventListener("click", () =>
                 {
-                    console.log("prev1" + index);
                     let category = document.querySelector(".category").innerHTML;
                     let type = document.querySelector(".type").innerHTML;
                     let vendor = document.querySelector(".vendor").innerHTML;
@@ -415,6 +431,7 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
 
@@ -450,11 +467,9 @@ function Page1(props)
 
                 nextPage.addEventListener("click", () =>
                 {
-                    console.log("next2" + index);
                     let category = document.querySelector(".category").innerHTML;
                     let type = document.querySelector(".type").innerHTML;
                     let vendor = document.querySelector(".vendor").innerHTML;
-                    console.log(vendor);
 
                     index = index + 1;
 
@@ -476,6 +491,7 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
 
@@ -487,11 +503,9 @@ function Page1(props)
 
                 prevPage.addEventListener("click", () =>
                 {
-                    console.log("prev2" + index);
                     let category = document.querySelector(".category").innerHTML;
                     let type = document.querySelector(".type").innerHTML;
                     let vendor = document.querySelector(".vendor").innerHTML;
-                    console.log(vendor);
                     index = index - 1;
 
                     const api_key = localStorage.getItem('api_key');
@@ -512,7 +526,8 @@ function Page1(props)
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            /> )) 
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> ))  
                         });
                         
                     })

@@ -25,6 +25,10 @@ const Layout = () => {
   {
     navigate('/customers');
   };
+  const navigateToQueue = () => 
+  {
+    navigate('/queue');
+  };
   const navigateToSettings = () => 
   {
     navigate('/settings');
@@ -53,6 +57,10 @@ const Layout = () => {
 
             <div className = "dropdown">
                 <button onClick = {navigateToCustomers} className = "dropbtn">Customers</button>
+            </div>
+
+            <div className = "dropdown">
+                <button onClick = {navigateToQueue} className = "dropbtn">Queue</button>
             </div>
 
             <div className = "dropdown">

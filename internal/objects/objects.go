@@ -19,12 +19,18 @@ type OrderAmountResponse struct {
 }
 
 type RequestWebhookURL struct {
-	ForwardingURL string `json:"forwarding_url"`
+	Domain string `json:"domain"`
 }
 
 type ResponseWarehouseLocation struct {
-	Warehouses       []string `json:"warehouses"`
-	ShopifyLocations any      `json:"shopify_locations"`
+	Warehouses       []Warehouse `json:"warehouses"`
+	ShopifyLocations any         `json:"shopify_locations"`
+}
+
+type Warehouse struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // queue.go
@@ -423,6 +429,9 @@ type RequestString struct {
 }
 
 // request_validation.go
+type RequestGlobalWarehouse struct {
+	Name string `json:"name"`
+}
 
 type RequestWarehouseLocation struct {
 	LocationID           string `json:"location_id"`
@@ -435,6 +444,7 @@ type RequestBodyUser struct {
 	Token string `json:"token"`
 }
 type RequestBodyProduct struct {
+	Active         string               `json:"active"`
 	ProductCode    string               `json:"product_code"`
 	Title          string               `json:"title"`
 	BodyHTML       string               `json:"body_html"`
@@ -552,11 +562,14 @@ type SearchCustomer struct {
 	LastName  string `json:"last_name"`
 }
 type SearchProduct struct {
-	ID          uuid.UUID `json:"id"`
-	Title       string    `json:"title"`
-	Category    string    `json:"category"`
-	ProductType string    `json:"product_type"`
-	Vendor      string    `json:"vendor"`
+	ID          uuid.UUID       `json:"id"`
+	Active      string          `json:"active"`
+	Title       string          `json:"title"`
+	Category    string          `json:"category"`
+	ProductType string          `json:"product_type"`
+	Vendor      string          `json:"vendor"`
+	Images      []ProductImages `json:"product_images"`
+	UpdatedAt   time.Time       `json:"updated_at"`
 }
 type Product struct {
 	ID             uuid.UUID        `json:"id"`

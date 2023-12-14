@@ -5,9 +5,11 @@
     height: 100%;
     left: 25%;
     width: 75%;
-    background-color:rgba(0, 0, 0, 0.5);
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
     overflow: auto;
     transition-duration: 0.4s;
+    overflow: hidden;
+    z-index:2;
 }
 .main-container:hover
 {
@@ -20,9 +22,10 @@
     left: 0;
     height: 100%;
     width: 25%;
-    background-color:rgba(0, 0, 0, 0.5);
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
     overflow: auto;
     transition-duration: 0.4s;
+    z-index:2;
 }
 .side-container:hover 
 {
@@ -34,10 +37,10 @@
     display: block;
     left: 0;
     text-align: center;
-    padding: 20px;
     height: 100%;
     width: 100%;
     overflow: auto;
+    top: 20px;
 }
 .app-settings, .shopify-settings
 {
@@ -51,28 +54,32 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 20px;
     border-bottom: 1px solid aliceblue; 
+    color: white;
 }
-.setting 
+.setting, .setting_main 
 {
     position: relative;
     margin-top: 15px;
     margin-bottom: 15px;
     display: block;
     width: 70%;
-    height: 170px;
+    height: auto;
     left: 50%;
     transform: translate(-50%);
     background-color:rgb(240, 248, 255, 0.6);
-    border-radius: 40px;
+    border-radius: 5px;
     transition-duration: 0.4s;
-    padding: 15px;
+    padding-top: 15px;
+    padding-right: 15px;
+    padding-left: 15px;
+    padding-bottom: 15px;
 }
 .setting:hover 
 {
     box-shadow: 5px 10px rgb(0, 5, 5, 0.1);
     background-color:rgb(240, 248, 255, 0.9);
 }
-.setting-title
+.setting-title, ._title, .tittle 
 {
     position: relative;
     text-align: center;
@@ -82,6 +89,7 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 15px;
     border-bottom: 1px solid black;
+    font-weight: bold;
 }
 .setting-details 
 {
@@ -97,15 +105,31 @@
 {
     word-wrap: break-word;
     overflow: auto;
+    text-align: center;
+    transition-duration: 0.4s;
+    background-color: rgba(128, 128, 128, 0.1);
+    width: 80%;
+    position: relative;
+    left: 50%;
+    transform: translate(-50%);
+    border-left: transparent;
+    margin-bottom: 5px;
 }
-.value 
+.description:hover
+{
+    background-color: rgba(128, 128, 128, 0.2);
+}
+
+
+.value, .id
 {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
 }
-.button-on-off 
+.button-on-off, .webhook-button
 {
     position: absolute;
-    width: 70px;
+    width: 90px;
     height: 36px;
     right: 15px;
     top: 55%;
@@ -119,9 +143,26 @@
     transform: translate(0%, -45%);
     border: none;
 }
-.button-on-off:hover
+.button-on-off:hover, .webhook-button:hover
 {
     background-color: rgba(11, 121, 7, 0.5);
+}
+
+input[type = setting]
+{
+    position: relative;
+    padding: 10px;
+    font-size: 13px;
+    float: left;
+    border-left: 1px solid grey;
+    border-top: 1px solid grey;
+    border-bottom: 1px solid grey;
+    border-right: 1px solid grey;
+    width: 30%;
+    background: transparent;
+    color: rgb(17, 17, 17);
+    left: 50%;
+    transform: translate(-50%);
 }
 .settings-2
 {
@@ -137,9 +178,9 @@
     left: 50%;
     transform: translate(-50%);
     font-size: 16px;
-    color: black;
+    color: rgb(255, 255, 255);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    border-bottom: 1px solid rgb(0, 0, 0);
+    border-bottom: 1px solid rgb(255, 255, 255);
     padding: 10px;
     user-select: none;
 }
@@ -152,15 +193,15 @@
     font-size: 16px;
     color: black;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    border-bottom: 1px solid rgb(0, 0, 0);
+    border-bottom: 1px solid rgb(255, 255, 255);
     padding: 10px;
     user-select: none;
 }
 .a
 {
     position: absolute;
-    height: 20px;
-    width: 20px;
+    height: 25px;
+    width: 25px;
     left: 47px;
     display: block;
     background-size: cover;
@@ -169,8 +210,8 @@
 .b 
 {
     position: absolute;
-    height: 20px;
-    width: 20px;
+    height: 25px;
+    width: 25px;
     left: 60px;
     display: block;
     background-size: cover;
@@ -181,23 +222,51 @@
     position: relative;
     left: 50%;
     transform: translate(-50%);
-    font-size: 13px;
+    font-size: 11px;
     background-color: white;
     color: black;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     padding: 5px;
     border-radius: 10px;
     margin-top: 5px;
-    margin-bottom: 5px;
-    width: 50%;
+    border: none;
+    width: 60%;
+    display: block;
     height: auto;
     cursor: pointer;
     transition-duration: 0.4s;
 }
 .mini-setting:hover
 {
-    color: white;
-    background-color: rgb(17, 17, 17);
+    background-color: rgb(64, 97, 128);
+    color: aliceblue;
+}
+.true, .false
+{
+    position: relative;
+    font-size: 11px;
+    background-color: rgb(255, 255, 255);
+    color: black;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 5px;
+    border-radius: 10px;
+    margin: 5px;
+    border: none;
+    width: 90px;
+    display: block;
+    height: auto;
+    cursor: pointer;
+    transition-duration: 0.4s;
+}
+.true:hover
+{
+    background-color: rgb(19, 99, 8);
+    color: aliceblue;
+}
+.false:hover
+{
+    background-color: rgb(148, 11, 11);
+    color: aliceblue;
 }
 
 /* Webhook div */
@@ -256,13 +325,14 @@ h3 {
     display: inline-block;
     top: 7px;
     left: 7px;
-    transition-duration: 2s;
+    transition-duration: 0.4s;
     border-radius: 15px;
     cursor: pointer;
+    background-color: #c5c5c5;
 }
 
 .info_icon:hover {
-    background-color: #c5c5c5;
+    background-color: #7a7a7a;
 }
 
 /* Location_Warehouse CSS */

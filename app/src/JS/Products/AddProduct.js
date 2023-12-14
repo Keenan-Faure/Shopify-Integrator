@@ -35,13 +35,19 @@ function Add_Product()
                     option2: inputs.variant_option2, 
                     option3: inputs.variant_option3, 
                     barcode: inputs.variant_barcode,
-                    variant_price_tiers: [
+                    variant_price_tiers: 
+                    [
                         {
                             name: inputs.price_tier_name,
                             value: inputs.price_tier_value
                         },
+                        {
+                            name: inputs.compareprice_tier_name,
+                            value: inputs.price_tier_value2
+                        }
                     ],
-                    variant_quantities: [
+                    variant_quantities: 
+                    [
                         {
                             name: inputs.quantity_warehouse_name,
                             value: parseInt(inputs.warehouse_quantity)
@@ -53,6 +59,9 @@ function Add_Product()
             [
                 {
                     value: inputs.product_options
+                },
+                {
+                    value: inputs.product_options2
                 }
             ]
         };
@@ -234,7 +243,7 @@ function Add_Product()
     return (
         <>
             <Background />
-            <div className = 'modal1' id = "model">
+            <div className = 'modal1' id = "model" style={{zIndex: '2'}}>
                 <div className = "back-row-toggle splat-toggle">
                     <div className = "rain front-row"></div>
                     <div className = "rain back-row"></div>
@@ -246,7 +255,7 @@ function Add_Product()
                 <form className = 'modal-content' style ={{opacity: '1'}} method = 'post' onSubmit={(event) => AddProduct(event)} autoComplete='off' id = 'form1' encType="multipart/form-data" noValidate>
                 <div id = "detailss">
                     <div className = 'rtn-button'></div>
-                    <div className = "button-holder" style = {{position: 'absolute', width: '71%', zIndex:'1', left:'29%', backgroundColor: ''}}>
+                    <div className = "button-holder" style = {{position: 'absolute', width: '71%', zIndex:'3', left:'29%', backgroundColor: ''}}>
                         <button type = "button" className="tablink" id = "Product" style ={{left: '-14%', width:'95px'}}>Product</button>
                         <button type = "button" className="tablink" id ="Variants" style ={{left: '-14%', width:'95px'}}>Variants</button>
                     </div>
@@ -317,11 +326,11 @@ function Add_Product()
                                                 <th>Variant SKU</th>
                                             </tr>
                                             <tr>
-                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Barcode" name = "variant_barcode" 
+                                                <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant Barcode" name = "variant_barcode" 
                                                 value = {inputs.variant_barcode || ""} onChange = {handleChange} required></input></td>
-                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant ID" name = "variant_id" 
+                                                <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant ID" name = "variant_id" 
                                                 value = {inputs.variant_id || ""} onChange = {handleChange} required></input></td>
-                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant SKU" name = "variant_sku" 
+                                                <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant SKU" name = "variant_sku" 
                                                 value = {inputs.variant_sku || ""} onChange = {handleChange} required></input></td>
                                             </tr>
                                         </tbody>
@@ -334,11 +343,11 @@ function Add_Product()
                                                 <th>Option 3</th>
                                             </tr>
                                             <tr>
-                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Option 1" name = "variant_option1" 
+                                                <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant Option 1" name = "variant_option1" 
                                                 value = {inputs.variant_option1 || ""} onChange = {handleChange} required></input></td>
-                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Option 2" name = "variant_option2" 
+                                                <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant Option 2" name = "variant_option2" 
                                                 value = {inputs.variant_option2 || ""} onChange = {handleChange} ></input></td>
-                                                <td><input type = '_text' style = {{width: '150px'}} placeholder = "Variant Option 3" name = "variant_option3" 
+                                                <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant Option 3" name = "variant_option3" 
                                                 value = {inputs.variant_option3 || ""} onChange = {handleChange} ></input></td>
                                             </tr>
                                         </tbody>
@@ -352,10 +361,16 @@ function Add_Product()
                                                     <th>Value</th>
                                                 </tr>
                                                 <tr>
-                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Price Tier Name" name = "price_tier_name" 
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Selling Price" name = "price_tier_name" 
                                                     value = {inputs.price_tier_name || ""} onChange = {handleChange} required></input></td>
-                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Price Tier Price" name = "price_tier_value" 
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Price Tier Price" name = "price_tier_value" 
                                                     value = {inputs.price_tier_value || ""} onChange = {handleChange} ></input></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Compare-to-Price" name = "_compareprice_tier_name" 
+                                                    value = {inputs._compareprice_tier_name || ""} onChange = {handleChange} required></input></td>
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Price Tier Price" name = "price_tier_value2" 
+                                                    value = {inputs.price_tier_value2 || ""} onChange = {handleChange} ></input></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -368,10 +383,16 @@ function Add_Product()
                                                     <th>Quantity</th>
                                                 </tr>
                                                 <tr>
-                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Warehouse Name" name = "quantity_warehouse_name" 
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Warehouse Name" name = "quantity_warehouse_name" 
                                                     value = {inputs.quantity_warehouse_name || ""} onChange = {handleChange} required></input></td>
-                                                    <td><input type = '_text' style = {{width: '150px'}} placeholder = "Warehouse Quantity" name = "warehouse_quantity" 
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Warehouse Quantity" name = "warehouse_quantity" 
                                                     value = {inputs.warehouse_quantity || ""} onChange = {handleChange} ></input></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Warehouse 2 Name" name = "quantity_warehouse_name2" 
+                                                    value = {inputs.quantity_warehouse_name2 || ""} onChange = {handleChange} required></input></td>
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Warehouse 2 Quantity" name = "warehouse_quantity2" 
+                                                    value = {inputs.warehouse_quantity2 || ""} onChange = {handleChange} ></input></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -379,11 +400,15 @@ function Add_Product()
                                         <table>
                                             <tbody>
                                                 <tr>
-                                                    <th>Value</th>
+                                                    <th style = {{textAlign: 'center'}}>Value</th>
                                                 </tr>
                                                 <tr>
                                                     <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant Option" name = "product_options" 
                                                     value = {inputs.product_options || ""} onChange = {handleChange} required></input></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><input type = '_text' style = {{width: '100%'}} placeholder = "Variant Option 2" name = "product_options2" 
+                                                    value = {inputs.product_options2 || ""} onChange = {handleChange} required></input></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -395,7 +420,7 @@ function Add_Product()
                         </div>
                     </div>
                 </div>
-                <button type = "submit" className = "submiit">Add Product</button>
+                <button type = "submit" className = "submiit" style={{zIndex: '2'}}>Add Product</button>
                 </form>
             </div>    
         </>

@@ -12,6 +12,28 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validate: InsertGlobalWarehouse
+func GlobalWarehouseValidation(warehouse objects.RequestGlobalWarehouse) error {
+	if warehouse.Name == "" {
+		return errors.New("invalid warehouse name")
+	}
+	return nil
+}
+
+// Decode: InsertGlobalWarehouse
+func DecodeGlobalWarehouse(dbconfig *DbConfig, r *http.Request) (objects.RequestGlobalWarehouse, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestGlobalWarehouse{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
+		return objects.RequestGlobalWarehouse{}, err
+	}
+	return params, nil
+}
+
 // Decode: WebhookURL
 func DecodeWebhookURL(r *http.Request) (objects.RequestWebhookURL, error) {
 	decoder := json.NewDecoder(r.Body)
@@ -444,11 +466,12 @@ func ProductValidation(product objects.RequestBodyProduct) error {
 	if product.Variants[0].Sku == "" {
 		return errors.New("empty SKU codes not allowed")
 	}
-	if product.Variants[0].VariantPricing[0].Name == "" {
-		return errors.New("empty price tier name not allowed")
-	}
-	if product.Variants[0].VariantQuantity[0].Name == "" {
-		return errors.New("empty warehouse name not allowed")
+	if len(product.Variants[0].VariantPricing) > 0 {
+		if product.Variants[0].VariantPricing[0].Name == "" {
+			return errors.New("empty price tier name not allowed")
+		}
+	} else {
+		return errors.New("product must have a price")
 	}
 	return nil
 }
@@ -460,7 +483,7 @@ func ValidateDuplicateOption(product objects.RequestBodyProduct) error {
 		for _, value := range product.ProductOptions {
 			if value.Value != "" && len(value.Value) > 0 {
 				if slices.Contains(options_names, value.Value) {
-					return errors.New("duplicate options not allowed: " + value.Value)
+					return errors.New("duplicate product option names not allowed: " + value.Value)
 				}
 				options_names = append(options_names, value.Value)
 			}
@@ -501,11 +524,14 @@ func ValidateDuplicateSKU(
 
 // Product: Duplicate Option value validation (variations)
 func DuplicateOptionValues(product objects.RequestBodyProduct) error {
+	if len(product.ProductOptions) == 0 {
+		return nil
+	}
 	if len(product.ProductOptions) == 1 {
 		option_values := []string{}
 		for _, value := range product.Variants {
 			if slices.Contains(option_values, value.Option1) {
-				return errors.New("duplicate option value")
+				return errors.New("duplicate option values not allowed")
 			}
 			option_values = append(option_values, value.Option1)
 		}
@@ -527,7 +553,7 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 				}
 			}
 		}
-	} else if len(product.ProductOptions) != 3 {
+	} else if len(product.ProductOptions) > 3 {
 		return errors.New("too many option values")
 	}
 	option_1_values := []string{}

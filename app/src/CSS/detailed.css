@@ -22,8 +22,7 @@
 .description ul 
 {
     list-style-type: disc;
-    padding: 10px 0;
-    background-color: transparent;
+    padding: 0px 0;
 }
 .description li 
 {
@@ -48,7 +47,7 @@
     width: 100%;
     text-align: center;
     background-color: rgba(238, 243, 248, 1);
-    z-index: 1;
+    z-index: 3;
 }
 
 .details 
@@ -62,6 +61,7 @@
     width: 100%;
     height: 100%;
     overflow: auto;
+    z-index: 2;
 }    
 .details-details 
 {
@@ -74,14 +74,13 @@
     display: block;
     overflow: hidden;
 }
-.details-image
+.auto-slideshow-container .details-image
 {
     background-size: contain;
     background-repeat: no-repeat;
     height: 100%;
     position: absolute;
     overflow: auto;
-    filter: blur(1px);
     width: 29%;
     object-fit: cover;
     object-position: 38% 25%;
@@ -98,6 +97,7 @@
     overflow: auto;
     text-align: center;
     left: 54%;
+    z-index: 2;
 }
 .details-left 
 {
@@ -110,6 +110,7 @@
     overflow: auto;
     text-align: center;
     transform: translate(1px);
+    z-index: 2;
 }
 .details-right
 {
@@ -122,11 +123,16 @@
     overflow: auto;
     text-align: center;
     transform: translate(1px);
+    z-index: 2;
 }
 .details-warehouse 
 {
     padding: 10px;
     position: relative;
+}
+#title 
+{
+    text-decoration: underline;
 }
 .details-title 
 {
@@ -147,6 +153,7 @@
     position: relative;
     font-size: 18px;
     text-align: center;
+    margin-bottom: 5px;
 }
 .details-code 
 {
@@ -181,14 +188,14 @@
 {
     position: absolute;
     display: block;
-    width: 70px;
+    width: 50px;
     height: 50px;
-    top: 5px;
+    top: 0px;
     right: 0px;
     cursor: pointer;
     z-index: 2;
     color: rgb(184, 11, 11);
-    font-size: 45px;
+    font-size: 35px;
     text-align: center;
 }
 .rtn-button
@@ -203,7 +210,7 @@
     background-size: cover;
     background-position: center;
     cursor: pointer;
-    z-index: 2;
+    z-index: 4;
 }
 table 
 {
@@ -236,6 +243,7 @@ tr
 tr:hover 
 {
     border-left: 1px solid black;
+    background-color: white;
 }
 
 .activee
@@ -304,7 +312,7 @@ tr:hover
 .Prices, .updateDate, .Quantities
 {
     font-weight: bold;
-    font-size: 14px;
+    font-size: 15px;
 }
 p{ padding: 10px 60px; margin: 0;}
 .c 
@@ -325,6 +333,16 @@ p{ padding: 10px 60px; margin: 0;}
 {
     margin-bottom: 5px;
     float: right;
+}
+.confirm-line 
+{
+    position: absolute;
+    display: none;
+    width: 100%;
+    height: 42px;
+    bottom: 0%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2;
 }
 /* Slide Show */
 * {box-sizing: border-box;}
@@ -389,35 +407,16 @@ a:hover {
     color: #30b2e1;
 }
 
-/** Background properties */
-.background {
-    background-image: url();
-    background-position: relative;
-    background-size: cover;
-    background-repeat: no-repeat;
-    width: 100%;
-    height: 100%;
-}
-
-.background-cover {
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    position: absolute;
-}
-.confirm-line 
+.order-image
 {
     position: absolute;
-    display: none;
     width: 100%;
-    height: 42px;
-    bottom: 0%;
-    background-color: rgba(0, 0, 0, 0.7);
+    height: 100%;
+    background-position: center;
+    background-size: cover;
 }
 
 
-/** End Background properties */
 
 .view {
     z-index: 1;
@@ -486,7 +485,7 @@ a:hover {
 }
 .order_data_customer_address_view:first-child
 {
-    margin-top: 30px;
+    margin-top: 45px;
 }
 
 .customer_address_title {
@@ -512,7 +511,17 @@ a:hover {
 
 .customer_address_tiles {
     background-color: transparent;
+    cursor: pointer;    position: absolute;
+    display: block;
+    width: 50px;
+    height: 50px;
+    top: 0px;
+    right: 0px;
     cursor: pointer;
+    z-index: 2;
+    color: rgb(184, 11, 11);
+    font-size: 35px;
+    text-align: center;
     padding: 8px 0px 8px 0px;
     width: 92.5%;
     font-size: 12px;
@@ -580,7 +589,6 @@ a:hover {
 /** Order Lines */
 .order_lines_view {
     position: relative;
-    background-color: transparent;
     left: 50%;
     transform: translate(-48%);
     width: 90%;
@@ -596,7 +604,6 @@ a:hover {
 
 .order_line:nth-child(even) {
     position: relative;
-    background-color: transparent;
     padding: 10px;
     justify-content: center;
 }
@@ -645,7 +652,6 @@ a:hover {
     z-index: 1;
     position: relative;
     width: 90%;
-    background-color: transparent;
     left: 50%;
     transform: translate(-48%);
 }
@@ -660,8 +666,8 @@ a:hover {
 
 .order_totals_line:nth-child(even) {
     position: relative;
-    background-color: transparent;
     padding: 0px 8px 0px 8px;
+    background-color: transparent;
     display: flex;
     justify-content: center;
 }

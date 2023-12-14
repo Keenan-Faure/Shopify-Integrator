@@ -21,7 +21,7 @@ INSERT INTO users (
     created_at,
     updated_at
 ) VALUES ($1, $2, $3, $4, $5)
-RETURNING id, webhook_token, created_at, updated_at, name, email, api_key
+RETURNING id, name, email, api_key, webhook_token, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -43,18 +43,18 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.WebhookToken,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 		&i.Name,
 		&i.Email,
 		&i.ApiKey,
+		&i.WebhookToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getUserByApiKey = `-- name: GetUserByApiKey :one
-SELECT id, webhook_token, created_at, updated_at, name, email, api_key FROM users
+SELECT id, name, email, api_key, webhook_token, created_at, updated_at FROM users
 WHERE api_key = $1
 LIMIT 1
 `
@@ -64,18 +64,18 @@ func (q *Queries) GetUserByApiKey(ctx context.Context, apiKey string) (User, err
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.WebhookToken,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 		&i.Name,
 		&i.Email,
 		&i.ApiKey,
+		&i.WebhookToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, webhook_token, created_at, updated_at, name, email, api_key FROM users
+SELECT id, name, email, api_key, webhook_token, created_at, updated_at FROM users
 WHERE email = $1
 `
 
@@ -84,12 +84,12 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.WebhookToken,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 		&i.Name,
 		&i.Email,
 		&i.ApiKey,
+		&i.WebhookToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -109,7 +109,7 @@ func (q *Queries) GetUserByName(ctx context.Context, name string) (string, error
 }
 
 const getUsers = `-- name: GetUsers :one
-SELECT id, webhook_token, created_at, updated_at, name, email, api_key FROM users LIMIT 1
+SELECT id, name, email, api_key, webhook_token, created_at, updated_at FROM users LIMIT 1
 `
 
 func (q *Queries) GetUsers(ctx context.Context) (User, error) {
@@ -117,12 +117,12 @@ func (q *Queries) GetUsers(ctx context.Context) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.WebhookToken,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 		&i.Name,
 		&i.Email,
 		&i.ApiKey,
+		&i.WebhookToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

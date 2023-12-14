@@ -51,16 +51,23 @@ function Orders()
         .done(function( _data) 
         {
             console.log(_data);
+            if(_data == "")
+            {
+                document.querySelector(".empty-message").style.display = "block";
+            }
+            else 
+            {
+                let root;
+                let pan_main = document.querySelector(".pan-main");
+                let div = document.createElement("div");
+                pan_main.appendChild(div);
 
-            let root;
-            let pan_main = document.querySelector(".pan-main");
-            let div = document.createElement("div");
-            pan_main.appendChild(div);
-
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
-            Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
-            />))
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Order_details key={`${el.title}_${i}`} Order_WebCode={el.web_code}
+                Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
+                />))
+            }
+            
 
 
         })
@@ -494,6 +501,7 @@ function Orders()
                     </form>    
                 </div>
                 <div className = "main-elements">
+                    <div className = "empty-message">No results found.</div>
                     <div className = "pan-main" id = "pan-main">
 
                     </div>

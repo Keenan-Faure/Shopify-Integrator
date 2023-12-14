@@ -33,6 +33,7 @@ type AppSetting struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
+	FieldName   string    `json:"field_name"`
 	Value       string    `json:"value"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
@@ -194,6 +195,7 @@ type ShopifySetting struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Value       string    `json:"value"`
+	FieldName   string    `json:"field_name"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	Description string    `json:"description"`
@@ -211,12 +213,12 @@ type ShopifyVid struct {
 
 type User struct {
 	ID           uuid.UUID `json:"id"`
-	WebhookToken string    `json:"webhook_token"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
 	ApiKey       string    `json:"api_key"`
+	WebhookToken string    `json:"webhook_token"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type Variant struct {
@@ -249,4 +251,11 @@ type VariantQty struct {
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 	Isdefault bool          `json:"isdefault"`
+}
+
+type Warehouse struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

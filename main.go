@@ -92,12 +92,21 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 	api.Delete("/products/{id}", dbconfig.middlewareAuth(dbconfig.RemoveProductHandle))
 	api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
+	api.Put("/products/{id}", dbconfig.middlewareAuth(dbconfig.UpdateProductHandle))
 
-	// Configure warehouse-locations
-	api.Get("/inventory/map", dbconfig.middlewareAuth(dbconfig.ConfigLocationMap))
-	api.Get("/inventory", dbconfig.middlewareAuth(dbconfig.GetWarehouseLocations))
-	api.Post("/inventory", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
-	api.Delete("/inventory/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
+	// general endpoint that returns the shopify_locations & internal warehouses
+	api.Get("/inventory/config", dbconfig.middlewareAuth(dbconfig.ConfigLocationWarehouse))
+
+	// shopify_location-internal warehouses map
+	api.Get("/inventory/map", dbconfig.middlewareAuth(dbconfig.GetWarehouseLocations))
+	api.Post("/inventory/map", dbconfig.middlewareAuth(dbconfig.AddWarehouseLocationMap))
+	api.Delete("/inventory/map/{id}", dbconfig.middlewareAuth(dbconfig.RemoveWarehouseLocation))
+
+	// internal warehouses
+	api.Get("/inventory/warehouse", dbconfig.middlewareAuth(dbconfig.GetInventoryWarehouses))
+	api.Get("/inventory/warehouse/{id}", dbconfig.middlewareAuth(dbconfig.GetInventoryWarehouse))
+	api.Post("/inventory/warehouse", dbconfig.middlewareAuth(dbconfig.AddInventoryWarehouse))
+	api.Delete("/inventory/warehouse/{id}", dbconfig.middlewareAuth(dbconfig.DeleteInventoryWarehouse))
 
 	// shopify settings
 	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetShopifySettingValue))

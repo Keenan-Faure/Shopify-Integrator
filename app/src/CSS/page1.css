@@ -17,6 +17,8 @@ body
     opacity: 1;
     transition-duration: 0.4s;
     animation: SlideUp 1.2s ease-in;
+    z-index: 1;
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
 }
 .filter-title
 {
@@ -30,8 +32,9 @@ body
     height: 10%;
     top: 0;
     left: 0;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid rgb(255, 255, 255);
     margin-bottom: 20px;
+    color: white;
 }
 .filter-elements 
 {
@@ -47,16 +50,16 @@ body
     top: 0;
     left: 0;
     transition-duration: 0.5s;
-    background-color: rgba(61, 61, 61, 0.7);
+    background-color: rgba(61, 61, 61, 0.75);
     overflow: auto;
     padding: 15px;
     cursor: pointer;
-    /*
-    border-left: 2px solid beige;
-    border-right: 2px solid rgb(214, 214, 90);
-    border-top: 2px solid rgb(174, 204, 149);
-    border-bottom: 2px solid rgb(157, 207, 99);
-    */
+    color: white;
+}
+.filter-elements:hover 
+{
+    background-color: rgba(61, 61, 61, 1);
+    color: aliceblue;
 }
 .filter-img 
 {
@@ -79,7 +82,7 @@ body
     height: 40px;
     position: relative;
     background-size: cover;
-    color: black;
+    color: rgb(255, 255, 255);
     border: 1px solid #000000;
     border-radius: 4px;
     transition-duration: 0.4s;
@@ -91,14 +94,14 @@ body
 }
 .filter-button:hover
 {
-	color: rgb(0, 0, 0);
+	color: rgb(255, 255, 255);
 	border: 1px solid white;
 	background-position: center;
 }
 .filter-selection-main 
 {
     display: none;
-    background-color: rgb(137 137 137 / 25%);
+    background-color: rgb(137 137 137 / 90%);
     position: absolute;
     width: 100%;
     height: 100%;
@@ -133,12 +136,12 @@ body
     display: block;
     width: 70px;
     height: 50px;
-    top: -16px;
+    top: -5px;
     right: -16px;
     cursor: pointer;
     z-index: 2;
     color: rgb(184, 11, 11);
-    font-size: 45px;
+    font-size: 35px;
     text-align: center;
 }
 input[type = vendor], input[type = category], input[type = type]
@@ -162,6 +165,10 @@ form.search-area
     opacity: 0;
     border: none;
     padding: 0;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translate(-50%);
 }
 input[type="search"] 
 {
@@ -176,14 +183,16 @@ input[type="search"]
     
 }
 
-input[type="search"]::placeholder 
+input[type = search]::-webkit-input-placeholder 
 {
-    color: #3b3b3b;
+    text-align: center;
+    color: rgb(170, 170, 170);
 }
 input.search-area
 {
     width: 260px;
-    border: 1px solid #555;
+    border: 1px solid #8d8d8d;
+    color: #cdcdcd;
     display: block;
     position: relative;
     left: 50%;
@@ -198,14 +207,15 @@ input.search-area
     position: absolute;
     display: block;
     left: 51%;
-    top: 13%;
+    top: 10%;
     width: 70%;
-    height: 90%;
+    height: 96%;
     opacity: 1;
     z-index: 2;
     transform: translate(-30%, -6%);
     animation: SlideUp2 1.2s ease-in;
     overflow: hidden;
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
 }
 .main-elements 
 {
@@ -213,11 +223,9 @@ input.search-area
     top: 50%;
     left: 50%;
     width: 90%;
-    height: 90%;
-    background-color:rgb(0, 0, 0, 0.2);
+    height: 85%;
     transform: translate(-50%, -50%);
     overflow: auto;
-
 }
 .pan-main 
 {
@@ -248,6 +256,7 @@ input.search-area
     user-select: none;
     cursor: pointer;
     overflow: hidden;
+    background: linear-gradient(to left, #202020, #818181);
 }
 .pan:hover 
 {
@@ -266,14 +275,29 @@ input.search-area
     transform: translate(0%, -50%);
     background-size: cover;
     background-position: center;
-    background-color: rgb(41, 136, 136);
+    background-color: rgb(177 177 177);
+}
+.img-2
+{
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url(../media/orders.png);
+    background-size:auto;
+}
+.img-3
+{
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: rgb(177 177 177);
+    background-image: url(../media/customer.png);
+    background-size:auto;
 }
 .pan-details
 {
     position: relative;
     float: left;
     height: 100%;
-    width: 75%;
+    width: 80%;
     font-size: 14px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
@@ -281,25 +305,12 @@ input.search-area
     text-align: left;
     padding: 4px;
     transition-duration: 0.4s;
-}
-.pan-price
-{
-    position: fixed;
-    right: 10px;
-    float: left;
-    height: auto;
-    width: 20%;
-    font-size: 14px;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    text-align: right;
-    padding: 4px;
-    transition-duration: 0.4s;
+    pointer-events: none;
 }
 .p-d-id, .p-d-activity
 {
     display: none;
+    pointer-events: none;
 }
 .p-d-false 
 {
@@ -323,9 +334,41 @@ input.search-area
     background-size: cover;
     background-image: url(../media/tick.png);
 }
+.p-d-unknown
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 3px;
+    opacity: 0.75;
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/question-mark.png);
+}
+.p-d-load 
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 3px;
+    opacity: 0.75;
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/load.png);
+}
 .p-d-title
 {
-
+    border: none;
+}
+.p-d-status
+{
+    position: absolute;
+    left: 75%;
+    font-weight: 400;
+}
+.status
+{
+    display: inline;
 }
 @keyframes SlideUp 
 {
@@ -350,6 +393,11 @@ input.search-area
     from {position: relative; z-index: 1; width: 100%; left: 0%;}
     to {z-index: 1; width: 70%; left: 30%;}
 }
+@keyframes MoveLeft2
+{
+    from {position: relative; z-index: 1; width: 100%; left: 0%;}
+    to {z-index: 1; width: 75%; left: 25%;}
+}
 
 @keyframes MoveRight
 {
@@ -369,7 +417,7 @@ input.search-area
 {
     text-align: center;
     position: relative;
-    top: -15px;
+    top: 28px;
     display: none;
 }
 .hidden 
@@ -385,7 +433,7 @@ input.search-area
   
 .pagination button 
 {
-    color: black;
+    color: rgb(202, 202, 202);
     float: left;
     padding: 8px 16px;
     text-decoration: none;
@@ -478,8 +526,22 @@ a
     left: 32px;
     display: block;
     background-size: cover;
-    background-size: cover;
     background-image: url(../media/add.png);
+}
+.empty-message 
+{
+    position: absolute;
+    display: none;
+    left: 50%;
+    top: 50%;
+    padding: 15px;
+    border-radius: 5px;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 16px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    background-color: rgba(61, 61, 61, 0.8);
+    user-select: none;
 }
 
 

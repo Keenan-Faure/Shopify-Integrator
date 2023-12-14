@@ -60,6 +60,19 @@ SELECT
 FROM variants
 WHERE id = $1;
 
+-- name: GetVariants :many
+SELECT id FROM variants;
+
+-- name: GetUnindexedVariants :many
+SELECT
+    id
+FROM variants
+WHERE id NOT IN (
+    SELECT
+        variant_id
+    FROM variant_qty
+);
+
 -- name: RemoveVariant :exec
 DELETE FROM variants
 WHERE id = $1;

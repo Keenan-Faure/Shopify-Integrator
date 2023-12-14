@@ -3,11 +3,12 @@ INSERT INTO shopify_settings(
     id,
     key,
     description,
+    field_name,
     value,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 );
 
 -- name: UpdateShopifySetting :exec
@@ -22,6 +23,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM shopify_settings
@@ -32,6 +34,7 @@ SELECT
     id,
     key,
     description,
+    field_name,
     value,
     updated_at
 FROM shopify_settings;

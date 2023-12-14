@@ -12,10 +12,11 @@ import Orders from '../JS/Orders';
 import Settings from '../JS/Settings';
 import Customers from '../JS/Customers';
 import Home from '../JS/Login';
+import Queue from "../JS/Queue";
 import Import_Product from "../JS/Products/ImportProduct";
 import Export_Product from "../JS/Products/ExportProduct";
 import Add_Product from "../JS/Products/AddProduct";
-import Add_Customer from "../JS/Customers/AddCustomer";
+
 
 // Import Style sheet below
 import '../CSS/navigation-bar.css'
@@ -40,7 +41,7 @@ function Navigation_Bar(props)
         }
 
         /* The user clicks on Buttons other than products or home */
-        for(let i = 2; i < navbar.length; i++)
+        for(let i = 3; i < navbar.length; i++)
         {
             navbar[i].onclick = function(event)
             {
@@ -51,6 +52,18 @@ function Navigation_Bar(props)
                     navigation.style.width = "100%";
                 }
             }
+        }
+        
+        /* The user clicks on 'Queue' button */
+        navbar[4].onclick = function(event)
+        {
+            if(navbar[4].onclick)
+            {
+                navigation.style.left = "30%";
+                navigation.style.position = "absolute";
+                navigation.style.width = "70%";
+                navigation.style.animation = "MoveLeft 1.2s ease";
+            } 
         }
 
         /* The user clicks on 'Dashboard' button */
@@ -78,6 +91,7 @@ function Navigation_Bar(props)
                         <Route path = "products" element = {<Products />}></Route>
                         <Route path = "orders" element = {<Orders />}></Route>
                         <Route path = "customers" element = {<Customers />}></Route>
+                        <Route path = "queue" element = {<Queue />}></Route>
                         <Route path = "settings" element = {<Settings />}></Route>
                         <Route path = "importProducts" element = {<Import_Product />}></Route>
                         <Route path = "exportProducts" element = {<Export_Product />}></Route>

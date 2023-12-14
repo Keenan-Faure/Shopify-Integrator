@@ -31,12 +31,6 @@ function Detailed_order(props)
             openPage('Order');
         });
 
-        let defaul = document.getElementById("Variants");
-        defaul.addEventListener("click", () =>
-        {
-            openPage('Variants');
-        });
-
         document.getElementById("Order").click();
 
         /* When the user clicks on the return button */
@@ -70,8 +64,7 @@ function Detailed_order(props)
         
             <div className="tabcontent" id="_Order" >
                 <div className = "details-details">
-                    <div className = "detailed-image" />
-                    <div className = "detailed">
+                    <div className = "detailed" style={{backgroundColor: 'transparent'}}>
                         <div className = "details-title">Customer Orders</div>
 
                         <div className="order_header_div">
@@ -116,21 +109,10 @@ function Detailed_order(props)
                         </div>
                           
                     </div>
-                    <div className = "details-right"></div>
-                    <div id = "address" className = "details-left">
-
+                    <div className = "details-right" style={{backgroundColor: 'transparent'}}>
+                        
                     </div>
-                </div>
-            </div>
-            <div className="tabcontent" id="_Variants" >
-                <div className = "details-details">
-                    <div className = "auto-slideshow-container" />
-                    <div className = "detailed">
-                        <div className = "details-title">Addresses</div>
-                        <div className = "variants"></div>
-                    </div>
-                    <div className = "details-right"></div>
-                    <div className = "details-left"></div>
+                    <div id = "address" className = "details-left" style={{backgroundColor: 'transparent'}}></div>
                 </div>
             </div>
         </div>

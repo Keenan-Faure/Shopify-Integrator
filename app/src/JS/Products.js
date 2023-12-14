@@ -10,6 +10,7 @@ import Detailed_Images from '../components/semi-components/Product/detailed_imag
 import Detailed_Images2 from '../components/semi-components/Product/detailed_images2';
 import Detailed_Price from '../components/semi-components/Product/detailed_prices';
 import Detailed_Quantities from '../components/semi-components/Product/detailed_quantities';
+import Detailed_Options from '../components/semi-components/Product/detailed_options';
 
 import '../CSS/page1.css';
 
@@ -27,7 +28,6 @@ function Products()
     const SearchProduct = (event) =>
     {
         event.preventDefault();
-
     }
 
     useEffect(()=> 
@@ -49,15 +49,24 @@ function Products()
         .done(function( _data) 
         {
             console.log(_data);
-            let root;
-            let pan_main = document.querySelector(".pan-main");
-            let div = document.createElement("div");
-            pan_main.appendChild(div);
+            if(_data == "")
+            {
+                document.querySelector(".empty-message").style.display = "block";
+            }
+            else 
+            {
+                let root;
+                let pan_main = document.querySelector(".pan-main");
+                let div = document.createElement("div");
+                pan_main.appendChild(div);
 
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
-            Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-            />))
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} 
+                Product_Activity={el.active} Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category}
+                Product_Vendor={el.vendor} Product_Image={el.product_images.map((el, i) => el.src)}
+                />))
+            }
+            
             
         })
         .fail( function(xhr) { alert(xhr.responseText); });
@@ -81,12 +90,10 @@ function Products()
 
                 root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                 Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                Product_Image={el.product_images.map((el, i) => el.src)}
                 /> )) 
 
-                setTimeout(() =>
-                {
-                    DetailedView();
-                }, 100);
+                setTimeout(() => { DetailedView(); }, 200);
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
@@ -119,8 +126,10 @@ function Products()
                     root = createRoot(pan_main);
                     root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                     Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                    Product_Image={el.product_images.map((el, i) => el.src)}
                     /> ))
-                    DetailedView();
+
+                    setTimeout(() => { DetailedView(); }, 200);
                     Pagintation(1);
                 })
                 .fail( function(xhr) { alert(xhr.responseText); });
@@ -154,9 +163,11 @@ function Products()
                             products.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                            rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
                                 Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
-                            />)
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
+                                
+                            />) 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
@@ -177,7 +188,6 @@ function Products()
                                 Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
                                 Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
                                 />))
-
                             }, 10);
                             
                         }
@@ -187,9 +197,11 @@ function Products()
                             let details = document.createElement('details');
                             products.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                            rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
                                 Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
-                            />)
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
+                                
+                            />) 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
                             {
@@ -258,6 +270,22 @@ function Products()
         
         function Pagintation(index)
         {
+
+            let ahead = index + 1;
+            /*  API  */
+            $.get('http://localhost:8080/api/products?page=' + ahead, [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+                if(_data == "")
+                {
+                    let next = document.getElementById("next");
+                    next.style.cursor = "not-allowed";
+                    next.disabled = true;
+                } 
+            })
+            .fail( function(xhr) { alert(xhr.responseText); });
+
             /* Check done to remove old elements if they exist */
             if(document.getElementById("next") != null && document.getElementById("prev") != null && document.getElementById("hod") != null)
             //If they exist remove them, and create new based on the new index value
@@ -309,6 +337,7 @@ function Products()
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                     })
@@ -357,9 +386,10 @@ function Products()
 
                         flushSync(() => 
                         { 
-                            root.render(_data.map((el, i) =>  <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
+                            root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            /> ))
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> )) 
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -413,7 +443,8 @@ function Products()
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                            /> )) 
+                            Product_Image={el.product_images.map((el, i) => el.src)}
+                            /> ))  
                         });
                     })
                     .fail( function(xhr) { alert(xhr.responseText); });
@@ -445,6 +476,7 @@ function Products()
                         { 
                             root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                             Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
+                            Product_Image={el.product_images.map((el, i) => el.src)}
                             /> )) 
                         });
                     })
@@ -460,6 +492,8 @@ function Products()
         let C_filter = document.getElementById("clear_filter");
         C_filter.addEventListener("click", () => 
         {
+            document.querySelector(".empty-message").style.display = "none";
+
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.get("http://localhost:8080/api/products?page=1", [], [])
@@ -475,7 +509,8 @@ function Products()
 
                 let root;
                 let pan_main;
-                document.querySelector(".pan-main").remove();
+                if(document.querySelector(".pan-main") != null){ document.querySelector(".pan-main").remove(); }
+            
                 pan_main = document.createElement('div');
                 let main_elements = document.querySelector(".main-elements");
                 pan_main.className = "pan-main";
@@ -483,7 +518,8 @@ function Products()
                 root = createRoot(pan_main);
                 root.render(_data.map((el, i) => <Pan_details key={`${el.title}_${i}`} Product_Title={el.title} Product_ID={el.id} Product_Activity={el.active}
                 Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
-                /> ))
+                Product_Image={el.product_images.map((el, i) => el.src)}
+                /> )) 
                 setTimeout(() => { DetailedView();}, 200);
                 Pagintation(1);
             })
@@ -499,17 +535,18 @@ function Products()
         <div className = "products">
             <div className = "main">
                 <div className = "search">
-                    <form className = "search-area" id = "search" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
+                    <form className = "search-area" style={{top: '30px'}} id = "search" autoComplete='off' onSubmit={(event) => SearchProduct(event)}>
                         <input className ="search-area" type="search" placeholder="Search..." 
                         name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
                 </div>
-                <div className = "main-elements">
+                <div className = "main-elements" style={{top: '53%'}}>
+                    <div className = "empty-message">No results found.</div>
                     <div className = "pan-main" id = "pan-main">
-                
+
                     </div>
                 </div>
-                <div className = "center" id = "pag"></div>
+                <div className = "center" id = "pag" style ={{top: '45px'}}></div>
             </div>
 
             <Page1 title = "Products"/>

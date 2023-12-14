@@ -1,23 +1,23 @@
 import '../../../CSS/detailed.css';
 
+const userName = localStorage.getItem('username').toUpperCase();
 function Product_Variants(props)
 {
     return (
-        <div>
-            <div className = "variant-title">{props.Variant_Title}</div>
-            <table>
+        <div style={{marginBottom: '5px'}}>
+            <table style={{marginBottom: '25px'}}>
                 <tbody>
                     <tr>
-                        <th>Variant Barcode</th>
-                        <th>Variant SKU</th>
+                        <th style= {{width: '50%'}}>Variant Barcode</th>
+                        <th style= {{width: '50%'}}>Variant SKU</th>
                     </tr>
                     <tr>
-                        <td className = "barcode">{props.Variant_Barcode}</td>
-                        <td className = "sku">{props.Variant_SKU}</td>
+                        <td style= {{width: '50%'}} className = "barcode">{props.Variant_Barcode}</td>
+                        <td style= {{width: '50%'}} className = "sku">{props.Variant_SKU}</td>
                     </tr>
                 </tbody>
             </table>
-            <table>
+            <table style={{marginBottom: '15px'}}>
                 <tbody>
                     <tr>
                         <th>Option 1</th>
@@ -25,9 +25,9 @@ function Product_Variants(props)
                         <th>Option 3</th>
                     </tr>
                     <tr>
-                        <td className = "option1">{props.Option1}</td>
-                        <td className = "option2">{props.Option2}</td>
-                        <td className = "option3">{props.Option3}</td>
+                        <td className = "option1" >{props.Option1}</td>
+                        <td className = "option2" >{props.Option2}</td>
+                        <td className = "option3" >{props.Option3}</td>
                     </tr>
                 </tbody>
             </table>
@@ -41,8 +41,7 @@ function Product_Variants(props)
                 <br />
                 <div className = "quantities">{props.Quantities}</div>
 
-                <div className = "updateDate">Variant Update Date:</div>
-                <div className = "variant-updateDate">{props.Variant_UpdateDate}</div>
+                <div className = "variant-updateDate">Updated by <b>{userName}</b> at: <b>{props.Variant_UpdateDate}</b></div>
             </div>
         </div>
     );

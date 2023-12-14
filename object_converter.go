@@ -5,10 +5,24 @@ import (
 	"fmt"
 	"integrator/internal/database"
 	"objects"
+	"strings"
 	"utils"
 
 	"github.com/google/uuid"
 )
+
+// Convert database.warehouse into warehouses object
+func ConvertDatabaseToWarehouse(warehouses []database.GetWarehousesRow) []objects.Warehouse {
+	warehouses_object := []objects.Warehouse{}
+	for _, warehouse := range warehouses {
+		warehouses_object = append(warehouses_object, objects.Warehouse{
+			ID:        uuid.New(),
+			Name:      warehouse.Name,
+			UpdatedAt: warehouse.UpdatedAt,
+		})
+	}
+	return warehouses_object
+}
 
 // Compile Queue Filter Search into a single object (variable)
 func CompileQueueFilterSearch(
@@ -486,7 +500,6 @@ func CompileFilterSearch(
 	response := []objects.SearchProduct{}
 	if product_type != "" {
 		if category == "" {
-			// vendor
 			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
 				Vendor: utils.ConvertStringToSQL(vendor),
 				Limit:  10,
@@ -496,12 +509,19 @@ func CompileFilterSearch(
 				return response, err
 			}
 			for _, value := range results {
+				images, err := CompileProductImages(value.ID, ctx, dbconfig)
+				if err != nil {
+					return response, err
+				}
 				response = append(response, objects.SearchProduct{
 					ID:          value.ID,
+					Active:      value.Active,
+					Images:      images,
 					Title:       value.Title.String,
 					Category:    value.Category.String,
 					ProductType: value.ProductType.String,
 					Vendor:      value.Vendor.String,
+					UpdatedAt:   value.UpdatedAt,
 				})
 			}
 			return response, nil
@@ -517,12 +537,19 @@ func CompileFilterSearch(
 				return response, err
 			}
 			for _, value := range results {
+				images, err := CompileProductImages(value.ID, ctx, dbconfig)
+				if err != nil {
+					return response, err
+				}
 				response = append(response, objects.SearchProduct{
 					ID:          value.ID,
+					Active:      value.Active,
+					Images:      images,
 					Title:       value.Title.String,
 					Category:    value.Category.String,
 					ProductType: value.ProductType.String,
 					Vendor:      value.Vendor.String,
+					UpdatedAt:   value.UpdatedAt,
 				})
 			}
 			return response, nil
@@ -539,12 +566,19 @@ func CompileFilterSearch(
 				return response, err
 			}
 			for _, value := range results {
+				images, err := CompileProductImages(value.ID, ctx, dbconfig)
+				if err != nil {
+					return response, err
+				}
 				response = append(response, objects.SearchProduct{
 					ID:          value.ID,
+					Active:      value.Active,
+					Images:      images,
 					Title:       value.Title.String,
 					Category:    value.Category.String,
 					ProductType: value.ProductType.String,
 					Vendor:      value.Vendor.String,
+					UpdatedAt:   value.UpdatedAt,
 				})
 			}
 			return response, nil
@@ -559,12 +593,19 @@ func CompileFilterSearch(
 			return response, err
 		}
 		for _, value := range results {
+			images, err := CompileProductImages(value.ID, ctx, dbconfig)
+			if err != nil {
+				return response, err
+			}
 			response = append(response, objects.SearchProduct{
 				ID:          value.ID,
+				Active:      value.Active,
+				Images:      images,
 				Title:       value.Title.String,
 				Category:    value.Category.String,
 				ProductType: value.ProductType.String,
 				Vendor:      value.Vendor.String,
+				UpdatedAt:   value.UpdatedAt,
 			})
 		}
 		return response, nil
@@ -580,12 +621,19 @@ func CompileFilterSearch(
 				return response, err
 			}
 			for _, value := range results {
+				images, err := CompileProductImages(value.ID, ctx, dbconfig)
+				if err != nil {
+					return response, err
+				}
 				response = append(response, objects.SearchProduct{
 					ID:          value.ID,
+					Active:      value.Active,
+					Images:      images,
 					Title:       value.Title.String,
 					Category:    value.Category.String,
 					ProductType: value.ProductType.String,
 					Vendor:      value.Vendor.String,
+					UpdatedAt:   value.UpdatedAt,
 				})
 			}
 			return response, nil
@@ -600,12 +648,19 @@ func CompileFilterSearch(
 				return response, err
 			}
 			for _, value := range results {
+				images, err := CompileProductImages(value.ID, ctx, dbconfig)
+				if err != nil {
+					return response, err
+				}
 				response = append(response, objects.SearchProduct{
 					ID:          value.ID,
+					Active:      value.Active,
+					Images:      images,
 					Title:       value.Title.String,
 					Category:    value.Category.String,
 					ProductType: value.ProductType.String,
 					Vendor:      value.Vendor.String,
+					UpdatedAt:   value.UpdatedAt,
 				})
 			}
 			return response, nil
@@ -622,12 +677,38 @@ func CompileFilterSearch(
 		return response, err
 	}
 	for _, value := range results {
+		images, err := CompileProductImages(value.ID, ctx, dbconfig)
+		if err != nil {
+			return response, err
+		}
 		response = append(response, objects.SearchProduct{
 			ID:          value.ID,
+			Active:      value.Active,
+			Images:      images,
 			Title:       value.Title.String,
 			Category:    value.Category.String,
 			ProductType: value.ProductType.String,
 			Vendor:      value.Vendor.String,
+			UpdatedAt:   value.UpdatedAt,
+		})
+	}
+	return response, nil
+}
+
+func CompileProductImages(
+	product_id uuid.UUID,
+	ctx context.Context,
+	dbconfig *DbConfig) ([]objects.ProductImages, error) {
+	response := []objects.ProductImages{}
+	images, err := dbconfig.DB.GetProductImageByProductID(ctx, product_id)
+	if err != nil {
+		return response, err
+	}
+	for _, image := range images {
+		response = append(response, objects.ProductImages{
+			Src:       image.ImageUrl,
+			Position:  int(image.Position),
+			UpdatedAt: image.UpdatedAt,
 		})
 	}
 	return response, nil
@@ -635,28 +716,44 @@ func CompileFilterSearch(
 
 // Comples the search results into one object
 func CompileSearchResult(
+	dbconfig *DbConfig,
+	ctx context.Context,
 	sku []database.GetProductsSearchSKURow,
-	title []database.GetProductsSearchTitleRow) []objects.SearchProduct {
+	title []database.GetProductsSearchTitleRow) ([]objects.SearchProduct, error) {
 	response := []objects.SearchProduct{}
 	for _, value := range sku {
+		images, err := CompileProductImages(value.ID, ctx, dbconfig)
+		if err != nil {
+			return response, err
+		}
 		response = append(response, objects.SearchProduct{
 			ID:          value.ID,
+			Active:      value.Active,
+			Images:      images,
 			Title:       value.Title.String,
 			Category:    value.Category.String,
 			ProductType: value.ProductType.String,
 			Vendor:      value.Vendor.String,
+			UpdatedAt:   value.UpdatedAt,
 		})
 	}
 	for _, value := range title {
+		images, err := CompileProductImages(value.ID, ctx, dbconfig)
+		if err != nil {
+			return response, err
+		}
 		response = append(response, objects.SearchProduct{
 			ID:          value.ID,
+			Active:      value.Active,
+			Images:      images,
 			Title:       value.Title.String,
 			Category:    value.Category.String,
 			ProductType: value.ProductType.String,
 			Vendor:      value.Vendor.String,
+			UpdatedAt:   value.UpdatedAt,
 		})
 	}
-	return response
+	return response, nil
 }
 
 // Compiles the product data
@@ -680,28 +777,20 @@ func CompileProductData(
 			Position: int(value.Position),
 		})
 	}
-	product_images, err := dbconfig.DB.GetProductImageByProductID(ctx, product_id)
+	images, err := CompileProductImages(product_id, ctx, dbconfig)
 	if err != nil {
 		return objects.Product{}, err
-	}
-	images := []objects.ProductImages{}
-	for _, product_image := range product_images {
-		images = append(images, objects.ProductImages{
-			Src:       product_image.ImageUrl,
-			Position:  int(product_image.Position),
-			UpdatedAt: product_image.UpdatedAt,
-		})
 	}
 	if ignore_variant {
 		product_data := objects.Product{
 			ID:             product_id,
-			ProductCode:    product.ProductCode,
+			ProductCode:    strings.ReplaceAll(product.ProductCode, "\"", "'"),
 			Active:         product.Active,
-			Title:          product.Title.String,
-			BodyHTML:       product.BodyHtml.String,
-			Category:       product.Category.String,
-			Vendor:         product.Vendor.String,
-			ProductType:    product.ProductType.String,
+			Title:          strings.ReplaceAll(product.Title.String, "\"", "'"),
+			BodyHTML:       strings.ReplaceAll(product.BodyHtml.String, "\"", "'"),
+			Category:       strings.ReplaceAll(product.Category.String, "\"", "'"),
+			Vendor:         strings.ReplaceAll(product.Vendor.String, "\"", "'"),
+			ProductType:    strings.ReplaceAll(product.ProductType.String, "\"", "'"),
 			Variants:       []objects.ProductVariant{},
 			ProductOptions: options,
 			ProductImages:  images,
@@ -715,13 +804,13 @@ func CompileProductData(
 	}
 	product_data := objects.Product{
 		ID:             product_id,
-		ProductCode:    product.ProductCode,
+		ProductCode:    strings.ReplaceAll(product.ProductCode, "\"", "'"),
 		Active:         product.Active,
-		Title:          product.Title.String,
-		BodyHTML:       product.BodyHtml.String,
-		Category:       product.Category.String,
-		Vendor:         product.Vendor.String,
-		ProductType:    product.ProductType.String,
+		Title:          strings.ReplaceAll(product.Title.String, "\"", "'"),
+		BodyHTML:       strings.ReplaceAll(product.BodyHtml.String, "\"", "'"),
+		Category:       strings.ReplaceAll(product.Category.String, "\"", "'"),
+		Vendor:         strings.ReplaceAll(product.Vendor.String, "\"", "'"),
+		ProductType:    strings.ReplaceAll(product.ProductType.String, "\"", "'"),
 		Variants:       variant_data,
 		ProductOptions: options,
 		ProductImages:  images,

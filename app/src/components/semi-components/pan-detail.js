@@ -50,17 +50,22 @@ function Pan_details(props)
             {
                 option[i].className = "p-d-true";
             }
+            else if(activity[i].innerHTML == "")
+            {
+                option[i].className = "p-d-unknown";
+            }
             else
             {
                 option[i].className = "p-d-false";
             }
         }
+        
     }, []);
 
     return (
 
         <div className = "pan">
-            <div className = "pan-img"></div>
+            <div className = "pan-img" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
             <div className = "pan-details">
                 <a href = "/#" className = "p-d-title">{props.Product_Title} <i id = "options" href = "/#" className = "p-d-options" /></a> 
                 <br/><br/>
@@ -82,5 +87,6 @@ Pan_details.defaultProps =
     Product_Category: 'Category',
     Product_Type: 'Type',
     Product_Vendor: 'Vendor',
+    Product_Image: ''
 }
 export default Pan_details;
