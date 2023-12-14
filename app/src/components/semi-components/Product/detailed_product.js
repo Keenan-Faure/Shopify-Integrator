@@ -138,7 +138,6 @@ function Detailed_product(props)
                 object.options[i] = options;
             }
 
-
             /* Quantities object + rest of it */
             for(let i = 0; i < price.length; i++)
             {
@@ -180,9 +179,7 @@ function Detailed_product(props)
             }
             
             let id = document.querySelector("._id").innerHTML;
-            console.log(id)
             console.log(object);
-
             
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, type: 'PUT' });
@@ -197,21 +194,6 @@ function Detailed_product(props)
             {
                 alert(xhr.responseText);
             });
-            
-
-
-            /*
-            $.put("http://localhost:8080/api/products/" + id, JSON.stringify(object),[], 'json')
-            .done(function( _data) 
-            {
-                console.log(_data);
-            })
-            .fail( function(xhr) 
-            {
-                alert(xhr.responseText);
-            });
-            */
-            
 
         })
 
@@ -229,7 +211,7 @@ function Detailed_product(props)
         
             <div className="tabcontent" id="_Product" >
                 <div className = "details-details">
-                    <div className = "auto-slideshow-container" />
+                    <div className = "auto-slideshow-container" style={{backgroundColor: 'transparent'}} />
                     <div className = "detailed">
                         <div className = "details-title"><div id ="_title" style={{position: 'relative',top: '10px',display: 'inline-block'}}>
                             <div id = "title">{props.Product_Title}</div></div>
@@ -279,7 +261,7 @@ function Detailed_product(props)
 
             <div className="tabcontent" id="_Variants" >
                 <div className = "details-details">
-                    <div className = "auto-slideshow-container" />
+                    <div className = "auto-slideshow-container" style={{backgroundColor: 'transparent'}} />
                     <div className = "detailed">
                         <div className = "details-title"> {props.Product_Title} Variants</div>
                         <div className = "variants" id="_variants" ></div>
