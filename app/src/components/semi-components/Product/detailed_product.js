@@ -47,7 +47,6 @@ function Detailed_product(props)
         {
             close.style.display = "none";
             details.style.animation = "Fadeout 0.5s ease-out";
-            
             setTimeout(() => 
             {
                 main.style.animation = "FadeIn ease-in 0.6s";
