@@ -342,6 +342,7 @@ p{ padding: 10px 60px; margin: 0;}
     height: 42px;
     bottom: 0%;
     background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2;
 }
 /* Slide Show */
 * {box-sizing: border-box;}

@@ -54,6 +54,7 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 20px;
     border-bottom: 1px solid aliceblue; 
+    color: white;
 }
 .setting, .setting_main 
 {
@@ -177,7 +178,7 @@ input[type = setting]
     left: 50%;
     transform: translate(-50%);
     font-size: 16px;
-    color: black;
+    color: rgb(255, 255, 255);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     border-bottom: 1px solid rgb(255, 255, 255);
     padding: 10px;
@@ -199,8 +200,8 @@ input[type = setting]
 .a
 {
     position: absolute;
-    height: 20px;
-    width: 20px;
+    height: 25px;
+    width: 25px;
     left: 47px;
     display: block;
     background-size: cover;
@@ -209,8 +210,8 @@ input[type = setting]
 .b 
 {
     position: absolute;
-    height: 20px;
-    width: 20px;
+    height: 25px;
+    width: 25px;
     left: 60px;
     display: block;
     background-size: cover;
@@ -238,6 +239,33 @@ input[type = setting]
 .mini-setting:hover
 {
     background-color: rgb(64, 97, 128);
+    color: aliceblue;
+}
+.true, .false
+{
+    position: relative;
+    font-size: 11px;
+    background-color: rgb(255, 255, 255);
+    color: black;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 5px;
+    border-radius: 10px;
+    margin: 5px;
+    border: none;
+    width: 90px;
+    display: block;
+    height: auto;
+    cursor: pointer;
+    transition-duration: 0.4s;
+}
+.true:hover
+{
+    background-color: rgb(19, 99, 8);
+    color: aliceblue;
+}
+.false:hover
+{
+    background-color: rgb(148, 11, 11);
     color: aliceblue;
 }
 
