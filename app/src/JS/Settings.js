@@ -203,57 +203,140 @@ function Settings()
             let setting_main_title = document.querySelectorAll("._title");
             let setting_main_value = document.querySelectorAll("._input");
             let setting_default_value = document.querySelectorAll("._value");
+            let button_true = document.querySelectorAll(".true");
+            let button_false = document.querySelectorAll(".false");
 
             let app_object = [];
             let _shopify_object = [];
             let _setting = {};
             for(let i = 0; i < setting_main_title.length - 3; i++)
             {
-                if(setting_main_value[i].value == "")
+                if(setting_main_value[i].style.display == "block")
                 {
-                    _setting = 
+                    //IF setting is empty, use the original value stored in default
+                    if(setting_main_value[i].value == "")
                     {
-                        key : setting_main_title[i].innerHTML,
-                        value : setting_default_value[i].innerHTML
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : setting_default_value[i].innerHTML
+                        }
+                        app_object[i] = _setting;
                     }
-                    app_object[i] = _setting;
+                    //use the new version
+                    else 
+                    {
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : setting_main_value[i].value
+                        }
+                        app_object[i] = _setting;
+                    }
                 }
                 else 
                 {
-                    _setting = 
+                    // IF neither buttons are selected, use the default value
+                    if(button_false[i].className == "false" && button_true[i].className == "true")
                     {
-                        key : setting_main_title[i].innerHTML,
-                        value : setting_main_value[i].value
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : setting_default_value[i].innerHTML
+                        }
+                        app_object[i] = _setting;
+                    }   
+                    //if button false is selected, use false
+                    else if(button_false[i].className != "false")
+                    {
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : button_false[i].innerHTML.toLowerCase()
+                        }
+                        app_object[i] = _setting;
                     }
-                    app_object[i] = _setting;
+                    //if button true is slelected, use true
+                    else if(button_true[i].className != "true")
+                    {
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : button_true[i].innerHTML.toLowerCase()
+                        }
+                        app_object[i] = _setting;
+                    }
                 }
+                
                 
             }
 
             let count = 0;
             for(let i = setting_main_title.length - 3; i < setting_main_title.length; i++)
             {
-                if(setting_main_value[count].value == "")
+                if(setting_main_value[count].style.display == "block")
                 {
-                    _setting = 
+                    //IF setting is empty, use the original value stored in default
+                    if(setting_main_value[count].value == "")
                     {
-                        key : setting_main_title[i].innerHTML,
-                        value : setting_default_value[i].innerHTML
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : setting_default_value[i].innerHTML
+                        }
+                        _shopify_object[count] = _setting;
                     }
-                    _shopify_object[count] = _setting;
+                    //use the new version
+                    else 
+                    {
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : setting_main_value[i].value
+                        }
+                        _shopify_object[count] = _setting;
+                    }
                 }
                 else 
                 {
-                    _setting = 
+                    // IF neither buttons are selected, use the default value
+                    if(button_false[count].className == "false" && button_true[i].className == "true")
                     {
-                        key : setting_main_title[i].innerHTML,
-                        value : setting_main_value[i].value
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : setting_default_value[i].innerHTML
+                        }
+                        _shopify_object[count] = _setting;
+                    }   
+                    //if button false is selected, use false
+                    else if(button_false[count].className != "false")
+                    {
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : button_false[i].innerHTML.toLowerCase()
+                        }
+                        _shopify_object[count] = _setting;
                     }
-                    _shopify_object[count] = _setting;
+                    //if button true is slelected, use true
+                    else if(button_true[count].className != "true")
+                    {
+                        _setting = 
+                        {
+                            key : setting_main_title[i].innerHTML,
+                            value : button_true[i].innerHTML.toLowerCase()
+                        }
+                        _shopify_object[count] = _setting;
+                    }
                 }
                 count += 1;
             }
 
+            console.log(app_object);
+            console.log(_shopify_object);
+
+            
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.post("http://localhost:8080/api/settings", JSON.stringify(app_object),[], 'json')
@@ -275,6 +358,7 @@ function Settings()
             {
                 alert(xhr.responseText);
             });
+            
         });
 
         /* Webhook Setting */
@@ -315,7 +399,34 @@ function Settings()
                 navigator.clipboard.writeText(copyText);
                 webhook_button.innerHTML = "Copied!";
             }); 
-        })
+        });
+
+        
+
+        setTimeout(() =>
+        {
+            let setting_main = document.querySelectorAll(".setting_main");
+            
+            
+            for(let i=0; i<setting_main.length; i++)
+            {
+                let setting_default_value = setting_main[i].querySelector("._value");
+                let setting_input = setting_main[i].querySelector("._input");
+                let true_false = setting_main[i].querySelector(".true-false");
+                if(setting_default_value.innerHTML == "true" || setting_default_value.innerHTML == "false")
+                {
+                    setting_input.style.display = "none";
+                }
+                else 
+                {
+                    true_false.style.display = "none";
+                }
+            }
+            
+            
+        }, 200);
+        
+
 
 
     }, []);
