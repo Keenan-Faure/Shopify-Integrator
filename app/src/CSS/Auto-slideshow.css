@@ -20,6 +20,7 @@
 	margin: 0px;
 	overflow: hidden;
     z-index: 1;
+    background-color: rgb(31, 31, 31);
 }
 
 .auto-slideshow-container .text 
