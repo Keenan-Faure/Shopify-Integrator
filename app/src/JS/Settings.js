@@ -439,17 +439,6 @@ function Settings()
                     <div className = "app-settings" style= {{position: 'relative', top:'15px'}}>
                         <div className = "title">App Settings</div>
                         <div className = "_app">
-                            <div className = "setting" id = "setting1">
-                                <div className = "setting-title" style ={{top: '-14px'}}>Webhook Configuration
-                                    <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
-                                </div>
-                                <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
-                                <div className="webhook_div" action="/action_page.php" style= {{margin:  'auto',maxWidth: '300px'}}>
-                                    <input type="text" placeholder = "Domain Name..." name = "search2" />
-                                    <button id = "_webhook" className = "button-on-off" type="button">Create</button>
-                                </div>
-                            </div>
-
                             <div className = "setting" style = {{height: '240px', fontSize: '12px'}}>
                                 <div className = "setting-title">Warehouse Location</div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the location warehousing required for the products displayed</div>
@@ -472,6 +461,16 @@ function Settings()
                                         </tr>
                                     </tbody> 
                                 </table>
+                            </div>
+                            <div className = "setting" id = "setting1">
+                                <div className = "setting-title" style ={{top: '-14px'}}>Webhook Configuration
+                                    <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
+                                </div>
+                                <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
+                                <div className="webhook_div" action="/action_page.php" style= {{margin:  'auto',maxWidth: '300px'}}>
+                                    <input type="text" placeholder = "Domain Name..." name = "search2" />
+                                    <button id = "_webhook" className = "button-on-off" type="button">Create</button>
+                                </div>
                             </div>
                         </div>
                         

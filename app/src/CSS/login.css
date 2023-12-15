@@ -133,6 +133,7 @@ input[type = return]
     text-align: left;
     height: 100px;
     overflow: auto;
+    color: white;
 }
 
 .button 

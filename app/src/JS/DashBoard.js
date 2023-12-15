@@ -173,7 +173,7 @@ function Dashboard()
             });
         }, 100);
 
-        /* Settings Notifications */
+        /* Settings Notifications 
         $.get("http://localhost:8080/api/inventory?page=1", [], [], 'json')
         .done(function(_data) 
         {
@@ -192,6 +192,7 @@ function Dashboard()
         {
             alert(xhr.responseText);
         });
+        */
 
         
         setTimeout(() => 
