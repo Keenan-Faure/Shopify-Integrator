@@ -506,12 +506,12 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 	})
 }
 
-// POST /api/products/import?file_name={{file}}&test=true
+// POST /api/products/import?test=true
 func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	file_name := r.URL.Query().Get("file_name")
-	test := r.URL.Query().Get("test")
+	test := r.URL.Query().Get("")
+	file_name_global := "test_import"
 	if test == "true" {
-		// generate the file for the test
+		// generate the file for the test and ignore upload form
 		data := [][]string{
 			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_default"},
 			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00"},
@@ -520,6 +520,15 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			fmt.Println(err)
 		}
+	} else {
+		// if in production then expect form data &&
+		// file to exist in import
+		file_name, err := iocsv.UploadFile(r, "")
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		file_name_global = file_name
 	}
 	wd, err := os.Getwd()
 	if err != nil {
@@ -527,7 +536,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	csv_products, err := iocsv.ReadFile(wd + "/" + file_name)
+	csv_products, err := iocsv.ReadFile(wd + "/" + file_name_global)
 	if err != nil {
 		fmt.Println(err)
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
@@ -704,7 +713,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		}
 		processed_counter++
 	}
-	err = iocsv.RemoveFile(file_name)
+	err = iocsv.RemoveFile(file_name_global)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
