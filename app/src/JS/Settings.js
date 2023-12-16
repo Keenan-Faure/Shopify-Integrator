@@ -188,13 +188,15 @@ function Settings()
         })
         .fail( function(xhr) { alert(xhr.responseText); });
 
-        /* Submitted Setting Object */
+        /* EDIT SETTINGS FEATURES */
         let edit = document.getElementById("edit");
         let confirm_line = document.querySelector(".confirm-line");
         edit.addEventListener("click", () =>
         {
             confirm_line.style.display = "block";
         });
+    
+
 
         let confirm = document.getElementById("confirm");
         confirm.addEventListener("click", () =>
@@ -422,12 +424,38 @@ function Settings()
                     true_false.style.display = "none";
                 }
             }
-            
-            
         }, 200);
-        
 
+        //If the user changes any of the input fields/buttons show the save button
+        setTimeout(() =>
+        {
+            let setting_main_value = document.querySelectorAll("._input");
+            let button_true = document.querySelectorAll(".true");
+            let button_false = document.querySelectorAll(".false");
 
+            //If button
+            for(let i = 0; i < button_true.length; i++)
+            {
+                button_true[i].addEventListener("click", () => 
+                {
+                    confirm_line.style.display = "block";
+                });
+
+                button_false[i].addEventListener("click", () => 
+                {
+                    confirm_line.style.display = "block";
+                });
+            }
+
+            //If input field 
+            for(let i = 0; i < setting_main_value.length; i++)
+            {
+                setting_main_value[i].addEventListener("input", () => 
+                {
+                    confirm_line.style.display = "block";
+                });
+            }
+        }, 100);
 
     }, []);
 

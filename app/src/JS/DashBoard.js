@@ -173,8 +173,8 @@ function Dashboard()
             });
         }, 100);
 
-        /* Settings Notifications 
-        $.get("http://localhost:8080/api/inventory?page=1", [], [], 'json')
+        /* Settings Notifications */
+        $.get("http://localhost:8080/api/inventory/warehouse", [], [], 'json')
         .done(function(_data) 
         {
             console.log(_data);
@@ -192,7 +192,7 @@ function Dashboard()
         {
             alert(xhr.responseText);
         });
-        */
+        
 
         
         setTimeout(() => 
