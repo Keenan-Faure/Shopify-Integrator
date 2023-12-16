@@ -100,7 +100,7 @@ function Import_Product()
 
                     <div style = {{position: 'relative', top: '40%'}}>
 
-                        <input type={"file"} id = "file-upload-button" accept={".csv"} onChange={handleOnChange}/>
+                        <input type={"file"} id = "file-upload-button" name = "_import" accept={".csv"} onChange={handleOnChange}/>
                         <br /><br />
                         <button className = "button" onClick={(e) => { handleOnSubmit(e); }}> IMPORT CSV </button>
                     </div>

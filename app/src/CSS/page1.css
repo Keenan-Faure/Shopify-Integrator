@@ -20,6 +20,10 @@ body
     z-index: 1;
     background: linear-gradient(to bottom, #202020c7, #111119f0);
 }
+.filter:hover 
+{
+    background-color: #202020a2;
+}
 .filter-title
 {
     position: relative;
@@ -215,7 +219,12 @@ input.search-area
     transform: translate(-30%, -6%);
     animation: SlideUp2 1.2s ease-in;
     overflow: hidden;
+    transition-duration: 0.4s;
     background: linear-gradient(to bottom, #202020c7, #111119f0);
+}
+.main:hover 
+{
+    background-color: #202020a2;
 }
 .main-elements 
 {
