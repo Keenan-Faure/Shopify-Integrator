@@ -46,12 +46,12 @@ function Detailed_product(props)
         close.addEventListener("click", ()=> 
         {
             close.style.display = "none";
-            details.style.animation = "Fadeout 0.5s ease-out";
+            details.style.animation = "Fadeout 1s ease-out";
             setTimeout(() => 
             {
-                main.style.animation = "FadeIn ease-in 0.6s";
-                filter.style.animation = "FadeIn ease-in 0.6s";
-                navbar.style.animation = "FadeIn ease-in 0.6s";
+                main.style.animation = "FadeIn ease-in 1s";
+                filter.style.animation = "FadeIn ease-in 1s";
+                navbar.style.animation = "FadeIn ease-in 1s";
                 details.style.display = "none";
                 navbar.style.display = "block";
                 main.style.display = "block";
