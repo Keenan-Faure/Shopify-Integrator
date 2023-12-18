@@ -37,10 +37,21 @@ function Product_Variants(props)
                 <br />
                 <div className = "price">{props.Price}</div>
 
-                <div className = "Quantities">Quantities</div>
+                <div className = "Quantities" style ={{textAlign: 'center'}}>Quantities</div>
                 <br />
-                <div className = "quantities">{props.Quantities}</div>
-
+                <div className = "quantities">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th style= {{width: '50%'}}>Name</th>
+                                <th style= {{width: '50%'}}>Quantity</th>
+                            </tr>
+                            <>
+                                {props.Quantities}
+                            </>
+                        </tbody>
+                    </table>
+                </div>
                 <div className = "variant-updateDate">Updated by <b>{userName}</b> at: <b>{props.Variant_UpdateDate}</b></div>
             </div>
         </div>

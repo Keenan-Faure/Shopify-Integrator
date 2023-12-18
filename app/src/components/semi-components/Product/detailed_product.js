@@ -251,7 +251,7 @@ function Detailed_product(props)
                                     </>
                                 </tbody>
                             </table>
-                            </div>
+                        </div>
                     </div>
                     <div className = "details-right" style ={{backgroundColor: 'transparent'}}></div>
                     <div className = "details-left"></div>

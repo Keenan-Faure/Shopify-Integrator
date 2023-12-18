@@ -184,7 +184,8 @@ function Products()
                                 Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
                                 Option1={el.option1} Option2={el.option2} Option3={el.option3} 
                                 Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
-                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
+                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities key={`${el.title}_${i}`} quantity_value = {el.value} 
+                                quantity_name={el.name}/>)}
                                 />))
                             }, 10);
                             
@@ -223,7 +224,8 @@ function Products()
                                 Variant_Barcode={el.barcode} Variant_SKU={el.sku} Variant_UpdateDate={el.updated_at} 
                                 Option1={el.option1} Option2={el.option2} Option3={el.option3} 
                                 Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
-                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
+                                Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities key={`${el.title}_${i}`} quantity_value = {el.value} 
+                                quantity_name={el.name}/>)}
                                 /> ))
                             }, 0);
                         }

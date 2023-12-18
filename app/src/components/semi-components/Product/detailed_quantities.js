@@ -3,10 +3,10 @@ import '../../../CSS/detailed.css';
 function Detailed_Quantities(props)
 {
     return (
-        <div>
-            <div className = "quantity_value">{props.quantity_value}</div>
-            <div className = "quantity_name">{props.quantity_name}</div>
-        </div>
+        <tr>
+            <td className = "quantity_name" style= {{width: '50%'}}>{props.quantity_name}</td>
+            <td className = "quantity_value" style= {{width: '50%'}}>{props.quantity_value}</td>
+        </tr>
     );
 };
 
