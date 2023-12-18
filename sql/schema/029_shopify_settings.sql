@@ -30,7 +30,7 @@ INSERT INTO shopify_settings(
     uuid_generate_v4(),
     'shopify_enable_dynamic_sku_search',
     'Enables the dynamic searching of SKUs on Shopify when adding new products. If disabled, only first product SKU will be considered.',
-    'Shopify Enable Dynamic SKU Search',
+    'Shopify Dynamic SKU Search',
     'true',
     NOW(),
     NOW()
