@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import $ from 'jquery';
 import Chart from "chart.js/auto";
 import '../CSS/dashboard.css';
-import image from '../media/icons8-shopify-50.png';
+import image from '../media/icons8-shopify-50 (1).png';
 Chart.defaults.color = 'rgb(205, 205, 205)';
 
 function Dashboard()

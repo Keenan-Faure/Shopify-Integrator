@@ -20,23 +20,6 @@ function Import_Product()
     const handleOnSubmit = (e) => 
     {
         e.preventDefault();
-      
-        const formData = new FormData();
-        formData.append('file', file);
-        const api_key = localStorage.getItem('api_key');
-
-        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, processData: false, contentType: false, method: 'post',});
-
-        $.post("http://localhost:3000/", formData, [], 'multipart/form-data')
-        .done(function( _data) 
-        {
-            console.log(_data);
-            console.log('_data');
-        })
-        .fail( function(xhr) 
-        {
-            alert(xhr.responseText);
-        });
 
 
         if (file) 
@@ -50,22 +33,13 @@ function Import_Product()
             fileReader.readAsText(file);
             console.log(file);
 
-            /*
-            let a_tag = document.createElement("a");
-            a_tag.className = "tablink";
-            a_tag.setAttribute("href", file);
-            a_tag.setAttribute("target", "_blank");
-            a_tag.setAttribute("download", "");
-            a_tag.click();
-            
-            //<button type="submit" onclick="window.open('mydoc.doc')">Download</button>
-
-            //<a href="/images/myw3schoolsimage.jpg" download></a>
-
-            
+            const formData = new FormData();
+            formData.append('file', file);
             const api_key = localStorage.getItem('api_key');
-            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-            $.post("http://localhost:8080/api/products/import?file_name=" + file, [], [], 'json')
+            
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, processData: false, contentType: false, method: 'post',});
+
+            $.post("http://localhost:8080/api/products/import?test=true", formData, [], 'multipart/form-data')
             .done(function( _data) 
             {
                 console.log(_data);
@@ -74,7 +48,7 @@ function Import_Product()
             {
                 alert(xhr.responseText);
             });
-            */
+            
         }
     };
 
@@ -106,7 +80,8 @@ function Import_Product()
                     </div>
                     
                 </form>
-            </div>    
+            </div>  
+            <div className = "output"></div>  
         </>
     );
 };
