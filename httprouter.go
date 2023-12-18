@@ -509,7 +509,7 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 // POST /api/products/import?test=true
 func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	test := r.URL.Query().Get("test")
-	file_name_global := "test_import"
+	file_name_global := "test_import.csv"
 	if test == "true" {
 		// generate the file for the test and ignore upload form
 		data := [][]string{
@@ -530,6 +530,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			return
 		}
 		file_name_global = file_name
+		fmt.Println(file_name)
 	}
 	wd, err := os.Getwd()
 	if err != nil {
