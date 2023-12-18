@@ -551,8 +551,6 @@ function Settings()
             .done(function( _data) 
             {
                 console.log(_data);
-
-                
                 if(document.querySelector(".warehouse-mapp") != null)
                 {
                     document.querySelector(".warehouse-mapp").remove();
@@ -562,14 +560,11 @@ function Settings()
                     div.className = "warehouse-mapp";
                     div.style.display = "block";
                     _main.appendChild(div);
-
                     root = createRoot(div);
-                    
                     root.render(<Detailed_table table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
                     Shopify_Location_ID={el.shopify_location_id} id={el.id} 
                     Shopify_Warehouse_Name ={el.shopify_warehouse_name} Warehouse_Name={el.warehouse_name} />)}
                     />)
-                    
                 }
                 else 
                 {
@@ -578,25 +573,17 @@ function Settings()
                     div.className = "warehouse-mapp";
                     div.style.display = "block";
                     _main.appendChild(div);
-
-                    
                     root = createRoot(div);
                     root.render(<Detailed_table table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
                     Shopify_Location_ID={el.shopify_location_id} id={el.id} 
                     Shopify_Warehouse_Name ={el.shopify_warehouse_name} Warehouse_Name={el.warehouse_name} />)}
                     />)
-                    
                 }
-                
-                
             })
             .fail( function(xhr) 
             {
                 alert(xhr.responseText);
             });
-
-            
-
         });
 
         return_button.addEventListener("click", () =>
