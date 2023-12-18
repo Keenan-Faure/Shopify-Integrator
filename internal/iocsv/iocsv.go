@@ -389,7 +389,6 @@ func LoopRemoveCSV() {
 
 		// removes all imported files
 		path_import := path + "/import/"
-		fmt.Println(path_import)
 		err = os.MkdirAll(path_import, os.FileMode(int(0777)))
 		if err != nil {
 			if err.Error()[len(err.Error())-11:] != "file exists" {

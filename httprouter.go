@@ -430,7 +430,7 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap(w http.ResponseWriter, r *http
 	RespondWithJSON(w, http.StatusCreated, result)
 }
 
-// GET /api/products/export
+// GET /api/products/export?test=true
 func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	test := r.URL.Query().Get("test")
 	product_ids, err := dbconfig.DB.GetProductIDs(r.Context())
@@ -518,7 +518,8 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 		}
 		_, err := iocsv.WriteFile(data, "test_import")
 		if err != nil {
-			fmt.Println(err)
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
 		}
 	} else {
 		// if in production then expect form data &&
@@ -532,13 +533,11 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 	}
 	wd, err := os.Getwd()
 	if err != nil {
-		fmt.Println(err)
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
 	csv_products, err := iocsv.ReadFile(wd + "/" + file_name_global)
 	if err != nil {
-		fmt.Println(err)
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
