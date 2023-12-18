@@ -66,8 +66,6 @@ function Products()
                 Product_Vendor={el.vendor} Product_Image={el.product_images.map((el, i) => el.src)}
                 />))
             }
-            
-            
         })
         .fail( function(xhr) { alert(xhr.responseText); });
 

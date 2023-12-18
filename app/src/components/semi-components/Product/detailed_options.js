@@ -18,20 +18,3 @@ Detailed_Options.defaultProps =
 
 }
 export default Detailed_Options;
-
-/*
-
-<table style={{marginBottom: '5px'}}>
-            <tbody>
-                <tr>
-                    <th style= {{width: '50%'}}>Value</th>
-                    <th style= {{width: '50%'}}>Position</th>
-                </tr>
-                <tr>
-                    <td style= {{width: '50%'}}>{props.Option_Value}</td>
-                    <td style= {{width: '50%'}}>{props.Option_Name}</td>
-                </tr>
-            </tbody>
-        </table>
-
-*/

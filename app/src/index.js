@@ -8,7 +8,7 @@ import './CSS/index.css';
 export default function Main()  
 {
     return (    
-        <div>
+        <div>   
             <Auto_Slideshow />
             <NavigationBar Display = "block"/>
         </div>

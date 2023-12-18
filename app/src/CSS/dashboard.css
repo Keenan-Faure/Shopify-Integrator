@@ -27,6 +27,7 @@
     height: 100%;
     width: 100%;
     animation: FadeIn ease-in 1s;
+    transition-duration: 0.4s;
 }
 
 /* KEENAN CSS */

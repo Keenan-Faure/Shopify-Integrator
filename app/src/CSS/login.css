@@ -133,6 +133,7 @@ input[type = return]
     text-align: left;
     height: 100px;
     overflow: auto;
+    color: white;
 }
 
 .button 
@@ -215,6 +216,7 @@ input[type = return]
     padding: 5px;
     font-size: 13px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
 }
 .info-message 
 {
@@ -232,6 +234,7 @@ input[type = return]
 	background-color: transparent;
 	animation: fadeMessage ease-in-out 2s;
 	z-index: 2;
+    color: white;
 }
 .holder 
 {
@@ -248,7 +251,6 @@ input[type = return]
 }
 
 /* Output Image CSS */
-
 output
 {
     width: 100%;

@@ -174,7 +174,7 @@ function Dashboard()
         }, 100);
 
         /* Settings Notifications */
-        $.get("http://localhost:8080/api/inventory?page=1", [], [], 'json')
+        $.get("http://localhost:8080/api/inventory/warehouse", [], [], 'json')
         .done(function(_data) 
         {
             console.log(_data);
@@ -185,13 +185,32 @@ function Dashboard()
                 bubble.innerHTML = "Warehouse has not been set, proceed to 'Settings' to set";
                 bubble.setAttribute("onclick", "window.location.href = '/settings'");
                 main.appendChild(bubble);
-
             }
         })
         .fail( function(xhr) 
         {
             alert(xhr.responseText);
         });
+
+        /* Products Notifications */
+        $.get("http://localhost:8080/api/products?page=1", [], [], 'json')
+        .done(function(_data) 
+        {
+            console.log(_data);
+            if(_data == "")
+            {
+                let bubble = document.createElement("div");
+                bubble.className = "bubble bub2";
+                bubble.innerHTML = "Products have not been synced from Shopify, proceed to 'Settings'";
+                bubble.setAttribute("onclick", "window.location.href = '/settings'");
+                main.appendChild(bubble);
+            }
+        })
+        .fail( function(xhr) 
+        {
+            alert(xhr.responseText);
+        });
+        
 
         
         setTimeout(() => 

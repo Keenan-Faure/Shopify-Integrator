@@ -43,7 +43,8 @@ function Login()
             localStorage.setItem('username', inputs.username);
 
             message.innerHTML = "Login Sucessful";
-            message.style.backgroundColor = "rgb(6, 133, 6)";
+            message.style.background = "linear-gradient(to bottom, #16811f, #071203)";
+
             setTimeout(() =>
             {
                 message.innerHTML = "";
@@ -56,7 +57,8 @@ function Login()
         {
             alert(xhr.responseText);
             message.innerHTML = "Error - Login failed";
-            message.style.backgroundColor = "rgb(175, 11, 11)";
+            message.style.background = "linear-gradient(to bottom, #df1010, #8b1b1b6e)";
+            
             setTimeout(() =>
             {
                 message.innerHTML = "";
@@ -87,7 +89,7 @@ function Login()
             copyText.innerHTML = JSON.stringify(_data, null, 2);
 
             message.innerHTML = "Registration Sucessful";
-            message.style.backgroundColor = "rgb(6, 133, 6)";
+            message.style.background = "linear-gradient(to bottom, #16811f, #071203)";
             main2.style.animation = "Fadeout 2s ease-out";
             setTimeout(() =>
             {
@@ -102,7 +104,7 @@ function Login()
         {
             alert(xhr.responseText);
             message.innerHTML = "Error - Ensure the Token is correct";
-            message.style.backgroundColor = "rgb(175, 11, 11)";
+            message.style.background = "linear-gradient(to bottom, #df1010, #8b1b1b6e)";
             setTimeout(() =>
             {
                 message.innerHTML = "";
@@ -125,7 +127,7 @@ function Login()
             console.log(_data);
 
             message.innerHTML = "Email sent";
-            message.style.backgroundColor = "rgb(6, 133, 6)";
+            message.style.background = "linear-gradient(to bottom, #16811f, #071203)";
             setTimeout(() =>
             {
                 message.innerHTML = "";
@@ -147,7 +149,8 @@ function Login()
         { 
             alert(xhr.responseText);
             message.innerHTML = "Error";
-            message.style.backgroundColor = "rgb(175, 11, 11)";
+            message.style.background = "linear-gradient(to bottom, #df1010, #8b1b1b6e)";
+            
             setTimeout(() =>
             {
                 message.innerHTML = "";
