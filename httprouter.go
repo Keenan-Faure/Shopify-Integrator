@@ -21,6 +21,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// POST /api/worker/fetch
+func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	// create database table containing the status of this
+
+}
+
 // POST /api/inventory/warehouse?reindex=false
 func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	reindex := r.URL.Query().Get("reindex")
