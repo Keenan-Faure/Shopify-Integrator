@@ -10,9 +10,10 @@ function Detailed_Images(props)
         function showSlides() 
         {
             let slides = document.getElementsByClassName("mySlides");
+            console.log(slides);
             setTimeout(() =>
             {
-                if(slides.length <= 2)
+                if(slides.length <= 1)
                 {
                     
                     for(let i = 0; i < slides.length; i++)
@@ -21,7 +22,7 @@ function Detailed_Images(props)
                         slides[i].style.animationName = "";
                     }
                 }
-                else if(slides.length > 2)
+                else if(slides.length > 1)
                 {
                     for (let i = 0; i < slides.length; i++) 
                     {

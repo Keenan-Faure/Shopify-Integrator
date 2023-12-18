@@ -86,7 +86,7 @@ body
     height: 40px;
     position: relative;
     background-size: cover;
-    color: rgb(255, 255, 255);
+    color: rgb(0 0 0);
     border: 1px solid #000000;
     border-radius: 4px;
     transition-duration: 0.4s;

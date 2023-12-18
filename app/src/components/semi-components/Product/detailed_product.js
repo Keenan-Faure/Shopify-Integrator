@@ -34,8 +34,6 @@ function Detailed_product(props)
         /* Activity of the product */
         let activity = document.querySelector(".details-title").innerHTML;
         let status = document.querySelector(".inactive");
-        if(activity != "1") { status.className = "inactive"; }
-        else { status.className = "activee"; }
 
         /* When the user clicks on the return button */
         let close = document.querySelector(".rtn-button");
@@ -214,7 +212,6 @@ function Detailed_product(props)
                     <div className = "detailed">
                         <div className = "details-title"><div id ="_title" style={{position: 'relative',top: '10px',display: 'inline-block'}}>
                             <div id = "title">{props.Product_Title}</div></div>
-                            <i className = "inactive"/>
                         </div>
                         <div className = "_id" style ={{display: 'none'}}>{props.Product_ID}</div>
                         

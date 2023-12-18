@@ -39,7 +39,7 @@ function Import_Product()
             
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, processData: false, contentType: false, method: 'post',});
 
-            $.post("http://localhost:8080/api/products/import?test=true", formData, [], 'multipart/form-data')
+            $.post("http://localhost:8080/api/products/import?test=false", formData, [], 'multipart/form-data')
             .done(function( _data) 
             {
                 console.log(_data);
