@@ -496,7 +496,7 @@ func TestProductIOCRUD(t *testing.T) {
 	fmt.Println("Test 1 - Importing products")
 	dbconfig := SetUpDatabase()
 	user := CreateDemoUser(&dbconfig)
-	res, err := UFetchHelper("products/import?file_name=test_import&test=true", "POST", user.ApiKey)
+	res, err := UFetchHelper("products/import?test=true", "POST", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}

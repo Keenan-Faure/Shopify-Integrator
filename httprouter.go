@@ -508,7 +508,7 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 
 // POST /api/products/import?test=true
 func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	test := r.URL.Query().Get("")
+	test := r.URL.Query().Get("test")
 	file_name_global := "test_import"
 	if test == "true" {
 		// generate the file for the test and ignore upload form
