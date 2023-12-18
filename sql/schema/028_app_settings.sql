@@ -86,7 +86,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_fetch_create_price_tier_enabled',
     'Enables price tiers to be created when fetching data from Shopify.',
-    'App Fetch Create Price Tier Enabled',
+    'App Fetch Create Price Tier',
     'false',
     NOW(),
     NOW()
