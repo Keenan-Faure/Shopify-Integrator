@@ -1,7 +1,9 @@
 import {useEffect} from 'react';
 import {useState} from "react";
+import { createRoot } from 'react-dom/client';
 import $ from 'jquery';
 
+import Detailed_User from './Login/detailed_user';
 import '../CSS/login.css';
 
 function Login()
@@ -78,14 +80,18 @@ function Login()
         let copyText = document.getElementById("myInput");
         let main2 = document.getElementById("main2");
         let message = document.getElementById("message");
-
-
         message.style.display = "block";
         
         $.post("http://localhost:8080/api/register", JSON.stringify(inputs),[], 'json')
         .done(function( _data) 
         {
             console.log(_data);
+
+            let div = document.querySelector(".pre");
+            let rot = createRoot(div);
+            rot.render( <Detailed_User id={_data.id} name={_data.name} email={_data.email} api_key={_data.api_key} 
+                web_token={_data.webhook_token} created={_data.created_at}  updated={_data.updated_at} />) 
+                
             copyText.innerHTML = JSON.stringify(_data, null, 2);
 
             message.innerHTML = "Registration Sucessful";
@@ -368,9 +374,10 @@ function Login()
             <div className = 'result-container'>
                 <div className = 'reg-portion'>
                     <label><b>Information Returned</b></label>
-                    <div className = "message">You are recommended to save this information!</div>
+                    <div className = "message" style ={{color: 'white'}}>You are recommended to save this information!</div>
                     <br />
-                    <pre id = "myInput" className = "pre"/>
+                    <pre id = "myInput" style={{display: 'none'}}/>
+                    <pre className = "pre"/>
                     <br /><br />
                     <button className = 'button' type = 'button' id = "clip">Copy to Clipboard</button>
                 </div>
