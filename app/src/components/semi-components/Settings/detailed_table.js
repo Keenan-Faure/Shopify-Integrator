@@ -5,11 +5,14 @@ function Detailed_table(props)
 {
 
     return (
-        <table style = {{left: '40%',top: '17px', marginBottom: '0px',fontSize: '13px'}}>
+        <table className = "table">
             <tbody>
                 <tr>
-                    <th>Warehouse</th>
-                    <th>Shopify Location</th>
+                    <th>Warehouse Name</th>
+                    <th>Shopify Warehouse Name</th>
+                    <th>ID</th>
+                    <th>Shopify Location ID</th>
+                    <th>Created At</th>
                 </tr>
                 <>
                     {props.table}

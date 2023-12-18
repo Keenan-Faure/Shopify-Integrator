@@ -10,6 +10,7 @@
     transition-duration: 0.4s;
     overflow: hidden;
     z-index:2;
+    animation: FadeIn ease-in 0.5s;
 }
 .main-container:hover
 {
@@ -26,6 +27,7 @@
     overflow: auto;
     transition-duration: 0.4s;
     z-index:2;
+    animation: FadeIn ease-in 0.5s;
 }
 .side-container:hover 
 {
@@ -268,6 +270,47 @@ input[type = setting]
     background-color: rgb(148, 11, 11);
     color: aliceblue;
 }
+
+.warehouse-mapp
+{
+    position: absolute;
+    display: none;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #202020c7, #111119f0);
+    z-index: 2;
+    animation: FadeIn ease-in 0.5s;
+}
+.warehouse-mapp .table 
+{
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    border-collapse: collapse;
+    width: 80%;
+    position: relative;
+    left: 50%;
+    transform: translate(-50%);
+    margin-bottom: 40px;
+    font-size: 14px;
+    transform: translate(-50%);
+    top: 10%;
+    margin-bottom: 0px;
+    font-size: 14px;
+    color: white;
+}
+.warehouse-mapp .table tr
+{
+    color: rgb(218, 218, 218);
+    background-color: transparent;
+}
+.warehouse-mapp tr:hover
+{
+    color: rgb(0, 0, 0);
+    background-color: rgba(194, 194, 194, 0.842);
+}
+
 
 /* Webhook div */
 .webhook_div {

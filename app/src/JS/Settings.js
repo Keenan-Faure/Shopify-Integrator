@@ -79,7 +79,7 @@ function Settings()
 
                     console.log(object);
 
-                    $.post("http://localhost:8080/api/inventory", JSON.stringify(object), [], 'json')
+                    $.post("http://localhost:8080/api/inventory/map", JSON.stringify(object), [], 'json')
                     .done(function( _data) 
                     {
                         console.log(_data);
@@ -346,9 +346,7 @@ function Settings()
                         }
                         app_object[i] = _setting;
                     }
-                }
-                
-                
+                }   
             }
 
             let count = 0;
@@ -532,10 +530,90 @@ function Settings()
             }
         }, 100);
 
+        /* Displays the warehouse map */
+
+        let warehouse_map = document.getElementById("warehouse_map");
+        let side = document.querySelector(".side-container");
+        let main = document.querySelector(".main-container");
+        let return_button = document.querySelector(".rtn-button");
+        let _main = document.getElementById("_main");
+
+        warehouse_map.addEventListener("click", () =>
+        {
+            let map_container = document.querySelector(".warehouse-mapp");
+            return_button.style.display = "block";
+            map_container.style.display = "block";
+            side.style.display = "none";
+            main.style.display = "none";
+            navigation.style.display = "none";
+
+            $.get("http://localhost:8080/api/inventory/map", [], [], 'json')
+            .done(function( _data) 
+            {
+                console.log(_data);
+
+                
+                if(document.querySelector(".warehouse-mapp") != null)
+                {
+                    document.querySelector(".warehouse-mapp").remove();
+
+                    let root;
+                    let div = document.createElement("div");
+                    div.className = "warehouse-mapp";
+                    div.style.display = "block";
+                    _main.appendChild(div);
+
+                    root = createRoot(div);
+                    
+                    root.render(<Detailed_table table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
+                    Shopify_Location_ID={el.shopify_location_id} id={el.id} 
+                    Shopify_Warehouse_Name ={el.shopify_warehouse_name} Warehouse_Name={el.warehouse_name} />)}
+                    />)
+                    
+                }
+                else 
+                {
+                    let root;
+                    let div = document.createElement("div");
+                    div.className = "warehouse-mapp";
+                    div.style.display = "block";
+                    _main.appendChild(div);
+
+                    
+                    root = createRoot(div);
+                    root.render(<Detailed_table table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
+                    Shopify_Location_ID={el.shopify_location_id} id={el.id} 
+                    Shopify_Warehouse_Name ={el.shopify_warehouse_name} Warehouse_Name={el.warehouse_name} />)}
+                    />)
+                    
+                }
+                
+                
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+
+            
+
+        });
+
+        return_button.addEventListener("click", () =>
+        {
+            let map_container = document.querySelector(".warehouse-mapp");
+            return_button.style.display = "none";
+            map_container.style.display = "none";
+            navigation.style.display = "block";
+            side.style.display = "block";
+            main.style.display = "block";
+
+        });
+
     }, []);
 
     return (
-        <>
+        <div id = "_main">
             <div className = "main-container">
                 <div className = "settings">
                     <button className = "submiit" id = "edit" style = {{zIndex: '2', top: '55px'}}>Edit Settings</button>
@@ -545,6 +623,7 @@ function Settings()
                             <div className = "setting" style = {{height: '220px', fontSize: '12px'}}>
                                 <div className = "setting-title">Warehouse Location</div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the location warehousing required for the products displayed</div>
+                                <button className = "mini-setting" style ={{width: '20%'}} id = "warehouse_map">Current Warehouse Map</button>
                                 <button className = "button-on-off" style = {{width: '90px'}}id="fetch-button">Fetch shopify locations</button>
                                 
                                 <table style = {{left: '40%',top: '17px', marginBottom: '0px',fontSize: '13px'}}>
@@ -595,24 +674,15 @@ function Settings()
                 </div>
             </div>
             <div className = "confirm-line">
-                <button className="tablink" id = "confirm" style ={{left: '50%'/*, transform: 'translate(-50%)'*/}}>Save</button>
+                <button className="tablink" id = "confirm" style ={{left: '50%'}}>Save</button>
+            </div>
+            <div className = 'rtn-button' style={{display: 'none'}}/>
+            <div className = "warehouse-mapp">
+                
             </div>
             
-        </>
+        </div>
     );
 }
 
 export default Settings;
-/*
-                                        <tr>
-                                            <td className = "warehouse">Warehouse 1..</td>
-                                            <td className = "fill-able">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td className = "warehouse">Warehouse 2..</td>
-                                            <td className = "fill-able">
-                                            </td>
-                                        </tr>
-
-*/

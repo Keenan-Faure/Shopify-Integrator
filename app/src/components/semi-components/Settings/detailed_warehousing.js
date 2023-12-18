@@ -6,9 +6,12 @@ function Detailed_warehousing(props)
 
     return (
         <>
-            <tr>
-                <td className = "warehouse">{props.Warehouse_Location}</td>
-                <td className = "fill-able">{props.Shopify_Location}</td>
+            <tr className = "warehouse">
+                <td>{props.Warehouse_Name}</td>
+                <td>{props.Shopify_Warehouse_Name}</td>
+                <td>{props.id}</td>
+                <td>{props.Shopify_Location_ID}</td>
+                <td>{props.Created_At}</td>
             </tr>
         </>
         
@@ -17,8 +20,11 @@ function Detailed_warehousing(props)
 
 Detailed_warehousing.defaultProps = 
 {
-    Warehouse_Location: 'N/A', 
-    Shopify_Location: 'N/A'
+    Warehouse_Name: 'N/A', 
+    Shopify_Warehouse_Name: 'N/A',
+    id: 'N/A',
+    Shopify_Location_ID: 'N/A',
+    Created_At: 'N/A'
 
 }
 export default Detailed_warehousing;
