@@ -28,6 +28,7 @@ func UploadFile(r *http.Request, relative_directory string) (string, error) {
 	// upload of 10 MB files.
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
+		fmt.Println(err.Error())
 		return "", err
 	}
 	// FormFile returns the first file for the given key `_import`
@@ -77,7 +78,7 @@ func UploadFile(r *http.Request, relative_directory string) (string, error) {
 		return "", err
 	}
 	// return that we have successfully uploaded our file!
-	return (import_directory + tempFile.Name()), nil
+	return (tempFile.Name()), nil
 }
 
 func CSVProductHeaders(product objects.Product) []string {
@@ -264,11 +265,11 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 	if file_name == "" {
 		return []objects.CSVProduct{}, errors.New("invalid file")
 	}
-	file_data, err := os.Open(filepath.Clean(file_name) + ".csv")
+	file_data, err := os.Open(filepath.Clean(file_name))
 	if err != nil {
 		return []objects.CSVProduct{}, err
 	}
-	file_data2, err := os.Open(filepath.Clean(file_name) + ".csv")
+	file_data2, err := os.Open(filepath.Clean(file_name))
 	if err != nil {
 		return []objects.CSVProduct{}, err
 	}
@@ -340,7 +341,7 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 
 // Removes a file from the server
 func RemoveFile(file_name string) error {
-	err := os.Remove(file_name + ".csv")
+	err := os.Remove(file_name)
 	if err != nil {
 		return err
 	}
