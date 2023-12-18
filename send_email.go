@@ -17,7 +17,6 @@ func SendEmail(token uuid.UUID, email, name string) error {
 	d := mail.NewDialer("smtp.gmail.com", 587, utils.LoadEnv("email"), utils.LoadEnv("email_psw"))
 
 	if err := d.DialAndSend(m); err != nil {
-		fmt.Println(err)
 		return err
 	}
 	return nil

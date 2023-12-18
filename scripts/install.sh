@@ -56,5 +56,7 @@ else
     chmod +x ./sql/schema/migrations.sh
     docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
 
+    sleep 3;
+    
     docker restart $SERVER_CONTAINER_NAME
 fi

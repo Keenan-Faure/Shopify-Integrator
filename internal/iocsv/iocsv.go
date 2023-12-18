@@ -4,7 +4,9 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"objects"
 	"os"
 	"path/filepath"
@@ -18,6 +20,65 @@ import (
 )
 
 const csv_remove_time = 5 * time.Minute // 5 minutes
+const import_directory = "import"
+
+// Handles the import and upload of the file onto the server
+func UploadFile(r *http.Request, relative_directory string) (string, error) {
+	// Parse our multipart form, 10 << 20 specifies a maximum
+	// upload of 10 MB files.
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		return "", err
+	}
+	// FormFile returns the first file for the given key `_import`
+	// it also returns the FileHeader so we can get the Filename,
+	// the Header and the size of the file
+	file, handler, err := r.FormFile("_import")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		return "", err
+	}
+	defer file.Close()
+
+	// Displays properties of file that is uploaded
+	// fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+	// fmt.Printf("File Size: %+v\n", handler.Size)
+
+	// Only accept text/csv file types
+	if handler.Header.Get("Content-Type") != "text/csv" {
+		return "", errors.New("only CSV extensions are supported")
+	}
+
+	// Make new directory for all imports
+	err = os.Mkdir(import_directory, os.FileMode(int(0777)))
+	if err != nil {
+		if err.Error()[len(err.Error())-11:] != "file exists" {
+			return "", err
+		}
+	}
+
+	// Create a temporary file within our temp-images directory that follows
+	// a particular naming pattern
+	tempFile, err := os.CreateTemp(import_directory, "upload-*.csv")
+	if err != nil {
+		return "", err
+	}
+	defer tempFile.Close()
+
+	// read all of the contents of our uploaded file into a
+	// byte array
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+	// write this byte array to our temporary file
+	_, err = tempFile.Write(fileBytes)
+	if err != nil {
+		return "", err
+	}
+	// return that we have successfully uploaded our file!
+	return (import_directory + tempFile.Name()), nil
+}
 
 func CSVProductHeaders(product objects.Product) []string {
 	headers := []string{}
@@ -159,11 +220,11 @@ func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []st
 
 // Writes data to a file
 func WriteFile(data [][]string, file_name string) (string, error) {
+	path, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
 	if file_name != "" {
-		path, err := os.Getwd()
-		if err != nil {
-			return "", err
-		}
 		f, err := os.Create(filepath.Clean(path+"/"+file_name) + ".csv")
 		if err != nil {
 			return "", err
@@ -177,8 +238,15 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 		}
 		return "", nil
 	}
+	path = path + "/app/export/"
+	err = os.MkdirAll(path, os.FileMode(int(0777)))
+	if err != nil {
+		if err.Error()[len(err.Error())-11:] != "file exists" {
+			return "", err
+		}
+	}
 	csv_name := "product_export-" + time.Now().UTC().String() + ".csv"
-	f, err := os.Create(filepath.Clean(csv_name))
+	f, err := os.Create(filepath.Clean(path + csv_name))
 	if err != nil {
 		return "", err
 	}
@@ -188,7 +256,7 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return csv_name, nil
+	return "http://localhost:8080/app/export/" + csv_name, nil
 }
 
 // Reads a csv file contents
@@ -296,7 +364,38 @@ func GetKeysByMatcher(headers []string, match string) map[int]string {
 func LoopRemoveCSV() {
 	ticker := time.NewTicker(csv_remove_time)
 	for ; ; <-ticker.C {
-		files, err := filepath.Glob("product_export*")
+		path, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+		}
+
+		// removes all exported files
+		path_export := path + "/app/export/"
+		err = os.MkdirAll(path_export, os.FileMode(int(0777)))
+		if err != nil {
+			if err.Error()[len(err.Error())-11:] != "file exists" {
+				log.Println(err)
+			}
+		}
+		files, err := filepath.Glob(path_export + "product_export*")
+		if err != nil {
+			log.Println(err)
+		}
+		for _, file := range files {
+			if err := os.Remove(file); err != nil {
+				log.Println(err)
+			}
+		}
+
+		// removes all imported files
+		path_import := path + "/import/"
+		err = os.MkdirAll(path_import, os.FileMode(int(0777)))
+		if err != nil {
+			if err.Error()[len(err.Error())-11:] != "file exists" {
+				log.Println(err)
+			}
+		}
+		files, err = filepath.Glob(path_import + "upload-*")
 		if err != nil {
 			log.Println(err)
 		}
