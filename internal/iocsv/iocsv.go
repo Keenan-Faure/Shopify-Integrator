@@ -26,8 +26,10 @@ const import_directory = "import"
 func UploadFile(r *http.Request, relative_directory string) (string, error) {
 	// Parse our multipart form, 10 << 20 specifies a maximum
 	// upload of 10 MB files.
-	r.ParseMultipartForm(10 << 20)
-
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		return "", err
+	}
 	// FormFile returns the first file for the given key `_import`
 	// it also returns the FileHeader so we can get the Filename,
 	// the Header and the size of the file
