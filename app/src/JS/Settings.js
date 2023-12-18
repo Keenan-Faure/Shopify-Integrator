@@ -1,7 +1,10 @@
+import React from 'react';
 import {useEffect} from 'react';
 import { createRoot } from 'react-dom/client';
 import $ from 'jquery';
 import Setting_details from '../components/semi-components/settings-details';
+import Detailed_warehousing from '../components/semi-components/Settings/detailed_warehousing';
+import Detailed_table from '../components/semi-components/Settings/detailed_table';
 
 import '../CSS/page2.css';
 
@@ -24,24 +27,70 @@ function Settings()
             window.open('https://dashboard.ngrok.com', '_blank')
         })
 
+        let _location_id = [];
         function fetchShopify() 
         {
-            
             const api_key = localStorage.getItem('api_key');
             let shopify_locations  = [];
+            let warehouse_locations  = [];
+
+            /* Api-Request for shopify locations & warehouses */
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.get('http://localhost:8080/api/inventory/config', [], [])
             .done(function( _data) 
             {
                 console.log(_data);
-                for(let i = 0; i < _data.shopify_locations.locations.length; i++)
+                for(let i = 0; i < _data.warehouses.length; i++)
                 {
-                    shopify_locations [i] = _data.shopify_locations.locations[i].city;
+                    warehouse_locations[i] = _data.warehouses[i].name;
                 }
 
-                /* Api-Request for warehouse locations */
+                for(let i = 0; i < _data.shopify_locations.locations.length; i++)
+                {
+                    shopify_locations[i] = _data.shopify_locations.locations[i].name; 
+                    _location_id[i] = _data.shopify_locations.locations[i].id; 
+                }
+
                 createLocationsDOM(shopify_locations);
+                warehouseLocationsDOM(warehouse_locations);
                 document.getElementById('fetch-button').disabled = true;
+
+                /* changes the button */
+                let button = document.getElementById("fetch-button");
+                button.remove();
+
+                let setting = document.querySelector(".setting");
+                let new_button = document.createElement("button");
+                new_button.className = "button-on-off";
+                new_button.style.width = "90px";
+                new_button.innerHTML = "Confirm Warehousing";
+                setting.appendChild(new_button);
+
+
+                new_button.addEventListener("click", () =>
+                {
+                    let object = {};
+                    let select = document.querySelectorAll(".options");
+                    let location_id = document.querySelector(".location-id");
+
+                    object.location_id = location_id.innerHTML;
+                    object.warehouse_name = select[0].options[select[0].selectedIndex].innerHTML;
+                    object.shopify_warehouse_name = select[1].options[select[1].selectedIndex].innerHTML;
+
+                    console.log(object);
+
+                    $.post("http://localhost:8080/api/inventory", JSON.stringify(object), [], 'json')
+                    .done(function( _data) 
+                    {
+                        console.log(_data);
+                    })
+                    .fail( function(xhr) 
+                    {
+                        alert(xhr.responseText);
+                    });
+                    
+                });
+                
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         }
@@ -51,7 +100,37 @@ function Settings()
             let elements = document.querySelectorAll('.fill-able');
             for (let i = 0; i < elements.length; i++) 
             {
+                let drop_down = document.createElement('select');
+                drop_down.className = "options 1";
+                let default_option = createOptions(true, "")
+                drop_down.appendChild(default_option);
+                for (let j = 0; j < locations.length; j++) 
+                {
+                    let option = createOptions(false, locations[j]);
+                    option.id = j;
+                    drop_down.appendChild(option);
+                }
+                elements[i].appendChild(drop_down);
+            }
+
+            let select = document.querySelector(".options");
+
+            select.addEventListener("change", () =>
+            {
+                let selectedOption = select.options[select.selectedIndex];
+                let location_id = document.querySelector(".location-id");
+                location_id.innerHTML = _location_id[parseInt(selectedOption.id)];
+            });  
+        }
+
+        function warehouseLocationsDOM(locations) 
+        {
+            let elements = document.querySelectorAll('.warehouse');
+            for (let i = 0; i < elements.length; i++) 
+            {
+                elements[i].innerHTML = "";
                 let drop_down = document.createElement('select')
+                drop_down.className = "options";
                 let default_option = createOptions(true, "")
                 drop_down.appendChild(default_option);
                 for (let j = 0; j < locations.length; j++) 
@@ -78,6 +157,7 @@ function Settings()
             }
             return option;
         }
+
 
         /* Onclick for the Location setting */
         let fetch_button = document.getElementById("fetch-button");
@@ -196,8 +276,6 @@ function Settings()
             confirm_line.style.display = "block";
         });
     
-
-
         let confirm = document.getElementById("confirm");
         confirm.addEventListener("click", () =>
         {
@@ -335,10 +413,6 @@ function Settings()
                 count += 1;
             }
 
-            console.log(app_object);
-            console.log(_shopify_object);
-
-            
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.post("http://localhost:8080/api/settings", JSON.stringify(app_object),[], 'json')
@@ -400,6 +474,7 @@ function Settings()
                 copyText = data;
                 navigator.clipboard.writeText(copyText);
                 webhook_button.innerHTML = "Copied!";
+                
             }); 
         });
 
@@ -467,35 +542,33 @@ function Settings()
                     <div className = "app-settings" style= {{position: 'relative', top:'15px'}}>
                         <div className = "title">App Settings</div>
                         <div className = "_app">
-                            <div className = "setting" style = {{height: '240px', fontSize: '12px'}}>
+                            <div className = "setting" style = {{height: '220px', fontSize: '12px'}}>
                                 <div className = "setting-title">Warehouse Location</div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the location warehousing required for the products displayed</div>
                                 <button className = "button-on-off" style = {{width: '90px'}}id="fetch-button">Fetch shopify locations</button>
+                                
                                 <table style = {{left: '40%',top: '17px', marginBottom: '0px',fontSize: '13px'}}>
                                     <tbody>
                                         <tr>
                                             <th>Warehouse</th>
                                             <th>Shopify Location</th>
+                                            <th>Location ID</th>
                                         </tr>
                                         <tr>
-                                            <td>Cape Town Warehouse</td>
-                                            <td className = "fill-able">
-                                            </td>
+                                            <td className = "warehouse">Warehouse</td>
+                                            <td className = "fill-able"></td>
+                                            <td className = "location-id"></td>
                                         </tr>
-                                        <tr>
-                                            <td>Japan Warehouse</td>
-                                            <td className = "fill-able">
-                                            </td>
-                                        </tr>
-                                    </tbody> 
+                                    </tbody>
                                 </table>
+
                             </div>
                             <div className = "setting" id = "setting1">
                                 <div className = "setting-title" style ={{top: '-14px'}}>Webhook Configuration
                                     <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
                                 </div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
-                                <div className="webhook_div" action="/action_page.php" style= {{margin:  'auto',maxWidth: '300px'}}>
+                                <div className="webhook_div" style= {{margin:  'auto',maxWidth: '300px'}}>
                                     <input type="text" placeholder = "Domain Name..." name = "search2" />
                                     <button id = "_webhook" className = "button-on-off" type="button">Create</button>
                                 </div>
@@ -530,3 +603,16 @@ function Settings()
 }
 
 export default Settings;
+/*
+                                        <tr>
+                                            <td className = "warehouse">Warehouse 1..</td>
+                                            <td className = "fill-able">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className = "warehouse">Warehouse 2..</td>
+                                            <td className = "fill-able">
+                                            </td>
+                                        </tr>
+
+*/
