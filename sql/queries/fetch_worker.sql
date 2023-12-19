@@ -2,10 +2,13 @@
 INSERT INTO fetch_worker(
     id,
     status,
+    fetch_url,
+    local_count,
+    shopify_product_count,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3, $4, $5, $6, $7 
 );
 
 -- name: GetFetchWorker :one
@@ -16,5 +19,8 @@ LIMIT 1;
 UPDATE fetch_worker
 SET
     status = $1,
-    updated_at = $2
-WHERE id = $3;
+    fetch_url = $2,
+    local_count = $3,
+    shopify_product_count = $4,
+    updated_at = $5
+WHERE id = $6;
