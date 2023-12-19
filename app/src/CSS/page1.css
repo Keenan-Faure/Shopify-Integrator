@@ -54,7 +54,7 @@ body
     top: 0;
     left: 0;
     transition-duration: 0.5s;
-    background-color: rgba(61, 61, 61, 0.75);
+    background-color: rgba(61, 61, 61, 0.55);
     overflow: auto;
     padding: 15px;
     cursor: pointer;
@@ -133,6 +133,31 @@ body
 .vendor, .category, .type
 {
     display: none;
+}
+.retry-sync 
+{
+    position: relative;
+    display: none;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 15px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    width: 100%;
+    height: 7%;
+    top: 0;
+    left: 0;
+    transition-duration: 0.5s;
+    background-color: rgba(61, 61, 61, 0.55);
+    overflow: auto;
+    padding: 15px;
+    cursor: pointer;
+    color: white;
+}
+.retry-sync:hover 
+{
+    background-color: rgba(61, 61, 61, 1);
+    color: aliceblue;
 }
 .close-filter 
 {

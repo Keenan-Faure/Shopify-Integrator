@@ -589,11 +589,17 @@ function Settings()
         return_button.addEventListener("click", () =>
         {
             let map_container = document.querySelector(".warehouse-mapp");
+            let navigation = document.getElementById("navbar");
+
+            navigation.style.display = "block";
             return_button.style.display = "none";
             map_container.style.display = "none";
-            navigation.style.display = "block";
-            side.style.display = "block";
-            main.style.display = "block";
+            setTimeout(() => 
+            {
+                side.style.display = "block";
+                main.style.display = "block";
+            }, 800);
+            
 
         });
 

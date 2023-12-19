@@ -9,7 +9,6 @@ import Product_Variants from './semi-components/Product/product_variants';
 import Detailed_Price from '../components/semi-components/Product/detailed_prices';
 import Detailed_Quantities from '../components/semi-components/Product/detailed_quantities';
 
-import Background from './Background';
 import $ from 'jquery';
 import Pan_details from './semi-components/pan-detail';
 import '../CSS/page1.css';
@@ -541,14 +540,21 @@ function Page1(props)
         filter_button.addEventListener("click", () =>
         {
             Filter_Pagintation(1);
-        })
+        });
+
+        /* Retry Sync Button */
+
+        let retry = document.querySelector(".retry-sync");
+        retry.addEventListener("click", () =>
+        {
+            
+        });
 
 
     }, []);
 
     return (
         <>
-            <Background />
             <div className = "filter" style = {{display: props.filter_display}}>
                 <div className = "filter-title"><b>Available Filters:</b></div>
                 <div className = "filter-elements">
@@ -572,6 +578,10 @@ function Page1(props)
                 <div className = "category"></div>
                 <button id = "clear_filter"className = "filter-button">Clear Filter</button>
                 <button id = "_filter"className = "filter-button">Filter Results</button>
+
+                <br/><br/><br/>
+                <div className = "filter-title"><b>Product Sync</b></div>
+                <div className = "retry-sync">Sync Products</div>
             </div>
             <div className = "filter-selection-main">
                 <div className = "filter-input">

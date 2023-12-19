@@ -456,14 +456,15 @@ function Customers()
     return (
         <div className = "customer">
             <div className = "main" style = {{left: '50%', top: '53%', transform: 'translate(-50%, -50%)', 
-                                        height: '90%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in'}}>
+                    height: '100%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in', width: '100%'}}>
                 <div className = "search">
-                    <form id = "search" className = "search-area" autoComplete = 'off' onSubmit={(event) => SearchCustomer(event)}>
+                    <form id = "search" className = "search-area" autoComplete = 'off' onSubmit={(event) => SearchCustomer(event)}
+                    style = {{top: '32px'}}>
                     <input className ="search-area" type="search" placeholder="Search..." 
                         name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
                 </div>
-                <div className = "main-elements">
+                <div className = "main-elements" style ={{top: '52%'}}>
                     <div className = "empty-message">No results found.</div>
                     <div className = "pan-main" id = "pan-main">
 

@@ -33,13 +33,10 @@ function Orders()
         /* Ensures the navbar is set correctly */
         let navigation = document.getElementById("navbar");
         let main = document.querySelector(".main");
-        window.onload = function(event)
-        {
-            navigation.style.left = "0%";
-            navigation.style.position = "relative";
-            navigation.style.width = "100%";
-            main.style.animation = "SlideUp3 1.2s ease-in";
-        }
+        navigation.style.left = "0%";
+        navigation.style.position = "relative";
+        navigation.style.width = "100%";
+        main.style.animation = "SlideUp3 1.2s ease-in";
 
         /*  API  */
         const api_key = localStorage.getItem('api_key');
@@ -492,15 +489,15 @@ function Orders()
     return (
         <div className = "orders">
             <div className = "main" style = {{left: '50%', top: '53%', transform: 'translate(-50%, -50%)', 
-                                        height: '90%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in'}}>
+                height: '100%', backgroundColor: 'transparent', animation:'SlideUp3 1.2s ease-in', width: '100%'}}>
 
                 <div className = "search" onSubmit={(event) => SearchOrder(event)}>
-                    <form id = "search" className = "search-area" autoComplete='off'>
+                    <form id = "search" className = "search-area" autoComplete='off' style = {{top:'32px'}}>
                     <input className ="search-area" type="search" placeholder="Search..." 
                         name = "search" value = {inputs.search || ""}  onChange = {handleChange}></input>
                     </form>    
                 </div>
-                <div className = "main-elements">
+                <div className = "main-elements" style ={{top: '52%'}}>
                     <div className = "empty-message">No results found.</div>
                     <div className = "pan-main" id = "pan-main">
 
