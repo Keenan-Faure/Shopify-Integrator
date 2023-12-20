@@ -16,9 +16,9 @@ const createFetchWorker = `-- name: CreateFetchWorker :exec
 INSERT INTO fetch_worker(
     id,
     status,
-    fetch_url,
     local_count,
     shopify_product_count,
+    fetch_url,
     created_at,
     updated_at
 ) VALUES (
@@ -29,9 +29,9 @@ INSERT INTO fetch_worker(
 type CreateFetchWorkerParams struct {
 	ID                  uuid.UUID `json:"id"`
 	Status              string    `json:"status"`
-	FetchUrl            string    `json:"fetch_url"`
 	LocalCount          int32     `json:"local_count"`
 	ShopifyProductCount int32     `json:"shopify_product_count"`
+	FetchUrl            string    `json:"fetch_url"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }
@@ -40,9 +40,9 @@ func (q *Queries) CreateFetchWorker(ctx context.Context, arg CreateFetchWorkerPa
 	_, err := q.db.ExecContext(ctx, createFetchWorker,
 		arg.ID,
 		arg.Status,
-		arg.FetchUrl,
 		arg.LocalCount,
 		arg.ShopifyProductCount,
+		arg.FetchUrl,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -50,7 +50,7 @@ func (q *Queries) CreateFetchWorker(ctx context.Context, arg CreateFetchWorkerPa
 }
 
 const getFetchWorker = `-- name: GetFetchWorker :one
-SELECT id, status, fetch_url, local_count, shopify_product_count, created_at, updated_at FROM fetch_worker
+SELECT id, status, local_count, shopify_product_count, fetch_url, created_at, updated_at FROM fetch_worker
 LIMIT 1
 `
 
@@ -60,9 +60,9 @@ func (q *Queries) GetFetchWorker(ctx context.Context) (FetchWorker, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Status,
-		&i.FetchUrl,
 		&i.LocalCount,
 		&i.ShopifyProductCount,
+		&i.FetchUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -73,18 +73,18 @@ const updateFetchWorker = `-- name: UpdateFetchWorker :exec
 UPDATE fetch_worker
 SET
     status = $1,
-    fetch_url = $2,
-    local_count = $3,
-    shopify_product_count = $4,
+    local_count = $2,
+    shopify_product_count = $3,
+    fetch_url = $4,
     updated_at = $5
 WHERE id = $6
 `
 
 type UpdateFetchWorkerParams struct {
 	Status              string    `json:"status"`
-	FetchUrl            string    `json:"fetch_url"`
 	LocalCount          int32     `json:"local_count"`
 	ShopifyProductCount int32     `json:"shopify_product_count"`
+	FetchUrl            string    `json:"fetch_url"`
 	UpdatedAt           time.Time `json:"updated_at"`
 	ID                  uuid.UUID `json:"id"`
 }
@@ -92,9 +92,9 @@ type UpdateFetchWorkerParams struct {
 func (q *Queries) UpdateFetchWorker(ctx context.Context, arg UpdateFetchWorkerParams) error {
 	_, err := q.db.ExecContext(ctx, updateFetchWorker,
 		arg.Status,
-		arg.FetchUrl,
 		arg.LocalCount,
 		arg.ShopifyProductCount,
+		arg.FetchUrl,
 		arg.UpdatedAt,
 		arg.ID,
 	)

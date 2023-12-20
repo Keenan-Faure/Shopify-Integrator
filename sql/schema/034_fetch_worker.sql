@@ -2,9 +2,9 @@
 create table fetch_worker(
     id UUID PRIMARY KEY NOT NULL,
     status VARCHAR(1) NOT NULL,
-    fetch_url VARCHAR(255) NOT NULL,
     local_count INTEGER NOT NULL,
     shopify_product_count INTEGER NOT NULL,
+    fetch_url VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );

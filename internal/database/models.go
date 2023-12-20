@@ -67,9 +67,9 @@ type FetchStat struct {
 type FetchWorker struct {
 	ID                  uuid.UUID `json:"id"`
 	Status              string    `json:"status"`
-	FetchUrl            string    `json:"fetch_url"`
 	LocalCount          int32     `json:"local_count"`
 	ShopifyProductCount int32     `json:"shopify_product_count"`
+	FetchUrl            string    `json:"fetch_url"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }
