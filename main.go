@@ -136,6 +136,9 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/stats/fetch", dbconfig.middlewareAuth(dbconfig.GetFetchStats))
 	api.Get("/stats/orders", dbconfig.middlewareAuth(dbconfig.GetOrderStats))
 
+	// fetch handle
+	api.Get("/shopify/fetch", dbconfig.middlewareAuth(dbconfig.WorkerFetchProductsHandle))
+
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))

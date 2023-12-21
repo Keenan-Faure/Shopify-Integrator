@@ -21,6 +21,20 @@ import (
 	"github.com/google/uuid"
 )
 
+// POST /api/worker/fetch
+func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	// create database table containing the status of this
+	shopifyConfig := shopify.InitConfigShopify()
+	err := FetchShopifyProducts(dbconfig, shopifyConfig)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
 // POST /api/inventory/warehouse?reindex=false
 func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	reindex := r.URL.Query().Get("reindex")
