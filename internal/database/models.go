@@ -64,6 +64,16 @@ type FetchStat struct {
 	UpdatedAt        time.Time `json:"updated_at"`
 }
 
+type FetchWorker struct {
+	ID                  uuid.UUID `json:"id"`
+	Status              string    `json:"status"`
+	LocalCount          int32     `json:"local_count"`
+	ShopifyProductCount int32     `json:"shopify_product_count"`
+	FetchUrl            string    `json:"fetch_url"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
 type InventoryLocation struct {
 	ID                uuid.UUID `json:"id"`
 	ShopifyLocationID string    `json:"shopify_location_id"`

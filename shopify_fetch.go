@@ -19,9 +19,6 @@ import (
 func LoopJSONShopify(
 	dbconfig *DbConfig,
 	shopifyConfig shopify.ConfigShopify) {
-	fetch_url := ""
-	fetch_shopify_product_count := 0
-	local_product_fetch_count := 0
 	fetch_time := 3
 	fetch_time_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_shopify_fetch_time")
 	if err != nil {
@@ -37,45 +34,83 @@ func LoopJSONShopify(
 	}
 	ticker := time.NewTicker(time.Duration(fetch_time) * time.Minute)
 	for ; ; <-ticker.C {
-		// loops each interval and retrieves the amount of products on Shopify
-		// it should only re-do the fetch from scratch if the count of products on Shopify and counted are the same
+		err = FetchShopifyProducts(dbconfig, shopifyConfig)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
 
-		// during the first iteration it should fetch the count from shopify and update the counter
-		if fetch_shopify_product_count == 0 {
-			fetch_shopify_product_count_object, err := shopifyConfig.GetShopifyProductCount()
-			if err != nil {
-				log.Fatal("Shopify > Error fetching next products to process:", err)
-				break
-			}
-			// sets it to the counter
-			fetch_shopify_product_count = fetch_shopify_product_count_object.Count
+// fetch url to be stored inside the database
+// this way the next fetch items can be paginated
+
+// the fetch_url should be posted to the database
+// along with the type of status that is currently used...
+
+// the FectshopifyProducts should be used in the LoopJSONShopify function
+// inside the loop...
+func FetchShopifyProducts(dbconfig *DbConfig,
+	shopifyConfig shopify.ConfigShopify) error {
+	db_fetch_worker, err := dbconfig.DB.GetFetchWorker(context.Background())
+	if err != nil {
+		return err
+	}
+	fetch_url := db_fetch_worker.FetchUrl
+	fetch_shopify_product_count := db_fetch_worker.ShopifyProductCount
+	local_product_fetch_count := db_fetch_worker.LocalCount
+	// during the first iteration it should fetch the count from shopify and update the counter
+	if fetch_shopify_product_count == 0 {
+		fetch_shopify_product_count_object, err := shopifyConfig.GetShopifyProductCount()
+		if err != nil {
+			log.Fatal("Shopify > Error fetching next products to process:", err)
+		}
+		// sets it to the counter
+		fetch_shopify_product_count = int32(fetch_shopify_product_count_object.Count)
+	} else {
+		// otherwise if the value is non-zero (it has been set already)
+		// then we check if the local counter equals the shopify count
+		if fetch_shopify_product_count == local_product_fetch_count {
+			// resets the url and the counters
+			fetch_url = ""
+			local_product_fetch_count = 0
+			fetch_shopify_product_count = 0
+		}
+	}
+	log.Println("running fetch worker...")
+	fetch_enabled := false
+	fetch_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_fetch")
+	if err != nil {
+		fetch_enabled = false
+	}
+	fetch_enabled, err = strconv.ParseBool(fetch_enabled_db.Value)
+	if err != nil {
+		fetch_enabled = false
+	}
+	// if the `app_enable_shopify_fetch` setting is enabled
+	// then we attempt to fetch the products from Shopify to store locally
+	if fetch_enabled {
+		// add check here to check if the worker is running or not
+		status, err := dbconfig.DB.GetFetchWorker(context.Background())
+		if err != nil {
+			return err
+		}
+		if status.Status == "1" {
+			return errors.New("worker is currently running")
 		} else {
-			// otherwise if the value is non-zero (it has been set already)
-			// then we check if the local counter equals the shopify count
-			if fetch_shopify_product_count == local_product_fetch_count {
-				// resets the url and the counters
-				fetch_url = ""
-				local_product_fetch_count = 0
-				fetch_shopify_product_count = 0
+			err = dbconfig.DB.UpdateFetchWorker(context.Background(), database.UpdateFetchWorkerParams{
+				Status:              "1",
+				FetchUrl:            fetch_url,
+				LocalCount:          local_product_fetch_count,
+				ShopifyProductCount: fetch_shopify_product_count,
+				UpdatedAt:           time.Now().UTC(),
+				ID:                  db_fetch_worker.ID,
+			})
+			if err != nil {
+				return err
 			}
-		}
-		log.Println("running fetch worker...")
-		fetch_enabled := false
-		fetch_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_fetch")
-		if err != nil {
-			fetch_enabled = false
-		}
-		fetch_enabled, err = strconv.ParseBool(fetch_enabled_db.Value)
-		if err != nil {
-			fetch_enabled = false
-		}
-		// if the `app_enable_shopify_fetch` setting is enabled
-		// then we attempt to fetch the products from Shopify to store locally
-		if fetch_enabled {
 			shopifyProds, next, err := shopifyConfig.FetchProducts(fetch_url)
 			if err != nil {
-				log.Println("Shopify > Error fetching next products to process:", err)
-				continue
+				return errors.New("Shopify > Error fetching next products to process: " + err.Error())
 			}
 			created_db_product := database.Product{}
 			for _, product := range shopifyProds.Products {
@@ -83,8 +118,7 @@ func LoopJSONShopify(
 					internal_product, err := dbconfig.DB.GetVariantBySKU(context.Background(), product_variant.Sku)
 					if err != nil {
 						if err.Error() != "sql: no rows in result set" {
-							log.Println(err)
-							break
+							return err
 						}
 					}
 					// if product is the same as the internal variant
@@ -98,8 +132,7 @@ func LoopJSONShopify(
 						)
 						if err != nil {
 							if err.Error() != "sql: no rows in result set" {
-								log.Println(err)
-								break
+								return err
 							}
 							overwrite = false
 						}
@@ -115,8 +148,7 @@ func LoopJSONShopify(
 								category := ""
 								categories, err := shopifyConfig.GetShopifyCategoryByProductID(fmt.Sprint(product.ID))
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 								if len(categories.CustomCollections) > 0 {
 									category = categories.CustomCollections[0].Title
@@ -132,8 +164,7 @@ func LoopJSONShopify(
 									Sku:         product_variant.Sku,
 								})
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 								// update product options
 								if product.Options[0].Name != "Title" {
@@ -148,8 +179,7 @@ func LoopJSONShopify(
 											},
 										)
 										if err != nil {
-											log.Println(err)
-											break
+											return err
 										}
 									}
 								}
@@ -164,8 +194,7 @@ func LoopJSONShopify(
 								Sku:       internal_product.Sku,
 							})
 							if err != nil {
-								log.Println(err)
-								break
+								return err
 							}
 							// update variant pricing
 							create_price_tier_enabled := false
@@ -175,8 +204,7 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 								create_price_tier_enabled = false
 							}
@@ -190,16 +218,14 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 							}
 							// update only the price that is syncing to Shopify
 							if pricing_name.Value != "" {
 								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_name.Value, product_variant.Price)
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 							} else {
 								if create_price_tier_enabled {
@@ -207,8 +233,7 @@ func LoopJSONShopify(
 									// use the default value of `fetch_price`
 									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_price", product_variant.Price)
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -218,16 +243,14 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 							}
 							// update only the compare price that is syncing to Shopify
 							if pricing_compare_name.Value != "" {
 								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 							} else {
 								if create_price_tier_enabled {
@@ -235,8 +258,7 @@ func LoopJSONShopify(
 									// use the default value of `fetch_compare_price`
 									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_compare_price", product_variant.CompareAtPrice)
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -247,8 +269,7 @@ func LoopJSONShopify(
 									fmt.Sprint(product_variant.InventoryItemID),
 								)
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 								// create map for warehouse quantity
 								total_quantity := make(map[string]int)
@@ -262,8 +283,7 @@ func LoopJSONShopify(
 											if err.Error() == "sql: no rows in result set" {
 												continue
 											}
-											log.Println(err)
-											break
+											return err
 										}
 										total_quantity[warehouse.WarehouseName] = total_quantity[warehouse.WarehouseName] + inventory_level.Available
 									}
@@ -279,8 +299,7 @@ func LoopJSONShopify(
 										Name_2:    warehouse_name,
 									})
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -291,8 +310,7 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 								sync_images_enabled = false
 							}
@@ -305,8 +323,7 @@ func LoopJSONShopify(
 								for _, image := range product.Images {
 									err = AddImagery(dbconfig, internal_product.ProductID, image.Src, image.Position)
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -336,8 +353,7 @@ func LoopJSONShopify(
 								category := ""
 								categories, err := shopifyConfig.GetShopifyCategoryByProductID(fmt.Sprint(product.ID))
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 								if len(categories.CustomCollections) > 0 {
 									category = categories.CustomCollections[0].Title
@@ -355,8 +371,7 @@ func LoopJSONShopify(
 									UpdatedAt:   time.Now().UTC(),
 								})
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 								created_db_product = db_product
 								// create product options
@@ -372,8 +387,7 @@ func LoopJSONShopify(
 											},
 										)
 										if err != nil {
-											log.Println(err)
-											break
+											return err
 										}
 									}
 								}
@@ -394,8 +408,7 @@ func LoopJSONShopify(
 								},
 							)
 							if err != nil {
-								log.Println(err)
-								break
+								return err
 							}
 							// create variant pricing
 							create_price_tier_enabled := false
@@ -405,8 +418,7 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 								create_price_tier_enabled = false
 							}
@@ -420,16 +432,14 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 							}
 							// update only the price that is syncing to Shopify
 							if pricing_name.Value != "" {
 								err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_name.Value, product_variant.Price)
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 							} else {
 								if create_price_tier_enabled {
@@ -437,8 +447,7 @@ func LoopJSONShopify(
 									// use the default value of `fetch_price`
 									err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_price", product_variant.Price)
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -448,16 +457,14 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 							}
 							// update only the compare price that is syncing to Shopify
 							if pricing_compare_name.Value != "" {
 								err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 							} else {
 								if create_price_tier_enabled {
@@ -465,8 +472,7 @@ func LoopJSONShopify(
 									// use the default value of `fetch_compare_price`
 									err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_compare_price", product_variant.CompareAtPrice)
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -477,8 +483,7 @@ func LoopJSONShopify(
 									fmt.Sprint(product_variant.InventoryItemID),
 								)
 								if err != nil {
-									log.Println(err)
-									break
+									return err
 								}
 								// create map for warehouse quantity
 								total_quantity := make(map[string]int)
@@ -492,8 +497,7 @@ func LoopJSONShopify(
 											if err.Error() == "sql: no rows in result set" {
 												continue
 											}
-											log.Println(err)
-											break
+											return err
 										}
 										total_quantity[warehouse.WarehouseName] = total_quantity[warehouse.WarehouseName] + inventory_level.Available
 									}
@@ -511,8 +515,7 @@ func LoopJSONShopify(
 										UpdatedAt: time.Now().UTC(),
 									})
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -523,8 +526,7 @@ func LoopJSONShopify(
 							)
 							if err != nil {
 								if err.Error() != "sql: no rows in result set" {
-									log.Println(err)
-									break
+									return err
 								}
 								sync_images_enabled = false
 							}
@@ -537,8 +539,7 @@ func LoopJSONShopify(
 								for _, image := range product.Images {
 									err = AddImagery(dbconfig, created_db_product.ID, image.Src, image.Position)
 									if err != nil {
-										log.Println(err)
-										break
+										return err
 									}
 								}
 							}
@@ -553,14 +554,26 @@ func LoopJSONShopify(
 				UpdatedAt:        time.Now().UTC(),
 			})
 			if err != nil {
-				log.Println(err)
-				break
+				return err
 			}
 			log.Printf("From Shopify %d products were collected", len(shopifyProds.Products))
-			local_product_fetch_count = local_product_fetch_count + len(shopifyProds.Products)
+			local_product_fetch_count = int32(local_product_fetch_count) + int32(len(shopifyProds.Products))
 			fetch_url = utils.GetNextURL(next)
+			err = dbconfig.DB.UpdateFetchWorker(context.Background(), database.UpdateFetchWorkerParams{
+				Status:              "0",
+				FetchUrl:            fetch_url,
+				LocalCount:          local_product_fetch_count,
+				ShopifyProductCount: fetch_shopify_product_count,
+				UpdatedAt:           time.Now().UTC(),
+				ID:                  db_fetch_worker.ID,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
 		}
 	}
+	return nil
 }
 
 // Updates/Creates the specific price tier for
