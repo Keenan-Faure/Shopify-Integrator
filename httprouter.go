@@ -27,6 +27,10 @@ func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *ht
 	shopifyConfig := shopify.InitConfigShopify()
 	err := FetchShopifyProducts(dbconfig, shopifyConfig)
 	if err != nil {
+		if err.Error() == "worker is currently running" {
+			RespondWithError(w, http.StatusConflict, err.Error())
+			return
+		}
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
