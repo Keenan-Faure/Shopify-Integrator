@@ -74,9 +74,18 @@ function Import_Product()
 
                     <div style = {{position: 'relative', top: '40%'}}>
 
-                        <input type={"file"} id = "file-upload-button" name = "_import" accept={".csv"} onChange={handleOnChange}/>
+                        <label style = {{fontSize: '18px',color: 'white', textDecoration:'underline'}}>
+                            <b>Import Product</b> 
+                            <i className = "info_icon" 
+                            title='Ensure that your imported CSV file has the relative columns and information, to avoid any errors'></i>
+                        </label>
+                        <br /><br /><br />
+                        <label style = {{color: 'white'}}><b>Imports customized products to the application</b></label>
+                        <br /><br /><br />
+                        
+                        <input style = {{color: 'white'}} type={"file"} id = "file-upload-button" name = "_import" accept={".csv"} onChange={handleOnChange}/>
                         <br /><br />
-                        <button className = "button" onClick={(e) => { handleOnSubmit(e); }}> IMPORT CSV </button>
+                        <button className = "button" onClick={(e) => { handleOnSubmit(e); }}>IMPORT CSV</button>
                     </div>
                     
                 </form>

@@ -63,10 +63,10 @@ function Export_Product()
             <div className = 'modal1' id = "model" style={{background:'linear-gradient(to bottom, #202020c7, #111119f0)', zIndex: '2'}}>
 
                 <form className = 'modal-content' style ={{backgroundColor: 'none'}} method = 'post' onSubmit={(event) => ExportProduct(event)} autoComplete='off' id = 'form1'>
-                    <div className = 'modal-container' id = "main">
-                        <label style = {{fontSize: '18px'}}><b>Export Product</b></label>
+                    <div className = 'modal-container'style = {{backgroundColor: 'transparent'}} id = "main">
+                        <label style = {{fontSize: '18px', textDecoration:'underline'}}><b>Export Product</b></label>
                         <br /><br /><br />
-                        <label><b>Exports to a CSV File</b></label>
+                        <label><b>Exports existing products to a CSV File</b></label>
                         <br /><br /><br />
                         <button className = 'button' type = 'submit'>Export</button>
                     </div>

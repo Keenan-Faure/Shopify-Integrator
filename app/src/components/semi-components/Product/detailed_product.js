@@ -184,9 +184,10 @@ function Detailed_product(props)
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, type: 'PUT' });
 
             $.ajax({ type: 'PUT', url: "http://localhost:8080/api/products/" + id, 
-            contentType: 'application/json', data: JSON.stringify(object)})
+            contentType: 'json', data: JSON.stringify(object)})
             .done(function (_data) 
             {
+                console.log("New Product Info:");
                 console.log(_data);
             })
             .fail( function(xhr) 
