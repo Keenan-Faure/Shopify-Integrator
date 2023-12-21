@@ -76,6 +76,12 @@ function Products()
             $.get("http://localhost:8080/api/products/search?q=" + document.getElementsByName("search")[0].value,[],[], 'json')
             .done(function( _data) 
             {
+                if(_data.length < 10)
+                {
+                    let next = document.getElementById("next");
+                    next.disabled = true;
+                    next.style.cursor = "not-allowed";
+                }
                 console.log(_data);
 
                 document.querySelector(".pan-main").remove();
@@ -162,9 +168,8 @@ function Products()
 
                             let rot = createRoot(details);
                             rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id} Product_Activity={_data.active}
                                 Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
-                                
                             />) 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
@@ -197,7 +202,7 @@ function Products()
                             products.appendChild(details);
                             let rot = createRoot(details);
                             rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id} Product_Activity={_data.active}
                                 Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
                                 
                             />) 

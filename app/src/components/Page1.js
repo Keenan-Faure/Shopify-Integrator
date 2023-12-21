@@ -8,6 +8,7 @@ import Detailed_product from './semi-components/Product/detailed_product';
 import Product_Variants from './semi-components/Product/product_variants';
 import Detailed_Price from '../components/semi-components/Product/detailed_prices';
 import Detailed_Quantities from '../components/semi-components/Product/detailed_quantities';
+import Detailed_Options from '../components/semi-components/Product/detailed_options';
 
 import $ from 'jquery';
 import Pan_details from './semi-components/pan-detail';
@@ -156,8 +157,9 @@ function Page1(props)
                             products.appendChild(details);
 
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
+                            rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id} Product_Activity={_data.active}
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
                             />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
@@ -189,8 +191,9 @@ function Page1(props)
                             let details = document.createElement('details');
                             products.appendChild(details);
                             let rot = createRoot(details);
-                            rot.render( <Detailed_product Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
-                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id}
+                            rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
+                                Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id} Product_Activity={_data.active}
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
                             />)
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
@@ -407,6 +410,7 @@ function Page1(props)
                     setTimeout(() => { DetailedView();}, 200);
                 });
 
+    
                 prevPage.addEventListener("click", () =>
                 {
                     let category = document.querySelector(".category").innerHTML;
@@ -547,7 +551,8 @@ function Page1(props)
         let retry = document.querySelector(".retry-sync");
         retry.addEventListener("click", () =>
         {
-            
+            retry.disabled = true;
+            retry.style.cursor = "progress";
         });
 
 
@@ -634,7 +639,3 @@ Page1.defaultProps =
 };
 
 export default Page1;
-
-/*
-
-*/

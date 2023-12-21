@@ -10,7 +10,6 @@ function Detailed_Images(props)
         function showSlides() 
         {
             let slides = document.getElementsByClassName("mySlides");
-            console.log(slides);
             setTimeout(() =>
             {
                 if(slides.length <= 1)

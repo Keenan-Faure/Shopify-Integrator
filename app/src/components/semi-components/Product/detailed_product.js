@@ -1,6 +1,8 @@
 import {useEffect} from 'react';
 import $ from 'jquery';
 import '../../../CSS/detailed.css';
+import '../../../CSS/page1.css';
+
 
 function Detailed_product(props)
 {
@@ -32,8 +34,7 @@ function Detailed_product(props)
         document.getElementById("Product").click();
 
         /* Activity of the product */
-        let activity = document.querySelector(".details-title").innerHTML;
-        let status = document.querySelector(".inactive");
+        let activity = document.querySelector(".p-d-activity").innerHTML;
 
         /* When the user clicks on the return button */
         let close = document.querySelector(".rtn-button");
@@ -90,6 +91,7 @@ function Detailed_product(props)
 
             let object = 
             {
+                active: activity,
                 body_html: description.innerHTML, 
                 category: td_list[0].innerHTML, 
                 options:
@@ -192,7 +194,26 @@ function Detailed_product(props)
                 alert(xhr.responseText);
             });
 
-        })
+        });
+
+        /* Activity of pan elements */
+        let _main = document.querySelector("#detailss");
+        let activit = _main.querySelector(".p-d-activity");
+        let option = _main.querySelector("#options");
+
+        if(activit.innerHTML == "1")
+        {
+            option.className = "p-d-true";
+        }
+        else if(activit.innerHTML == "")
+        {
+            option.className = "p-d-unknown";
+        }
+        else
+        {
+            option.className = "p-d-false";
+        }
+        
 
     }, []);
 
@@ -206,16 +227,20 @@ function Detailed_product(props)
                 <button className="tablink" id = "Edit" style ={{left: '-14%', width:'95px'}}>Edit</button>
             </div>
         
-            <div className="tabcontent" id="_Product" >
-                <div className = "details-details">
+            <div className="tabcontent" id="_Product"> 
+                <div className = "details-details"> 
                     <div className = "auto-slideshow-container" style={{backgroundColor: 'transparent'}} />
                     <div className = "detailed">
-                        <div className = "details-title"><div id ="_title" style={{position: 'relative',top: '10px',display: 'inline-block'}}>
-                            <div id = "title">{props.Product_Title}</div></div>
+                        <div className = "details-title">
+                            <div id ="_title" style={{position: 'relative',top: '10px',display: 'inline-block'}}>
+                                <div>
+                                    <div id = "title" style = {{display: 'inline-block'}}>{props.Product_Title}</div> 
+                                    <i id = "options" href = "/#" className = "p-d-options" style ={{width:'30px', height: '30px'}}/>
+                                </div>
+                            </div>
                         </div>
                         <div className = "_id" style ={{display: 'none'}}>{props.Product_ID}</div>
-                        
-                        <span id = "activity">Activity</span>
+                        <div className = "p-d-activity" style ={{display: 'none'}}>{props.Product_Activity}</div>
                         <table>
                             <tbody>
                                 <tr>

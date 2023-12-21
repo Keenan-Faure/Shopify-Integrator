@@ -584,6 +584,40 @@ a:hover {
     white-space: nowrap;
 }
 
+.p-d-false 
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 3px;
+    opacity: 0.75;
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/cross.png);
+}
+.p-d-true 
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 3px;
+    opacity: 0.75;
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/tick.png);
+}
+.p-d-unknown
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 3px;
+    opacity: 0.75;
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/question-mark.png);
+}
+
 /** End Customer details */
 
 /** Order Lines */
