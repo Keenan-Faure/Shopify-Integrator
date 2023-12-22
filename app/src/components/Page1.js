@@ -553,6 +553,17 @@ function Page1(props)
         {
             retry.disabled = true;
             retry.style.cursor = "progress";
+
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.get("http://localhost:8080/api/shopify/fetch", [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+                retry.disabled = false;
+                retry.style.cursor = "pointer";
+            })
+            .fail( function(xhr) { alert(xhr.responseText); }); 
         });
 
 
@@ -586,7 +597,7 @@ function Page1(props)
 
                 <br/><br/><br/>
                 <div className = "filter-title"><b>Product Sync</b></div>
-                <div className = "retry-sync">Sync Products</div>
+                <div className = "retry-sync">Fetch Products</div>
             </div>
             <div className = "filter-selection-main">
                 <div className = "filter-input">
