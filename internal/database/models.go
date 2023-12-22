@@ -57,6 +57,14 @@ type Customerorder struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+type FetchRestriction struct {
+	ID        uuid.UUID `json:"id"`
+	Field     string    `json:"field"`
+	Flag      string    `json:"flag"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type FetchStat struct {
 	ID               uuid.UUID `json:"id"`
 	AmountOfProducts int32     `json:"amount_of_products"`
@@ -144,6 +152,14 @@ type ProductOption struct {
 	ProductID uuid.UUID `json:"product_id"`
 	Name      string    `json:"name"`
 	Position  int32     `json:"position"`
+}
+
+type PushRestriction struct {
+	ID        uuid.UUID `json:"id"`
+	Field     string    `json:"field"`
+	Flag      string    `json:"flag"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type QueueItem struct {
