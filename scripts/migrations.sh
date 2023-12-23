@@ -5,8 +5,11 @@ echo "---running migrations on server container---"
 SSL_MODE="?sslmode=disable"
 DRIVER="postgres://"
 
-cd /keenan/sql/schema
+cd /keenan
+
 source .env
+
+cd sql/schema
 
 echo "Checking GOOSE version"
 goose -version

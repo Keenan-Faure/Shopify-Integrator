@@ -14,7 +14,7 @@ services:
         networks:
             - integrator-net
         volumes:
-            - .env:/keenan/.env
+            - ./:/keenan/
 
     docs:
         build:
@@ -29,6 +29,7 @@ services:
             - integrator-net
         volumes:
             - .env:/keenan/.env
+            - ../Shopify-Integrator-docs/swagger.yml:/keenan/docs/swagger.yml
 
     ngrok:
         image: ngrok/ngrok:latest

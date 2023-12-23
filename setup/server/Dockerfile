@@ -8,16 +8,10 @@ RUN mkdir keenan && cd keenan
 WORKDIR /keenan/
 
 # Migrations
-ADD /sql/ /keenan/sql/
-ADD /scripts/migrations.sh /keenan/sql/schema
+COPY ./ /keenan/
 
-# Add test_payloads for tests
-ADD /test_payloads /keenan/test_payloads
+RUN ["chmod", "+x", "/keenan/scripts/migrations.sh"]
 
-# Mount the .env file for development
-COPY .env /keenan/sql/schema/
+RUN cd /keenan/
 
-RUN ["chmod", "+x", "/keenan/sql/schema/migrations.sh"]
-
-ADD integrator /keenan/
-CMD [ "/keenan/integrator" ]
+CMD [ "/bin/sh", "-c" , "go build -o integrator && ./integrator"]
