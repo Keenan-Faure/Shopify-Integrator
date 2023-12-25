@@ -2,8 +2,6 @@ import {useEffect} from 'react';
 import $ from 'jquery';
 import '../../../CSS/detailed.css';
 import '../../../CSS/page1.css';
-
-
 function Detailed_product(props)
 {
     useEffect(()=> 

@@ -2,7 +2,6 @@ import {useEffect} from 'react';
 import {useState} from "react";
 import $ from 'jquery';
 import '../../CSS/login.css';
-import Background from '../../components/Background';
 
 function Export_Product()
 {
@@ -58,8 +57,6 @@ function Export_Product()
 
     return (
         <>
-            <Background />
-
             <div className = 'modal1' id = "model" style={{background:'linear-gradient(to bottom, #202020c7, #111119f0)', zIndex: '2'}}>
 
                 <form className = 'modal-content' style ={{backgroundColor: 'none'}} method = 'post' onSubmit={(event) => ExportProduct(event)} autoComplete='off' id = 'form1'>

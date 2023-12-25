@@ -2,8 +2,6 @@ import {useEffect} from 'react';
 import {useState} from "react";
 import $ from 'jquery';
 import '../../CSS/login.css';
-import Background from '../../components/Background';
-
 function Import_Product()
 {
     const [file, setFile] = useState();
@@ -67,7 +65,6 @@ function Import_Product()
 
     return (
         <>
-            <Background />
             <div className = 'modal1' id = "model" style={{zIndex: '2', background:'linear-gradient(to bottom, #202020c7, #111119f0)'}}>
 
                 <form className = 'modal-content' style ={{backgroundColor: 'none'}} method = 'post' autoComplete='off' id = 'form1'>

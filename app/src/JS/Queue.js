@@ -422,7 +422,6 @@ function Queue()
             <div className = "details">
                 <div className = 'close-button'>&times;</div>
             </div>
-
         </div>
     );
 }

@@ -65,9 +65,6 @@ function Customers()
                 Customer_firstName={el.first_name} Customer_lastName={el.last_name}
                 />))
             }
-
-            
-
         })
         .fail( function(xhr) 
         {
@@ -96,7 +93,6 @@ function Customers()
         /* SEARCH */
         document.getElementById("search").addEventListener("submit", function(e)
         {
-
             $.get("http://localhost:8080/api/customers/search?q=" + document.getElementsByName("search")[0].value,[],[], 'json')
             .done(function( _data) 
             {
@@ -210,7 +206,6 @@ function Customers()
                         let main = document.querySelector(".main");
                         let navbar = document.getElementById("navbar");
                         let details = document.querySelector(".details");
-
                         main.style.animation = "Fadeout 0.5s ease-out";
                         navbar.style.animation = "Fadeout 0.5s ease-out";
                         main.style.display = "none";
@@ -466,9 +461,7 @@ function Customers()
                 </div>
                 <div className = "main-elements" style ={{top: '52%'}}>
                     <div className = "empty-message">No results found.</div>
-                    <div className = "pan-main" id = "pan-main">
-
-                    </div>
+                    <div className = "pan-main" id = "pan-main"></div>
                 </div>
                 <div className = "center" id = "pag"></div>
             </div>
@@ -476,7 +469,6 @@ function Customers()
             <Page1 filter_display = "none"/>
             <div className = "details">
                 <div className = 'close-button'>&times;</div>
-                
             </div>
             
         </div>

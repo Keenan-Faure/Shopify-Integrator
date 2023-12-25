@@ -25,7 +25,6 @@ function Orders()
     const SearchOrder = (event) =>
     {
         event.preventDefault();
-
     }
 
     useEffect(()=> 
@@ -64,9 +63,6 @@ function Orders()
                 Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
                 />))
             }
-            
-
-
         })
         .fail( function(xhr) 
         {
@@ -94,10 +90,7 @@ function Orders()
                 Order_firstName={el.customer.first_name} Order_lastName={el.customer.last_name} Order_ID = {el.id}
                 />)) 
 
-                setTimeout(() =>
-                {
-                    DetailedView();
-                }, 100);
+                setTimeout(() =>{ DetailedView(); }, 100);
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
@@ -177,7 +170,6 @@ function Orders()
                         if(document.querySelector(".details") != null)
                         //div already exists, remove it, and create another
                         {
-
                             document.querySelector(".details").remove();
                             let details = document.createElement('div');
                             details.className = "details";
@@ -209,9 +201,7 @@ function Orders()
                                 Address_Name={el.address_type.charAt(0).toUpperCase() + el.address_type.slice(1)} Address1={el.address_1} Address2={el.address_2} 
                                 Address3 ={el.city} Address4={el.suburb} Address5={el.postal_code}
                                 />))
-                            }, 0);
-                            
-                            
+                            }, 0);    
                         }
                         else 
                         //create new div
@@ -499,9 +489,7 @@ function Orders()
                 </div>
                 <div className = "main-elements" style ={{top: '52%'}}>
                     <div className = "empty-message">No results found.</div>
-                    <div className = "pan-main" id = "pan-main">
-
-                    </div>
+                    <div className = "pan-main" id = "pan-main"></div>
                 </div>
                 <div className = "center" id = "pag"></div>
             </div>
@@ -509,7 +497,6 @@ function Orders()
             <Page1 filter_display = "none"/>
             <div className = "details">
                 <div className = 'close-button'>&times;</div>
-                
             </div>
             
         </div>

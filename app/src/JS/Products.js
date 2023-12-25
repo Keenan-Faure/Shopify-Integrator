@@ -132,7 +132,6 @@ function Products()
                     Product_Type={el.product_type} Product_Code={el.product_code} Product_Category={el.category} Product_Vendor={el.vendor}
                     Product_Image={el.product_images.map((el, i) => el.src)}
                     /> ))
-
                     setTimeout(() => { DetailedView(); }, 200);
                     Pagintation(1);
                 })
@@ -175,7 +174,6 @@ function Products()
                             setTimeout(() =>
                             {
                                 details.querySelector(".description").innerHTML = _data.body_html;
-
                                 let _div = details.querySelectorAll(".auto-slideshow-container");
                                 for(let i = 0; i < _div.length; i++)
                                 {
@@ -193,7 +191,6 @@ function Products()
                                 quantity_name={el.name}/>)}
                                 />))
                             }, 10);
-                            
                         }
                         else 
                         //create new div
@@ -203,8 +200,7 @@ function Products()
                             let rot = createRoot(details);
                             rot.render( <Detailed_product key={`${_data.title}_${i}`} Product_Title = {_data.title} Product_Category={_data.category} Product_Code={_data.product_code}
                                 Product_Type={_data.product_type} Product_Vendor={_data.vendor} Product_ID={_data.id} Product_Activity={_data.active}
-                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)}
-                                
+                                Product_Options={_data.options.map((el, i) => <Detailed_Options key={`${el.title}_${i}`} Option_Value={el.value} Option_Name = {el.position} />)} 
                             />) 
                             /* For some reason it wont pick up the element unless it throw it here */
                             setTimeout(() =>
@@ -272,7 +268,7 @@ function Products()
         let main = document.querySelector(".main-elements");
         main.appendChild(div);
 
-        
+        /* pagination Function for elements */
         function Pagintation(index)
         {
 
@@ -530,10 +526,6 @@ function Products()
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
-
-        
-        
-
     }, []);
     
     return (

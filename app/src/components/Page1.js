@@ -181,9 +181,7 @@ function Page1(props)
                                 Price={el.variant_price_tiers.map((el, i) => <Detailed_Price key={`${el.title}_${i}`} Price_Name={el.name} Price_Value={el.value}  />)}
                                 Quantities={el.variant_quantities.map((el, i) => <Detailed_Quantities quantity_value = {el.value}/>)}
                                 />))
-
-                            }, 10);
-                            
+                            }, 10);  
                         }
                         else 
                         //create new div
@@ -306,9 +304,7 @@ function Page1(props)
                         });
                         setTimeout(() => { DetailedView();}, 200);
                     }
-                }
-                
-                
+                } 
             })
             .fail( function(xhr) { alert(xhr.responseText); });
         });
@@ -320,6 +316,7 @@ function Page1(props)
         paginationContainer.classList.add('pagination');
         content.appendChild(paginationContainer);
 
+        /* paginiation function for filtered elements */
         function Filter_Pagintation(index)
         {
             if(index == 1)
@@ -547,7 +544,6 @@ function Page1(props)
         });
 
         /* Retry Sync Button */
-
         let retry = document.querySelector(".retry-sync");
         retry.addEventListener("click", () =>
         {
@@ -565,8 +561,6 @@ function Page1(props)
             })
             .fail( function(xhr) { alert(xhr.responseText); }); 
         });
-
-
     }, []);
 
     return (

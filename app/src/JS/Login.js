@@ -186,10 +186,8 @@ function Login()
         {
             form1.style.animation = "Fadeout ease-out 1s";
             form1.style.display = "none";
-
             form2.style.animation = "FadeIn ease-in 1s";
             form2.style.display = "block";
-
             return_button.style.display = "block";
         });
 
@@ -198,12 +196,9 @@ function Login()
         {
             form2.style.animation = "Fadeout ease-out 1s";
             form2.style.display = "none";
-
             form1.style.animation = "FadeIn ease-in 1s";
             form1.style.display = "block";
-
             return_button.style.display = "none";
-
         });
 
         /* return button2 swapping of forms */
@@ -211,10 +206,8 @@ function Login()
         {
             form3.style.animation = "Fadeout ease-out 1s";
             form3.style.display = "none";
-
             form2.style.animation = "FadeIn ease-in 1s";
             form2.style.display = "block";
-
             return_button2.style.display = "none";
             return_button.style.display = "block";
         });
@@ -240,10 +233,7 @@ function Login()
                 re.style.animation = "Fadeout 2s ease-out";
                 form2.style.animation = "Fadeout 2s ease-out";
                 
-                setTimeout(() =>
-                {
-                    window.location.reload();
-                }, 1000);
+                setTimeout(() =>{ window.location.reload(); }, 1000);
             }, 1000)
         });
 

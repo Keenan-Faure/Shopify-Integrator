@@ -66,7 +66,6 @@ function Settings()
                 new_button.innerHTML = "Confirm Warehousing";
                 setting.appendChild(new_button);
 
-
                 new_button.addEventListener("click", () =>
                 {
                     let object = {};
@@ -77,8 +76,6 @@ function Settings()
                     object.warehouse_name = select[0].options[select[0].selectedIndex].innerHTML;
                     object.shopify_warehouse_name = select[1].options[select[1].selectedIndex].innerHTML;
 
-                    console.log(object);
-
                     $.post("http://localhost:8080/api/inventory/map", JSON.stringify(object), [], 'json')
                     .done(function( _data) 
                     {
@@ -88,7 +85,6 @@ function Settings()
                     {
                         alert(xhr.responseText);
                     });
-                    
                 });
                 
             })
@@ -179,12 +175,10 @@ function Settings()
             let div = document.createElement("div");
             div.id = "a_settings";
             _main.appendChild(div);
-
             root = createRoot(div);
             root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
             Value={el.value} id={el.id} Title = {el.key}
             />))
-            
 
             let setting_2 = document.getElementById("app_settings");
             for(let i = 0; i < _data.length; i++)
@@ -194,8 +188,7 @@ function Settings()
                 div.innerHTML = _data[i].field_name;
                 setting_2.appendChild(div);
             }
-            
-
+        
             /* Scroll into View Button Event */
             let a_settings = document.getElementById("a_settings").childNodes;
             let app_button = document.getElementById("app_settings").children;
@@ -208,14 +201,10 @@ function Settings()
                     setTimeout(() =>
                     {
                         a_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
-                        setTimeout(() =>
-                        {
-                            a_settings[i].style.boxShadow = "";
-                        }, 1200)
+                        setTimeout(() => { a_settings[i].style.boxShadow = ""; }, 1200)
                     }, 50);
                 });
             }
-            
         })
         .fail( function(xhr) { alert(xhr.responseText); });
 
@@ -256,15 +245,11 @@ function Settings()
                     setTimeout(() =>
                     {
                         s_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
-                        setTimeout(() =>
-                        {
-                            s_settings[i].style.boxShadow = "";
-                        }, 1200)
+                        setTimeout(() => { s_settings[i].style.boxShadow = ""; }, 1200)
                     }, 50);
                     
                 });
             }
-            
         })
         .fail( function(xhr) { alert(xhr.responseText); });
 
@@ -411,6 +396,7 @@ function Settings()
                 count += 1;
             }
 
+            /* App settings post request */
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
             $.post("http://localhost:8080/api/settings", JSON.stringify(app_object),[], 'json')
@@ -423,6 +409,7 @@ function Settings()
                 alert(xhr.responseText);
             });
 
+            /* Shopify settings post request */
             $.post("http://localhost:8080/api/shopify/settings", JSON.stringify(_shopify_object),[], 'json')
             .done(function( _data) 
             {
@@ -432,7 +419,6 @@ function Settings()
             {
                 alert(xhr.responseText);
             });
-            
         });
 
         /* Webhook Setting */
@@ -476,8 +462,6 @@ function Settings()
             }); 
         });
 
-        
-
         setTimeout(() =>
         {
             let setting_main = document.querySelectorAll(".setting_main");
@@ -492,7 +476,7 @@ function Settings()
                 {
                     setting_input.style.display = "none";
                 }
-                else 
+                else
                 {
                     true_false.style.display = "none";
                 }
@@ -530,8 +514,8 @@ function Settings()
             }
         }, 100);
 
-        /* Displays the warehouse map */
 
+        /* Displays the warehouse map */
         let warehouse_map = document.getElementById("warehouse_map");
         let side = document.querySelector(".side-container");
         let main = document.querySelector(".main-container");
@@ -599,8 +583,6 @@ function Settings()
                 side.style.display = "block";
                 main.style.display = "block";
             }, 800);
-            
-
         });
 
     }, []);
