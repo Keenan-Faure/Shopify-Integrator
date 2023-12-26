@@ -17,8 +17,8 @@ const createVariantQty = `-- name: CreateVariantQty :one
 INSERT INTO variant_qty(
     id,
     variant_id,
-    name,
-    value,
+    "name",
+    "value",
     isdefault,
     created_at,
     updated_at
@@ -101,8 +101,8 @@ func (q *Queries) GetUniqueWarehouses(ctx context.Context) ([]string, error) {
 
 const getVariantQty = `-- name: GetVariantQty :many
 SELECT 
-    name,
-    value,
+    "name",
+    "value",
     isdefault,
     updated_at
 FROM variant_qty
@@ -146,15 +146,15 @@ func (q *Queries) GetVariantQty(ctx context.Context, variantID uuid.UUID) ([]Get
 
 const getVariantQtyBySKU = `-- name: GetVariantQtyBySKU :many
 SELECT
-    name,
-    value,
+    "name",
+    "value",
     isdefault,
     updated_at
 FROM variant_qty
 WHERE variant_id IN (
     SELECT id FROM variants
     WHERE sku = $1
-) AND name = $2
+) AND "name" = $2
 `
 
 type GetVariantQtyBySKUParams struct {
@@ -220,14 +220,14 @@ func (q *Queries) RemoveQtyByWarehouseName(ctx context.Context, name string) err
 const updateVariantQty = `-- name: UpdateVariantQty :exec
 UPDATE variant_qty
 SET
-    name = $1,
-    value = $2,
-    isdefault = $3,
+    "name" = COALESCE($1, "name"),
+    "value" = COALESCE($2, "value"),
+    isdefault = COALESCE($3, isdefault),
     updated_at = $4
 WHERE variant_id IN (
     SELECT id FROM variants
     WHERE sku = $5
-) AND name = $6
+) AND "name" = $6
 `
 
 type UpdateVariantQtyParams struct {

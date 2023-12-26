@@ -15,3 +15,6 @@ SET
     flag = $1,
     updated_at = $2
 WHERE field = $3;
+
+-- name: GetPushRestriction :many
+SELECT * FROM push_restriction;

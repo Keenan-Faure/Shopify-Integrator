@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -36,6 +37,13 @@ func main() {
 		host = "@postgres:5432/"
 	}
 	dbCon, err := InitConn(connection_string + host + utils.LoadEnv("db_name") + "?sslmode=disable")
+	if err != nil {
+		log.Fatalf("Error occured %v", err.Error())
+	}
+
+	// reset the (possible broken workers)
+	fmt.Println("resetting broken workers")
+	err = dbCon.DB.ResetFetchWorker(context.Background(), "0")
 	if err != nil {
 		log.Fatalf("Error occured %v", err.Error())
 	}
@@ -110,12 +118,12 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 
 	// shopify settings
 	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetShopifySettingValue))
-	api.Post("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
+	api.Put("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
 	api.Delete("/shopify/settings", dbconfig.middlewareAuth(dbconfig.RemoveShopifySettings))
 
 	// app settings
 	api.Get("/settings", dbconfig.middlewareAuth(dbconfig.GetAppSettingValue))
-	api.Post("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
+	api.Put("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
 	api.Delete("/settings", dbconfig.middlewareAuth(dbconfig.RemoveAppSettings))
 	// webhook configuration
 	api.Post("/settings/webhook", dbconfig.middlewareAuth(dbconfig.GetWebhookURL))
@@ -138,6 +146,13 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 
 	// fetch handle
 	api.Get("/shopify/fetch", dbconfig.middlewareAuth(dbconfig.WorkerFetchProductsHandle))
+
+	// restrictions
+	api.Put("/push/restriction", dbconfig.middlewareAuth(dbconfig.PushRestrictionHandle))
+	api.Get("/push/restriction", dbconfig.middlewareAuth(dbconfig.GetPushRestrictionHandle))
+
+	api.Put("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.FetchRestrictionHandle))
+	api.Get("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.GetFetchRestrictionHandle))
 
 	r.Mount("/api", api)
 

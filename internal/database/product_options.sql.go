@@ -15,7 +15,7 @@ const createProductOption = `-- name: CreateProductOption :one
 INSERT INTO product_options(
     id,
     product_id,
-    name,
+    "name",
     position
 ) VALUES (
     $1, $2, $3, $4
@@ -49,7 +49,7 @@ func (q *Queries) CreateProductOption(ctx context.Context, arg CreateProductOpti
 
 const getProductOptions = `-- name: GetProductOptions :many
 SELECT
-    name,
+    "name",
     position
 FROM product_options
 WHERE product_id = $1
@@ -86,7 +86,7 @@ func (q *Queries) GetProductOptions(ctx context.Context, productID uuid.UUID) ([
 
 const getProductOptionsByCode = `-- name: GetProductOptionsByCode :many
 SELECT
-    name,
+    "name",
     position
 FROM product_options
 WHERE product_id IN (
@@ -128,8 +128,8 @@ func (q *Queries) GetProductOptionsByCode(ctx context.Context, productCode strin
 const updateProductOption = `-- name: UpdateProductOption :one
 UPDATE product_options
 SET
-    name = $1,
-    position = $2
+    "name" = COALESCE($1, "name"),
+    position = COALESCE($2, position)
 WHERE product_id = $3
 and position = $4
 RETURNING id, product_id, name, position

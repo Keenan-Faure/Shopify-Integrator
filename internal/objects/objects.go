@@ -6,6 +6,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// restrictions
+type RestrictionRequest struct {
+	Field string `json:"field"`
+	Flag  string `json:"flag"`
+}
+
 // invisible endpoints
 
 type FetchAmountResponse struct {

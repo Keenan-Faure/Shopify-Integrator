@@ -43,6 +43,39 @@ func (q *Queries) CreatePushReestriction(ctx context.Context, arg CreatePushRees
 	return err
 }
 
+const getPushRestriction = `-- name: GetPushRestriction :many
+SELECT id, field, flag, created_at, updated_at FROM push_restriction
+`
+
+func (q *Queries) GetPushRestriction(ctx context.Context) ([]PushRestriction, error) {
+	rows, err := q.db.QueryContext(ctx, getPushRestriction)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PushRestriction
+	for rows.Next() {
+		var i PushRestriction
+		if err := rows.Scan(
+			&i.ID,
+			&i.Field,
+			&i.Flag,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updatePushRestriction = `-- name: UpdatePushRestriction :exec
 UPDATE push_restriction
 SET

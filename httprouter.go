@@ -21,6 +21,90 @@ import (
 	"github.com/google/uuid"
 )
 
+// PUT /api/push/restriction
+func (dbconfig *DbConfig) PushRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := DecodeRestriction(dbconfig, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = RestrictionValidation(restrictions)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	for _, value := range restrictions {
+		err = dbconfig.DB.UpdatePushRestriction(r.Context(), database.UpdatePushRestrictionParams{
+			Flag:      value.Flag,
+			UpdatedAt: time.Now().UTC(),
+			Field:     value.Field,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
+// GET /api/push/restriction
+func (dbconfig *DbConfig) GetPushRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, "no push restrictions found found")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, restrictions)
+}
+
+// GET /api/fetch/restriction
+func (dbconfig *DbConfig) GetFetchRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := dbconfig.DB.GetFetchRestriction(context.Background())
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, "no fetch restrictions found found")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, restrictions)
+}
+
+// PUT /api/fetch/restriction
+func (dbconfig *DbConfig) FetchRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := DecodeRestriction(dbconfig, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = RestrictionValidation(restrictions)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	for _, value := range restrictions {
+		err = dbconfig.DB.UpdateFetchRestriction(r.Context(), database.UpdateFetchRestrictionParams{
+			Flag:      value.Flag,
+			UpdatedAt: time.Now().UTC(),
+			Field:     value.Field,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
 // POST /api/worker/fetch
 func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	// create database table containing the status of this
@@ -31,6 +115,20 @@ func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *ht
 			RespondWithError(w, http.StatusConflict, err.Error())
 			return
 		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
+// should never be used in production
+
+// PUT /api/shopify/reset_fetch
+func (dbconfig *DbConfig) ResetShopifyFetchHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	err := dbconfig.DB.ResetFetchWorker(context.Background(), "0")
+	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -274,6 +372,7 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 				Name:      price_lists.Name,
 				Value:     utils.ConvertStringToSQL(price_lists.Value),
 				Isdefault: price_lists.IsDefault,
+				UpdatedAt: time.Now().UTC(),
 				Sku:       variant.Sku,
 				Name_2:    price_lists.Name,
 			})

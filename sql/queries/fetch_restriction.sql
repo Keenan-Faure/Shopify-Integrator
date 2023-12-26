@@ -1,5 +1,5 @@
 -- name: CreateFetchRestriction :exec
-INSERT INTO push_restriction(
+INSERT INTO fetch_restriction(
     id,
     field,
     flag,
@@ -10,8 +10,11 @@ INSERT INTO push_restriction(
 );
 
 -- name: UpdateFetchRestriction :exec
-UPDATE push_restriction
+UPDATE fetch_restriction
 SET
     flag = $1,
     updated_at = $2
 WHERE field = $3;
+
+-- name: GetFetchRestriction :many
+SELECT * FROM fetch_restriction;

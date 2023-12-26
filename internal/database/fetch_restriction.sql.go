@@ -13,7 +13,7 @@ import (
 )
 
 const createFetchRestriction = `-- name: CreateFetchRestriction :exec
-INSERT INTO push_restriction(
+INSERT INTO fetch_restriction(
     id,
     field,
     flag,
@@ -43,8 +43,41 @@ func (q *Queries) CreateFetchRestriction(ctx context.Context, arg CreateFetchRes
 	return err
 }
 
+const getFetchRestriction = `-- name: GetFetchRestriction :many
+SELECT id, field, flag, created_at, updated_at FROM fetch_restriction
+`
+
+func (q *Queries) GetFetchRestriction(ctx context.Context) ([]FetchRestriction, error) {
+	rows, err := q.db.QueryContext(ctx, getFetchRestriction)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FetchRestriction
+	for rows.Next() {
+		var i FetchRestriction
+		if err := rows.Scan(
+			&i.ID,
+			&i.Field,
+			&i.Flag,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateFetchRestriction = `-- name: UpdateFetchRestriction :exec
-UPDATE push_restriction
+UPDATE fetch_restriction
 SET
     flag = $1,
     updated_at = $2

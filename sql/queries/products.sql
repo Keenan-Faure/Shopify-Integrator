@@ -18,36 +18,36 @@ RETURNING *;
 -- name: UpdateProduct :exec
 UPDATE products
 SET
-    active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
+    active = COALESCE($1, active),
+    title = COALESCE($2, title),
+    body_html = COALESCE($3, body_html),
+    category = COALESCE($4, category),
+    vendor = COALESCE($5, vendor),
+    product_type = COALESCE($6, product_type),
     updated_at = $7
 WHERE product_code = $8;
 
 -- name: UpdateProductByID :exec
 UPDATE products
 SET
-    active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
+    active = COALESCE($1, active),
+    title = COALESCE($2, title),
+    body_html = COALESCE($3, body_html),
+    category = COALESCE($4, category),
+    vendor = COALESCE($5, vendor),
+    product_type = COALESCE($6, product_type),
     updated_at = $7
 WHERE id = $8;
 
 -- name: UpdateProductBySKU :exec
 UPDATE products
 SET
-    active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
+    active = COALESCE($1, active),
+    title = COALESCE($2, title),
+    body_html = COALESCE($3, body_html),
+    category = COALESCE($4, category),
+    vendor = COALESCE($5, vendor),
+    product_type = COALESCE($6, product_type),
     updated_at = $7
 WHERE id = (
     SELECT

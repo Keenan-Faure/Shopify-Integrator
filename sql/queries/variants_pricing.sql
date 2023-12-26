@@ -2,8 +2,8 @@
 INSERT INTO variant_pricing(
     id,
     variant_id,
-    name,
-    value,
+    "name",
+    "value",
     isdefault,
     created_at,
     updated_at
@@ -15,37 +15,38 @@ RETURNING *;
 -- name: UpdateVariantPricing :exec
 UPDATE variant_pricing
 SET
-    name = $1,
-    value = $2,
-    isdefault = $3
+    "name" = COALESCE($1, "name"),
+    "value" = COALESCE($2, "value"),
+    isdefault = COALESCE($3, isdefault),
+    updated_at = $4
 WHERE variant_id IN (
     SELECT id FROM variants
-    WHERE sku = $4
-) AND name = $5;
+    WHERE sku = $5
+) AND "name" = $6;
 
 -- name: GetPriceTierBySKU :one
 SELECT 
-    name,
-    value,
+    "name",
+    "value",
     isdefault
 FROM variant_pricing
 WHERE variant_id IN (
     SELECT id FROM variants
     WHERE sku = $1
-) AND name = $2;
+) AND "name" = $2;
 
 -- name: GetVariantPricing :many
 SELECT 
-    name,
-    value,
+    "name",
+    "value",
     isdefault
 FROM variant_pricing
 WHERE variant_id = $1;
 
 -- name: GetVariantPricingBySKU :many
 SELECT
-    name,
-    value,
+    "name",
+    "value",
     isdefault
 FROM variant_pricing
 WHERE variant_id IN (

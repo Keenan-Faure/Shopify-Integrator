@@ -17,8 +17,8 @@ const createVariantPricing = `-- name: CreateVariantPricing :one
 INSERT INTO variant_pricing(
     id,
     variant_id,
-    name,
-    value,
+    "name",
+    "value",
     isdefault,
     created_at,
     updated_at
@@ -74,14 +74,14 @@ func (q *Queries) GetCountOfUniquePrices(ctx context.Context) (int32, error) {
 
 const getPriceTierBySKU = `-- name: GetPriceTierBySKU :one
 SELECT 
-    name,
-    value,
+    "name",
+    "value",
     isdefault
 FROM variant_pricing
 WHERE variant_id IN (
     SELECT id FROM variants
     WHERE sku = $1
-) AND name = $2
+) AND "name" = $2
 `
 
 type GetPriceTierBySKUParams struct {
@@ -131,8 +131,8 @@ func (q *Queries) GetUniquePriceTiers(ctx context.Context) ([]string, error) {
 
 const getVariantPricing = `-- name: GetVariantPricing :many
 SELECT 
-    name,
-    value,
+    "name",
+    "value",
     isdefault
 FROM variant_pricing
 WHERE variant_id = $1
@@ -169,8 +169,8 @@ func (q *Queries) GetVariantPricing(ctx context.Context, variantID uuid.UUID) ([
 
 const getVariantPricingBySKU = `-- name: GetVariantPricingBySKU :many
 SELECT
-    name,
-    value,
+    "name",
+    "value",
     isdefault
 FROM variant_pricing
 WHERE variant_id IN (
@@ -221,19 +221,21 @@ func (q *Queries) RemovePricing(ctx context.Context, id uuid.UUID) error {
 const updateVariantPricing = `-- name: UpdateVariantPricing :exec
 UPDATE variant_pricing
 SET
-    name = $1,
-    value = $2,
-    isdefault = $3
+    "name" = COALESCE($1, "name"),
+    "value" = COALESCE($2, "value"),
+    isdefault = COALESCE($3, isdefault),
+    updated_at = $4
 WHERE variant_id IN (
     SELECT id FROM variants
-    WHERE sku = $4
-) AND name = $5
+    WHERE sku = $5
+) AND "name" = $6
 `
 
 type UpdateVariantPricingParams struct {
 	Name      string         `json:"name"`
 	Value     sql.NullString `json:"value"`
 	Isdefault bool           `json:"isdefault"`
+	UpdatedAt time.Time      `json:"updated_at"`
 	Sku       string         `json:"sku"`
 	Name_2    string         `json:"name_2"`
 }
@@ -243,6 +245,7 @@ func (q *Queries) UpdateVariantPricing(ctx context.Context, arg UpdateVariantPri
 		arg.Name,
 		arg.Value,
 		arg.Isdefault,
+		arg.UpdatedAt,
 		arg.Sku,
 		arg.Name_2,
 	)

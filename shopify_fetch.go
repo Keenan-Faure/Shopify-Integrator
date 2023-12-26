@@ -125,6 +125,16 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 					// then we will UPDATE the product
 					// if the `app_fetch_overwrite_products` setting is enabled
 					if internal_product.Sku == product_variant.Sku {
+						// UPDATE PRODUCT: NOTE restrictions will only have effect
+						// on product updates
+
+						// fetch internal database restrictions for current iteration
+						restrictions, err := dbconfig.DB.GetFetchRestriction(context.Background())
+						if err != nil {
+							return err
+						}
+						restrictions_map := FetchRestrictionsToMap(restrictions)
+
 						overwrite := false
 						overwrite_db, err := dbconfig.DB.GetAppSettingByKey(
 							context.Background(),
@@ -155,11 +165,11 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 								}
 								err = dbconfig.DB.UpdateProductBySKU(context.Background(), database.UpdateProductBySKUParams{
 									Active:      "1",
-									Title:       utils.ConvertStringToSQL(product.Title),
-									BodyHtml:    utils.ConvertStringToSQL(product.BodyHTML),
-									Category:    utils.ConvertStringToSQL(category),
-									Vendor:      utils.ConvertStringToSQL(product.Vendor),
-									ProductType: utils.ConvertStringToSQL(product.ProductType),
+									Title:       utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, product.Title, "title")),
+									BodyHtml:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, product.BodyHTML, "body_html")),
+									Category:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, category, "category")),
+									Vendor:      utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, product.Vendor, "vendor")),
+									ProductType: utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, product.ProductType, "product_type")),
 									UpdatedAt:   time.Now().UTC(),
 									Sku:         product_variant.Sku,
 								})
@@ -167,29 +177,47 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 									return err
 								}
 								// update product options
-								if product.Options[0].Name != "Title" {
-									for _, option_value := range product.Options {
-										_, err = dbconfig.DB.UpdateProductOption(
-											context.Background(),
-											database.UpdateProductOptionParams{
-												Name:       option_value.Name,
-												Position:   int32(option_value.Position),
-												ProductID:  internal_product.ProductID,
-												Position_2: int32(option_value.Position),
-											},
-										)
-										if err != nil {
-											return err
+								// check if product options should be updated
+								// only if true should it be updated
+								if DeterFetchRestriction(restrictions_map, "options") {
+									if product.Options[0].Name != "Title" {
+										for _, option_value := range product.Options {
+											_, err = dbconfig.DB.UpdateProductOption(
+												context.Background(),
+												database.UpdateProductOptionParams{
+													Name:       option_value.Name,
+													Position:   int32(option_value.Position),
+													ProductID:  internal_product.ProductID,
+													Position_2: int32(option_value.Position),
+												},
+											)
+											if err != nil {
+												return err
+											}
 										}
 									}
 								}
 							}
 							// update variant
 							err = dbconfig.DB.UpdateVariant(context.Background(), database.UpdateVariantParams{
-								Option1:   utils.ConvertStringToSQL(IgnoreDefaultOption(product_variant.Option1)),
-								Option2:   utils.ConvertStringToSQL(IgnoreDefaultOption(product_variant.Option2)),
-								Option3:   utils.ConvertStringToSQL(IgnoreDefaultOption(product_variant.Option3)),
-								Barcode:   utils.ConvertStringToSQL(product_variant.Barcode),
+								Option1: utils.ConvertStringToSQL(
+									ApplyFetchRestriction(
+										restrictions_map,
+										IgnoreDefaultOption(product_variant.Option1),
+										"options",
+									),
+								),
+								Option2: utils.ConvertStringToSQL(ApplyFetchRestriction(
+									restrictions_map,
+									IgnoreDefaultOption(product_variant.Option2),
+									"options",
+								)),
+								Option3: utils.ConvertStringToSQL(ApplyFetchRestriction(
+									restrictions_map,
+									IgnoreDefaultOption(product_variant.Option3),
+									"options",
+								)),
+								Barcode:   utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, product_variant.Barcode, "barcode")),
 								UpdatedAt: time.Now().UTC(),
 								Sku:       internal_product.Sku,
 							})
@@ -197,109 +225,115 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 								return err
 							}
 							// update variant pricing
-							create_price_tier_enabled := false
-							create_price_tier_enabled_db, err := dbconfig.DB.GetAppSettingByKey(
-								context.Background(),
-								"app_fetch_create_price_tier_enabled",
-							)
-							if err != nil {
-								if err.Error() != "sql: no rows in result set" {
-									return err
-								}
-								create_price_tier_enabled = false
-							}
-							create_price_tier_enabled, err = strconv.ParseBool(create_price_tier_enabled_db.Value)
-							if err != nil {
-								create_price_tier_enabled = false
-							}
-							pricing_name, err := dbconfig.DB.GetShopifySettingByKey(
-								context.Background(),
-								"shopify_default_price_tier",
-							)
-							if err != nil {
-								if err.Error() != "sql: no rows in result set" {
-									return err
-								}
-							}
-							// update only the price that is syncing to Shopify
-							if pricing_name.Value != "" {
-								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_name.Value, product_variant.Price)
+							// check if pricing should be updated
+							if DeterFetchRestriction(restrictions_map, "pricing") {
+								create_price_tier_enabled := false
+								create_price_tier_enabled_db, err := dbconfig.DB.GetAppSettingByKey(
+									context.Background(),
+									"app_fetch_create_price_tier_enabled",
+								)
 								if err != nil {
-									return err
+									if err.Error() != "sql: no rows in result set" {
+										return err
+									}
+									create_price_tier_enabled = false
 								}
-							} else {
-								if create_price_tier_enabled {
-									// price tier is not set
-									// use the default value of `fetch_price`
-									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_price", product_variant.Price)
-									if err != nil {
+								create_price_tier_enabled, err = strconv.ParseBool(create_price_tier_enabled_db.Value)
+								if err != nil {
+									create_price_tier_enabled = false
+								}
+								pricing_name, err := dbconfig.DB.GetShopifySettingByKey(
+									context.Background(),
+									"shopify_default_price_tier",
+								)
+								if err != nil {
+									if err.Error() != "sql: no rows in result set" {
 										return err
 									}
 								}
-							}
-							pricing_compare_name, err := dbconfig.DB.GetShopifySettingByKey(
-								context.Background(),
-								"shopify_default_compare_at_price_tier",
-							)
-							if err != nil {
-								if err.Error() != "sql: no rows in result set" {
-									return err
-								}
-							}
-							// update only the compare price that is syncing to Shopify
-							if pricing_compare_name.Value != "" {
-								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
-								if err != nil {
-									return err
-								}
-							} else {
-								if create_price_tier_enabled {
-									// price tier is not set
-									// use the default value of `fetch_compare_price`
-									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_compare_price", product_variant.CompareAtPrice)
+								// update only the price that is syncing to Shopify
+								if pricing_name.Value != "" {
+									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_name.Value, product_variant.Price)
 									if err != nil {
 										return err
+									}
+								} else {
+									if create_price_tier_enabled {
+										// price tier is not set
+										// use the default value of `fetch_price`
+										err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_price", product_variant.Price)
+										if err != nil {
+											return err
+										}
+									}
+								}
+								pricing_compare_name, err := dbconfig.DB.GetShopifySettingByKey(
+									context.Background(),
+									"shopify_default_compare_at_price_tier",
+								)
+								if err != nil {
+									if err.Error() != "sql: no rows in result set" {
+										return err
+									}
+								}
+								// update only the compare price that is syncing to Shopify
+								if pricing_compare_name.Value != "" {
+									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
+									if err != nil {
+										return err
+									}
+								} else {
+									if create_price_tier_enabled {
+										// price tier is not set
+										// use the default value of `fetch_compare_price`
+										err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_compare_price", product_variant.CompareAtPrice)
+										if err != nil {
+											return err
+										}
 									}
 								}
 							}
 							// check if the product's inventory should be tracked
-							if product_variant.InventoryManagement == "shopify" {
-								shopify_inventory_levels, err := shopifyConfig.GetShopifyInventoryLevels(
-									"",
-									fmt.Sprint(product_variant.InventoryItemID),
-								)
-								if err != nil {
-									return err
-								}
-								// create map for warehouse quantity
-								total_quantity := make(map[string]int)
-								if len(shopify_inventory_levels.InventoryLevels) != 0 {
-									for _, inventory_level := range shopify_inventory_levels.InventoryLevels {
-										warehouse, err := dbconfig.DB.GetShopifyLocationByLocationID(
-											context.Background(),
-											fmt.Sprint(inventory_level.LocationID),
-										)
-										if err != nil {
-											if err.Error() == "sql: no rows in result set" {
-												continue
-											}
-											return err
-										}
-										total_quantity[warehouse.WarehouseName] = total_quantity[warehouse.WarehouseName] + inventory_level.Available
-									}
-								}
-								// only update the warehouses that exist locally
-								for warehouse_name, available := range total_quantity {
-									err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
-										Name:      warehouse_name,
-										Value:     utils.ConvertIntToSQL(available),
-										Isdefault: false,
-										UpdatedAt: time.Now().UTC(),
-										Sku:       product_variant.Sku,
-										Name_2:    warehouse_name,
-									})
+							// check if the product's quantities should be updated
+							if DeterFetchRestriction(restrictions_map, "warehousing") {
+								if product_variant.InventoryManagement == "shopify" {
+									shopify_inventory_levels, err := shopifyConfig.GetShopifyInventoryLevels(
+										"",
+										fmt.Sprint(product_variant.InventoryItemID),
+									)
 									if err != nil {
 										return err
+									}
+									// create map for warehouse quantity
+									total_quantity := make(map[string]int)
+									if len(shopify_inventory_levels.InventoryLevels) != 0 {
+										for _, inventory_level := range shopify_inventory_levels.InventoryLevels {
+											warehouse, err := dbconfig.DB.GetShopifyLocationByLocationID(
+												context.Background(),
+												fmt.Sprint(inventory_level.LocationID),
+											)
+											if err != nil {
+												if err.Error() == "sql: no rows in result set" {
+													continue
+												}
+												return err
+											}
+											total_quantity[warehouse.WarehouseName] = total_quantity[warehouse.WarehouseName] + inventory_level.Available
+										}
+									}
+									// only update the warehouses that exist locally
+									for warehouse_name, available := range total_quantity {
+										err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
+											Name:      warehouse_name,
+											Value:     utils.ConvertIntToSQL(available),
+											Isdefault: false,
+											UpdatedAt: time.Now().UTC(),
+											Sku:       product_variant.Sku,
+											Name_2:    warehouse_name,
+										})
+										if err != nil {
+											return err
+										}
 									}
 								}
 							}
@@ -329,6 +363,9 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 							}
 						}
 					} else {
+						// PRODUCT CREATION: Note that the restrictions will have no impact
+						// on a new product at all
+
 						// product and variants can be created if setting is enabled
 						create_fetched_product := false
 						created_fetch_product_db, err := dbconfig.DB.GetAppSettingByKey(
@@ -599,6 +636,7 @@ func AddPricing(
 			Name:      pricing_name,
 			Value:     utils.ConvertStringToSQL(price),
 			Isdefault: false,
+			UpdatedAt: time.Now().UTC(),
 			Sku:       sku,
 			Name_2:    pricing_name,
 		})

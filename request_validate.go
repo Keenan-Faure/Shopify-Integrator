@@ -12,6 +12,51 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Validate: PushRestriction
+func RestrictionValidation(
+	request_settings_map []objects.RestrictionRequest) error {
+	setting_keys := []string{
+		"title",
+		"body_html",
+		"category",
+		"vendor",
+		"product_type",
+		"barcode",
+		"options",
+		"pricing",
+		"warehousing",
+	}
+	for _, map_value := range request_settings_map {
+		found := false
+		if map_value.Field == "" {
+			return errors.New("settings key cannot be blank")
+		}
+		for _, value := range setting_keys {
+			if map_value.Field == strings.ToLower(value) {
+				found = true
+			}
+		}
+		if !found {
+			return errors.New("restriction " + map_value.Field + " not allowed")
+		}
+	}
+	return nil
+}
+
+// Decode: PushRestriction
+func DecodeRestriction(dbconfig *DbConfig, r *http.Request) ([]objects.RestrictionRequest, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := []objects.RestrictionRequest{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
+		return []objects.RestrictionRequest{}, err
+	}
+	return params, nil
+}
+
 // Validate: InsertGlobalWarehouse
 func GlobalWarehouseValidation(warehouse objects.RequestGlobalWarehouse) error {
 	if warehouse.Name == "" {

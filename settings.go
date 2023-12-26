@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 	"utils"
-
-	"github.com/google/uuid"
 )
 
 // GET /api/settings
@@ -43,7 +41,7 @@ func (dbconfig *DbConfig) GetAppSettingValue(
 	}
 }
 
-// POST /api/settings
+// PUT /api/settings
 func (dbconfig *DbConfig) AddAppSetting(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	setting_keys := utils.GetAppSettings("app")
 	app_settings_map, err := DecodeSettings(r)
@@ -57,29 +55,14 @@ func (dbconfig *DbConfig) AddAppSetting(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	for _, setting := range app_settings_map {
-		err = dbconfig.DB.AddAppSetting(r.Context(), database.AddAppSettingParams{
-			ID:          uuid.New(),
-			Key:         setting.Key,
-			Description: setting_keys[strings.ToUpper(setting.Key)],
-			Value:       setting.Value,
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
+		err = dbconfig.DB.UpdateAppSetting(r.Context(), database.UpdateAppSettingParams{
+			Value:     setting.Value,
+			UpdatedAt: time.Now().UTC(),
+			Key:       setting.Key,
 		})
 		if err != nil {
-			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				err = dbconfig.DB.UpdateAppSetting(r.Context(), database.UpdateAppSettingParams{
-					Value:     setting.Value,
-					UpdatedAt: time.Now().UTC(),
-					Key:       setting.Key,
-				})
-				if err != nil {
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
-					return
-				}
-			} else {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
-				return
-			}
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
 		}
 	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
@@ -143,7 +126,7 @@ func (dbconfig *DbConfig) GetShopifySettingValue(
 	}
 }
 
-// POST /api/shopify/settings
+// PUT /api/shopify/settings
 func (dbconfig *DbConfig) AddShopifySetting(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	setting_keys := utils.GetAppSettings("shopify")
 	shopify_settings_map, err := DecodeSettings(r)
@@ -157,29 +140,14 @@ func (dbconfig *DbConfig) AddShopifySetting(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	for _, setting := range shopify_settings_map {
-		err = dbconfig.DB.AddShopifySetting(r.Context(), database.AddShopifySettingParams{
-			ID:          uuid.New(),
-			Key:         setting.Key,
-			Description: setting_keys[strings.ToUpper(setting.Key)],
-			Value:       setting.Value,
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
+		err = dbconfig.DB.UpdateShopifySetting(r.Context(), database.UpdateShopifySettingParams{
+			Value:     setting.Value,
+			UpdatedAt: time.Now().UTC(),
+			Key:       setting.Key,
 		})
 		if err != nil {
-			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				err = dbconfig.DB.UpdateShopifySetting(r.Context(), database.UpdateShopifySettingParams{
-					Value:     setting.Value,
-					UpdatedAt: time.Now().UTC(),
-					Key:       setting.Key,
-				})
-				if err != nil {
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
-					return
-				}
-			} else {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
-				return
-			}
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
 		}
 	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{

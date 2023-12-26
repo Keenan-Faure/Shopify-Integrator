@@ -69,6 +69,15 @@ func (q *Queries) GetFetchWorker(ctx context.Context) (FetchWorker, error) {
 	return i, err
 }
 
+const resetFetchWorker = `-- name: ResetFetchWorker :exec
+UPDATE fetch_worker SET status = $1
+`
+
+func (q *Queries) ResetFetchWorker(ctx context.Context, status string) error {
+	_, err := q.db.ExecContext(ctx, resetFetchWorker, status)
+	return err
+}
+
 const updateFetchWorker = `-- name: UpdateFetchWorker :exec
 UPDATE fetch_worker
 SET
