@@ -1,4 +1,4 @@
--- name: CreatePushReestriction :exec
+-- name: CreatePushRestriction :exec
 INSERT INTO push_restriction(
     id,
     field,

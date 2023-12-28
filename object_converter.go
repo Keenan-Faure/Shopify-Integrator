@@ -265,6 +265,29 @@ func ConvertVariantToShopify(variant objects.ProductVariant) objects.ShopifyVari
 	}
 }
 
+// Convert objects.Variant into objects.ShopifyVariant
+func ConvertVariantToShopifyVariant(variant objects.ProductVariant) objects.ShopifyProdVariant {
+	return objects.ShopifyProdVariant{
+		ID:                   0,
+		ProductID:            0,
+		Title:                "",
+		Price:                "0",
+		Sku:                  variant.Sku,
+		Position:             0,
+		InventoryPolicy:      "",
+		CompareAtPrice:       "0",
+		InventoryManagement:  "",
+		Option1:              variant.Option1,
+		Option2:              variant.Option2,
+		Option3:              variant.Option3,
+		Barcode:              variant.Barcode,
+		Grams:                0,
+		InventoryItemID:      0,
+		InventoryQuantity:    0,
+		OldInventoryQuantity: 0,
+	}
+}
+
 // Compiles the ShopifyOptions array
 func CompileShopifyOptions(product objects.Product) []objects.ShopifyOptions {
 	shopify_options := []objects.ShopifyOptions{}

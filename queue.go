@@ -504,18 +504,27 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return err
 		}
+		restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+		if err != nil {
+			return err
+		}
+		shopify_update_variant := ApplyPushRestrictionV(
+			PushRestrictionsToMap(restrictions),
+			ConvertVariantToShopifyVariant(variant),
+		)
 		if queue_item.Instruction == "add_variant" {
 			return dbconfig.PushVariant(
 				&shopifyConfig,
 				variant,
+				shopify_update_variant,
 				queue_object.Shopify.ProductID,
 				queue_object.Shopify.VariantID,
 			)
-
 		} else if queue_item.Instruction == "update_variant" {
 			return dbconfig.PushVariant(
 				&shopifyConfig,
 				variant,
+				shopify_update_variant,
 				queue_object.Shopify.ProductID,
 				queue_object.Shopify.VariantID,
 			)

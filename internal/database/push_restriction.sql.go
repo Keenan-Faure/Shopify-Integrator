@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const createPushReestriction = `-- name: CreatePushReestriction :exec
+const createPushRestriction = `-- name: CreatePushRestriction :exec
 INSERT INTO push_restriction(
     id,
     field,
@@ -24,7 +24,7 @@ INSERT INTO push_restriction(
 )
 `
 
-type CreatePushReestrictionParams struct {
+type CreatePushRestrictionParams struct {
 	ID        uuid.UUID `json:"id"`
 	Field     string    `json:"field"`
 	Flag      string    `json:"flag"`
@@ -32,8 +32,8 @@ type CreatePushReestrictionParams struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (q *Queries) CreatePushReestriction(ctx context.Context, arg CreatePushReestrictionParams) error {
-	_, err := q.db.ExecContext(ctx, createPushReestriction,
+func (q *Queries) CreatePushRestriction(ctx context.Context, arg CreatePushRestrictionParams) error {
+	_, err := q.db.ExecContext(ctx, createPushRestriction,
 		arg.ID,
 		arg.Field,
 		arg.Flag,

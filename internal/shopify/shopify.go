@@ -290,7 +290,7 @@ func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.
 // Adds a product variant on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#post-products-product-id-variants
 func (configShopify *ConfigShopify) AddVariantShopify(
-	variant objects.ShopifyVariant,
+	variant objects.ShopifyProdVariant,
 	product_id string) (objects.ShopifyVariantResponse, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
@@ -322,7 +322,7 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 // Updates a product variant on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#put-variants-variant-id
 func (configShopify *ConfigShopify) UpdateVariantShopify(
-	variant objects.ShopifyVariant,
+	variant objects.ShopifyProdVariant,
 	variant_id string) (objects.ShopifyVariantResponse, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)

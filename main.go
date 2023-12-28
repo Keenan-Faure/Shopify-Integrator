@@ -61,6 +61,49 @@ func main() {
 		QueueWorker(&dbCon)
 	}
 	fmt.Println("starting API")
+	// product := objects.ShopifyProduct{
+	// 	ShopifyProd: objects.ShopifyProd{
+	// 		Title:    "I am a title",
+	// 		BodyHTML: "body_html",
+	// 		Vendor:   "",
+	// 		Type:     "easy",
+	// 		Status:   "",
+	// 		Variants: []objects.ShopifyProdVariant{
+	// 			{
+	// 				ID:                   0,
+	// 				ProductID:            0,
+	// 				Title:                "",
+	// 				Price:                "",
+	// 				Sku:                  "",
+	// 				Position:             0,
+	// 				InventoryPolicy:      "",
+	// 				CompareAtPrice:       "",
+	// 				InventoryManagement:  "",
+	// 				Option1:              "",
+	// 				Option2:              "",
+	// 				Option3:              "",
+	// 				Barcode:              "90",
+	// 				Grams:                0,
+	// 				InventoryItemID:      0,
+	// 				InventoryQuantity:    0,
+	// 				OldInventoryQuantity: 0,
+	// 			},
+	// 		},
+	// 		Options: []objects.ShopifyOptions{},
+	// 	},
+	// }
+	// restrictions, err := dbCon.DB.GetPushRestriction(context.Background())
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// nw_product := ApplyPushRestrictionProduct(PushRestrictionsToMap(restrictions), product)
+	// nw_product.Variants = append(nw_product.Variants, ApplyPushRestrictionV(PushRestrictionsToMap(restrictions), product.Variants[0]))
+	// var buffer bytes.Buffer
+	// err = json.NewEncoder(&buffer).Encode(nw_product)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println(buffer.String())
 	setupAPI(dbCon, shopifyConfig)
 }
 
