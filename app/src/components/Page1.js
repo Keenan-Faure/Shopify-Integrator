@@ -97,8 +97,7 @@ function Page1(props)
         let C_filter = document.getElementById("clear_filter");
         let filter_input = document.querySelectorAll(".filter-selection-main");
         let close = document.querySelectorAll(".close-filter");
-        let main = document.querySelector(".main");
-        let filter_main = document.querySelector(".filter");
+
 
         filter_button.disabled = true;
         C_filter.disabled = true;
@@ -568,17 +567,17 @@ function Page1(props)
             <div className = "filter" style = {{display: props.filter_display}}>
                 <div className = "filter-title"><b>Available Filters:</b></div>
                 <div className = "filter-elements">
-                    Filter By Type
+                    <div className = "filter-elements-text">Filter By Type</div>
                     <div className = "filter-img"/>
                     <div className = "type"></div>
                 </div>
                 <div className = "filter-elements">
-                    Filter By Vendor
+                    <div className = "filter-elements-text">Filter By Type</div>
                     <div className = "filter-img"/>
                     <div className = "vendor"></div>
                 </div>
                 <div className = "filter-elements">
-                    Filter By Category
+                    <div className = "filter-elements-text">Filter By Type</div>
                     <div className = "filter-img"/>
                     <div className = "category"></div>
                 </div>
@@ -591,7 +590,7 @@ function Page1(props)
 
                 <br/><br/><br/>
                 <div className = "filter-title"><b>Product Sync</b></div>
-                <div className = "retry-sync">Fetch Products</div>
+                <div className = "retry-sync"><div className = "filter-elements-text">Fetch Products</div></div>
             </div>
             <div className = "filter-selection-main">
                 <div className = "filter-input">

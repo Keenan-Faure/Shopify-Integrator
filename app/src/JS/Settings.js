@@ -40,6 +40,7 @@ function Settings()
             .done(function( _data) 
             {
                 console.log(_data);
+
                 for(let i = 0; i < _data.warehouses.length; i++)
                 {
                     warehouse_locations[i] = _data.warehouses[i].name;
@@ -80,6 +81,15 @@ function Settings()
                     .done(function( _data) 
                     {
                         console.log(_data);
+                        let info = document.getElementById("info-message");
+                        info.innerHTML = "success";
+                        info.style.display = "block";  
+                        info.style.color = "white";
+                        info.style.backgroundColor = "#1a5e12";
+                        setTimeout(() => 
+                        {
+                            info.style.display = "none";  
+                        }, 2000);
                     })
                     .fail( function(xhr) 
                     {
@@ -206,7 +216,10 @@ function Settings()
                 });
             }
         })
-        .fail( function(xhr) { alert(xhr.responseText); });
+        .fail( function(xhr) 
+        { 
+            alert(xhr.responseText); 
+        });
 
         /*  API INITIAL-REQUEST for SHOPIFY_SETTINGS*/
         $.get("http://localhost:8080/api/shopify/settings", [], [])
@@ -251,15 +264,13 @@ function Settings()
                 });
             }
         })
-        .fail( function(xhr) { alert(xhr.responseText); });
+        .fail( function(xhr) 
+        { 
+            alert(xhr.responseText); 
+        });
 
-        /* EDIT SETTINGS FEATURES */
         let edit = document.getElementById("edit");
         let confirm_line = document.querySelector(".confirm-line");
-        edit.addEventListener("click", () =>
-        {
-            confirm_line.style.display = "block";
-        });
     
         let confirm = document.getElementById("confirm");
         confirm.addEventListener("click", () =>
@@ -403,6 +414,16 @@ function Settings()
             .done(function( _data) 
             {
                 console.log(_data);
+
+                let info = document.getElementById("info-message");
+                info.innerHTML = "success";
+                info.style.display = "block";  
+                info.style.color = "white";
+                info.style.backgroundColor = "#1a5e12";
+                setTimeout(() => 
+                {
+                    info.style.display = "none";  
+                }, 2000);
             })
             .fail( function(xhr) 
             {
@@ -414,6 +435,15 @@ function Settings()
             .done(function( _data) 
             {
                 console.log(_data);
+                let info = document.getElementById("info-message");
+                info.innerHTML = "success";
+                info.style.display = "block";  
+                info.style.color = "white";
+                info.style.backgroundColor = "#1a5e12";
+                setTimeout(() => 
+                {
+                    info.style.display = "none";  
+                }, 2000);
             })
             .fail( function(xhr) 
             {
@@ -447,6 +477,17 @@ function Settings()
             .done(function( _data) 
             {
                 console.log(_data);
+
+                let info = document.getElementById("info-message");
+                info.innerHTML = _data.message;
+                info.style.display = "block"; 
+                info.style.color = "white";
+                info.style.backgroundColor = "#1a5e12";
+                setTimeout(() => 
+                {
+                    info.style.display = "none";  
+                }, 2000);
+
                 data = _data.message;
             })
             .fail( function(xhr) 
@@ -458,9 +499,42 @@ function Settings()
                 copyText = data;
                 navigator.clipboard.writeText(copyText);
                 webhook_button.innerHTML = "Copied!";
-                
             }); 
         });
+
+        /* Adds a new Warehouse */
+        let warehouse_button = document.getElementById("new_warehouse");
+        warehouse_button.addEventListener("click", () =>
+        {
+            let _input = document.getElementById("ware_").value;
+
+            let body =
+            {
+                name: _input
+            }
+
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.post("http://localhost:8080/api/inventory/warehouse?reindex=false", JSON.stringify(body), [], 'json')
+            .done(function( _data) 
+            {
+                console.log(_data);
+                let info = document.getElementById("info-message");
+                info.innerHTML = _data.message;
+                info.style.display = "block";  
+                info.style.color = "white";
+                info.style.backgroundColor = "#1a5e12"; 
+                setTimeout(() => 
+                {
+                    info.style.display = "none";  
+                }, 2000);           
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+        });
+
 
         setTimeout(() =>
         {
@@ -535,6 +609,14 @@ function Settings()
             .done(function( _data) 
             {
                 console.log(_data);
+                let info = document.getElementById("info-message");
+                info.innerHTML = _data;
+                info.style.display = "block";
+                info.style.color = "white";
+                setTimeout(() => 
+                {
+                    info.style.display = "none";  
+                }, 2000);
                 if(document.querySelector(".warehouse-mapp") != null)
                 {
                     document.querySelector(".warehouse-mapp").remove();
@@ -545,7 +627,7 @@ function Settings()
                     div.style.display = "block";
                     _main.appendChild(div);
                     root = createRoot(div);
-                    root.render(<Detailed_table table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
+                    root.render(<Detailed_table key={_data.title} table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
                     Shopify_Location_ID={el.shopify_location_id} id={el.id} 
                     Shopify_Warehouse_Name ={el.shopify_warehouse_name} Warehouse_Name={el.warehouse_name} />)}
                     />)
@@ -558,7 +640,7 @@ function Settings()
                     div.style.display = "block";
                     _main.appendChild(div);
                     root = createRoot(div);
-                    root.render(<Detailed_table table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
+                    root.render(<Detailed_table key={_data.title} table={_data.map((el, i) => <Detailed_warehousing Created_At={el.created_at} 
                     Shopify_Location_ID={el.shopify_location_id} id={el.id} 
                     Shopify_Warehouse_Name ={el.shopify_warehouse_name} Warehouse_Name={el.warehouse_name} />)}
                     />)
@@ -591,13 +673,12 @@ function Settings()
         <div id = "_main">
             <div className = "main-container">
                 <div className = "settings">
-                    <button className = "submiit" id = "edit" style = {{zIndex: '2', top: '55px'}}>Edit Settings</button>
                     <div className = "app-settings" style= {{position: 'relative', top:'15px'}}>
-                        <div className = "title">App Settings</div>
+                        <div className = "title" style = {{marginTop: '20px'}}>App Settings</div>
                         <div className = "_app">
                             <div className = "setting" style = {{height: '220px', fontSize: '12px'}}>
                                 <div className = "setting-title">Warehouse Location</div>
-                                <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the location warehousing required for the products displayed</div>
+                                <div className = "setting-details description" style = {{textAlign: 'center', backgroundColor: 'transparent'}}>Configures the location warehousing required for the products displayed</div>
                                 <button className = "mini-setting" style ={{width: '20%'}} id = "warehouse_map">Current Warehouse Map</button>
                                 <button className = "button-on-off" style = {{width: '90px'}}id="fetch-button">Fetch shopify locations</button>
                                 
@@ -615,15 +696,26 @@ function Settings()
                                         </tr>
                                     </tbody>
                                 </table>
-
                             </div>
+                            
+                            <div className = "setting_ware">
+                                <div className = "setting-title" style ={{top: '-14px'}}>Add Warehouse</div>
+                                <div className = "setting-details description" style = {{textAlign: 'center', backgroundColor: 'transparent'}}>
+                                    Adds a new Warehouse to the list of existing Warehouses
+                                </div>
+                                <div className="webhook_div" style= {{margin:  'auto',maxWidth: '300px'}}>
+                                    <input id = "ware_" type="text" placeholder = "Warehouse Name..." name = "new_warehouse" style= {{color: 'black'}}/>
+                                    <button id = "new_warehouse" className = "button-on-off" type="button">Create</button>
+                                </div>
+                            </div>
+
                             <div className = "setting" id = "setting1">
                                 <div className = "setting-title" style ={{top: '-14px'}}>Webhook Configuration
                                     <div className="info_icon" title="The forwarding url can be found in your ngrok dashboard."></div>
                                 </div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
                                 <div className="webhook_div" style= {{margin:  'auto',maxWidth: '300px'}}>
-                                    <input type="text" placeholder = "Domain Name..." name = "search2" />
+                                    <input type="text" placeholder = "Domain Name..." name = "search2" style= {{color: 'black'}}/>
                                     <button id = "_webhook" className = "button-on-off" type="button">Create</button>
                                 </div>
                             </div>
@@ -652,9 +744,8 @@ function Settings()
                 <button className="tablink" id = "confirm" style ={{left: '50%'}}>Save</button>
             </div>
             <div className = 'rtn-button' style={{display: 'none'}}/>
-            <div className = "warehouse-mapp">
-                
-            </div>
+            <div className = "warehouse-mapp"></div>
+            <div className = "info-message" id = "info-message"></div>
             
         </div>
     );

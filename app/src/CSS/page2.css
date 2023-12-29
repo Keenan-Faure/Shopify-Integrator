@@ -58,7 +58,7 @@
     border-bottom: 1px solid aliceblue; 
     color: white;
 }
-.setting, .setting_main 
+.setting, .setting_main, .setting_ware 
 {
     position: relative;
     margin-top: 15px;

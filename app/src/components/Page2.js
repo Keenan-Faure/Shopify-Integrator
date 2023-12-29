@@ -566,17 +566,17 @@ function Page2(props)
             <div className = "filter" style = {{display: props.filter_display}}>
                 <div className = "filter-title"><b>Available Filters:</b></div>
                 <div className = "filter-elements">
-                    Filter By Order
+                    <div className = "filter-elements-text">Filter By Order</div>
                     <div className = "filter-img"/>
                     <div className = "order"></div>
                 </div>
                 <div className = "filter-elements" disabled>
-                    Filter By Product
+                    <div className = "filter-elements-text">Filter By Product</div>
                     <div className = "filter-img"/>
                     <div className = "product"></div>
                 </div>
                 <div className = "filter-elements" disabled>
-                    Filter By Customer
+                    <div className = "filter-elements-text">Filter By Customer</div>
                     <div className = "filter-img"/>
                     <div className = "customer"></div>
                 </div>
