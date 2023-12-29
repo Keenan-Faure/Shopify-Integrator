@@ -116,8 +116,10 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 			Offset: (int32(page) * 10),
 		})
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
+			if err.Error() != "sql: no rows in result set" {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 		if len(queue_items) == 0 {
 			break

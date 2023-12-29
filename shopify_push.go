@@ -505,7 +505,9 @@ func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUs
 	}
 	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product.ProductCode)
 	if err != nil {
-		return err
+		if err.Error() != "sql: no rows in result set" {
+			return err
+		}
 	}
 	queue_item_object := objects.RequestQueueItemProducts{
 		SystemProductID: product.ID.String(),
@@ -548,11 +550,15 @@ func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVarian
 	}
 	variant_id, err := dbconfig.DB.GetVIDBySKU(context.Background(), variant.Sku)
 	if err != nil {
-		return err
+		if err.Error() != "sql: no rows in result set" {
+			return err
+		}
 	}
 	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product.ProductCode)
 	if err != nil {
-		return err
+		if err.Error() != "sql: no rows in result set" {
+			return err
+		}
 	}
 	queue_item_object := objects.RequestQueueItemProducts{
 		SystemProductID: product.ID.String(),
