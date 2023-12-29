@@ -24,7 +24,10 @@ func PushRestrictionsToMap(push_map []database.PushRestriction) map[string]strin
 	return mapp
 }
 
-// Applies the database restriction to the product and returns it
+// Determines whether a field should be updated or not
+// by default if the `restriction_type“ value inside the `restrictions“
+// map is set to `app` or not
+// NOTE: the field will NOT be updated if it is set to app
 func ApplyFetchRestriction(
 	restrictions map[string]string,
 	value,
@@ -51,8 +54,9 @@ func ApplyFetchRestriction(
 }
 
 // Determines whether a field should be updated or not
-// by default if a key does not exist in the database
-// it updates the shopify value with the app value during a push
+// by default if the `restriction_type` value inside the `restrictions`
+// map is set to `app` or not
+// NOTE: the field will be updated if it is set to app
 func DeterPushRestriction(
 	restrictions map[string]string,
 	restriction_type string,

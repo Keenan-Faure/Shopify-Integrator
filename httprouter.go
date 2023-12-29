@@ -154,7 +154,7 @@ func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.R
 		// check if the warehouse exists internally
 		warehouse_db, err := dbconfig.DB.GetWarehouseByName(r.Context(), warehouse.Name)
 		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
+			if err.Error() != "sql: no rows in result set" {
 				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 			} else {
@@ -398,6 +398,18 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 	updated_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	err = CompileInstructionProduct(dbconfig, updated_data, dbUser)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for _, variant := range updated_data.Variants {
+		err = CompileInstructionVariant(dbconfig, variant, updated_data, dbUser)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 	RespondWithJSON(w, http.StatusOK, updated_data)
 }
@@ -949,7 +961,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			ApiKey:      dbUser.ApiKey,
 			Method:      http.MethodPost,
 			Object:      order_body,
-		}, nil)
+		})
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 			return
@@ -964,7 +976,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			ApiKey:      dbUser.ApiKey,
 			Method:      http.MethodPost,
 			Object:      order_body,
-		}, &buffer)
+		})
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 			return
@@ -1068,7 +1080,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
-		log.Println("1: " + err.Error())
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
@@ -1080,7 +1091,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			Position:  int32(key + 1),
 		})
 		if err != nil {
-			log.Println("2: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
@@ -1099,7 +1109,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
-			log.Println("3: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
@@ -1115,7 +1124,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				UpdatedAt: time.Now().UTC(),
 			})
 			if err != nil {
-				log.Println("4: " + err.Error())
 				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
@@ -1143,24 +1151,36 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				Name_2:    warehouse_name,
 			})
 			if err != nil {
-				log.Println("5: " + err.Error())
 				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
 		}
 		if err != nil {
-			log.Println("6: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
-	// TODO is it necessary to respond with the created product data
 	product_added, err := CompileProductData(dbconfig, product.ID, r.Context(), false)
 	if err != nil {
-		log.Println("7: " + err.Error())
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
-	RespondWithJSON(w, http.StatusCreated, product_added)
+	// queue new products to be added to shopify
+	err = CompileInstructionProduct(dbconfig, product_added, dbUser)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for _, variant := range product_added.Variants {
+		err = CompileInstructionVariant(dbconfig, variant, product_added, dbUser)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // GET /api/customers/search?q=value
@@ -1328,17 +1348,12 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
 		return
 	}
-	sku_search, err := dbconfig.DB.GetProductsSearchSKU(r.Context(), utils.ConvertStringToLike(search_query))
+	search, err := dbconfig.DB.GetProductsSearch(r.Context(), utils.ConvertStringToLike(search_query))
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), utils.ConvertStringToSQL(utils.ConvertStringToLike(search_query)))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	compiled, err := CompileSearchResult(dbconfig, r.Context(), sku_search, title_search)
+	compiled, err := CompileSearchResult(dbconfig, r.Context(), search)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -1399,7 +1414,9 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 
 // POST /api/login
 func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	RespondWithJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	RespondWithJSON(w, http.StatusOK, objects.RequestString{
+		Message: "success",
+	})
 }
 
 // POST /api/preregister

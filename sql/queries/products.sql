@@ -71,7 +71,7 @@ FROM products
 WHERE id = $1;
 
 -- name: GetProductByProductCode :one
-SELECT
+SELECT DISTINCT
     active,
     product_code,
     title,
@@ -84,7 +84,7 @@ FROM products
 WHERE product_code = $1;
 
 -- name: GetProductsByCategory :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -95,11 +95,11 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE category LIKE $1
+WHERE category ILIKE $1
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductsByVendor :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -110,11 +110,11 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE vendor LIKE $1
+WHERE vendor ILIKE $1
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductsByType :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -125,11 +125,11 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE product_type LIKE $1
+WHERE product_type ILIKE $1
 LIMIT $2 OFFSET $3;
 
 -- name: GetProductByCategoryAndType :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -140,12 +140,12 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE category LIKE $1
-AND product_type LIKE $2
+WHERE category ILIKE $1
+AND product_type ILIKE $2
 LIMIT $3 OFFSET $4;
 
 -- name: GetProductsByTypeAndVendor :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -156,12 +156,12 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE product_type LIKE $1
-AND vendor LIKE $2
+WHERE product_type ILIKE $1
+AND vendor ILIKE $2
 LIMIT $3 OFFSET $4;
 
 -- name: GetProductsByVendorAndCategory :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -172,12 +172,12 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE vendor LIKE $1
-AND category LIKE $2
+WHERE vendor ILIKE $1
+AND category ILIKE $2
 LIMIT $3 OFFSET $4;
 
 -- name: GetProductsFilter :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -188,12 +188,12 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE category LIKE $1
-AND product_type LIKE $2
-AND vendor LIKE $3
+WHERE category ILIKE $1
+AND product_type ILIKE $2
+AND vendor ILIKE $3
 LIMIT $4 OFFSET $5;
 
--- name: GetProductsSearchSKU :many
+-- name: GetProductsSearch :many
 SELECT
     p.id,
     p.active,
@@ -206,10 +206,8 @@ SELECT
 FROM products p
 INNER JOIN variants v
     ON p.id = v.product_id
-WHERE v.sku LIKE $1
-LIMIT 5;
-
--- name: GetProductsSearchTitle :many
+WHERE v.sku ILIKE $1
+UNION
 SELECT
     id,
     active,
@@ -220,8 +218,7 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE title LIKE $1
-LIMIT 5;
+WHERE title ILIKE $1;
 
 -- name: GetProducts :many
 SELECT

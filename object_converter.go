@@ -741,26 +741,9 @@ func CompileProductImages(
 func CompileSearchResult(
 	dbconfig *DbConfig,
 	ctx context.Context,
-	sku []database.GetProductsSearchSKURow,
-	title []database.GetProductsSearchTitleRow) ([]objects.SearchProduct, error) {
+	search []database.GetProductsSearchRow) ([]objects.SearchProduct, error) {
 	response := []objects.SearchProduct{}
-	for _, value := range sku {
-		images, err := CompileProductImages(value.ID, ctx, dbconfig)
-		if err != nil {
-			return response, err
-		}
-		response = append(response, objects.SearchProduct{
-			ID:          value.ID,
-			Active:      value.Active,
-			Images:      images,
-			Title:       value.Title.String,
-			Category:    value.Category.String,
-			ProductType: value.ProductType.String,
-			Vendor:      value.Vendor.String,
-			UpdatedAt:   value.UpdatedAt,
-		})
-	}
-	for _, value := range title {
+	for _, value := range search {
 		images, err := CompileProductImages(value.ID, ctx, dbconfig)
 		if err != nil {
 			return response, err

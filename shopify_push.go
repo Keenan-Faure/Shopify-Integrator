@@ -241,6 +241,11 @@ func PushAddShopify(
 	shopifyProduct objects.ShopifyProduct,
 	update_shopify_product objects.ShopifyProduct,
 ) error {
+	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+	if err != nil {
+		return err
+	}
+	restrictions_map := PushRestrictionsToMap(restrictions)
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
@@ -260,6 +265,7 @@ func PushAddShopify(
 				configShopify,
 				product.Variants[key],
 				update_shopify_product.Variants[key],
+				restrictions_map,
 				fmt.Sprint(product_data.Product.ID),
 				fmt.Sprint(product_data.Product.Variants[key].ID))
 		}
@@ -294,6 +300,7 @@ func PushAddShopify(
 				configShopify,
 				product.Variants[key],
 				update_shopify_product.Variants[key],
+				restrictions_map,
 				fmt.Sprint(product_data.Product.ID),
 				fmt.Sprint(product_data.Product.Variants[key].ID))
 		}
@@ -360,6 +367,7 @@ func (dbconfig *DbConfig) PushVariant(
 	configShopify *shopify.ConfigShopify,
 	variant objects.ProductVariant,
 	product_variant objects.ShopifyProdVariant,
+	restrictions map[string]string,
 	shopify_product_id string,
 	shopify_variant_id string,
 ) error {
@@ -389,7 +397,14 @@ func (dbconfig *DbConfig) PushVariant(
 			}
 			return err
 		}
-		return dbconfig.PushProductInventory(configShopify, variant)
+		// determine if warehousing should be updated
+		if DeterPushRestriction(restrictions, "warehousing") {
+			err = dbconfig.PushProductInventory(configShopify, variant)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	price, err := dbconfig.ShopifyVariantPricing(variant, "default_price_tier")
 	if err != nil {
@@ -506,14 +521,14 @@ func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUs
 	queue_item.Object = queue_item_object
 	if product_id.ShopifyProductID == "" {
 		// add product
-		_, err := dbconfig.QueueHelper(queue_item, nil)
+		_, err := dbconfig.QueueHelper(queue_item)
 		if err != nil {
 			return err
 		}
 	} else {
 		// update product
 		queue_item.Instruction = "update_product"
-		_, err := dbconfig.QueueHelper(queue_item, nil)
+		_, err := dbconfig.QueueHelper(queue_item)
 		if err != nil {
 			return err
 		}
@@ -553,7 +568,7 @@ func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVarian
 	queue_item.Object = queue_item_object
 	if variant_id.ShopifyVariantID == "" {
 		// since its blank we should do an add instruction
-		_, err := dbconfig.QueueHelper(queue_item, nil)
+		_, err := dbconfig.QueueHelper(queue_item)
 		if err != nil {
 			return err
 		}
@@ -561,7 +576,7 @@ func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVarian
 		// update instruction
 		// get the object body
 		queue_item.Instruction = "update_variant"
-		_, err := dbconfig.QueueHelper(queue_item, nil)
+		_, err := dbconfig.QueueHelper(queue_item)
 		if err != nil {
 			return err
 		}

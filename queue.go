@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"integrator/internal/database"
 	"io"
 	"log"
@@ -56,7 +55,6 @@ func LoopQueueWorker(dbconfig *DbConfig) {
 			queue_enabled = false
 		}
 		if queue_enabled {
-			fmt.Println("running queue worker...")
 			QueueWaitGroup(dbconfig)
 		}
 	}
@@ -89,9 +87,10 @@ func QueueWaitGroup(dbconfig *DbConfig) {
 	waitgroup.Wait()
 }
 
-// Pushes all products in database to Shopify
+// POST /api/shopify/sync
 func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	// check if the syncro queue item exists in the queue already
+	// if it does then it should throw an error
 	item, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(r.Context(), database.GetQueueItemsByInstructionAndStatusParams{
 		Instruction: "zsync_channel",
 		Status:      "in-queue",
@@ -99,8 +98,10 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 		Offset:      0,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		if err.Error() != "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 	if len(item) != 0 {
 		RespondWithError(w, http.StatusInternalServerError, "sync in progress")
@@ -151,7 +152,7 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 		ApiKey:      dbUser.ApiKey,
 		Method:      http.MethodPost,
 		Object:      nil,
-	}, nil)
+	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -508,8 +509,9 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return err
 		}
+		restrictions_map := PushRestrictionsToMap(restrictions)
 		shopify_update_variant := ApplyPushRestrictionV(
-			PushRestrictionsToMap(restrictions),
+			restrictions_map,
 			ConvertVariantToShopifyVariant(variant),
 		)
 		if queue_item.Instruction == "add_variant" {
@@ -517,6 +519,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 				&shopifyConfig,
 				variant,
 				shopify_update_variant,
+				restrictions_map,
 				queue_object.Shopify.ProductID,
 				queue_object.Shopify.VariantID,
 			)
@@ -525,6 +528,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 				&shopifyConfig,
 				variant,
 				shopify_update_variant,
+				restrictions_map,
 				queue_object.Shopify.ProductID,
 				queue_object.Shopify.VariantID,
 			)
@@ -698,7 +702,7 @@ func FailedQueueItem(dbconfig *DbConfig, queue_item database.QueueItem, err_r er
 }
 
 // Helper function: Posts internal requests to the queue endpoint
-func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, body io.Reader) (objects.ResponseQueueItem, error) {
+func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper) (objects.ResponseQueueItem, error) {
 	httpClient := http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -709,6 +713,7 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, b
 	}
 	req, err := http.NewRequest(
 		request_data.Method,
+		// TODO change this call to be more dynamic
 		"http://localhost:"+utils.LoadEnv("port")+"/api/"+request_data.Endpoint,
 		&buffer,
 	)
