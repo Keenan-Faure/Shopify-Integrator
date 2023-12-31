@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"integrator/internal/database"
 	"objects"
 )
@@ -68,7 +67,6 @@ func DeterPushRestriction(
 	// include it in the object as a property value
 	// but we return a boolean to indicate this
 
-	fmt.Println(restrictions)
 	if map_value, ok := restrictions[restriction_type]; ok {
 		if map_value == "app" {
 			return true

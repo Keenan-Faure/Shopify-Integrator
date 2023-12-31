@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"integrator/internal/database"
 	"io"
 	"log"
@@ -183,18 +184,18 @@ func (dbconfig *DbConfig) GetQueueItemByID(
 
 // POST /api/queue
 func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user database.User) {
-	queue_size_int := 0
+	queue_size_int := 500
 	queue_size_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_size")
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		queue_size_int = 100
+		queue_size_int = 500
 	}
 	queue_size_int, err = strconv.Atoi(queue_size_db.Value)
 	if err != nil {
-		queue_size_int = 100
+		queue_size_int = 500
 	}
 	size, err := dbconfig.DB.GetQueueSize(context.Background())
 	if err != nil {
@@ -686,6 +687,7 @@ func CheckWorkerType(worker_type string) error {
 			return nil
 		}
 	}
+	fmt.Println(worker_type)
 	return errors.New("invalid worker type")
 }
 
@@ -719,11 +721,11 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper) (
 		"http://localhost:"+utils.LoadEnv("port")+"/api/"+request_data.Endpoint,
 		&buffer,
 	)
-	if request_data.ApiKey != "" {
-		req.Header.Add("Authorization", "ApiKey "+request_data.ApiKey)
-	}
 	if err != nil {
 		return objects.ResponseQueueItem{}, err
+	}
+	if request_data.ApiKey != "" {
+		req.Header.Add("Authorization", "ApiKey "+request_data.ApiKey)
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -735,7 +737,7 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper) (
 		return objects.ResponseQueueItem{}, err
 	}
 	if res.StatusCode != 201 {
-		return objects.ResponseQueueItem{}, err
+		return objects.ResponseQueueItem{}, errors.New(string(respBody))
 	}
 	queue_response := objects.ResponseQueueItem{}
 	err = json.Unmarshal(respBody, &queue_response)

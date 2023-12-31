@@ -540,7 +540,7 @@ func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUs
 
 func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVariant, product objects.Product, dbUser database.User) error {
 	queue_item := objects.RequestQueueHelper{
-		Type:        "product_variant",
+		Type:        "product",
 		Status:      "in-queue",
 		Instruction: "add_variant",
 		Endpoint:    "queue",

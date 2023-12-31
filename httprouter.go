@@ -659,7 +659,6 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			return
 		}
 		file_name_global = file_name
-		fmt.Println(file_name)
 	}
 	wd, err := os.Getwd()
 	if err != nil {
@@ -915,15 +914,20 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 
 // POST /api/orders?token={{token}}&api_key={{key}}
 // ngrok exposed url
-func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request) {
 	web_token := r.URL.Query().Get("token")
 	if TokenValidation(web_token) != nil {
 		RespondWithError(w, http.StatusBadRequest, "invalid token")
 		return
 	}
+	api_key := r.URL.Query().Get("api_key")
+	if TokenValidation(api_key) != nil {
+		RespondWithError(w, http.StatusBadRequest, "invalid api_key")
+		return
+	}
 	_, err := dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
 		WebhookToken: web_token,
-		ApiKey:       dbUser.ApiKey,
+		ApiKey:       api_key,
 	})
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -945,20 +949,20 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.OrderNumber)))
+	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.Name)))
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
-			log.Println(err)
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
-	if db_order.WebCode.String == fmt.Sprint(order_body.OrderNumber) {
+	if db_order.WebCode.String == fmt.Sprint(order_body.Name) {
 		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
 			Type:        "order",
 			Status:      "in-queue",
 			Instruction: "update_order",
 			Endpoint:    "queue",
-			ApiKey:      dbUser.ApiKey,
+			ApiKey:      api_key,
 			Method:      http.MethodPost,
 			Object:      order_body,
 		})
@@ -973,7 +977,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			Status:      "in-queue",
 			Instruction: "add_order",
 			Endpoint:    "queue",
-			ApiKey:      dbUser.ApiKey,
+			ApiKey:      api_key,
 			Method:      http.MethodPost,
 			Object:      order_body,
 		})

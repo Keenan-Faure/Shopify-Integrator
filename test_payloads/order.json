@@ -87,7 +87,9 @@
 	"order_number": 7505,
 	"order_status_url": "https://keenan-faure.myshopify.com/56527355965/orders/da4d09a024207bbbf612092c68395110/authenticate?key=832b048bd3568b5a53d3342938d0407f",
 	"original_total_duties_set": null,
-	"payment_gateway_names": ["manual"],
+	"payment_gateway_names": [
+		"manual"
+	],
 	"phone": "+27123456789",
 	"presentment_currency": "ZAR",
 	"processed_at": "2023-02-01T08:55:26+02:00",
@@ -109,22 +111,24 @@
 		}
 	},
 	"tags": "",
-	"tax_lines": [{
-		"price": "384.75",
-		"rate": 0.15,
-		"title": "VAT",
-		"price_set": {
-			"shop_money": {
-				"amount": "384.75",
-				"currency_code": "ZAR"
+	"tax_lines": [
+		{
+			"price": "384.75",
+			"rate": 0.15,
+			"title": "VAT",
+			"price_set": {
+				"shop_money": {
+					"amount": "384.75",
+					"currency_code": "ZAR"
+				},
+				"presentment_money": {
+					"amount": "384.75",
+					"currency_code": "ZAR"
+				}
 			},
-			"presentment_money": {
-				"amount": "384.75",
-				"currency_code": "ZAR"
-			}
-		},
-		"channel_liable": false
-	}],
+			"channel_liable": false
+		}
+	],
 	"taxes_included": false,
 	"test": false,
 	"token": "da4d09a024207bbbf612092c68395110",
@@ -191,7 +195,6 @@
 		"first_name": "Keenan",
 		"address1": "14 Tracy Crescent",
 		"phone": null,
-
 		"city": "Cape Town",
 		"zip": "7786",
 		"province": "Western Cape",
@@ -258,7 +261,8 @@
 	},
 	"discount_applications": [],
 	"fulfillments": [],
-	"line_items": [{
+	"line_items": [
+		{
 			"id": 11989124120637,
 			"admin_graphql_api_id": "gid://shopify/LineItem/11989124120637",
 			"fulfillable_quantity": 1,
@@ -301,22 +305,24 @@
 			"variant_inventory_management": "shopify",
 			"variant_title": "Queen Cakes 10 Pack",
 			"vendor": "Mihoyo",
-			"tax_lines": [{
-				"channel_liable": false,
-				"price": "229.50",
-				"price_set": {
-					"shop_money": {
-						"amount": "229.50",
-						"currency_code": "ZAR"
+			"tax_lines": [
+				{
+					"channel_liable": false,
+					"price": "229.50",
+					"price_set": {
+						"shop_money": {
+							"amount": "229.50",
+							"currency_code": "ZAR"
+						},
+						"presentment_money": {
+							"amount": "229.50",
+							"currency_code": "ZAR"
+						}
 					},
-					"presentment_money": {
-						"amount": "229.50",
-						"currency_code": "ZAR"
-					}
-				},
-				"rate": 0.15,
-				"title": "VAT"
-			}],
+					"rate": 0.15,
+					"title": "VAT"
+				}
+			],
 			"duties": [],
 			"discount_allocations": []
 		},
@@ -363,22 +369,24 @@
 			"variant_inventory_management": "shopify",
 			"variant_title": "N/A",
 			"vendor": "Keenan-faure",
-			"tax_lines": [{
-				"channel_liable": false,
-				"price": "155.25",
-				"price_set": {
-					"shop_money": {
-						"amount": "155.25",
-						"currency_code": "ZAR"
+			"tax_lines": [
+				{
+					"channel_liable": false,
+					"price": "155.25",
+					"price_set": {
+						"shop_money": {
+							"amount": "155.25",
+							"currency_code": "ZAR"
+						},
+						"presentment_money": {
+							"amount": "155.25",
+							"currency_code": "ZAR"
+						}
 					},
-					"presentment_money": {
-						"amount": "155.25",
-						"currency_code": "ZAR"
-					}
-				},
-				"rate": 0.15,
-				"title": "VAT"
-			}],
+					"rate": 0.15,
+					"title": "VAT"
+				}
+			],
 			"duties": [],
 			"discount_allocations": []
 		}
@@ -402,38 +410,40 @@
 		"country_code": "ZA",
 		"province_code": "WC"
 	},
-	"shipping_lines": [{
-		"id": 4153358319809,
-		"carrier_identifier": "650f1a14fa979ec5c74d063e968411d4",
-		"code": "Free Shipping (2-3 Days)",
-		"delivery_category": null,
-		"discounted_price": "0.00",
-		"discounted_price_set": {
-			"shop_money": {
-				"amount": "0.00",
-				"currency_code": "ZAR"
+	"shipping_lines": [
+		{
+			"id": 4153358319809,
+			"carrier_identifier": "650f1a14fa979ec5c74d063e968411d4",
+			"code": "Free Shipping (2-3 Days)",
+			"delivery_category": null,
+			"discounted_price": "0.00",
+			"discounted_price_set": {
+				"shop_money": {
+					"amount": "0.00",
+					"currency_code": "ZAR"
+				},
+				"presentment_money": {
+					"amount": "0.00",
+					"currency_code": "ZAR"
+				}
 			},
-			"presentment_money": {
-				"amount": "0.00",
-				"currency_code": "ZAR"
-			}
-		},
-		"phone": null,
-		"price": "0.00",
-		"price_set": {
-			"shop_money": {
-				"amount": "0.00",
-				"currency_code": "ZAR"
+			"phone": null,
+			"price": "0.00",
+			"price_set": {
+				"shop_money": {
+					"amount": "0.00",
+					"currency_code": "ZAR"
+				},
+				"presentment_money": {
+					"amount": "0.00",
+					"currency_code": "ZAR"
+				}
 			},
-			"presentment_money": {
-				"amount": "0.00",
-				"currency_code": "ZAR"
-			}
-		},
-		"requested_fulfillment_service_id": null,
-		"source": "shopify",
-		"title": "Free Shipping (2-3 Days)",
-		"tax_lines": [],
-		"discount_allocations": []
-	}]
+			"requested_fulfillment_service_id": null,
+			"source": "shopify",
+			"title": "Free Shipping (2-3 Days)",
+			"tax_lines": [],
+			"discount_allocations": []
+		}
+	]
 }

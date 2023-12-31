@@ -126,9 +126,9 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/orders", dbconfig.middlewareAuth(dbconfig.OrdersHandle))
 	api.Get("/orders/{id}", dbconfig.middlewareAuth(dbconfig.OrderHandle))
 	api.Get("/orders/search", dbconfig.middlewareAuth(dbconfig.OrderSearchHandle))
+	api.Post("/orders", dbconfig.PostOrderHandle)
 
 	// registration
-	api.Post("/orders", dbconfig.middlewareAuth(dbconfig.PostOrderHandle))
 	api.Post("/register", dbconfig.RegisterHandle)
 	api.Post("/preregister", dbconfig.PreRegisterHandle)
 	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
