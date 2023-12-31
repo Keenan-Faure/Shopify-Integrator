@@ -546,8 +546,7 @@ function Page2(props)
                     }
                 }
             });
-
-        }, 100);
+        }, 200);
 
         let graph = document.querySelector(".graph");
         setTimeout(() =>
@@ -555,9 +554,7 @@ function Page2(props)
             graph.style.animation = "SlideUp2 0.8s ease-in";
             graph.style.display = "block";
         }, 1200);
-        
-        
-
+    
     }, []);
 
     return (

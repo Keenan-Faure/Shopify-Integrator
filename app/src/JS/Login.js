@@ -45,7 +45,7 @@ function Login()
             localStorage.setItem('username', inputs.username);
 
             message.innerHTML = "Login Sucessful";
-            message.style.background = "linear-gradient(to bottom, #16811f, #071203)";
+            message.style.background = "#1a5e12";
 
             setTimeout(() =>
             {
@@ -59,7 +59,7 @@ function Login()
         {
             alert(xhr.responseText);
             message.innerHTML = "Error - Login failed";
-            message.style.background = "linear-gradient(to bottom, #df1010, #8b1b1b6e)";
+            message.style.background = "#9f0a0a";
             
             setTimeout(() =>
             {
@@ -95,7 +95,7 @@ function Login()
             copyText.innerHTML = JSON.stringify(_data, null, 2);
 
             message.innerHTML = "Registration Sucessful";
-            message.style.background = "linear-gradient(to bottom, #16811f, #071203)";
+            message.style.background = "#1a5e12";
             main2.style.animation = "Fadeout 2s ease-out";
             setTimeout(() =>
             {
@@ -110,7 +110,7 @@ function Login()
         {
             alert(xhr.responseText);
             message.innerHTML = "Error - Ensure the Token is correct";
-            message.style.background = "linear-gradient(to bottom, #df1010, #8b1b1b6e)";
+            message.style.background = "#9f0a0a";
             setTimeout(() =>
             {
                 message.innerHTML = "";
@@ -133,7 +133,7 @@ function Login()
             console.log(_data);
 
             message.innerHTML = "Email sent";
-            message.style.background = "linear-gradient(to bottom, #16811f, #071203)";
+            message.style.background = "#1a5e12";
             setTimeout(() =>
             {
                 message.innerHTML = "";
@@ -155,7 +155,7 @@ function Login()
         { 
             alert(xhr.responseText);
             message.innerHTML = "Error";
-            message.style.background = "linear-gradient(to bottom, #df1010, #8b1b1b6e)";
+            message.style.background = "#9f0a0a";
             
             setTimeout(() =>
             {

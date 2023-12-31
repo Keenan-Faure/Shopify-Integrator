@@ -460,46 +460,59 @@ function Settings()
             webhook_button.className = "webhook-button";
             webhook_button.innerHTML = "Copy Webhook";
 
-            let setting = document.getElementById("setting1");
-            setting.appendChild(webhook_button);
-            let domain =  
+            let domain_name = document.getElementById("domain_name").value;
+
+            if(domain_name == "")
             {
-                domain: "https://190-92384-123/ngrok.io"
+                alert("Domain name field is empty...")
             }
-            console.log(JSON.stringify(domain));
-            
-            let copyText;
-            let data;
-
-            const api_key = localStorage.getItem('api_key');
-            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-            $.post("http://localhost:8080/api/settings/webhook", JSON.stringify(domain), [], 'json')
-            .done(function( _data) 
+            else 
             {
-                console.log(_data);
-
-                let info = document.getElementById("info-message");
-                info.innerHTML = _data.message;
-                info.style.display = "block"; 
-                info.style.color = "white";
-                info.style.backgroundColor = "#1a5e12";
-                setTimeout(() => 
+                let setting = document.getElementById("setting1");
+                setting.appendChild(webhook_button);
+                let domain =  
                 {
-                    info.style.display = "none";  
-                }, 2000);
+                    domain: domain_name
+                }
+                console.log(JSON.stringify(domain));
+                
+                let copyText;
+                let data;
 
-                data = _data.message;
-            })
-            .fail( function(xhr) 
-            {
-                alert(xhr.responseText);
-            });
-            webhook_button.addEventListener("click", () =>
-            { 
-                copyText = data;
-                navigator.clipboard.writeText(copyText);
-                webhook_button.innerHTML = "Copied!";
-            }); 
+                const api_key = localStorage.getItem('api_key');
+                $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+                
+                $.post("http://localhost:8080/api/settings/webhook", JSON.stringify(domain), [], 'json')
+                .done(function( _data) 
+                {
+                    console.log(_data);
+
+                    let info = document.getElementById("info-message");
+                    info.innerHTML = _data.message;
+                    info.style.display = "block"; 
+                    info.style.color = "white";
+                    info.style.backgroundColor = "#1a5e12";
+                    setTimeout(() => 
+                    {
+                        info.style.display = "none";  
+                    }, 2000);
+
+                    data = _data.message;
+                })
+                .fail( function(xhr) 
+                {
+                    alert(xhr.responseText);
+                });
+                
+                webhook_button.addEventListener("click", () =>
+                { 
+                    copyText = data;
+                    navigator.clipboard.writeText(copyText);
+                    webhook_button.innerHTML = "Copied!";
+                });
+            }
+
+             
         });
 
         /* Adds a new Warehouse */
@@ -715,7 +728,7 @@ function Settings()
                                 </div>
                                 <div className = "setting-details description" style = {{textAlign: 'left', backgroundColor: 'transparent'}}>Configures the Webhook required for the customers and order syncs to function correctly.</div>
                                 <div className="webhook_div" style= {{margin:  'auto',maxWidth: '300px'}}>
-                                    <input type="text" placeholder = "Domain Name..." name = "search2" style= {{color: 'black'}}/>
+                                    <input type="text" placeholder = "Domain Name..." id = "domain_name" name = "domain_name" style= {{color: 'black'}}/>
                                     <button id = "_webhook" className = "button-on-off" type="button">Create</button>
                                 </div>
                             </div>
