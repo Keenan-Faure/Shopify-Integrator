@@ -217,7 +217,7 @@ func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
 	}
 }
 
-// Convert objects.Product into objects.ShopifyProduct
+// Convert objects.Product.Variant into objects.ShopifyProdVariant
 func ConvertVariantToShopifyProdVariant(product objects.Product) []objects.ShopifyProdVariant {
 	variants := []objects.ShopifyProdVariant{}
 	for _, value := range product.Variants {

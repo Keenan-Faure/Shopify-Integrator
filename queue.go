@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"integrator/internal/database"
 	"io"
 	"log"
@@ -110,11 +109,10 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 	}
 	page := 0
 	for {
-		page += 1
 		// fetch all products paginated
-		queue_items, err := dbconfig.DB.GetProducts(context.Background(), database.GetProductsParams{
-			Limit:  50,
-			Offset: (int32(page) * 10),
+		products, err := dbconfig.DB.GetProducts(context.Background(), database.GetProductsParams{
+			Limit:  1,
+			Offset: (int32(page) * 50),
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
@@ -122,30 +120,31 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 				return
 			}
 		}
-		if len(queue_items) == 0 {
+		if len(products) == 0 || page == 1 {
 			break
 		}
-		for _, queue_item := range queue_items {
-			product, err := CompileProductData(dbconfig, queue_item.ID, r.Context(), false)
+		for _, product := range products {
+			product_compiled, err := CompileProductData(dbconfig, product.ID, r.Context(), false)
 			if err != nil {
 				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			// add product queue_items to the queue
-			err = CompileInstructionProduct(dbconfig, product, dbUser)
+			err = CompileInstructionProduct(dbconfig, product_compiled, dbUser)
 			if err != nil {
 				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			for _, variant := range product.Variants {
+			for _, variant := range product_compiled.Variants {
 				// add variant queue_items to queue
-				err = CompileInstructionVariant(dbconfig, variant, product, dbUser)
+				err = CompileInstructionVariant(dbconfig, variant, product_compiled, dbUser)
 				if err != nil {
 					RespondWithError(w, http.StatusInternalServerError, err.Error())
 					return
 				}
 			}
 		}
+		page += 1
 	}
 	_, err = dbconfig.QueueHelper(objects.RequestQueueHelper{
 		Type:        "product",
@@ -291,6 +290,44 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 		}
 		if len(item) != 0 {
 			if item[0].QueueType == "product" {
+				FailedQueueItem(dbconfig, queue_item, errors.New("product queue is currently busy"))
+				return
+			}
+		}
+	} else if worker_type == "product_variant" {
+		is_enabled := false
+		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				FailedQueueItem(dbconfig, queue_item, err)
+				return
+			}
+		}
+		if push_enabled.Value == "" {
+			push_enabled.Value = "false"
+		}
+		is_enabled, err = strconv.ParseBool(push_enabled.Value)
+		if err != nil {
+			FailedQueueItem(dbconfig, queue_item, err)
+			return
+		}
+		if !is_enabled {
+			FailedQueueItem(dbconfig, queue_item, errors.New("product push is disabled"))
+			return
+		}
+		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(context.Background(), database.GetQueueItemsByStatusAndTypeParams{
+			Status:    "processing",
+			QueueType: "product_variant",
+			Limit:     1,
+			Offset:    0,
+		})
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				return
+			}
+		}
+		if len(item) != 0 {
+			if item[0].QueueType == "product_variant" {
 				FailedQueueItem(dbconfig, queue_item, errors.New("product queue is currently busy"))
 				return
 			}
@@ -515,7 +552,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		restrictions_map := PushRestrictionsToMap(restrictions)
 		shopify_update_variant := ApplyPushRestrictionV(
 			restrictions_map,
-			ConvertVariantToShopifyVariant(variant),
+			ConvertVariantToShopify(variant),
 		)
 		if queue_item.Instruction == "add_variant" {
 			return dbconfig.PushVariant(
@@ -681,13 +718,12 @@ func CompileRemoveQueueFilter(
 
 // Helper function: Checks if the worker type is valid
 func CheckWorkerType(worker_type string) error {
-	worker_types := []string{"product", "order"}
+	worker_types := []string{"product", "product_variant", "order"}
 	for _, value := range worker_types {
 		if value == worker_type {
 			return nil
 		}
 	}
-	fmt.Println(worker_type)
 	return errors.New("invalid worker type")
 }
 

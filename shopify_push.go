@@ -188,7 +188,11 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		return err
 	}
 	shopifyProduct := ConvertProductToShopify(product)
-	update_shopify_product := ApplyPushRestrictionProduct(PushRestrictionsToMap(restrictions), shopifyProduct)
+	push_restrictions := PushRestrictionsToMap(restrictions)
+	update_shopify_product := ApplyPushRestrictionProduct(push_restrictions, shopifyProduct)
+	for _, variant_ := range product.Variants {
+		update_shopify_product.Variants = append(update_shopify_product.Variants, ConvertVariantToShopifyVariant(variant_))
+	}
 	if product_id != "" && len(product_id) > 0 {
 		_, err := configShopify.UpdateProductShopify(update_shopify_product, product_id)
 		return err
@@ -209,10 +213,13 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		return err
 	}
 	if !dynamic_search_enabled {
+		fmt.Println(product.Variants[0].Sku)
 		ids, err := configShopify.GetProductBySKU(product.Variants[0].Sku)
 		if err != nil {
 			return err
 		}
+		fmt.Println("BEFORE PUSH ADD SHOPIFY")
+		fmt.Println(ids)
 		err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct, update_shopify_product)
 		if err != nil {
 			return err
@@ -224,6 +231,8 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 			if err != nil {
 				return err
 			}
+			fmt.Println("BEFORE PUSH ADD SHOPIFY")
+			fmt.Println(ids)
 			err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct, update_shopify_product)
 			if err != nil {
 				return err
@@ -246,6 +255,8 @@ func PushAddShopify(
 		return err
 	}
 	restrictions_map := PushRestrictionsToMap(restrictions)
+	fmt.Println("I WANT~ SAjsAJ")
+	fmt.Println(ids)
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
@@ -259,15 +270,6 @@ func PushAddShopify(
 		})
 		if err != nil {
 			return err
-		}
-		for key := range product.Variants {
-			return dbconfig.PushVariant(
-				configShopify,
-				product.Variants[key],
-				update_shopify_product.Variants[key],
-				restrictions_map,
-				fmt.Sprint(product_data.Product.ID),
-				fmt.Sprint(product_data.Product.Variants[key].ID))
 		}
 		return nil
 	} else {
@@ -299,7 +301,7 @@ func PushAddShopify(
 			return dbconfig.PushVariant(
 				configShopify,
 				product.Variants[key],
-				update_shopify_product.Variants[key],
+				ApplyPushRestrictionV(restrictions_map, ConvertVariantToShopify(product.Variants[key])),
 				restrictions_map,
 				fmt.Sprint(product_data.Product.ID),
 				fmt.Sprint(product_data.Product.Variants[key].ID))
@@ -366,15 +368,17 @@ func (dbconfig *DbConfig) CollectionShopfy(
 func (dbconfig *DbConfig) PushVariant(
 	configShopify *shopify.ConfigShopify,
 	variant objects.ProductVariant,
-	product_variant objects.ShopifyProdVariant,
+	product_variant objects.ShopifyVariant,
 	restrictions map[string]string,
 	shopify_product_id string,
 	shopify_variant_id string,
 ) error {
 	if shopify_variant_id != "" && len(shopify_variant_id) > 0 {
+		fmt.Println("I am updating using variant_id: " + shopify_variant_id)
 		// update variant
 		variant_data, err := configShopify.UpdateVariantShopify(product_variant, shopify_variant_id)
 		if err != nil {
+			fmt.Println("err updating variant: " + shopify_variant_id + " with error: " + err.Error())
 			return err
 		}
 		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
@@ -401,36 +405,25 @@ func (dbconfig *DbConfig) PushVariant(
 		if DeterPushRestriction(restrictions, "warehousing") {
 			err = dbconfig.PushProductInventory(configShopify, variant)
 			if err != nil {
+				fmt.Println("err updating warehouse (deter): " + err.Error())
 				return err
 			}
 		}
 		return nil
 	}
+	product_variant_adding := ConvertVariantToShopify(variant)
 	price, err := dbconfig.ShopifyVariantPricing(variant, "default_price_tier")
 	if err != nil {
 		return err
 	}
 	product_variant.Price = price
+	product_variant_adding.Price = price
 	compare_to_price, err := dbconfig.ShopifyVariantPricing(variant, "default_compare_at_price")
 	if err != nil {
 		return err
 	}
 	product_variant.CompareAtPrice = compare_to_price
-	variant_id, err := GetVariantID(dbconfig, variant.Sku)
-	if err != nil {
-		return err
-	}
-	if variant_id != "" && len(variant_id) > 0 {
-		_, err := configShopify.UpdateVariantShopify(product_variant, variant_id)
-		if err != nil {
-			return err
-		}
-		err = dbconfig.PushProductInventory(configShopify, variant)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
+	product_variant_adding.CompareAtPrice = compare_to_price
 	ids, err := configShopify.GetProductBySKU(variant.Sku)
 	if err != nil {
 		return err
@@ -438,6 +431,7 @@ func (dbconfig *DbConfig) PushVariant(
 	if ids.VariantID != "" && len(ids.VariantID) > 0 {
 		variant_data, err := configShopify.UpdateVariantShopify(product_variant, ids.VariantID)
 		if err != nil {
+			fmt.Println("error updating sku with IDs retrieved from shopify: " + err.Error())
 			return err
 		}
 		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
@@ -462,11 +456,13 @@ func (dbconfig *DbConfig) PushVariant(
 		}
 		err = dbconfig.PushProductInventory(configShopify, variant)
 		if err != nil {
+			fmt.Println("error updating product inventory: " + err.Error())
 			return err
 		}
 	} else {
-		variant_data, err := configShopify.AddVariantShopify(product_variant, shopify_product_id)
+		variant_data, err := configShopify.AddVariantShopify(product_variant_adding, shopify_product_id)
 		if err != nil {
+			fmt.Println("error adding new variant to product id - " + shopify_product_id + " with error: " + err.Error())
 			return err
 		}
 		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
@@ -540,7 +536,7 @@ func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUs
 
 func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVariant, product objects.Product, dbUser database.User) error {
 	queue_item := objects.RequestQueueHelper{
-		Type:        "product",
+		Type:        "product_variant",
 		Status:      "in-queue",
 		Instruction: "add_variant",
 		Endpoint:    "queue",

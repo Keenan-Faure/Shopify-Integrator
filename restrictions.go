@@ -105,9 +105,9 @@ func ApplyPushRestrictionProduct(
 
 func ApplyPushRestrictionV(
 	restrictions map[string]string,
-	shopify_variant objects.ShopifyProdVariant,
-) objects.ShopifyProdVariant {
-	shopify_variant_new := objects.ShopifyProdVariant{}
+	shopify_variant objects.ShopifyVariant,
+) objects.ShopifyVariant {
+	shopify_variant_new := objects.ShopifyVariant{}
 
 	if DeterPushRestriction(restrictions, "barcode") {
 		shopify_variant_new.Barcode = shopify_variant.Barcode
@@ -127,6 +127,12 @@ func ApplyPushRestrictionV(
 	if DeterPushRestriction(restrictions, "pricing") {
 		shopify_variant_new.CompareAtPrice = shopify_variant.CompareAtPrice
 	}
+	if DeterPushRestriction(restrictions, "warehousing") {
+		shopify_variant_new.InventoryManagement = "shopify"
+	}
+
+	// SKU is mandatory
+	shopify_variant_new.Sku = shopify_variant.Sku
 
 	return shopify_variant_new
 }

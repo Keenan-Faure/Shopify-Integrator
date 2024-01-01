@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -290,7 +291,7 @@ func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.
 // Adds a product variant on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#post-products-product-id-variants
 func (configShopify *ConfigShopify) AddVariantShopify(
-	variant objects.ShopifyProdVariant,
+	variant objects.ShopifyVariant,
 	product_id string) (objects.ShopifyVariantResponse, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
@@ -304,7 +305,6 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return objects.ShopifyVariantResponse{}, err
 	}
 	if res.StatusCode != 201 {
@@ -313,7 +313,6 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 	variant_data := objects.ShopifyVariantResponse{}
 	err = json.Unmarshal(respBody, &variant_data)
 	if err != nil {
-		log.Println(err)
 		return objects.ShopifyVariantResponse{}, err
 	}
 	return variant_data, nil
@@ -322,13 +321,14 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 // Updates a product variant on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#put-variants-variant-id
 func (configShopify *ConfigShopify) UpdateVariantShopify(
-	variant objects.ShopifyProdVariant,
+	variant objects.ShopifyVariant,
 	variant_id string) (objects.ShopifyVariantResponse, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
 	if err != nil {
 		return objects.ShopifyVariantResponse{}, err
 	}
+	fmt.Println(variant_id)
 	res, err := configShopify.FetchHelper("variants/"+variant_id+".json", http.MethodPut, &buffer)
 	if err != nil {
 		return objects.ShopifyVariantResponse{}, err
@@ -336,9 +336,10 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return objects.ShopifyVariantResponse{}, err
 	}
+	fmt.Println(res.StatusCode)
+	fmt.Println(string(respBody))
 	if res.StatusCode != 200 {
 		return objects.ShopifyVariantResponse{}, errors.New(string(respBody))
 	}
@@ -377,7 +378,6 @@ func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return objects.ResponseAddProductToShopifyCollection{}, err
 	}
 	if res.StatusCode != 201 {
@@ -585,11 +585,16 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 	httpClient := http.Client{
 		Timeout: time.Second * 20,
 	}
+	fmt.Println("URL: " + shopifyConfig.Url + "/" + endpoint)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(body)
+	s := buf.String()
+	fmt.Println(s)
 	req, err := http.NewRequest(method, shopifyConfig.Url+"/"+endpoint, body)
 	if err != nil {
 		return &http.Response{}, err
 	}
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", "application/json;charset=UTF-8")
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return &http.Response{}, err
