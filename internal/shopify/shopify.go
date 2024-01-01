@@ -321,7 +321,7 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 // Updates a product variant on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#put-variants-variant-id
 func (configShopify *ConfigShopify) UpdateVariantShopify(
-	variant objects.ShopifyVariant,
+	variant any,
 	variant_id string) (objects.ShopifyVariantResponse, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)

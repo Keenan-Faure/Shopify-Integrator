@@ -61,49 +61,16 @@ func main() {
 		QueueWorker(&dbCon)
 	}
 	fmt.Println("starting API")
-	// product := objects.ShopifyProduct{
-	// 	ShopifyProd: objects.ShopifyProd{
-	// 		Title:    "I am a title",
-	// 		BodyHTML: "body_html",
-	// 		Vendor:   "",
-	// 		Type:     "easy",
-	// 		Status:   "",
-	// 		Variants: []objects.ShopifyProdVariant{
-	// 			{
-	// 				ID:                   0,
-	// 				ProductID:            0,
-	// 				Title:                "",
-	// 				Price:                "",
-	// 				Sku:                  "",
-	// 				Position:             0,
-	// 				InventoryPolicy:      "",
-	// 				CompareAtPrice:       "",
-	// 				InventoryManagement:  "",
-	// 				Option1:              "",
-	// 				Option2:              "",
-	// 				Option3:              "",
-	// 				Barcode:              "90",
-	// 				Grams:                0,
-	// 				InventoryItemID:      0,
-	// 				InventoryQuantity:    0,
-	// 				OldInventoryQuantity: 0,
-	// 			},
-	// 		},
-	// 		Options: []objects.ShopifyOptions{},
-	// 	},
-	// }
-	// restrictions, err := dbCon.DB.GetPushRestriction(context.Background())
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// nw_product := ApplyPushRestrictionProduct(PushRestrictionsToMap(restrictions), product)
-	// nw_product.Variants = append(nw_product.Variants, ApplyPushRestrictionV(PushRestrictionsToMap(restrictions), product.Variants[0]))
-	// var buffer bytes.Buffer
-	// err = json.NewEncoder(&buffer).Encode(nw_product)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Println(buffer.String())
+	variant, _ := dbCon.DB.GetVariantBySKU(context.Background(), "GenImp-BeaconReed")
+	variant_data, _ := CompileVariantData(&dbCon, variant.ID, context.Background())
+	shopify_variant := ConvertVariantToShopify(variant_data)
+	shopifyConfig.UpdateVariantShopify(shopify_variant, "40733557194813")
+
+	fmt.Println("--product update---")
+	product, _ := dbCon.DB.GetProductIDByCode(context.Background(), "GenImp-BeaconReed")
+	product_data, _ := CompileProductData(&dbCon, product, context.Background(), true)
+	shopify_product := ConvertProductToShopify(product_data)
+	shopifyConfig.UpdateProductShopify(shopify_product, "7073502330941")
 	setupAPI(dbCon, shopifyConfig)
 }
 
