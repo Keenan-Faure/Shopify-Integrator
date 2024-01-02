@@ -1046,23 +1046,21 @@ func (q *Queries) UpdateProductByID(ctx context.Context, arg UpdateProductByIDPa
 const updateProductBySKU = `-- name: UpdateProductBySKU :exec
 UPDATE products
 SET
-    active = COALESCE($1, active),
-    title = COALESCE($2, title),
-    body_html = COALESCE($3, body_html),
-    category = COALESCE($4, category),
-    vendor = COALESCE($5, vendor),
-    product_type = COALESCE($6, product_type),
-    updated_at = $7
+    title = COALESCE($1, title),
+    body_html = COALESCE($2, body_html),
+    category = COALESCE($3, category),
+    vendor = COALESCE($4, vendor),
+    product_type = COALESCE($5, product_type),
+    updated_at = $6
 WHERE id = (
     SELECT
         product_id
     FROM variants
-    WHERE sku = $8
+    WHERE sku = $7
 )
 `
 
 type UpdateProductBySKUParams struct {
-	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
@@ -1074,7 +1072,6 @@ type UpdateProductBySKUParams struct {
 
 func (q *Queries) UpdateProductBySKU(ctx context.Context, arg UpdateProductBySKUParams) error {
 	_, err := q.db.ExecContext(ctx, updateProductBySKU,
-		arg.Active,
 		arg.Title,
 		arg.BodyHtml,
 		arg.Category,

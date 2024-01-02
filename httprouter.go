@@ -399,16 +399,19 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	err = CompileInstructionProduct(dbconfig, updated_data, dbUser)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	for _, variant := range updated_data.Variants {
-		err = CompileInstructionVariant(dbconfig, variant, updated_data, dbUser)
+	// only update if the active = 1
+	if updated_data.Active == "1" {
+		err = CompileInstructionProduct(dbconfig, updated_data, dbUser)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
+		}
+		for _, variant := range updated_data.Variants {
+			err = CompileInstructionVariant(dbconfig, variant, updated_data, dbUser)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 	}
 	RespondWithJSON(w, http.StatusOK, updated_data)

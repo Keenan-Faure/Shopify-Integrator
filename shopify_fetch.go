@@ -164,7 +164,6 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 									category = categories.CustomCollections[0].Title
 								}
 								err = dbconfig.DB.UpdateProductBySKU(context.Background(), database.UpdateProductBySKUParams{
-									Active:      "1",
 									Title:       utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, product.Title, "title")),
 									BodyHtml:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, product.BodyHTML, "body_html")),
 									Category:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictions_map, category, "category")),
@@ -227,70 +226,18 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 							// update variant pricing
 							// check if pricing should be updated
 							if DeterFetchRestriction(restrictions_map, "pricing") {
-								create_price_tier_enabled := false
-								create_price_tier_enabled_db, err := dbconfig.DB.GetAppSettingByKey(
-									context.Background(),
-									"app_fetch_create_price_tier_enabled",
-								)
-								if err != nil {
-									if err.Error() != "sql: no rows in result set" {
-										return err
-									}
-									create_price_tier_enabled = false
-								}
-								create_price_tier_enabled, err = strconv.ParseBool(create_price_tier_enabled_db.Value)
-								if err != nil {
-									create_price_tier_enabled = false
-								}
-								pricing_name, err := dbconfig.DB.GetShopifySettingByKey(
-									context.Background(),
-									"shopify_default_price_tier",
-								)
 								if err != nil {
 									if err.Error() != "sql: no rows in result set" {
 										return err
 									}
 								}
-								// update only the price that is syncing to Shopify
-								if pricing_name.Value != "" {
-									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_name.Value, product_variant.Price)
-									if err != nil {
-										return err
-									}
-								} else {
-									if create_price_tier_enabled {
-										// price tier is not set
-										// use the default value of `fetch_price`
-										err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_price", product_variant.Price)
-										if err != nil {
-											return err
-										}
-									}
-								}
-								pricing_compare_name, err := dbconfig.DB.GetShopifySettingByKey(
-									context.Background(),
-									"shopify_default_compare_at_price_tier",
-								)
+								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "Selling Price", product_variant.Price)
 								if err != nil {
-									if err.Error() != "sql: no rows in result set" {
-										return err
-									}
+									return err
 								}
-								// update only the compare price that is syncing to Shopify
-								if pricing_compare_name.Value != "" {
-									err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
-									if err != nil {
-										return err
-									}
-								} else {
-									if create_price_tier_enabled {
-										// price tier is not set
-										// use the default value of `fetch_compare_price`
-										err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "fetch_compare_price", product_variant.CompareAtPrice)
-										if err != nil {
-											return err
-										}
-									}
+								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "Compare At Price", product_variant.Price)
+								if err != nil {
+									return err
 								}
 							}
 							// check if the product's inventory should be tracked
@@ -447,71 +394,13 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 							if err != nil {
 								return err
 							}
-							// create variant pricing
-							create_price_tier_enabled := false
-							create_price_tier_enabled_db, err := dbconfig.DB.GetAppSettingByKey(
-								context.Background(),
-								"app_fetch_create_price_tier_enabled",
-							)
+							err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "Selling Price", product_variant.Price)
 							if err != nil {
-								if err.Error() != "sql: no rows in result set" {
-									return err
-								}
-								create_price_tier_enabled = false
+								return err
 							}
-							create_price_tier_enabled, err = strconv.ParseBool(create_price_tier_enabled_db.Value)
+							err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "Compare At Price", product_variant.CompareAtPrice)
 							if err != nil {
-								create_price_tier_enabled = false
-							}
-							pricing_name, err := dbconfig.DB.GetShopifySettingByKey(
-								context.Background(),
-								"shopify_default_price_tier",
-							)
-							if err != nil {
-								if err.Error() != "sql: no rows in result set" {
-									return err
-								}
-							}
-							// update only the price that is syncing to Shopify
-							if pricing_name.Value != "" {
-								err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_name.Value, product_variant.Price)
-								if err != nil {
-									return err
-								}
-							} else {
-								if create_price_tier_enabled {
-									// price tier is not set
-									// use the default value of `fetch_price`
-									err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_price", product_variant.Price)
-									if err != nil {
-										return err
-									}
-								}
-							}
-							pricing_compare_name, err := dbconfig.DB.GetShopifySettingByKey(
-								context.Background(),
-								"shopify_default_compare_at_price_tier",
-							)
-							if err != nil {
-								if err.Error() != "sql: no rows in result set" {
-									return err
-								}
-							}
-							// update only the compare price that is syncing to Shopify
-							if pricing_compare_name.Value != "" {
-								err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, pricing_compare_name.Value, product_variant.CompareAtPrice)
-								if err != nil {
-									return err
-								}
-							} else {
-								if create_price_tier_enabled {
-									// price tier is not set
-									// use the default value of `fetch_compare_price`
-									err = AddPricing(dbconfig, db_variant.Sku, db_variant.ID, "fetch_compare_price", product_variant.CompareAtPrice)
-									if err != nil {
-										return err
-									}
-								}
+								return err
 							}
 							// check if the product's inventory should be tracked
 							if product_variant.InventoryManagement == "shopify" {

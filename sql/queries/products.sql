@@ -42,18 +42,17 @@ WHERE id = $8;
 -- name: UpdateProductBySKU :exec
 UPDATE products
 SET
-    active = COALESCE($1, active),
-    title = COALESCE($2, title),
-    body_html = COALESCE($3, body_html),
-    category = COALESCE($4, category),
-    vendor = COALESCE($5, vendor),
-    product_type = COALESCE($6, product_type),
-    updated_at = $7
+    title = COALESCE($1, title),
+    body_html = COALESCE($2, body_html),
+    category = COALESCE($3, category),
+    vendor = COALESCE($4, vendor),
+    product_type = COALESCE($5, product_type),
+    updated_at = $6
 WHERE id = (
     SELECT
         product_id
     FROM variants
-    WHERE sku = $8
+    WHERE sku = $7
 );
 
 

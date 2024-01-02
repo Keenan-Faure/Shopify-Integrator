@@ -8,7 +8,6 @@ import (
 	"iocsv"
 	"log"
 	"net/http"
-	"objects"
 	"shopify"
 	"time"
 	"utils"
@@ -62,19 +61,6 @@ func main() {
 		QueueWorker(&dbCon)
 	}
 	fmt.Println("starting API")
-	// variant, _ := dbCon.DB.GetVariantBySKU(context.Background(), "GenImp-BeaconReed")
-	// variant_data, _ := CompileVariantData(&dbCon, variant.ID, context.Background())
-	// shopify_variant := ConvertVariantToShopify(variant_data)
-	// shopifyConfig.UpdateVariantShopify(shopify_variant, "40733557194813")
-
-	fmt.Println("--product update---")
-	shopify_product := objects.ShopifyProduct{
-		ShopifyProd: objects.ShopifyProd{
-			Title: "Easy",
-		},
-	}
-	_, err = shopifyConfig.UpdateProductShopify(shopify_product, "7073502330941")
-	fmt.Println(err)
 	setupAPI(dbCon, shopifyConfig)
 }
 

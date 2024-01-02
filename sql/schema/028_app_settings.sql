@@ -47,7 +47,7 @@ INSERT INTO app_settings(
     'app_queue_size',
     'Maximum amount of queue items that can exist in the queue at any time.',
     'App Queue Size',
-    '100',
+    '500',
     NOW(),
     NOW()
 ), (
@@ -55,7 +55,7 @@ INSERT INTO app_settings(
     'app_queue_process_limit',
     'Maximum amount of queue items that can be processed each iteration.',
     'App Queue Process Limit',
-    '10',
+    '20',
     NOW(),
     NOW()
 ), (
@@ -63,7 +63,7 @@ INSERT INTO app_settings(
     'app_queue_cron_time',
     'Interval between each run of the queue worker.',
     'App Queue Cron Time',
-    '7',
+    '5',
     NOW(),
     NOW()
 ), (
@@ -82,15 +82,7 @@ INSERT INTO app_settings(
     'false',
     NOW(),
     NOW()
-), (
-    uuid_generate_v4(),
-    'app_fetch_create_price_tier_enabled',
-    'Enables price tiers to be created when fetching data from Shopify.',
-    'App Fetch Create Price Tier',
-    'false',
-    NOW(),
-    NOW()
-), (
+),(
     uuid_generate_v4(),
     'app_fetch_sync_images',
     'Enabled products to be pulled from Shopify when fetching data.',

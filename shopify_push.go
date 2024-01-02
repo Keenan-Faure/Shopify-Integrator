@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO this is not necessary anyore, there will only exist two price tiers, selling and compare ever...
 // Return the price of the product for a specific tier
 func (dbconfig *DbConfig) ShopifyVariantPricing(
 	variant objects.ProductVariant,
@@ -179,10 +180,13 @@ func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShop
 
 // Pushes a product to Shopify
 func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, product objects.Product) error {
+	fmt.Println("---")
+	fmt.Println("starting at add product")
 	product_id, err := GetProductID(dbconfig, product.ProductCode)
 	if err != nil {
 		return err
 	}
+	fmt.Println("product_id: " + product_id) // should be blank at add_product
 	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
 	if err != nil {
 		return err
@@ -194,11 +198,12 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		update_shopify_product.Variants = append(update_shopify_product.Variants, ConvertVariantToShopifyVariant(variant_))
 	}
 	if product_id != "" && len(product_id) > 0 {
+		fmt.Println("I should appear here for an update, because I already exist inside the object")
 		_, err := configShopify.UpdateProductShopify(update_shopify_product, product_id)
 		return err
 	}
 	dynamic_search_enabled := false
-	dynamic_search, err := dbconfig.DB.GetAppSettingByKey(
+	dynamic_search, err := dbconfig.DB.GetShopifySettingByKey(
 		context.Background(),
 		"shopify_enable_dynamic_sku_search",
 	)
@@ -223,16 +228,25 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		}
 		return nil
 	} else {
+		ids := objects.ResponseIDs{}
+		// searches if the product variants exists on shpify already
 		for _, variant := range product.Variants {
-			ids, err := configShopify.GetProductBySKU(variant.Sku)
+			ids_search, err := configShopify.GetProductBySKU(variant.Sku)
 			if err != nil {
 				return err
 			}
-			err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct, update_shopify_product)
-			if err != nil {
-				return err
+			if ids_search.ProductID != "" || len(ids_search.ProductID) != 0 {
+				ids = ids_search
+				break
 			}
 		}
+		fmt.Println("adding product using the dynamic search method")
+		fmt.Println(ids)
+		err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct, update_shopify_product)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 }
@@ -245,6 +259,8 @@ func PushAddShopify(
 	shopifyProduct objects.ShopifyProduct,
 	update_shopify_product objects.ShopifyProduct,
 ) error {
+	fmt.Println("---")
+	fmt.Println("starting at the push_add_product")
 	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
 	if err != nil {
 		return err
@@ -254,7 +270,6 @@ func PushAddShopify(
 		// update existing product on the website
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
 		if err != nil {
-			fmt.Println("I am inside err: " + err.Error())
 			return err
 		}
 		err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
@@ -278,6 +293,7 @@ func PushAddShopify(
 		return nil
 	} else {
 		// add new product to website
+		fmt.Println("I should go here because I DONT exist on the website")
 		product_data, err := configShopify.AddProductShopify(shopifyProduct)
 		if err != nil {
 			return err
@@ -301,6 +317,7 @@ func PushAddShopify(
 				return err
 			}
 		}
+		fmt.Println("Pushing all variants")
 		for key := range product.Variants {
 			return dbconfig.PushVariant(
 				configShopify,
@@ -377,6 +394,21 @@ func (dbconfig *DbConfig) PushVariant(
 	shopify_product_id string,
 	shopify_variant_id string,
 ) error {
+	fmt.Println("---")
+	// time.Sleep(2 * time.Second)
+	product_variant_adding := ConvertVariantToShopify(variant)
+	price, err := dbconfig.ShopifyVariantPricing(variant, "default_price_tier")
+	if err != nil {
+		return err
+	}
+	product_variant.Price = price
+	product_variant_adding.Price = price
+	compare_to_price, err := dbconfig.ShopifyVariantPricing(variant, "default_compare_at_price")
+	if err != nil {
+		return err
+	}
+	product_variant.CompareAtPrice = compare_to_price
+	product_variant_adding.CompareAtPrice = compare_to_price
 	if shopify_variant_id != "" && len(shopify_variant_id) > 0 {
 		fmt.Println("I am updating using variant_id: " + shopify_variant_id)
 		// update variant
@@ -415,19 +447,6 @@ func (dbconfig *DbConfig) PushVariant(
 		}
 		return nil
 	}
-	product_variant_adding := ConvertVariantToShopify(variant)
-	price, err := dbconfig.ShopifyVariantPricing(variant, "default_price_tier")
-	if err != nil {
-		return err
-	}
-	product_variant.Price = price
-	product_variant_adding.Price = price
-	compare_to_price, err := dbconfig.ShopifyVariantPricing(variant, "default_compare_at_price")
-	if err != nil {
-		return err
-	}
-	product_variant.CompareAtPrice = compare_to_price
-	product_variant_adding.CompareAtPrice = compare_to_price
 	ids, err := configShopify.GetProductBySKU(variant.Sku)
 	if err != nil {
 		return err
@@ -464,6 +483,9 @@ func (dbconfig *DbConfig) PushVariant(
 			return err
 		}
 	} else {
+		if shopify_product_id == "" || len(shopify_product_id) == 0 {
+			shopify_product_id = ids.ProductID
+		}
 		variant_data, err := configShopify.AddVariantShopify(product_variant_adding, shopify_product_id)
 		if err != nil {
 			fmt.Println("error adding new variant to product id - " + shopify_product_id + " with error: " + err.Error())

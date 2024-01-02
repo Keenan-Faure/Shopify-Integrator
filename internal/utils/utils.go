@@ -127,11 +127,8 @@ func GetAppSettings(key string) map[string]string {
 	result := make(map[string]string)
 	app_keys := []string{"APP_ENABLE_SHOPIFY_FETCH", "APP_ENABLE_QUEUE_WORKER", "APP_SHOPIFY_FETCH_TIME",
 		"APP_ENABLE_SHOPIFY_PUSH", "APP_QUEUE_SIZE", "APP_QUEUE_PROCESS_LIMIT", "APP_QUEUE_CRON_TIME",
-		"APP_FETCH_ADD_PRODUCTS", "APP_FETCH_OVERWRITE_PRODUCTS", "APP_FECTH_CREATE_PRICE_TIER_ENABLED",
-		"APP_FETCH_CREATE_PRICE_TIER_ENABLED",
-		"APP_FETCH_SYNC_IMAGES"}
-	shopify_keys := []string{"SHOPIFY_DEFAULT_PRICE_TIER", "SHOPIFY_DEFAULT_COMPARE_AT_PRICE_TIER",
-		"SHOPIFY_ENABLE_DYNAMIC_SKU_SEARCH"}
+		"APP_FETCH_ADD_PRODUCTS", "APP_FETCH_OVERWRITE_PRODUCTS", "APP_FETCH_SYNC_IMAGES"}
+	shopify_keys := []string{"SHOPIFY_ENABLE_DYNAMIC_SKU_SEARCH"}
 	if key == "app" {
 		for iterator, value := range app_keys {
 			result[app_keys[iterator]] = LoadEnv(value)

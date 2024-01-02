@@ -179,9 +179,6 @@ func TestGetAppSettings(t *testing.T) {
 	if len(shopify_settings_map) == 0 {
 		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(shopify_settings_map)))
 	}
-	if shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"] == "" {
-		t.Errorf("Expected 'description' value but found " + shopify_settings_map["SHOPIFY_DEFAULT_PRICE_TIER"])
-	}
 }
 
 func TestGetNextURL(t *testing.T) {
