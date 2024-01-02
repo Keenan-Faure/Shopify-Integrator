@@ -261,11 +261,11 @@ func PushAddShopify(
 ) error {
 	fmt.Println("---")
 	fmt.Println("starting at the push_add_product")
-	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
-	if err != nil {
-		return err
-	}
-	restrictions_map := PushRestrictionsToMap(restrictions)
+	// restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+	// if err != nil {
+	// 	return err
+	// }
+	// restrictions_map := PushRestrictionsToMap(restrictions)
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
@@ -318,15 +318,16 @@ func PushAddShopify(
 			}
 		}
 		fmt.Println("Pushing all variants")
-		for key := range product.Variants {
-			return dbconfig.PushVariant(
-				configShopify,
-				product.Variants[key],
-				ApplyPushRestrictionV(restrictions_map, ConvertVariantToShopify(product.Variants[key])),
-				restrictions_map,
-				fmt.Sprint(product_data.Product.ID),
-				fmt.Sprint(product_data.Product.Variants[key].ID))
-		}
+		fmt.Println(product.Variants)
+		// for key := range product.Variants {
+		// 	return dbconfig.PushVariant(
+		// 		configShopify,
+		// 		product.Variants[key],
+		// 		ApplyPushRestrictionV(restrictions_map, ConvertVariantToShopify(product.Variants[key])),
+		// 		restrictions_map,
+		// 		fmt.Sprint(product_data.Product.ID),
+		// 		fmt.Sprint(product_data.Product.Variants[key].ID))
+		// }
 		return nil
 	}
 }
@@ -397,13 +398,13 @@ func (dbconfig *DbConfig) PushVariant(
 	fmt.Println("---")
 	// time.Sleep(2 * time.Second)
 	product_variant_adding := ConvertVariantToShopify(variant)
-	price, err := dbconfig.ShopifyVariantPricing(variant, "default_price_tier")
+	price, err := dbconfig.ShopifyVariantPricing(variant, "Selling Price")
 	if err != nil {
 		return err
 	}
 	product_variant.Price = price
 	product_variant_adding.Price = price
-	compare_to_price, err := dbconfig.ShopifyVariantPricing(variant, "default_compare_at_price")
+	compare_to_price, err := dbconfig.ShopifyVariantPricing(variant, "Compare At Price")
 	if err != nil {
 		return err
 	}

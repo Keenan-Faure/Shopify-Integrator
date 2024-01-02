@@ -368,16 +368,22 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 		}
 		// update variant pricing and qty here
 		for _, price_lists := range variant.VariantPricing {
-			err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-				Name:      price_lists.Name,
-				Value:     utils.ConvertStringToSQL(price_lists.Value),
-				Isdefault: price_lists.IsDefault,
-				UpdatedAt: time.Now().UTC(),
-				Sku:       variant.Sku,
-				Name_2:    price_lists.Name,
-			})
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			// check if the pricing is acceptable
+			if price_lists.Name == "Selling Price" || price_lists.Name == "Compare At Price" {
+				err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
+					Name:      price_lists.Name,
+					Value:     utils.ConvertStringToSQL(price_lists.Value),
+					Isdefault: price_lists.IsDefault,
+					UpdatedAt: time.Now().UTC(),
+					Sku:       variant.Sku,
+					Name_2:    price_lists.Name,
+				})
+				if err != nil {
+					RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+					return
+				}
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, "invalid price tier "+price_lists.Name)
 				return
 			}
 		}
@@ -806,13 +812,15 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 					continue
 				}
 				variants_updated++
+			} else {
+				log.Println(err)
+				failure_counter++
 				continue
 			}
-			log.Println(err)
-			failure_counter++
-			continue
 		}
-		variants_added++
+		if err == nil {
+			variants_added++
+		}
 		if variant.ID == uuid.Nil {
 			variant.ID, err = dbconfig.DB.GetVariantIDByCode(r.Context(), csv_product.SKU)
 			if err != nil {
@@ -822,9 +830,16 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			}
 		}
 		for _, pricing_value := range csv_product.Pricing {
-			err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
-			if err != nil {
-				log.Println(err)
+			// check if the price is acceptable
+			if pricing_value.Name == "Selling Price" || pricing_value.Name == "Compare At Price" {
+				err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
+				if err != nil {
+					log.Println(err)
+					failure_counter++
+					continue
+				}
+			} else {
+				log.Println("invalid price tier " + pricing_value.Name)
 				failure_counter++
 				continue
 			}
@@ -1121,17 +1136,25 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		}
 		// variant pricing & variant qty
 		for key_pricing := range params.Variants[key].VariantPricing {
-			_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
-				ID:        uuid.New(),
-				VariantID: variant.ID,
-				Name:      params.Variants[key].VariantPricing[key_pricing].Name,
-				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
-				Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			// check if the price tier name is acceptable
+			if params.Variants[key].VariantPricing[key_pricing].Name == "Selling Price" ||
+				params.Variants[key].VariantPricing[key_pricing].Name == "Compare At Price" {
+				_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
+					ID:        uuid.New(),
+					VariantID: variant.ID,
+					Name:      params.Variants[key].VariantPricing[key_pricing].Name,
+					Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
+					Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
+					CreatedAt: time.Now().UTC(),
+					UpdatedAt: time.Now().UTC(),
+				})
+				if err != nil {
+					RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+					return
+				}
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, "invalid price tier"+
+					params.Variants[key].VariantPricing[key_pricing].Name)
 				return
 			}
 		}
