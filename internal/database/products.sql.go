@@ -73,6 +73,72 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const getActiveProducts = `-- name: GetActiveProducts :many
+SELECT
+    id,
+    active,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = '1'
+LIMIT $1 OFFSET $2
+`
+
+type GetActiveProductsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type GetActiveProductsRow struct {
+	ID          uuid.UUID      `json:"id"`
+	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetActiveProducts(ctx context.Context, arg GetActiveProductsParams) ([]GetActiveProductsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveProducts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetActiveProductsRow
+	for rows.Next() {
+		var i GetActiveProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Active,
+			&i.ProductCode,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductByCategoryAndType = `-- name: GetProductByCategoryAndType :many
 SELECT DISTINCT
     id,

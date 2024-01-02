@@ -213,13 +213,10 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		return err
 	}
 	if !dynamic_search_enabled {
-		fmt.Println(product.Variants[0].Sku)
 		ids, err := configShopify.GetProductBySKU(product.Variants[0].Sku)
 		if err != nil {
 			return err
 		}
-		fmt.Println("BEFORE PUSH ADD SHOPIFY")
-		fmt.Println(ids)
 		err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct, update_shopify_product)
 		if err != nil {
 			return err
@@ -231,8 +228,6 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 			if err != nil {
 				return err
 			}
-			fmt.Println("BEFORE PUSH ADD SHOPIFY")
-			fmt.Println(ids)
 			err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct, update_shopify_product)
 			if err != nil {
 				return err
@@ -255,20 +250,29 @@ func PushAddShopify(
 		return err
 	}
 	restrictions_map := PushRestrictionsToMap(restrictions)
-	fmt.Println("I WANT~ SAjsAJ")
-	fmt.Println(ids)
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
 		if err != nil {
+			fmt.Println("I am inside err: " + err.Error())
 			return err
 		}
-		err = dbconfig.DB.UpdatePID(context.Background(), database.UpdatePIDParams{
-			ShopifyProductID: fmt.Sprint(product_data.Product.ID),
-			UpdatedAt:        time.Now().UTC(),
+		err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
+			ID:               uuid.New(),
 			ProductCode:      product.ProductCode,
+			ProductID:        product.ID,
+			ShopifyProductID: fmt.Sprint(product_data.Product.ID),
+			CreatedAt:        time.Now().UTC(),
+			UpdatedAt:        time.Now().UTC(),
 		})
 		if err != nil {
+			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
+				err = dbconfig.DB.UpdatePID(context.Background(), database.UpdatePIDParams{
+					ShopifyProductID: fmt.Sprint(product_data.Product.ID),
+					UpdatedAt:        time.Now().UTC(),
+					ProductCode:      product.ProductCode,
+				})
+			}
 			return err
 		}
 		return nil

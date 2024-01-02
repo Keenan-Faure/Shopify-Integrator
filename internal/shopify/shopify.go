@@ -585,7 +585,8 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 	httpClient := http.Client{
 		Timeout: time.Second * 20,
 	}
-	fmt.Println("URL: " + shopifyConfig.Url + "/" + endpoint)
+	fmt.Println(shopifyConfig.Url + "/" + endpoint)
+	fmt.Println(method)
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(body)
 	s := buf.String()
@@ -594,7 +595,7 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 	if err != nil {
 		return &http.Response{}, err
 	}
-	req.Header.Add("Content-Type", "application/json;charset=UTF-8")
+	req.Header.Add("Content-Type", "application/json")
 	res, err := httpClient.Do(req)
 	if err != nil {
 		return &http.Response{}, err

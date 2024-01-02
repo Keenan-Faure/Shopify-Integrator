@@ -110,7 +110,7 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 	page := 0
 	for {
 		// fetch all products paginated
-		products, err := dbconfig.DB.GetProducts(context.Background(), database.GetProductsParams{
+		products, err := dbconfig.DB.GetActiveProducts(context.Background(), database.GetActiveProductsParams{
 			Limit:  1,
 			Offset: (int32(page) * 50),
 		})

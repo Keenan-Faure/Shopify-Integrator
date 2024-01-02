@@ -234,6 +234,21 @@ SELECT
 FROM products
 LIMIT $1 OFFSET $2;
 
+-- name: GetActiveProducts :many
+SELECT
+    id,
+    active,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE active = '1'
+LIMIT $1 OFFSET $2;
+
 -- name: RemoveProduct :exec
 DELETE FROM products
 WHERE id = $1;
