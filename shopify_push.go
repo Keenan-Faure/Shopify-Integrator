@@ -16,24 +16,21 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO this is not necessary anyore, there will only exist two price tiers, selling and compare ever...
 // Return the price of the product for a specific tier
 func (dbconfig *DbConfig) ShopifyVariantPricing(
 	variant objects.ProductVariant,
 	price_tier string) (string, error) {
-	price_name, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), "shopify_"+price_tier)
+	price, err := dbconfig.DB.GetPriceTierBySKU(context.Background(), database.GetPriceTierBySKUParams{
+		Sku:  variant.Sku,
+		Name: price_tier,
+	})
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return "0.00", nil
 		}
 		return "0.00", err
 	}
-	for _, price := range variant.VariantPricing {
-		if price.Name == price_name.Value {
-			return price.Value, nil
-		}
-	}
-	return "0.00", nil
+	return price.Value.String, nil
 }
 
 // Calculate stock to send as the available_adjustment
@@ -194,9 +191,6 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 	shopifyProduct := ConvertProductToShopify(product)
 	push_restrictions := PushRestrictionsToMap(restrictions)
 	update_shopify_product := ApplyPushRestrictionProduct(push_restrictions, shopifyProduct)
-	for _, variant_ := range product.Variants {
-		update_shopify_product.Variants = append(update_shopify_product.Variants, ConvertVariantToShopifyVariant(variant_))
-	}
 	if product_id != "" && len(product_id) > 0 {
 		fmt.Println("I should appear here for an update, because I already exist inside the object")
 		_, err := configShopify.UpdateProductShopify(update_shopify_product, product_id)
@@ -261,11 +255,6 @@ func PushAddShopify(
 ) error {
 	fmt.Println("---")
 	fmt.Println("starting at the push_add_product")
-	// restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
-	// if err != nil {
-	// 	return err
-	// }
-	// restrictions_map := PushRestrictionsToMap(restrictions)
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
@@ -293,7 +282,6 @@ func PushAddShopify(
 		return nil
 	} else {
 		// add new product to website
-		fmt.Println("I should go here because I DONT exist on the website")
 		product_data, err := configShopify.AddProductShopify(shopifyProduct)
 		if err != nil {
 			return err
@@ -317,17 +305,13 @@ func PushAddShopify(
 				return err
 			}
 		}
-		fmt.Println("Pushing all variants")
-		fmt.Println(product.Variants)
-		// for key := range product.Variants {
-		// 	return dbconfig.PushVariant(
-		// 		configShopify,
-		// 		product.Variants[key],
-		// 		ApplyPushRestrictionV(restrictions_map, ConvertVariantToShopify(product.Variants[key])),
-		// 		restrictions_map,
-		// 		fmt.Sprint(product_data.Product.ID),
-		// 		fmt.Sprint(product_data.Product.Variants[key].ID))
-		// }
+		// add all variant skus to the database
+		for _, variant := range product.Variants {
+			err = SaveVariantIds(dbconfig, product_data, variant.Sku)
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 }
@@ -396,7 +380,6 @@ func (dbconfig *DbConfig) PushVariant(
 	shopify_variant_id string,
 ) error {
 	fmt.Println("---")
-	// time.Sleep(2 * time.Second)
 	product_variant_adding := ConvertVariantToShopify(variant)
 	price, err := dbconfig.ShopifyVariantPricing(variant, "Selling Price")
 	if err != nil {
@@ -410,6 +393,8 @@ func (dbconfig *DbConfig) PushVariant(
 	}
 	product_variant.CompareAtPrice = compare_to_price
 	product_variant_adding.CompareAtPrice = compare_to_price
+	fmt.Println("I WANNA SE THI")
+	fmt.Println(product_variant)
 	if shopify_variant_id != "" && len(shopify_variant_id) > 0 {
 		fmt.Println("I am updating using variant_id: " + shopify_variant_id)
 		// update variant
@@ -448,71 +433,43 @@ func (dbconfig *DbConfig) PushVariant(
 		}
 		return nil
 	}
-	ids, err := configShopify.GetProductBySKU(variant.Sku)
-	if err != nil {
-		return err
-	}
-	if ids.VariantID != "" && len(ids.VariantID) > 0 {
-		variant_data, err := configShopify.UpdateVariantShopify(product_variant, ids.VariantID)
-		if err != nil {
-			fmt.Println("error updating sku with IDs retrieved from shopify: " + err.Error())
-			return err
-		}
-		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
-			ID:                 uuid.New(),
-			Sku:                variant.Sku,
-			ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
-			ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
-			VariantID:          variant.ID,
-			CreatedAt:          time.Now().UTC(),
-			UpdatedAt:          time.Now().UTC(),
-		})
-		if err != nil {
-			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				err = dbconfig.DB.UpdateVID(context.Background(), database.UpdateVIDParams{
-					ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
-					ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
-					UpdatedAt:          time.Now().UTC(),
-					Sku:                variant.Sku,
-				})
-			}
-			return err
-		}
-		err = dbconfig.PushProductInventory(configShopify, variant)
-		if err != nil {
-			fmt.Println("error updating product inventory: " + err.Error())
-			return err
-		}
-	} else {
-		if shopify_product_id == "" || len(shopify_product_id) == 0 {
-			shopify_product_id = ids.ProductID
-		}
-		variant_data, err := configShopify.AddVariantShopify(product_variant_adding, shopify_product_id)
-		if err != nil {
-			fmt.Println("error adding new variant to product id - " + shopify_product_id + " with error: " + err.Error())
-			return err
-		}
-		err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
-			ID:                 uuid.New(),
-			Sku:                variant.Sku,
-			ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
-			ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
-			VariantID:          variant.ID,
-			CreatedAt:          time.Now().UTC(),
-			UpdatedAt:          time.Now().UTC(),
-		})
-		if err != nil {
-			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				err = dbconfig.DB.UpdateVID(context.Background(), database.UpdateVIDParams{
-					ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
-					ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
-					UpdatedAt:          time.Now().UTC(),
-					Sku:                variant.Sku,
-				})
-			}
-			return err
-		}
-	}
+	// TO BE REMOVED
+
+	// if shopify_product_id == "" || len(shopify_product_id) == 0 {
+	// 	db_shopify_product_id, err := dbconfig.DB.GetPIDBySKU(context.Background(), variant.Sku)
+	// 	if err != nil {
+	// 		if err.Error() != "sql: no rows in result set" {
+	// 			return errors.New("error pushing variant to shopify")
+	// 		}
+	// 		return err
+	// 	}
+	// 	shopify_product_id = db_shopify_product_id
+	// }
+	// variant_data, err := configShopify.AddVariantShopify(product_variant_adding, shopify_product_id)
+	// if err != nil {
+	// 	fmt.Println("error adding new variant to product id - " + shopify_product_id + " with error: " + err.Error())
+	// 	return err
+	// }
+	// err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
+	// 	ID:                 uuid.New(),
+	// 	Sku:                variant.Sku,
+	// 	ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
+	// 	ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
+	// 	VariantID:          variant.ID,
+	// 	CreatedAt:          time.Now().UTC(),
+	// 	UpdatedAt:          time.Now().UTC(),
+	// })
+	// if err != nil {
+	// 	if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
+	// 		err = dbconfig.DB.UpdateVID(context.Background(), database.UpdateVIDParams{
+	// 			ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
+	// 			ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
+	// 			UpdatedAt:          time.Now().UTC(),
+	// 			Sku:                variant.Sku,
+	// 		})
+	// 	}
+	// 	return err
+	// }
 	return nil
 }
 
@@ -647,4 +604,30 @@ func GetVariantID(dbconfig *DbConfig, sku string) (string, error) {
 		return variant_id.ShopifyVariantID, nil
 	}
 	return "", nil
+}
+
+func SaveVariantIds(dbconfig *DbConfig, shopify_product objects.ShopifyProductResponse, sku string) error {
+	for _, variant := range shopify_product.Product.Variants {
+		if variant.Sku == sku {
+			// get VariantID by SKU
+			variant_id, err := dbconfig.DB.GetVariantBySKU(context.Background(), sku)
+			if err != nil {
+				return err
+			}
+			// save variant_ids locally
+			err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
+				ID:                 uuid.New(),
+				Sku:                sku,
+				ShopifyVariantID:   fmt.Sprint(variant.ID),
+				ShopifyInventoryID: fmt.Sprint(variant.InventoryItemID),
+				VariantID:          variant_id.ID,
+				CreatedAt:          time.Now().UTC(),
+				UpdatedAt:          time.Now().UTC(),
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

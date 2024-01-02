@@ -769,6 +769,7 @@ type ShopifyVariant struct {
 	ShopifyVar `json:"variant"`
 }
 type ShopifyVar struct {
+	ID                  string `json:"id,omitempty"`
 	Sku                 string `json:"sku,omitempty"`
 	Price               string `json:"price,omitempty"`
 	CompareAtPrice      string `json:"compare_at_price,omitempty"`

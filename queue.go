@@ -491,6 +491,8 @@ func (dbconfig *DbConfig) ClearQueueByFilter(
 }
 
 // Process a queue item
+
+// Duplication issue - The ProcessQueueItem function is repeated....
 func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	if queue_item.QueueType == "product" {
 		if queue_item.Instruction == "zsync_channel" {
@@ -509,6 +511,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return err
 		}
+		fmt.Println("I am here at the queue :)))")
 		if queue_item.Instruction == "add_product" {
 			return dbconfig.PushProduct(&shopifyConfig, product)
 		} else if queue_item.Instruction == "update_product" {
