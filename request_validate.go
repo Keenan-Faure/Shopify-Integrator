@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"objects"
@@ -349,6 +350,7 @@ func ProductOptionValueValidation(
 	mapp := CreateOptionMap(option_names, variants)
 	for _, value := range mapp[option_name] {
 		if value == option_value {
+			fmt.Println("Inamerr1")
 			return errors.New("duplicate option values not allowed")
 		}
 	}
@@ -590,39 +592,41 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 		counter := 0
 		for key := range option_1_values {
 			for sub_key := range option_2_values {
-				if option_2_values[key] == option_2_values[sub_key] && option_1_values[key] == option_1_values[sub_key] {
+				if option_2_values[key] == option_1_values[sub_key] && option_1_values[key] == option_2_values[sub_key] {
 					counter += 1
 				}
 				if counter > 1 {
 					return errors.New("duplicate option values not allowed")
+				}
+			}
+		}
+	} else if len(product.ProductOptions) == 3 {
+		option_1_values := []string{}
+		option_2_values := []string{}
+		option_3_values := []string{}
+		for _, value := range product.Variants {
+			option_1_values = append(option_1_values, value.Option1)
+			option_2_values = append(option_2_values, value.Option2)
+			option_3_values = append(option_3_values, value.Option3)
+		}
+		counter := 0
+		for key := range option_1_values {
+			for sub_key := range option_2_values {
+				for primal_key := range option_3_values {
+					if (option_3_values[key] == option_2_values[primal_key] &&
+						option_2_values[key] == option_1_values[sub_key]) &&
+						option_1_values[key] == option_3_values[sub_key] {
+						counter += 1
+					}
+					if counter > 1 {
+						fmt.Println("Inamerr4")
+						return errors.New("duplicate option values not allowed")
+					}
 				}
 			}
 		}
 	} else if len(product.ProductOptions) > 3 {
 		return errors.New("too many option values")
-	}
-	option_1_values := []string{}
-	option_2_values := []string{}
-	option_3_values := []string{}
-	for _, value := range product.Variants {
-		option_1_values = append(option_1_values, value.Option1)
-		option_2_values = append(option_2_values, value.Option2)
-		option_3_values = append(option_3_values, value.Option3)
-	}
-	counter := 0
-	for key := range option_1_values {
-		for sub_key := range option_2_values {
-			for primal_key := range option_3_values {
-				if (option_3_values[key] == option_3_values[primal_key] &&
-					option_2_values[key] == option_2_values[sub_key]) &&
-					option_1_values[key] == option_1_values[sub_key] {
-					counter += 1
-				}
-				if counter > 1 {
-					return errors.New("duplicate option values not allowed")
-				}
-			}
-		}
 	}
 	return nil
 }

@@ -1091,7 +1091,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	// add product to database
 	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 		ID:          uuid.New(),
-		Active:      params.Active,
+		Active:      "1",
 		ProductCode: params.ProductCode,
 		Title:       utils.ConvertStringToSQL(params.Title),
 		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),

@@ -83,7 +83,7 @@ func QueueWaitGroup(dbconfig *DbConfig) {
 	}
 	for _, queue_item := range queue_items {
 		waitgroup.Add(1)
-		go dbconfig.QueuePopAndProcess(queue_item.QueueType, waitgroup)
+		dbconfig.QueuePopAndProcess(queue_item.QueueType, waitgroup)
 	}
 	waitgroup.Wait()
 }
@@ -257,7 +257,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 		FailedQueueItem(dbconfig, queue_item, err)
 		return
 	}
-	if worker_type == "product" {
+	if worker_type == "product" || worker_type == "product_variant" {
 		is_enabled := false
 		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
 		if err != nil {
@@ -280,7 +280,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 		}
 		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(context.Background(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
-			QueueType: "product",
+			QueueType: worker_type,
 			Limit:     1,
 			Offset:    0,
 		})
@@ -290,45 +290,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 			}
 		}
 		if len(item) != 0 {
-			if item[0].QueueType == "product" {
-				FailedQueueItem(dbconfig, queue_item, errors.New("product queue is currently busy"))
-				return
-			}
-		}
-	} else if worker_type == "product_variant" {
-		is_enabled := false
-		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
-		if err != nil {
-			if err.Error() != "sql: no rows in result set" {
-				FailedQueueItem(dbconfig, queue_item, err)
-				return
-			}
-		}
-		if push_enabled.Value == "" {
-			push_enabled.Value = "false"
-		}
-		is_enabled, err = strconv.ParseBool(push_enabled.Value)
-		if err != nil {
-			FailedQueueItem(dbconfig, queue_item, err)
-			return
-		}
-		if !is_enabled {
-			FailedQueueItem(dbconfig, queue_item, errors.New("product push is disabled"))
-			return
-		}
-		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(context.Background(), database.GetQueueItemsByStatusAndTypeParams{
-			Status:    "processing",
-			QueueType: "product_variant",
-			Limit:     1,
-			Offset:    0,
-		})
-		if err != nil {
-			if err.Error() != "sql: no rows in result set" {
-				return
-			}
-		}
-		if len(item) != 0 {
-			if item[0].QueueType == "product_variant" {
+			if item[0].QueueType == worker_type {
 				FailedQueueItem(dbconfig, queue_item, errors.New("product queue is currently busy"))
 				return
 			}
@@ -491,8 +453,6 @@ func (dbconfig *DbConfig) ClearQueueByFilter(
 }
 
 // Process a queue item
-
-// Duplication issue - The ProcessQueueItem function is repeated....
 func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	if queue_item.QueueType == "product" {
 		if queue_item.Instruction == "zsync_channel" {
@@ -561,15 +521,6 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			ConvertVariantToShopify(variant),
 		)
 		if queue_item.Instruction == "add_variant" {
-			return dbconfig.PushVariant(
-				&shopifyConfig,
-				variant,
-				shopify_update_variant,
-				restrictions_map,
-				queue_object.Shopify.ProductID,
-				queue_object.Shopify.VariantID,
-			)
-		} else if queue_item.Instruction == "update_variant" {
 			return dbconfig.PushVariant(
 				&shopifyConfig,
 				variant,

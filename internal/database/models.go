@@ -185,7 +185,7 @@ type RegisterToken struct {
 type ShopifyCollection struct {
 	ID                  uuid.UUID      `json:"id"`
 	ProductCollection   sql.NullString `json:"product_collection"`
-	ShopifyCollectionID int32          `json:"shopify_collection_id"`
+	ShopifyCollectionID string         `json:"shopify_collection_id"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 }

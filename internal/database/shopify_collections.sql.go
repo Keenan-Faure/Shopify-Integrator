@@ -26,7 +26,7 @@ INSERT INTO shopify_collections(
 type CreateShopifyCollectionParams struct {
 	ID                  uuid.UUID      `json:"id"`
 	ProductCollection   sql.NullString `json:"product_collection"`
-	ShopifyCollectionID int32          `json:"shopify_collection_id"`
+	ShopifyCollectionID string         `json:"shopify_collection_id"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 }
@@ -54,7 +54,7 @@ LIMIT 1
 
 type GetShopifyCollectionRow struct {
 	ProductCollection   sql.NullString `json:"product_collection"`
-	ShopifyCollectionID int32          `json:"shopify_collection_id"`
+	ShopifyCollectionID string         `json:"shopify_collection_id"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 }
 
@@ -73,7 +73,7 @@ WHERE product_collection = $2
 `
 
 type UpdateShopifyCollectionParams struct {
-	ShopifyCollectionID int32          `json:"shopify_collection_id"`
+	ShopifyCollectionID string         `json:"shopify_collection_id"`
 	ProductCollection   sql.NullString `json:"product_collection"`
 }
 
