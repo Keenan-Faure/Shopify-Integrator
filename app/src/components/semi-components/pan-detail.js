@@ -67,7 +67,7 @@ function Pan_details(props)
         <div className = "pan">
             <div className = "pan-img" style = {{backgroundImage: `url(${props.Product_Image})`}}></div>
             <div className = "pan-details">
-                <a href = "/#" className = "p-d-title">{props.Product_Title} <i id = "options" href = "/#" className = "p-d-options" /></a> 
+                <a href = "/#" className = "p-d-title">{props.Product_Title} <i id = "options" href = "/#" className = "p-d-options" title = "Activity"/></a> 
                 <br/><br/>
 
                 <a href = "/#" className = "p-d-code">{props.Product_Code}</a> <a href = "/#" className = "p-d-id">{props.Product_ID}</a> <a className = "p-d-activity">{props.Product_Activity}</a>

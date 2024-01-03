@@ -382,6 +382,79 @@ auto-slideshow-container .mySlides2
   to {opacity: 1}
 }
 
+/* Product Activity Slider */
+
+.switch 
+{
+    position: relative;
+    display: inline-block;
+    width: 64px;
+    height: 34px;
+    margin-left: 15px;
+    left: 0px;
+}
+
+.switch input 
+{ 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider 
+{
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before 
+{
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked + .slider 
+{
+    background-color: #2196F3;
+}
+
+input:focus + .slider 
+{
+    box-shadow: 0 0 1px #2196F3;
+}
+  
+input:checked + .slider:before 
+{
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round 
+{
+    border-radius: 34px;
+}
+  
+.slider.round:before 
+{
+    border-radius: 50%;
+}
+
 /* Orders */
 textarea {
     overflow: auto;
@@ -415,8 +488,6 @@ a:hover {
     background-position: center;
     background-size: cover;
 }
-
-
 
 .view {
     z-index: 1;
@@ -514,12 +585,12 @@ a:hover {
     cursor: pointer;    position: absolute;
     display: block;
     width: 50px;
-    height: 50px;
+    height: 31px;
     top: 0px;
     right: 0px;
     cursor: pointer;
     z-index: 2;
-    color: rgb(184, 11, 11);
+    color: rgb(0, 0, 0);
     font-size: 35px;
     text-align: center;
     padding: 8px 0px 8px 0px;

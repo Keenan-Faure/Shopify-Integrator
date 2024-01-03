@@ -31,9 +31,6 @@ function Detailed_product(props)
         defaul.addEventListener("click", () => { openPage('Variants'); });
         document.getElementById("Product").click();
 
-        /* Activity of the product */
-        let activity = document.querySelector(".p-d-activity").innerHTML;
-
         /* When the user clicks on the return button */
         let close = document.querySelector(".rtn-button");
         let filter = document.querySelector(".filter");
@@ -42,6 +39,7 @@ function Detailed_product(props)
         let details = document.querySelector(".details");
         close.addEventListener("click", ()=> 
         {
+
             close.style.display = "none";
             details.style.animation = "Fadeout 1s ease-out";
             setTimeout(() => 
@@ -54,15 +52,18 @@ function Detailed_product(props)
                 main.style.display = "block";
                 filter.style.display = "block";
             }, 500);
+            setTimeout(() =>{ window.location.reload(); }, 400);
         });
 
         /* Edit Feature */
         let edit = document.getElementById("Edit");
         let confirm = document.querySelector(".confirm-line");
+        let slider = document.querySelector(".switch");
         edit.addEventListener("click", () =>
         {
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
             let variant_updateDate = document.querySelector(".variant-updateDate");
+            slider.style.pointerEvents = "auto";
             confirm.style.display = "block";
             for(let i = 0; i< td_list.length; i++)
             {
@@ -78,7 +79,18 @@ function Detailed_product(props)
             let variant_updateDate = document.querySelector(".variant-updateDate"); let price = document.querySelectorAll(".price");
             let barcode = document.querySelectorAll(".barcode"); let sku = document.querySelectorAll(".sku"); 
             let option1 = document.querySelectorAll(".option1"); let option2 = document.querySelectorAll(".option2"); let option3 = document.querySelectorAll(".option3");
+            let slider_ = document.getElementById("lide"); let activity;
+
             confirm.style.display = "none";
+
+            if(slider_.checked == true)
+            {
+                activity = "1";
+            }
+            else 
+            {
+                activity = "0";
+            }
 
             let title = document.getElementById("title");
             for(let i = 0; i< td_list.length; i++)
@@ -196,22 +208,26 @@ function Detailed_product(props)
         });
 
         /* Activity of pan elements */
+        slider.style.pointerEvents = "none";
+
         let _main = document.querySelector("#detailss");
         let activit = _main.querySelector(".p-d-activity");
-        let option = _main.querySelector("#options");
+        let slider_ = document.getElementById("lide");
 
         if(activit.innerHTML == "1")
         {
-            option.className = "p-d-true";
+            slider_.checked = true;
         }
         else if(activit.innerHTML == "")
         {
-            option.className = "p-d-unknown";
+            slider_.checked = false;
         }
         else
         {
-            option.className = "p-d-false";
+            slider_.checked = false;
         }
+        
+        
         
 
     }, []);
@@ -234,7 +250,10 @@ function Detailed_product(props)
                             <div id ="_title" style={{position: 'relative',top: '10px',display: 'inline-block'}}>
                                 <div>
                                     <div id = "title" style = {{display: 'inline-block'}}>{props.Product_Title}</div> 
-                                    <i id = "options" href = "/#" className = "p-d-options" style ={{width:'30px', height: '30px'}}/>
+                                    <label className = "switch" id = "slider">
+                                        <input type = "checkbox" id = "lide" />
+                                        <span className = "slider round"title = "Activty of Element"/>
+                                    </label>
                                 </div>
                             </div>
                         </div>

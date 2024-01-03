@@ -191,7 +191,7 @@ function Orders()
                                 Tax_Amount={_data.tax_total} Shipping_Type={_data.shipping_lines[0].sku} Shipping_Amount={_data.shipping_lines[0].price} 
                                 Total={parseFloat(_data.order_total) + parseFloat(_data.tax_total) + parseFloat(_data.shipping_lines[0].price)}
                                 />)
-                                _rt.render(_data.line_items.map((el, i) => <Detailed_table  key={`${_data.title}_${i}`}Order_SKU={el.sku} 
+                                _rt.render(_data.line_items.map((el, i) => <Detailed_table  key={`${_data.title}_${i}`} Order_SKU={el.sku} 
                                 Quantity={el.qty} Barcode={el.barcode} Order_Price={el.price}
                                 />))
 
