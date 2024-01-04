@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 	"time"
 	"utils"
 
-	"github.com/fatih/structs"
 	"github.com/shurcooL/graphql"
 )
 
@@ -308,9 +306,6 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 	if err != nil {
 		return objects.ShopifyVariantResponse{}, err
 	}
-	fmt.Println(res.StatusCode)
-	fmt.Println(structs.Map(variant))
-	fmt.Println(string(respBody))
 	if res.StatusCode != 201 {
 		return objects.ShopifyVariantResponse{}, errors.New(string(respBody))
 	}
@@ -332,7 +327,6 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(
 	if err != nil {
 		return objects.ShopifyVariantResponse{}, err
 	}
-	fmt.Println(variant_id)
 	res, err := configShopify.FetchHelper("variants/"+variant_id+".json", http.MethodPut, &buffer)
 	if err != nil {
 		return objects.ShopifyVariantResponse{}, err
@@ -342,8 +336,6 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(
 	if err != nil {
 		return objects.ShopifyVariantResponse{}, err
 	}
-	fmt.Println(res.StatusCode)
-	fmt.Println(string(respBody))
 	if res.StatusCode != 200 {
 		return objects.ShopifyVariantResponse{}, errors.New(string(respBody))
 	}
@@ -589,7 +581,6 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 	httpClient := http.Client{
 		Timeout: time.Second * 20,
 	}
-	fmt.Println(shopifyConfig.Url + "/" + endpoint)
 	req, err := http.NewRequest(method, shopifyConfig.Url+"/"+endpoint, body)
 	if err != nil {
 		return &http.Response{}, err

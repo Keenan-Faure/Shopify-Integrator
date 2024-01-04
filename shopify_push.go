@@ -177,13 +177,10 @@ func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShop
 
 // Pushes a product to Shopify
 func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, product objects.Product) error {
-	fmt.Println("---")
-	fmt.Println("starting at add product")
 	product_id, err := GetProductID(dbconfig, product.ProductCode)
 	if err != nil {
 		return err
 	}
-	fmt.Println("product_id: " + product_id) // should be blank at add_product
 	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
 	if err != nil {
 		return err
@@ -192,7 +189,6 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 	push_restrictions := PushRestrictionsToMap(restrictions)
 	update_shopify_product := ApplyPushRestrictionProduct(push_restrictions, shopifyProduct)
 	if product_id != "" && len(product_id) > 0 {
-		fmt.Println("I should appear here for an update, because I already exist inside the object")
 		_, err := configShopify.UpdateProductShopify(update_shopify_product, product_id)
 		return err
 	}
@@ -229,16 +225,11 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 			if err != nil {
 				return err
 			}
-			fmt.Println("---sku search results---")
-			fmt.Println(variant.Sku)
-			fmt.Println(ids_search)
 			if ids_search.ProductID != "" || len(ids_search.ProductID) != 0 {
 				ids = ids_search
 				break
 			}
 		}
-		fmt.Println("adding product using the dynamic search method")
-		fmt.Println(ids)
 		err = PushAddShopify(configShopify, dbconfig, ids, product, shopifyProduct, update_shopify_product)
 		if err != nil {
 			return err
@@ -256,11 +247,9 @@ func PushAddShopify(
 	shopifyProduct objects.ShopifyProduct,
 	update_shopify_product objects.ShopifyProduct,
 ) error {
-	fmt.Println("---")
-	fmt.Println("starting at the push_add_product")
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
-		fmt.Println("I am updating a product that exists on the website")
+
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
 		if err != nil {
 			return err
@@ -298,7 +287,6 @@ func PushAddShopify(
 		return nil
 	} else {
 		// add new product to website
-		fmt.Println("I am adding a product to the website")
 		product_data, err := configShopify.AddProductShopify(shopifyProduct)
 		if err != nil {
 			return err
@@ -409,7 +397,6 @@ func (dbconfig *DbConfig) PushVariant(
 	shopify_product_id string,
 	shopify_variant_id string,
 ) error {
-	fmt.Println("---")
 	product_variant_adding := ConvertVariantToShopify(variant)
 	price, err := dbconfig.ShopifyVariantPricing(variant, "Selling Price")
 	if err != nil {
@@ -426,12 +413,16 @@ func (dbconfig *DbConfig) PushVariant(
 	if shopify_variant_id == "" && len(shopify_variant_id) == 0 {
 		db_shopify_variant_id, err := dbconfig.DB.GetVIDBySKU(context.Background(), variant.Sku)
 		if err != nil {
-			return err
+			if err.Error() != "sql: no rows in result set" {
+				return err
+			}
+		} else {
+			shopify_variant_id = db_shopify_variant_id.ShopifyVariantID
 		}
-		shopify_variant_id = db_shopify_variant_id.ShopifyVariantID
 	}
-	fmt.Println("I am updating using variant_id: " + shopify_variant_id)
 	if shopify_variant_id == "" && len(shopify_variant_id) == 0 {
+		// determines if the SKU is found on the website
+		// if found we use that product
 		ids, err := configShopify.GetProductBySKU(variant.Sku)
 		if err != nil {
 			return err
@@ -439,12 +430,32 @@ func (dbconfig *DbConfig) PushVariant(
 		shopify_variant_id = ids.VariantID
 	}
 	if shopify_variant_id == "" && len(shopify_variant_id) == 0 {
-		return errors.New("unable to process product with SKU " + variant.Sku + " to shopify")
+		// if the shopify_variant_id is empty
+		// we create a new variant on the website for this product
+		if (shopify_product_id == "") || len(shopify_product_id) == 0 {
+			db_shopify_product_id, err := dbconfig.DB.GetPIDBySKU(context.Background(), variant.Sku)
+			if err != nil {
+				if err.Error() != "sql: no rows in result set" {
+					return err
+				}
+				db_shopify_product_id = ""
+			}
+			shopify_product_id = db_shopify_product_id
+			if (shopify_product_id == "") || len(shopify_product_id) == 0 {
+				return errors.New("unable to process product with SKU " + variant.Sku + " to shopify")
+			}
+		}
+		variants, err := configShopify.AddVariantShopify(product_variant, shopify_product_id)
+		if err != nil {
+			return err
+		}
+		shopify_variant_id = fmt.Sprint(variants.Variant.ID)
+		// after adding the new variant, we should update it
+		// hence we do not return
 	}
 	// update variant
 	variant_data, err := configShopify.UpdateVariantShopify(product_variant, shopify_variant_id)
 	if err != nil {
-		fmt.Println("err updating variant: " + shopify_variant_id + " with error: " + err.Error())
 		return err
 	}
 	err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{

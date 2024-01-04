@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"objects"
@@ -350,7 +349,6 @@ func ProductOptionValueValidation(
 	mapp := CreateOptionMap(option_names, variants)
 	for _, value := range mapp[option_name] {
 		if value == option_value {
-			fmt.Println("Inamerr1")
 			return errors.New("duplicate option values not allowed")
 		}
 	}
@@ -619,7 +617,6 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 						counter += 1
 					}
 					if counter > 1 {
-						fmt.Println("Inamerr4")
 						return errors.New("duplicate option values not allowed")
 					}
 				}

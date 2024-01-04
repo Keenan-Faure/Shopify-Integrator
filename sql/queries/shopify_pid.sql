@@ -25,3 +25,20 @@ SELECT
 FROM shopify_pid
 WHERE product_code = $1
 LIMIT 1;
+
+-- name: GetPIDBySKU :one
+SELECT
+    shopify_product_id
+FROM shopify_pid
+WHERE product_code IN (
+    SELECT
+        product_code
+    FROM products
+    WHERE id IN (
+        SELECT
+            product_id
+        FROM variants
+        WHERE sku = $1
+    )
+)
+LIMIT 1;

@@ -155,7 +155,6 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 	if err != nil {
 		return nil
 	}
-	fmt.Println(db_order.ID)
 	if db_order.WebCode.String == fmt.Sprint(order_body.Name) {
 		// delete order
 		err := dbconfig.DB.RemoveOrder(context.Background(), db_order.ID)

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"integrator/internal/database"
 	"io"
 	"log"
@@ -471,7 +470,6 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("I am here at the queue :)))")
 		if queue_item.Instruction == "add_product" {
 			return dbconfig.PushProduct(&shopifyConfig, product)
 		} else if queue_item.Instruction == "update_product" {
@@ -496,8 +494,6 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			return errors.New("invalid order instruction")
 		}
 	} else if queue_item.QueueType == "product_variant" {
-		fmt.Println("---")
-		fmt.Println("starting at the queue wrker")
 		shopifyConfig := shopify.InitConfigShopify()
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
 		if err != nil {
