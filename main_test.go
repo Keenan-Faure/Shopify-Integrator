@@ -174,7 +174,7 @@ func CreateProd() objects.RequestBodyProduct {
 		Category:       "",
 		Vendor:         "",
 		ProductType:    "",
-		Variants:       []objects.RequestBodyVariant{{Sku: "Test", Option1: "", Option2: "", Option3: "", Barcode: "", VariantPricing: []objects.VariantPrice{{Name: "Test", Value: "0.00"}}, VariantQuantity: []objects.VariantQty{}, UpdatedAt: time.Time{}}},
+		Variants:       []objects.RequestBodyVariant{{Sku: "Test", Option1: "", Option2: "", Option3: "", Barcode: "", VariantPricing: []objects.VariantPrice{{Name: "Selling Price", Value: "0.00"}}, VariantQuantity: []objects.VariantQty{}, UpdatedAt: time.Time{}}},
 		ProductOptions: []objects.ProductOptions{{Value: ""}},
 	}
 }
@@ -271,16 +271,16 @@ func TestProductCRUD(t *testing.T) {
 	if res.StatusCode != 201 {
 		t.Errorf("Expected '201' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	productData := objects.Product{}
-	err = json.Unmarshal(respBody, &productData)
+	response_string := objects.ResponseString{}
+	err = json.Unmarshal(respBody, &response_string)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	if productData.Title != "TestProduct" {
-		t.Errorf("Expected 'TestProduct' but found: " + productData.Title)
+	if response_string.Message != "success" {
+		t.Errorf("Expected 'success' but found: " + response_string.Message)
 	}
-	fmt.Println("Test 2 - Fetching product")
-	res, err = UFetchHelper("products/"+productData.ID.String(), "GET", user.ApiKey)
+	fmt.Println("Test 2 - Fetching product by search title param")
+	res, err = UFetchHelper("products/search?q="+body.Title, "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -292,21 +292,42 @@ func TestProductCRUD(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
 	}
-	productData = objects.Product{}
+	productData := []objects.SearchProduct{}
 	err = json.Unmarshal(respBody, &productData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	if productData.Title != "TestProduct" {
-		t.Errorf("Expected 'TestProduct' but found: " + productData.Title)
+	if len(productData) == 0 {
+		t.Errorf("expected '1' but found: 0")
+	}
+	fmt.Println("Test 3 - Fetching product by ID ")
+	res, err = UFetchHelper("products/"+productData[0].ID.String(), "GET", user.ApiKey)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	defer res.Body.Close()
+	respBody, err = io.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if res.StatusCode != 200 {
+		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
+	}
+	productData_id := objects.Product{}
+	err = json.Unmarshal(respBody, &productData_id)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	if productData_id.Title != "TestProduct" {
+		t.Errorf("Expected 'TestProduct' but found: " + productData_id.Title)
 	}
 
-	fmt.Println("Test 3 - Deleting product & recheck")
-	dbconfig.DB.RemoveProduct(context.Background(), productData.ID)
+	fmt.Println("Test 4 - Deleting product & recheck")
+	dbconfig.DB.RemoveProduct(context.Background(), productData_id.ID)
 	type ErrorStruct struct {
 		Error string `json:"error"`
 	}
-	res, err = UFetchHelper("products/"+productData.ID.String(), "GET", user.ApiKey)
+	res, err = UFetchHelper("products/"+productData_id.ID.String(), "GET", user.ApiKey)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -339,7 +360,7 @@ func TestOrderCRUD(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	res, err := UFetchHelperPost("orders?token="+user.WebhookToken, "POST", user.ApiKey, &buffer)
+	res, err := UFetchHelperPost("orders?token="+user.WebhookToken+"&api_key="+user.ApiKey, "POST", "", &buffer)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -620,12 +641,11 @@ func TestQueueCRUD(t *testing.T) {
 	if queueDataList[1].QueueType != "order" {
 		t.Errorf("expected 'order' but found: " + queueDataList[1].QueueType)
 	}
-	// fmt.Println("Test 3 - Updating specific queue items in the queue")
-	fmt.Println("Test 4 - Processing queue item in the queue and check status")
+	fmt.Println("Test 3 - Processing queue item in the queue and check status")
 	// depends on how often the worker runs
 	// by default I set time for 10 seconds
 	time.Sleep(10 * time.Second)
-	fmt.Println("Test 5 - Delete queue item in the queue")
+	fmt.Println("Test 4 - Delete queue item in the queue")
 	body = CreateQueueItemOrder("add_order")
 	err = json.NewEncoder(&buffer).Encode(body)
 	if err != nil {
@@ -655,6 +675,7 @@ func TestQueueCRUD(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Errorf("Expected '200' but found: " + strconv.Itoa(res.StatusCode))
 	}
+	fmt.Println("Test 5 - check the queue view")
 	res, err = UFetchHelperPost("queue/view", "GET", user.ApiKey, &buffer)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -675,8 +696,7 @@ func TestQueueCRUD(t *testing.T) {
 	if queueCount.AddOrder != 0 {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddOrder))
 	}
-	// by default the queue is disabled
-	if queueCount.AddProduct != 1 {
+	if queueCount.AddProduct != 0 {
 		t.Errorf("Expected '0' but found " + fmt.Sprint(queueCount.AddProduct))
 	}
 	if queueCount.AddVariant != 0 {

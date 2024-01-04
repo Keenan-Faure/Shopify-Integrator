@@ -23,7 +23,7 @@ INSERT INTO app_settings(
     'app_enable_queue_worker',
     'Enables the queue worker to process queue items.',
     'App Enable Queue Worker',
-    'false',
+    'true',
     NOW(),
     NOW()
 ), (
