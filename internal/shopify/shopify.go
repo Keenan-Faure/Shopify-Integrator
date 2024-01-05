@@ -490,7 +490,7 @@ func (configShopify *ConfigShopify) CategoryExists(product objects.Product, cate
 func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.ResponseIDs, error) {
 	client := graphql.NewClient(configShopify.Url+"/graphql.json", nil)
 	variables := map[string]any{
-		"sku": graphql.String(sku),
+		"sku": "sku:" + graphql.String(sku),
 	}
 	var respData struct {
 		ProductVariants struct {

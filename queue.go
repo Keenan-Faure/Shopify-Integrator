@@ -516,7 +516,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			restrictions_map,
 			ConvertVariantToShopify(variant),
 		)
-		if queue_item.Instruction == "add_variant" {
+		if queue_item.Instruction == "add_variant" || queue_item.Instruction == "update_variant" {
 			return dbconfig.PushVariant(
 				&shopifyConfig,
 				variant,

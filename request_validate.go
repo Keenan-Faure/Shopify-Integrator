@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -501,7 +502,7 @@ func UserValidation(user objects.RequestBodyUser) error {
 }
 
 // Product: data validation
-func ProductValidation(product objects.RequestBodyProduct) error {
+func ProductValidation(dbconfig *DbConfig, product objects.RequestBodyProduct) error {
 	if product.Title == "" {
 		return errors.New("empty title not allowed")
 	}
@@ -517,6 +518,19 @@ func ProductValidation(product objects.RequestBodyProduct) error {
 		}
 	} else {
 		return errors.New("product must have a price")
+	}
+	for _, variant := range product.Variants {
+		for key_qty := range variant.VariantQuantity {
+			// check if the warehouse exists, then we update the quantity
+			warehouse_name := variant.VariantQuantity[key_qty].Name
+			_, err := dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					return errors.New("warehouse " + warehouse_name + " not found")
+				}
+				return err
+			}
+		}
 	}
 	return nil
 }

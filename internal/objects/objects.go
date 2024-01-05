@@ -781,7 +781,7 @@ type ShopifyVar struct {
 }
 type ShopifyOptions struct {
 	Name     string   `json:"name"`
-	Position int      `json:"position"`
+	Position int      `json:"position,omitempty"`
 	Values   []string `json:"values"`
 }
 

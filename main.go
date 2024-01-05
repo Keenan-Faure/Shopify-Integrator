@@ -99,7 +99,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/products/filter", dbconfig.middlewareAuth(dbconfig.ProductFilterHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 	api.Delete("/products/{id}", dbconfig.middlewareAuth(dbconfig.RemoveProductHandle))
-	api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
+	// api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
 	api.Put("/products/{id}", dbconfig.middlewareAuth(dbconfig.UpdateProductHandle))
 
 	// general endpoint that returns the shopify_locations & internal warehouses

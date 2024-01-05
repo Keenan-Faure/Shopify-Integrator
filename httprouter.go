@@ -308,7 +308,7 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	validation := ProductValidation(params)
+	validation := ProductValidation(dbconfig, params)
 	if validation != nil {
 		RespondWithError(w, http.StatusBadRequest, validation.Error())
 		return
@@ -1007,7 +1007,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// DELETE /api/products?id={{product_id}}
+// DELETE /api/products/{id}
 func (dbconfig *DbConfig) RemoveProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	product_id := chi.URLParam(r, "id")
 	err := IDValidation(product_id)
@@ -1060,7 +1060,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	validation := ProductValidation(params)
+	validation := ProductValidation(dbconfig, params)
 	if validation != nil {
 		RespondWithError(w, http.StatusBadRequest, validation.Error())
 		return
