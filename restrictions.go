@@ -121,12 +121,6 @@ func ApplyPushRestrictionV(
 	if DeterPushRestriction(restrictions, "options") {
 		shopify_variant_new.Option3 = shopify_variant.Option3
 	}
-	if DeterPushRestriction(restrictions, "pricing") {
-		shopify_variant_new.Price = shopify_variant.Price
-	}
-	if DeterPushRestriction(restrictions, "pricing") {
-		shopify_variant_new.CompareAtPrice = shopify_variant.CompareAtPrice
-	}
 	if DeterPushRestriction(restrictions, "warehousing") {
 		shopify_variant_new.InventoryManagement = "shopify"
 	}

@@ -111,7 +111,7 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 	for {
 		// fetch all products paginated
 		products, err := dbconfig.DB.GetActiveProducts(context.Background(), database.GetActiveProductsParams{
-			Limit:  1,
+			Limit:  50,
 			Offset: (int32(page) * 50),
 		})
 		if err != nil {
@@ -120,7 +120,7 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 				return
 			}
 		}
-		if len(products) == 0 || page == 1 {
+		if len(products) == 0 {
 			break
 		}
 		for _, product := range products {
@@ -159,7 +159,9 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, "synconizing started")
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "synconizing started",
+	})
 }
 
 // GET /api/queue/{id}

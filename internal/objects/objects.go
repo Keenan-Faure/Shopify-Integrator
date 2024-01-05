@@ -260,17 +260,29 @@ type ShopifyProductResponse struct {
 		Handle    string `json:"handle"`
 		ID        int    `json:"id"`
 		Images    []struct {
-			ID         int    `json:"id"`
-			ProductID  int    `json:"product_id"`
-			Position   int    `json:"position"`
-			CreatedAt  string `json:"created_at"`
-			UpdatedAt  string `json:"updated_at"`
-			Width      int    `json:"width"`
-			Height     int    `json:"height"`
-			Src        string `json:"src"`
-			VariantIds []struct {
-			} `json:"variant_ids"`
+			ID         int     `json:"id"`
+			ProductID  int     `json:"product_id"`
+			Position   int     `json:"position"`
+			CreatedAt  string  `json:"created_at"`
+			UpdatedAt  string  `json:"updated_at"`
+			Width      int     `json:"width"`
+			Height     int     `json:"height"`
+			Src        string  `json:"src"`
+			VariantIds []int64 `json:"variant_ids"`
 		} `json:"images"`
+		Image struct {
+			ID                int64     `json:"id"`
+			ProductID         int64     `json:"product_id"`
+			Position          int       `json:"position"`
+			CreatedAt         time.Time `json:"created_at"`
+			UpdatedAt         time.Time `json:"updated_at"`
+			Alt               any       `json:"alt"`
+			Width             int       `json:"width"`
+			Height            int       `json:"height"`
+			Src               string    `json:"src"`
+			VariantIds        []int64   `json:"variant_ids"`
+			AdminGraphqlAPIID string    `json:"admin_graphql_api_id"`
+		} `json:"image"`
 		Options []struct {
 			ID        int      `json:"id"`
 			ProductID int      `json:"product_id"`

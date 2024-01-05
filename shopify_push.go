@@ -108,6 +108,9 @@ func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShop
 	if err != nil {
 		return err
 	}
+	if shopify_inventory.ShopifyInventoryID == "" || len(shopify_inventory.ShopifyInventoryID) == 0 {
+		return errors.New("invalid inventory_item_id for sku: " + variant.Sku)
+	}
 	int_inventory_id, err := strconv.Atoi(shopify_inventory.ShopifyInventoryID)
 	if err != nil {
 		return err
@@ -249,7 +252,6 @@ func PushAddShopify(
 ) error {
 	if ids.ProductID != "" && len(ids.ProductID) > 0 {
 		// update existing product on the website
-
 		product_data, err := configShopify.UpdateProductShopify(update_shopify_product, ids.ProductID)
 		if err != nil {
 			return err
@@ -261,9 +263,11 @@ func PushAddShopify(
 			return err
 		}
 		if DeterPushRestriction(PushRestrictionsToMap(restrictions), "category") {
-			err = dbconfig.CollectionShopfy(configShopify, product, product_data.Product.ID)
-			if err != nil {
-				return err
+			if product.Category != "" || len(product.Category) > 0 {
+				err = dbconfig.CollectionShopfy(configShopify, product, int(product_data.Product.ID))
+				if err != nil {
+					return err
+				}
 			}
 		}
 		err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
@@ -305,7 +309,7 @@ func PushAddShopify(
 			}
 		}
 		if product_data.Product.ID != 0 {
-			err = dbconfig.CollectionShopfy(configShopify, product, product_data.Product.ID)
+			err = dbconfig.CollectionShopfy(configShopify, product, int(product_data.Product.ID))
 			if err != nil {
 				return err
 			}
@@ -325,6 +329,17 @@ func (dbconfig *DbConfig) CollectionShopfy(
 	configShopify *shopify.ConfigShopify,
 	product objects.Product,
 	shopify_product_id int) error {
+	// check if the product has the associated category linked to it already...
+	categories, err := configShopify.GetShopifyCategoryByProductID(fmt.Sprint(shopify_product_id))
+	if err != nil {
+		return err
+	}
+	if len(categories.CustomCollections) > 0 {
+		if product.Category == categories.CustomCollections[0].Title {
+			// the product already has the category added to it
+			return nil
+		}
+	}
 	db_category, err := dbconfig.DB.GetShopifyCollection(context.Background(), utils.ConvertStringToSQL(product.Category))
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
@@ -402,14 +417,17 @@ func (dbconfig *DbConfig) PushVariant(
 	if err != nil {
 		return err
 	}
-	product_variant.Price = price
 	product_variant_adding.Price = price
 	compare_to_price, err := dbconfig.ShopifyVariantPricing(variant, "Compare At Price")
 	if err != nil {
 		return err
 	}
-	product_variant.CompareAtPrice = compare_to_price
 	product_variant_adding.CompareAtPrice = compare_to_price
+	// only update price if the restriction says so
+	if DeterPushRestriction(restrictions, "pricing") {
+		product_variant.CompareAtPrice = compare_to_price
+		product_variant.Price = price
+	}
 	if shopify_variant_id == "" && len(shopify_variant_id) == 0 {
 		db_shopify_variant_id, err := dbconfig.DB.GetVIDBySKU(context.Background(), variant.Sku)
 		if err != nil {
