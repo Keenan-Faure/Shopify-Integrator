@@ -120,9 +120,9 @@ To run the application simply open the (cloned) local version of the application
 
 A friendly list of features currently supported and available:
 
-- Adding, removing, updating, and viewing products from the application.
+- Adding, disabling, updating, and viewing products from the application.
 - Adding, updating, and viewing order data. Note that this is only via the API.
-- Viewing of customer data.
+- Viewing of customer data (generated from order data).
 - Import/export function available for products.
 - Filter & search features for products, orders and customers.
 - Automatic customer creation from orders.
