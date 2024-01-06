@@ -7,8 +7,6 @@ DRIVER="postgres://"
 
 cd /keenan
 
-source .env
-
 cd sql/schema
 
 echo "Checking GOOSE version"
