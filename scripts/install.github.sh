@@ -21,6 +21,7 @@ else
     do 
         sleep 3;
     done
+    docker restart $SERVER_CONTAINER_NAME
     until [ "`docker inspect -f {{.State.Running}} $SERVER_CONTAINER_NAME`"=="true" ]; do
         sleep 1;
     done;
