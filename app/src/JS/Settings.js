@@ -182,39 +182,89 @@ function Settings()
             
             let root;
             let _main = document.querySelector(".app-settings");
-            let div = document.createElement("div");
-            div.id = "a_settings";
-            _main.appendChild(div);
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
-            Value={el.value} id={el.id} Title = {el.key}
-            />))
-
-            let setting_2 = document.getElementById("app_settings");
-            for(let i = 0; i < _data.length; i++)
+            if(document.getElementById("a_settings") != null && document.getElementById("app_settings") != null)
             {
-                let div = document.createElement("button");
-                div.className = "mini-setting";
-                div.innerHTML = _data[i].field_name;
-                setting_2.appendChild(div);
+                // Remove old elements
+                document.getElementById("a_settings").remove();
+                document.getElementById("app_settings").remove();
+
+                let settings_2 = document.getElementById("a-s");
+                let div = document.createElement("div");
+                div.id = "a_settings";
+                _main.appendChild(div);
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
+                Value={el.value} id={el.id} Title = {el.key}
+                />))
+
+                //create new setting_2
+                let setting_2 = document.createElement("div");
+                setting_2.id = "app_settings";
+                settings_2.appendChild(setting_2);
+
+                for(let i = 0; i < _data.length; i++)
+                {
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = _data[i].field_name;
+                    setting_2.appendChild(div);
+                }
+                console.log(setting_2);
+                console.log(div);
+            
+                /* Scroll into View Button Event */
+                let a_settings = div.childNodes;
+                let app_button = setting_2.children;
+                for(let i = 0; i < app_button.length; i++)
+                {
+                    app_button[i].addEventListener("click", () =>
+                    {
+                        a_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            a_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { a_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                    });
+                }
+            }
+            else 
+            {
+                let div = document.createElement("div");
+                div.id = "a_settings";
+                _main.appendChild(div);
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
+                Value={el.value} id={el.id} Title = {el.key}
+                />))
+
+                let setting_2 = document.getElementById("app_settings");
+                for(let i = 0; i < _data.length; i++)
+                {
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = _data[i].field_name;
+                    setting_2.appendChild(div);
+                }
+            
+                /* Scroll into View Button Event */
+                let a_settings = div.childNodes;
+                let app_button = setting_2.children;
+
+                for(let i = 0; i < app_button.length; i++)
+                {
+                    app_button[i].addEventListener("click", () =>
+                    {
+                        a_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            a_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { a_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                    })
+                }
             }
         
-            /* Scroll into View Button Event */
-            let a_settings = document.getElementById("a_settings").childNodes;
-            let app_button = document.getElementById("app_settings").children;
-
-            for(let i = 0; i < app_button.length; i++)
-            {
-                app_button[i].addEventListener("click", () =>
-                {
-                    a_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
-                    setTimeout(() =>
-                    {
-                        a_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
-                        setTimeout(() => { a_settings[i].style.boxShadow = ""; }, 1200)
-                    }, 50);
-                });
-            }
         })
         .fail( function(xhr) 
         { 
@@ -229,39 +279,88 @@ function Settings()
             
             let root;
             let _main = document.querySelector("._shopify");
-            let div = document.createElement("div");
-            div.id = "s_settings";
-            _main.appendChild(div);
-
-            root = createRoot(div);
-            root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
-            Value={el.value} id={el.id} Title = {el.key}
-            />))
-
-            let setting_2 = document.getElementById("shopify_settings");
-            for(let i = 0; i < _data.length; i++)
+            if(document.getElementById("s_settings") != null && document.getElementById("shopify_settings") != null)
             {
-                let div = document.createElement("button");
-                div.className = "mini-setting";
-                div.innerHTML = _data[i].field_name;
-                setting_2.appendChild(div);
-            }
+                document.getElementById("s_settings").remove();
+                document.getElementById("shopify_settings").remove();
 
-            /* Scroll into View Button Event */
-            let s_settings = document.getElementById("s_settings").childNodes;
-            let shop_button = document.getElementById("shopify_settings").children;
-            for(let i = 0; i < shop_button.length; i++)
-            {
-                shop_button[i].addEventListener("click", () =>
+                let settings_2 = document.getElementById("s-s");
+                let div = document.createElement("div");
+                div.id = "s_settings";
+                _main.appendChild(div);
+
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
+                Value={el.value} id={el.id} Title = {el.key}
+                />))
+
+                //create new setting_2
+                let setting_2 = document.createElement("div");
+                setting_2.id = "shopify_settings";
+                settings_2.appendChild(setting_2);
+
+                for(let i = 0; i < _data.length; i++)
                 {
-                    s_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
-                    setTimeout(() =>
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = _data[i].field_name;
+                    setting_2.appendChild(div);
+                }
+
+                /* Scroll into View Button Event */
+                let s_settings = div.childNodes;
+                let shop_button = setting_2.children;
+                for(let i = 0; i < shop_button.length; i++)
+                {
+                    shop_button[i].addEventListener("click", () =>
                     {
-                        s_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
-                        setTimeout(() => { s_settings[i].style.boxShadow = ""; }, 1200)
-                    }, 50);
-                    
-                });
+                        s_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            s_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { s_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                    });
+                }
+                
+            }
+            else 
+            {
+                let div = document.createElement("div");
+                div.id = "s_settings";
+                _main.appendChild(div);
+
+                root = createRoot(div);
+                root.render(_data.map((el, i) => <Setting_details key={`${el.title}_${i}`} Key={el.field_name} Description={el.description}
+                Value={el.value} id={el.id} Title = {el.key}
+                />))
+
+                let setting_2 = document.getElementById("shopify_settings");
+                for(let i = 0; i < _data.length; i++)
+                {
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = _data[i].field_name;
+                    setting_2.appendChild(div);
+                }
+
+                /* Scroll into View Button Event */
+                let s_settings = div.childNodes;
+                let shop_button = setting_2.children;
+                for(let i = 0; i < shop_button.length; i++)
+                {
+                    shop_button[i].addEventListener("click", () =>
+                    {
+                        s_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            s_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { s_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                        
+                    })
+                }
+                
             }
         })
         .fail( function(xhr) 
@@ -743,12 +842,12 @@ function Settings()
                 
             </div>
             <div className = "side-container">
-                <div className = "settings-2">
+                <div className = "settings-2" id = "a-s">
                     <div className = "application"><i className = "a"/>Application Settings:</div>
                     <div id = "app_settings"></div>
 
                 </div>
-                <div className = "settings-2">
+                <div className = "settings-2" id = "s-s" style ={{paddingTop: '0px'}}>
                     <div className = "application"><i className = "b"/>Spotify Settings:</div>
                     <div id = "shopify_settings"></div>
                 </div>
