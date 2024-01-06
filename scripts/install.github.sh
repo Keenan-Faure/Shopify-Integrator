@@ -21,8 +21,10 @@ else
     do 
         sleep 3;
     done
-    chmod +x ./sql/schema/migrations.sh
-    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
+    until [ "`docker inspect -f {{.State.Running}} $SERVER_CONTAINER_NAME`"=="true" ]; do
+        sleep 1;
+    done;
+    docker exec $SERVER_CONTAINER_NAME bash -c /keenan/scripts/migrations.sh
 
     docker restart $SERVER_CONTAINER_NAME
 fi
