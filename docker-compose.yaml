@@ -5,7 +5,8 @@ services:
             context: ./
             dockerfile: ./setup/server/Dockerfile
         depends_on:
-            - postgres
+            postgres:
+                condition: service_healthy
         ports:
             - "${PORT}:${PORT}"
         container_name: ${SERVER_CONTAINER_NAME}
