@@ -22,6 +22,7 @@ else
         sleep 3;
     done
     docker restart $SERVER_CONTAINER_NAME
+    sleep 4;
     docker exec $SERVER_CONTAINER_NAME bash -c /keenan/scripts/migrations.sh
     if [ $? -eq 0 ]; then
         echo SUCCEEDED
