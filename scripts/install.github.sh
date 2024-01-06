@@ -20,9 +20,7 @@ else
         docker exec $DB_NAME pg_isready
     do 
         sleep 3;
-    done
-    docker-compose logs
-    
+    done    
     docker exec $SERVER_CONTAINER_NAME bash -c "/keenan/scripts/migrations.sh"
     docker restart $SERVER_CONTAINER_NAME
 fi

@@ -1,60 +1,56 @@
 name: ci
 
 on:
-  pull_request:
-    branches: [main]
+    pull_request:
+        branches: [main]
 
 jobs:
-  integration-tests:
-    name: integration tests
-    runs-on: ubuntu-latest
+    integration-tests:
+        name: integration tests
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.20"
+        steps:
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.20"
 
-      - name: Check out code
-        uses: actions/checkout@v3
+            - name: Check out code
+              uses: actions/checkout@v3
 
-      - name: Run install script
-        run: |
-          chmod +x ./scripts/install.github.sh
-          ./scripts/install.github.sh
-        shell: bash
+            - name: Run install script
+              run: |
+                  chmod +x ./scripts/install.github.sh
+                  ./scripts/install.github.sh
+              shell: bash
 
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
+            - name: 🔎 Run unit tests
+              run: go test ./... -cover
 
-      - name: 🔎 Run unit tests
-        run: go test ./... -cover
+            - name: Install go security
+              run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
-      - name: Install go security
-        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+            - name: 🔎 Security check
+              run: gosec -exclude-generated ./...
 
-      - name: 🔎 Security check
-        run: gosec -exclude-generated ./...
+    style:
+        name: style
+        runs-on: ubuntu-latest
 
-  style:
-    name: style
-    runs-on: ubuntu-latest
+        steps:
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.20"
 
-    steps:
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.20"
+            - name: Check out code
+              uses: actions/checkout@v3
 
-      - name: Check out code
-        uses: actions/checkout@v3
+            - name: 🔎Check code formatting
+              run: test -z $(go fmt ./...)
 
-      - name: 🔎Check code formatting
-        run: test -z $(go fmt ./...)
+            - name: Install static check
+              run: go install honnef.co/go/tools/cmd/staticcheck@latest
 
-      - name: Install static check
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-      - name: 🔎Static check
-        run: staticcheck ./...
+            - name: 🔎Static check
+              run: staticcheck ./...

@@ -14,4 +14,4 @@ RUN ["chmod", "+x", "/keenan/scripts/migrations.sh"]
 
 RUN cd /keenan/
 
-ENTRYPOINT [ "/bin/sh", "-c" , "go build -o integrator && ./integrator"]
+ENTRYPOINT [ "/bin/sh", "-c" , "go build -buildvcs=false -o integrator && ./integrator"]
