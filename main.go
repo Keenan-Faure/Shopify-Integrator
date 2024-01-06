@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"integrator/internal/database"
+	"iocsv"
 	"log"
 	"net/http"
 	"shopify"
@@ -24,7 +25,7 @@ const file_path = "./app"
 
 func main() {
 	// flags
-	// workers := flag.Bool("workers", false, "Enable server and worker for tests only")
+	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
 	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
 	flag.Parse()
 
@@ -43,14 +44,14 @@ func main() {
 	shopifyConfig := shopify.InitConfigShopify()
 
 	// config workers only if flags are set
-	// if !*workers {
-	// 	fmt.Println("starting workers")
-	// 	go iocsv.LoopRemoveCSV()
-	// 	if shopifyConfig.Valid {
-	// 		go LoopJSONShopify(&dbCon, shopifyConfig)
-	// 	}
-	// 	QueueWorker(&dbCon)
-	// }
+	if !*workers {
+		fmt.Println("starting workers")
+		go iocsv.LoopRemoveCSV()
+		if shopifyConfig.Valid {
+			go LoopJSONShopify(&dbCon, shopifyConfig)
+		}
+		QueueWorker(&dbCon)
+	}
 	fmt.Println("starting API")
 	setupAPI(dbCon, shopifyConfig)
 }

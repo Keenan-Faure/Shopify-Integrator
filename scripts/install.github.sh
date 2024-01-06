@@ -13,7 +13,7 @@ fi
 
 source .env
 docker-compose rm -f
-if ! docker compose up -d --force-recreate --no-deps server postgres; then
+if ! docker compose -f docker-compose-github.yaml up -d --force-recreate --no-deps server postgres; then
     exit
 else 
     until
