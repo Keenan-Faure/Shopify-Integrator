@@ -21,15 +21,7 @@ else
     do 
         sleep 3;
     done
-    docker restart $SERVER_CONTAINER_NAME
-    sleep 4;
-    docker exec $SERVER_CONTAINER_NAME bash -c /keenan/scripts/migrations.sh
-    if [ $? -eq 0 ]; then
-        echo SUCCEEDED
-    else
-        echo FAILED
-        exit;
-    fi
-
+    
+    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
     docker restart $SERVER_CONTAINER_NAME
 fi
