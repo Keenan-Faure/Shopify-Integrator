@@ -10,12 +10,6 @@ WORKDIR /keenan/
 # Migrations
 COPY ./ /keenan/
 
-RUN ls ./
-RUN ls ../
-RUN ls /
-
-RUN ls ../keenan/
-
 RUN ["chmod", "+x", "/keenan/scripts/migrations.sh"]
 
 RUN cd /keenan/
