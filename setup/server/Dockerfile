@@ -9,6 +9,7 @@ WORKDIR /keenan/
 
 # Migrations
 COPY ./ /keenan/
+COPY ./.env /keenan/
 
 RUN ["chmod", "+x", "/keenan/scripts/migrations.sh"]
 
