@@ -7,11 +7,14 @@ RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 RUN mkdir keenan && cd keenan
 WORKDIR /keenan/
 
+# Migrations
+COPY ./ /keenan/
+
 RUN ls ./
 RUN ls ../
 RUN ls /
-# Migrations
-COPY ./ /keenan/
+
+RUN ls ../keenan/
 
 RUN ["chmod", "+x", "/keenan/scripts/migrations.sh"]
 
