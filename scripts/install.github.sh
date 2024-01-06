@@ -21,7 +21,8 @@ else
     do 
         sleep 3;
     done
-    sleep 2;
+    docker restart $SERVER_CONTAINER_NAME
+    
     docker exec $SERVER_CONTAINER_NAME bash -c /keenan/scripts/migrations.sh
 
     docker restart $SERVER_CONTAINER_NAME
