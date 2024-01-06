@@ -13,7 +13,7 @@ fi
 
 source .env
 docker-compose rm -f
-if ! docker compose up -d --force-recreate --no-deps server postgres; then
+if ! docker compose -f docker-compose-github.yaml up -d --force-recreate --no-deps server postgres; then
     exit
 else 
     until
@@ -22,6 +22,6 @@ else
         sleep 3;
     done
     
-    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
+    docker exec $SERVER_CONTAINER_NAME bash -c "/keenan/scripts/migrations.sh"
     docker restart $SERVER_CONTAINER_NAME
 fi
