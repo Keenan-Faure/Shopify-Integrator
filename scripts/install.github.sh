@@ -21,6 +21,9 @@ else
     do 
         sleep 3;
     done
-    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
+    # migrations needs to be done here
+    docker exec $SERVER_CONTAINER_NAME bash -c "/keenan/scripts/migrations.sh"
+    # start the container again
+    
     docker restart $SERVER_CONTAINER_NAME
 fi

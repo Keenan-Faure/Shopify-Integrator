@@ -52,14 +52,12 @@ func main() {
 			go LoopJSONShopify(&dbCon, shopifyConfig)
 		}
 		QueueWorker(&dbCon)
-	}
-	fmt.Println("resetting broken workers")
-	// this will fail during the first instance
-	// as the migratins has not run yet
-	err = dbCon.DB.ResetFetchWorker(context.Background(), "0")
-	if err != nil {
-		if err.Error()[0:12] != "pq: relation" {
-			log.Fatalf("Error occured %v", err.Error())
+		fmt.Println("resetting broken workers")
+		err = dbCon.DB.ResetFetchWorker(context.Background(), "0")
+		if err != nil {
+			if err.Error()[0:12] != "pq: relation" {
+				log.Fatalf("Error occured %v", err.Error())
+			}
 		}
 	}
 	fmt.Println("starting API")

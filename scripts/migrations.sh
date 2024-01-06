@@ -7,8 +7,7 @@ goose -version
 SSL_MODE="?sslmode=disable"
 DRIVER="postgres://"
 
-cd /keenan
-cd sql/schema
+cd /keenan/sql/schema
 
 DB_STRING="postgres://${DB_USER}:${DB_PSW}@postgres:5432/${DB_NAME}${SSL_MODE}"
 echo "$DB_STRING"
