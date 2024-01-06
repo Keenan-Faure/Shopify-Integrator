@@ -304,7 +304,6 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return objects.ShopifyVariantResponse{}, err
 	}
 	if res.StatusCode != 201 {
@@ -313,7 +312,6 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 	variant_data := objects.ShopifyVariantResponse{}
 	err = json.Unmarshal(respBody, &variant_data)
 	if err != nil {
-		log.Println(err)
 		return objects.ShopifyVariantResponse{}, err
 	}
 	return variant_data, nil
@@ -322,7 +320,7 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 // Updates a product variant on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product-variant#put-variants-variant-id
 func (configShopify *ConfigShopify) UpdateVariantShopify(
-	variant objects.ShopifyVariant,
+	variant any,
 	variant_id string) (objects.ShopifyVariantResponse, error) {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
@@ -336,7 +334,6 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return objects.ShopifyVariantResponse{}, err
 	}
 	if res.StatusCode != 200 {
@@ -377,7 +374,6 @@ func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Println(err)
 		return objects.ResponseAddProductToShopifyCollection{}, err
 	}
 	if res.StatusCode != 201 {
@@ -494,7 +490,7 @@ func (configShopify *ConfigShopify) CategoryExists(product objects.Product, cate
 func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.ResponseIDs, error) {
 	client := graphql.NewClient(configShopify.Url+"/graphql.json", nil)
 	variables := map[string]any{
-		"sku": graphql.String(sku),
+		"sku": "sku:" + graphql.String(sku),
 	}
 	var respData struct {
 		ProductVariants struct {

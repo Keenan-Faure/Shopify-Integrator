@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -11,6 +12,51 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
 )
+
+// Validate: PushRestriction
+func RestrictionValidation(
+	request_settings_map []objects.RestrictionRequest) error {
+	setting_keys := []string{
+		"title",
+		"body_html",
+		"category",
+		"vendor",
+		"product_type",
+		"barcode",
+		"options",
+		"pricing",
+		"warehousing",
+	}
+	for _, map_value := range request_settings_map {
+		found := false
+		if map_value.Field == "" {
+			return errors.New("settings key cannot be blank")
+		}
+		for _, value := range setting_keys {
+			if map_value.Field == strings.ToLower(value) {
+				found = true
+			}
+		}
+		if !found {
+			return errors.New("restriction " + map_value.Field + " not allowed")
+		}
+	}
+	return nil
+}
+
+// Decode: PushRestriction
+func DecodeRestriction(dbconfig *DbConfig, r *http.Request) ([]objects.RestrictionRequest, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := []objects.RestrictionRequest{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
+		return []objects.RestrictionRequest{}, err
+	}
+	return params, nil
+}
 
 // Validate: InsertGlobalWarehouse
 func GlobalWarehouseValidation(warehouse objects.RequestGlobalWarehouse) error {
@@ -456,7 +502,7 @@ func UserValidation(user objects.RequestBodyUser) error {
 }
 
 // Product: data validation
-func ProductValidation(product objects.RequestBodyProduct) error {
+func ProductValidation(dbconfig *DbConfig, product objects.RequestBodyProduct) error {
 	if product.Title == "" {
 		return errors.New("empty title not allowed")
 	}
@@ -472,6 +518,19 @@ func ProductValidation(product objects.RequestBodyProduct) error {
 		}
 	} else {
 		return errors.New("product must have a price")
+	}
+	for _, variant := range product.Variants {
+		for key_qty := range variant.VariantQuantity {
+			// check if the warehouse exists, then we update the quantity
+			warehouse_name := variant.VariantQuantity[key_qty].Name
+			_, err := dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					return errors.New("warehouse " + warehouse_name + " not found")
+				}
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -545,39 +604,40 @@ func DuplicateOptionValues(product objects.RequestBodyProduct) error {
 		counter := 0
 		for key := range option_1_values {
 			for sub_key := range option_2_values {
-				if option_2_values[key] == option_2_values[sub_key] && option_1_values[key] == option_1_values[sub_key] {
+				if option_2_values[key] == option_1_values[sub_key] && option_1_values[key] == option_2_values[sub_key] {
 					counter += 1
 				}
 				if counter > 1 {
 					return errors.New("duplicate option values not allowed")
+				}
+			}
+		}
+	} else if len(product.ProductOptions) == 3 {
+		option_1_values := []string{}
+		option_2_values := []string{}
+		option_3_values := []string{}
+		for _, value := range product.Variants {
+			option_1_values = append(option_1_values, value.Option1)
+			option_2_values = append(option_2_values, value.Option2)
+			option_3_values = append(option_3_values, value.Option3)
+		}
+		counter := 0
+		for key := range option_1_values {
+			for sub_key := range option_2_values {
+				for primal_key := range option_3_values {
+					if (option_3_values[key] == option_2_values[primal_key] &&
+						option_2_values[key] == option_1_values[sub_key]) &&
+						option_1_values[key] == option_3_values[sub_key] {
+						counter += 1
+					}
+					if counter > 1 {
+						return errors.New("duplicate option values not allowed")
+					}
 				}
 			}
 		}
 	} else if len(product.ProductOptions) > 3 {
 		return errors.New("too many option values")
-	}
-	option_1_values := []string{}
-	option_2_values := []string{}
-	option_3_values := []string{}
-	for _, value := range product.Variants {
-		option_1_values = append(option_1_values, value.Option1)
-		option_2_values = append(option_2_values, value.Option2)
-		option_3_values = append(option_3_values, value.Option3)
-	}
-	counter := 0
-	for key := range option_1_values {
-		for sub_key := range option_2_values {
-			for primal_key := range option_3_values {
-				if (option_3_values[key] == option_3_values[primal_key] &&
-					option_2_values[key] == option_2_values[sub_key]) &&
-					option_1_values[key] == option_1_values[sub_key] {
-					counter += 1
-				}
-				if counter > 1 {
-					return errors.New("duplicate option values not allowed")
-				}
-			}
-		}
 	}
 	return nil
 }

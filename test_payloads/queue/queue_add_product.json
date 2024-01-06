@@ -3,9 +3,11 @@
     "status": "in-queue",
     "instruction": "add_product",
     "object": {
-        "system_product_id": "f6b1c96b-6079-41d5-9ec5-1203fb157206",
         "shopify": {
-            "product_id": "7127845371965"
-        }
+            "product_id": "",
+            "variant_id": ""
+        },
+        "system_product_id": "9d78d6b9-5c43-411f-9fa2-1fa99ede67ae",
+        "system_variant_id": ""
     }
 }

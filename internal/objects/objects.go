@@ -6,6 +6,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// teststrs
+
+// restrictions
+type RestrictionRequest struct {
+	Field string `json:"field"`
+	Flag  string `json:"flag"`
+}
+
 // invisible endpoints
 
 type FetchAmountResponse struct {
@@ -252,17 +260,29 @@ type ShopifyProductResponse struct {
 		Handle    string `json:"handle"`
 		ID        int    `json:"id"`
 		Images    []struct {
-			ID         int    `json:"id"`
-			ProductID  int    `json:"product_id"`
-			Position   int    `json:"position"`
-			CreatedAt  string `json:"created_at"`
-			UpdatedAt  string `json:"updated_at"`
-			Width      int    `json:"width"`
-			Height     int    `json:"height"`
-			Src        string `json:"src"`
-			VariantIds []struct {
-			} `json:"variant_ids"`
+			ID         int     `json:"id"`
+			ProductID  int     `json:"product_id"`
+			Position   int     `json:"position"`
+			CreatedAt  string  `json:"created_at"`
+			UpdatedAt  string  `json:"updated_at"`
+			Width      int     `json:"width"`
+			Height     int     `json:"height"`
+			Src        string  `json:"src"`
+			VariantIds []int64 `json:"variant_ids"`
 		} `json:"images"`
+		Image struct {
+			ID                int64     `json:"id"`
+			ProductID         int64     `json:"product_id"`
+			Position          int       `json:"position"`
+			CreatedAt         time.Time `json:"created_at"`
+			UpdatedAt         time.Time `json:"updated_at"`
+			Alt               any       `json:"alt"`
+			Width             int       `json:"width"`
+			Height            int       `json:"height"`
+			Src               string    `json:"src"`
+			VariantIds        []int64   `json:"variant_ids"`
+			AdminGraphqlAPIID string    `json:"admin_graphql_api_id"`
+		} `json:"image"`
 		Options []struct {
 			ID        int      `json:"id"`
 			ProductID int      `json:"product_id"`
@@ -730,49 +750,50 @@ type ShopifyProduct struct {
 }
 
 type ShopifyProd struct {
-	Title    string               `json:"title"`
-	BodyHTML string               `json:"body_html"`
-	Vendor   string               `json:"vendor"`
-	Type     string               `json:"product_type"`
-	Status   string               `json:"status"`
-	Variants []ShopifyProdVariant `json:"variants"`
-	Options  []ShopifyOptions     `json:"options"`
+	Title    string               `json:"title,omitempty"`
+	BodyHTML string               `json:"body_html,omitempty"`
+	Vendor   string               `json:"vendor,omitempty"`
+	Type     string               `json:"product_type,omitempty"`
+	Status   string               `json:"status,omitempty"`
+	Variants []ShopifyProdVariant `json:"variants,omitempty"`
+	Options  []ShopifyOptions     `json:"options,omitempty"`
 }
 type ShopifyProdVariant struct {
-	ID                   int64  `json:"id"`
-	ProductID            int64  `json:"product_id"`
-	Title                string `json:"title"`
-	Price                string `json:"price"`
-	Sku                  string `json:"sku"`
-	Position             int    `json:"position"`
-	InventoryPolicy      string `json:"inventory_policy"`
-	CompareAtPrice       string `json:"compare_at_price"`
-	InventoryManagement  string `json:"inventory_management"`
-	Option1              string `json:"option1"`
-	Option2              string `json:"option2"`
-	Option3              string `json:"option3"`
-	Barcode              string `json:"barcode"`
-	Grams                int    `json:"grams"`
-	InventoryItemID      int64  `json:"inventory_item_id"`
-	InventoryQuantity    int    `json:"inventory_quantity"`
-	OldInventoryQuantity int    `json:"old_inventory_quantity"`
+	ID                   int64  `json:"id,omitempty"`
+	ProductID            int64  `json:"product_id,omitempty"`
+	Title                string `json:"title,omitempty"`
+	Price                string `json:"price,omitempty"`
+	Sku                  string `json:"sku,omitempty"`
+	Position             int    `json:"position,omitempty"`
+	InventoryPolicy      string `json:"inventory_policy,omitempty"`
+	CompareAtPrice       string `json:"compare_at_price,omitempty"`
+	InventoryManagement  string `json:"inventory_management,omitempty"`
+	Option1              string `json:"option1,omitempty"`
+	Option2              string `json:"option2,omitempty"`
+	Option3              string `json:"option3,omitempty"`
+	Barcode              string `json:"barcode,omitempty"`
+	Grams                int    `json:"grams,omitempty"`
+	InventoryItemID      int64  `json:"inventory_item_id,omitempty"`
+	InventoryQuantity    int    `json:"inventory_quantity,omitempty"`
+	OldInventoryQuantity int    `json:"old_inventory_quantity,omitempty"`
 }
 type ShopifyVariant struct {
 	ShopifyVar `json:"variant"`
 }
 type ShopifyVar struct {
-	Sku                 string `json:"sku"`
-	Price               string `json:"price"`
-	CompareAtPrice      string `json:"compare_at_price"`
-	Option1             string `json:"option1"`
-	Option2             string `json:"option2"`
-	Option3             string `json:"option3"`
-	Barcode             string `json:"barcode"`
-	InventoryManagement string `json:"inventory_management"`
+	ID                  string `json:"id,omitempty"`
+	Sku                 string `json:"sku,omitempty"`
+	Price               string `json:"price,omitempty"`
+	CompareAtPrice      string `json:"compare_at_price,omitempty"`
+	Option1             string `json:"option1,omitempty"`
+	Option2             string `json:"option2,omitempty"`
+	Option3             string `json:"option3,omitempty"`
+	Barcode             string `json:"barcode,omitempty"`
+	InventoryManagement string `json:"inventory_management,omitempty"`
 }
 type ShopifyOptions struct {
 	Name     string   `json:"name"`
-	Position int      `json:"position"`
+	Position int      `json:"position,omitempty"`
 	Values   []string `json:"values"`
 }
 

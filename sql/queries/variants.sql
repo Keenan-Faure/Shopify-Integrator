@@ -17,10 +17,10 @@ RETURNING *;
 -- name: UpdateVariant :exec
 UPDATE variants
 SET
-    option1 = $1,
-    option2 = $2,
-    option3 = $3,
-    barcode = $4,
+    option1 = COALESCE($1, option1),
+    option2 = COALESCE($2, option2),
+    option3 = COALESCE($3, option3),
+    barcode = COALESCE($4, barcode),
     updated_at = $5
 WHERE sku = $6;
 

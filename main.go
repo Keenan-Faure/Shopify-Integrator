@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"integrator/internal/database"
@@ -51,6 +52,13 @@ func main() {
 			go LoopJSONShopify(&dbCon, shopifyConfig)
 		}
 		QueueWorker(&dbCon)
+		fmt.Println("resetting broken workers")
+		err = dbCon.DB.ResetFetchWorker(context.Background(), "0")
+		if err != nil {
+			if err.Error()[0:12] != "pq: relation" {
+				log.Fatalf("Error occured %v", err.Error())
+			}
+		}
 	}
 	fmt.Println("starting API")
 	setupAPI(dbCon, shopifyConfig)
@@ -75,9 +83,9 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/orders", dbconfig.middlewareAuth(dbconfig.OrdersHandle))
 	api.Get("/orders/{id}", dbconfig.middlewareAuth(dbconfig.OrderHandle))
 	api.Get("/orders/search", dbconfig.middlewareAuth(dbconfig.OrderSearchHandle))
+	api.Post("/orders", dbconfig.PostOrderHandle)
 
 	// registration
-	api.Post("/orders", dbconfig.middlewareAuth(dbconfig.PostOrderHandle))
 	api.Post("/register", dbconfig.RegisterHandle)
 	api.Post("/preregister", dbconfig.PreRegisterHandle)
 	api.Post("/login", dbconfig.middlewareAuth(dbconfig.LoginHandle))
@@ -91,7 +99,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/products/filter", dbconfig.middlewareAuth(dbconfig.ProductFilterHandle))
 	api.Get("/products/export", dbconfig.middlewareAuth(dbconfig.ExportProductsHandle))
 	api.Delete("/products/{id}", dbconfig.middlewareAuth(dbconfig.RemoveProductHandle))
-	api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
+	// api.Delete("/products/{variant_id}", dbconfig.middlewareAuth(dbconfig.RemoveProductVariantHandle))
 	api.Put("/products/{id}", dbconfig.middlewareAuth(dbconfig.UpdateProductHandle))
 
 	// general endpoint that returns the shopify_locations & internal warehouses
@@ -110,12 +118,12 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 
 	// shopify settings
 	api.Get("/shopify/settings", dbconfig.middlewareAuth(dbconfig.GetShopifySettingValue))
-	api.Post("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
+	api.Put("/shopify/settings", dbconfig.middlewareAuth(dbconfig.AddShopifySetting))
 	api.Delete("/shopify/settings", dbconfig.middlewareAuth(dbconfig.RemoveShopifySettings))
 
 	// app settings
 	api.Get("/settings", dbconfig.middlewareAuth(dbconfig.GetAppSettingValue))
-	api.Post("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
+	api.Put("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
 	api.Delete("/settings", dbconfig.middlewareAuth(dbconfig.RemoveAppSettings))
 	// webhook configuration
 	api.Post("/settings/webhook", dbconfig.middlewareAuth(dbconfig.GetWebhookURL))
@@ -138,6 +146,13 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 
 	// fetch handle
 	api.Get("/shopify/fetch", dbconfig.middlewareAuth(dbconfig.WorkerFetchProductsHandle))
+
+	// restrictions
+	api.Put("/push/restriction", dbconfig.middlewareAuth(dbconfig.PushRestrictionHandle))
+	api.Get("/push/restriction", dbconfig.middlewareAuth(dbconfig.GetPushRestrictionHandle))
+
+	api.Put("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.FetchRestrictionHandle))
+	api.Get("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.GetFetchRestrictionHandle))
 
 	r.Mount("/api", api)
 

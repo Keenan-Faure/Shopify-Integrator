@@ -217,7 +217,7 @@ func ConvertProductToShopify(product objects.Product) objects.ShopifyProduct {
 	}
 }
 
-// Convert objects.Product into objects.ShopifyProduct
+// Convert objects.Product.Variant into objects.ShopifyProdVariant
 func ConvertVariantToShopifyProdVariant(product objects.Product) []objects.ShopifyProdVariant {
 	variants := []objects.ShopifyProdVariant{}
 	for _, value := range product.Variants {
@@ -262,6 +262,29 @@ func ConvertVariantToShopify(variant objects.ProductVariant) objects.ShopifyVari
 			Barcode:             variant.Barcode,
 			InventoryManagement: "shopify", // TODO create a product field for this?
 		},
+	}
+}
+
+// Convert objects.Variant into objects.ShopifyVariant
+func ConvertVariantToShopifyVariant(variant objects.ProductVariant) objects.ShopifyProdVariant {
+	return objects.ShopifyProdVariant{
+		ID:                   0,
+		ProductID:            0,
+		Title:                "",
+		Price:                "0",
+		Sku:                  variant.Sku,
+		Position:             0,
+		InventoryPolicy:      "",
+		CompareAtPrice:       "0",
+		InventoryManagement:  "",
+		Option1:              variant.Option1,
+		Option2:              variant.Option2,
+		Option3:              variant.Option3,
+		Barcode:              variant.Barcode,
+		Grams:                0,
+		InventoryItemID:      0,
+		InventoryQuantity:    0,
+		OldInventoryQuantity: 0,
 	}
 }
 
@@ -718,26 +741,9 @@ func CompileProductImages(
 func CompileSearchResult(
 	dbconfig *DbConfig,
 	ctx context.Context,
-	sku []database.GetProductsSearchSKURow,
-	title []database.GetProductsSearchTitleRow) ([]objects.SearchProduct, error) {
+	search []database.GetProductsSearchRow) ([]objects.SearchProduct, error) {
 	response := []objects.SearchProduct{}
-	for _, value := range sku {
-		images, err := CompileProductImages(value.ID, ctx, dbconfig)
-		if err != nil {
-			return response, err
-		}
-		response = append(response, objects.SearchProduct{
-			ID:          value.ID,
-			Active:      value.Active,
-			Images:      images,
-			Title:       value.Title.String,
-			Category:    value.Category.String,
-			ProductType: value.ProductType.String,
-			Vendor:      value.Vendor.String,
-			UpdatedAt:   value.UpdatedAt,
-		})
-	}
-	for _, value := range title {
+	for _, value := range search {
 		images, err := CompileProductImages(value.ID, ctx, dbconfig)
 		if err != nil {
 			return response, err

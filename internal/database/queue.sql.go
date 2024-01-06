@@ -628,6 +628,7 @@ func (q *Queries) GetQueueItemsCount(ctx context.Context, instruction string) (i
 
 const getQueueSize = `-- name: GetQueueSize :one
 SELECT COUNT(*) FROM queue_items
+WHERE "status" IN ('in-queue', 'processing')
 `
 
 func (q *Queries) GetQueueSize(ctx context.Context) (int64, error) {

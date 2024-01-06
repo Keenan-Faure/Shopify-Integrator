@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"integrator/internal/database"
 	"io"
 	"log"
@@ -56,7 +55,6 @@ func LoopQueueWorker(dbconfig *DbConfig) {
 			queue_enabled = false
 		}
 		if queue_enabled {
-			fmt.Println("running queue worker...")
 			QueueWaitGroup(dbconfig)
 		}
 	}
@@ -84,14 +82,15 @@ func QueueWaitGroup(dbconfig *DbConfig) {
 	}
 	for _, queue_item := range queue_items {
 		waitgroup.Add(1)
-		go dbconfig.QueuePopAndProcess(queue_item.QueueType, waitgroup)
+		dbconfig.QueuePopAndProcess(queue_item.QueueType, waitgroup)
 	}
 	waitgroup.Wait()
 }
 
-// Pushes all products in database to Shopify
+// POST /api/shopify/sync
 func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	// check if the syncro queue item exists in the queue already
+	// if it does then it should throw an error
 	item, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(r.Context(), database.GetQueueItemsByInstructionAndStatusParams{
 		Instruction: "zsync_channel",
 		Status:      "in-queue",
@@ -99,8 +98,10 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 		Offset:      0,
 	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
+		if err.Error() != "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 	if len(item) != 0 {
 		RespondWithError(w, http.StatusInternalServerError, "sync in progress")
@@ -108,40 +109,42 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 	}
 	page := 0
 	for {
-		page += 1
 		// fetch all products paginated
-		queue_items, err := dbconfig.DB.GetProducts(context.Background(), database.GetProductsParams{
+		products, err := dbconfig.DB.GetActiveProducts(context.Background(), database.GetActiveProductsParams{
 			Limit:  50,
-			Offset: (int32(page) * 10),
+			Offset: (int32(page) * 50),
 		})
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
+			if err.Error() != "sql: no rows in result set" {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
-		if len(queue_items) == 0 {
+		if len(products) == 0 {
 			break
 		}
-		for _, queue_item := range queue_items {
-			product, err := CompileProductData(dbconfig, queue_item.ID, r.Context(), false)
+		for _, product := range products {
+			product_compiled, err := CompileProductData(dbconfig, product.ID, r.Context(), false)
 			if err != nil {
 				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 			}
 			// add product queue_items to the queue
-			err = CompileInstructionProduct(dbconfig, product, dbUser)
+			err = CompileInstructionProduct(dbconfig, product_compiled, dbUser)
 			if err != nil {
 				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 			}
-			for _, variant := range product.Variants {
+			for _, variant := range product_compiled.Variants {
 				// add variant queue_items to queue
-				err = CompileInstructionVariant(dbconfig, variant, product, dbUser)
+				err = CompileInstructionVariant(dbconfig, variant, product_compiled, dbUser)
 				if err != nil {
 					RespondWithError(w, http.StatusInternalServerError, err.Error())
 					return
 				}
 			}
 		}
+		page += 1
 	}
 	_, err = dbconfig.QueueHelper(objects.RequestQueueHelper{
 		Type:        "product",
@@ -151,12 +154,14 @@ func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, db
 		ApiKey:      dbUser.ApiKey,
 		Method:      http.MethodPost,
 		Object:      nil,
-	}, nil)
+	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	RespondWithJSON(w, http.StatusOK, "synconizing started")
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "synconizing started",
+	})
 }
 
 // GET /api/queue/{id}
@@ -180,18 +185,18 @@ func (dbconfig *DbConfig) GetQueueItemByID(
 
 // POST /api/queue
 func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user database.User) {
-	queue_size_int := 0
+	queue_size_int := 500
 	queue_size_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_size")
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		queue_size_int = 100
+		queue_size_int = 500
 	}
 	queue_size_int, err = strconv.Atoi(queue_size_db.Value)
 	if err != nil {
-		queue_size_int = 100
+		queue_size_int = 500
 	}
 	size, err := dbconfig.DB.GetQueueSize(context.Background())
 	if err != nil {
@@ -253,7 +258,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 		FailedQueueItem(dbconfig, queue_item, err)
 		return
 	}
-	if worker_type == "product" {
+	if worker_type == "product" || worker_type == "product_variant" {
 		is_enabled := false
 		push_enabled, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_shopify_push")
 		if err != nil {
@@ -276,7 +281,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 		}
 		item, err := dbconfig.DB.GetQueueItemsByStatusAndType(context.Background(), database.GetQueueItemsByStatusAndTypeParams{
 			Status:    "processing",
-			QueueType: "product",
+			QueueType: worker_type,
 			Limit:     1,
 			Offset:    0,
 		})
@@ -286,7 +291,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 			}
 		}
 		if len(item) != 0 {
-			if item[0].QueueType == "product" {
+			if item[0].QueueType == worker_type {
 				FailedQueueItem(dbconfig, queue_item, errors.New("product queue is currently busy"))
 				return
 			}
@@ -504,18 +509,21 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return err
 		}
-		if queue_item.Instruction == "add_variant" {
+		restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+		if err != nil {
+			return err
+		}
+		restrictions_map := PushRestrictionsToMap(restrictions)
+		shopify_update_variant := ApplyPushRestrictionV(
+			restrictions_map,
+			ConvertVariantToShopify(variant),
+		)
+		if queue_item.Instruction == "add_variant" || queue_item.Instruction == "update_variant" {
 			return dbconfig.PushVariant(
 				&shopifyConfig,
 				variant,
-				queue_object.Shopify.ProductID,
-				queue_object.Shopify.VariantID,
-			)
-
-		} else if queue_item.Instruction == "update_variant" {
-			return dbconfig.PushVariant(
-				&shopifyConfig,
-				variant,
+				shopify_update_variant,
+				restrictions_map,
 				queue_object.Shopify.ProductID,
 				queue_object.Shopify.VariantID,
 			)
@@ -665,7 +673,7 @@ func CompileRemoveQueueFilter(
 
 // Helper function: Checks if the worker type is valid
 func CheckWorkerType(worker_type string) error {
-	worker_types := []string{"product", "order"}
+	worker_types := []string{"product", "product_variant", "order"}
 	for _, value := range worker_types {
 		if value == worker_type {
 			return nil
@@ -689,7 +697,7 @@ func FailedQueueItem(dbconfig *DbConfig, queue_item database.QueueItem, err_r er
 }
 
 // Helper function: Posts internal requests to the queue endpoint
-func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, body io.Reader) (objects.ResponseQueueItem, error) {
+func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper) (objects.ResponseQueueItem, error) {
 	httpClient := http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -700,14 +708,15 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, b
 	}
 	req, err := http.NewRequest(
 		request_data.Method,
+		// TODO change this call to be more dynamic
 		"http://localhost:"+utils.LoadEnv("port")+"/api/"+request_data.Endpoint,
 		&buffer,
 	)
-	if request_data.ApiKey != "" {
-		req.Header.Add("Authorization", "ApiKey "+request_data.ApiKey)
-	}
 	if err != nil {
 		return objects.ResponseQueueItem{}, err
+	}
+	if request_data.ApiKey != "" {
+		req.Header.Add("Authorization", "ApiKey "+request_data.ApiKey)
 	}
 	res, err := httpClient.Do(req)
 	if err != nil {
@@ -719,7 +728,7 @@ func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper, b
 		return objects.ResponseQueueItem{}, err
 	}
 	if res.StatusCode != 201 {
-		return objects.ResponseQueueItem{}, err
+		return objects.ResponseQueueItem{}, errors.New(string(respBody))
 	}
 	queue_response := objects.ResponseQueueItem{}
 	err = json.Unmarshal(respBody, &queue_response)

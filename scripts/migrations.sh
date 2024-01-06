@@ -6,7 +6,6 @@ SSL_MODE="?sslmode=disable"
 DRIVER="postgres://"
 
 cd /keenan/sql/schema
-source .env
 
 echo "Checking GOOSE version"
 goose -version

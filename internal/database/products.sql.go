@@ -73,7 +73,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
-const getProductByCategoryAndType = `-- name: GetProductByCategoryAndType :many
+const getActiveProducts = `-- name: GetActiveProducts :many
 SELECT
     id,
     active,
@@ -85,8 +85,74 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE category LIKE $1
-AND product_type LIKE $2
+WHERE active = '1'
+LIMIT $1 OFFSET $2
+`
+
+type GetActiveProductsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type GetActiveProductsRow struct {
+	ID          uuid.UUID      `json:"id"`
+	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetActiveProducts(ctx context.Context, arg GetActiveProductsParams) ([]GetActiveProductsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveProducts, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetActiveProductsRow
+	for rows.Next() {
+		var i GetActiveProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Active,
+			&i.ProductCode,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductByCategoryAndType = `-- name: GetProductByCategoryAndType :many
+SELECT DISTINCT
+    id,
+    active,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE category ILIKE $1
+AND product_type ILIKE $2
 LIMIT $3 OFFSET $4
 `
 
@@ -189,7 +255,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (GetProductB
 }
 
 const getProductByProductCode = `-- name: GetProductByProductCode :one
-SELECT
+SELECT DISTINCT
     active,
     product_code,
     title,
@@ -336,7 +402,7 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Get
 }
 
 const getProductsByCategory = `-- name: GetProductsByCategory :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -347,7 +413,7 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE category LIKE $1
+WHERE category ILIKE $1
 LIMIT $2 OFFSET $3
 `
 
@@ -403,7 +469,7 @@ func (q *Queries) GetProductsByCategory(ctx context.Context, arg GetProductsByCa
 }
 
 const getProductsByType = `-- name: GetProductsByType :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -414,7 +480,7 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE product_type LIKE $1
+WHERE product_type ILIKE $1
 LIMIT $2 OFFSET $3
 `
 
@@ -470,7 +536,7 @@ func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypePa
 }
 
 const getProductsByTypeAndVendor = `-- name: GetProductsByTypeAndVendor :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -481,8 +547,8 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE product_type LIKE $1
-AND vendor LIKE $2
+WHERE product_type ILIKE $1
+AND vendor ILIKE $2
 LIMIT $3 OFFSET $4
 `
 
@@ -544,7 +610,7 @@ func (q *Queries) GetProductsByTypeAndVendor(ctx context.Context, arg GetProduct
 }
 
 const getProductsByVendor = `-- name: GetProductsByVendor :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -555,7 +621,7 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE vendor LIKE $1
+WHERE vendor ILIKE $1
 LIMIT $2 OFFSET $3
 `
 
@@ -611,7 +677,7 @@ func (q *Queries) GetProductsByVendor(ctx context.Context, arg GetProductsByVend
 }
 
 const getProductsByVendorAndCategory = `-- name: GetProductsByVendorAndCategory :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -622,8 +688,8 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE vendor LIKE $1
-AND category LIKE $2
+WHERE vendor ILIKE $1
+AND category ILIKE $2
 LIMIT $3 OFFSET $4
 `
 
@@ -685,7 +751,7 @@ func (q *Queries) GetProductsByVendorAndCategory(ctx context.Context, arg GetPro
 }
 
 const getProductsFilter = `-- name: GetProductsFilter :many
-SELECT
+SELECT DISTINCT
     id,
     active,
     product_code,
@@ -696,9 +762,9 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE category LIKE $1
-AND product_type LIKE $2
-AND vendor LIKE $3
+WHERE category ILIKE $1
+AND product_type ILIKE $2
+AND vendor ILIKE $3
 LIMIT $4 OFFSET $5
 `
 
@@ -761,7 +827,7 @@ func (q *Queries) GetProductsFilter(ctx context.Context, arg GetProductsFilterPa
 	return items, nil
 }
 
-const getProductsSearchSKU = `-- name: GetProductsSearchSKU :many
+const getProductsSearch = `-- name: GetProductsSearch :many
 SELECT
     p.id,
     p.active,
@@ -774,54 +840,8 @@ SELECT
 FROM products p
 INNER JOIN variants v
     ON p.id = v.product_id
-WHERE v.sku LIKE $1
-LIMIT 5
-`
-
-type GetProductsSearchSKURow struct {
-	ID          uuid.UUID      `json:"id"`
-	Active      string         `json:"active"`
-	ProductCode string         `json:"product_code"`
-	Title       sql.NullString `json:"title"`
-	Category    sql.NullString `json:"category"`
-	Vendor      sql.NullString `json:"vendor"`
-	ProductType sql.NullString `json:"product_type"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-}
-
-func (q *Queries) GetProductsSearchSKU(ctx context.Context, sku string) ([]GetProductsSearchSKURow, error) {
-	rows, err := q.db.QueryContext(ctx, getProductsSearchSKU, sku)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetProductsSearchSKURow
-	for rows.Next() {
-		var i GetProductsSearchSKURow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Active,
-			&i.ProductCode,
-			&i.Title,
-			&i.Category,
-			&i.Vendor,
-			&i.ProductType,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getProductsSearchTitle = `-- name: GetProductsSearchTitle :many
+WHERE v.sku ILIKE $1
+UNION
 SELECT
     id,
     active,
@@ -832,11 +852,10 @@ SELECT
     product_type,
     updated_at
 FROM products
-WHERE title LIKE $1
-LIMIT 5
+WHERE title ILIKE $1
 `
 
-type GetProductsSearchTitleRow struct {
+type GetProductsSearchRow struct {
 	ID          uuid.UUID      `json:"id"`
 	Active      string         `json:"active"`
 	ProductCode string         `json:"product_code"`
@@ -847,15 +866,15 @@ type GetProductsSearchTitleRow struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetProductsSearchTitle(ctx context.Context, title sql.NullString) ([]GetProductsSearchTitleRow, error) {
-	rows, err := q.db.QueryContext(ctx, getProductsSearchTitle, title)
+func (q *Queries) GetProductsSearch(ctx context.Context, sku string) ([]GetProductsSearchRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsSearch, sku)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetProductsSearchTitleRow
+	var items []GetProductsSearchRow
 	for rows.Next() {
-		var i GetProductsSearchTitleRow
+		var i GetProductsSearchRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Active,
@@ -951,12 +970,12 @@ func (q *Queries) RemoveProductByCode(ctx context.Context, productCode string) e
 const updateProduct = `-- name: UpdateProduct :exec
 UPDATE products
 SET
-    active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
+    active = COALESCE($1, active),
+    title = COALESCE($2, title),
+    body_html = COALESCE($3, body_html),
+    category = COALESCE($4, category),
+    vendor = COALESCE($5, vendor),
+    product_type = COALESCE($6, product_type),
     updated_at = $7
 WHERE product_code = $8
 `
@@ -989,12 +1008,12 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) er
 const updateProductByID = `-- name: UpdateProductByID :exec
 UPDATE products
 SET
-    active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
+    active = COALESCE($1, active),
+    title = COALESCE($2, title),
+    body_html = COALESCE($3, body_html),
+    category = COALESCE($4, category),
+    vendor = COALESCE($5, vendor),
+    product_type = COALESCE($6, product_type),
     updated_at = $7
 WHERE id = $8
 `
@@ -1027,23 +1046,21 @@ func (q *Queries) UpdateProductByID(ctx context.Context, arg UpdateProductByIDPa
 const updateProductBySKU = `-- name: UpdateProductBySKU :exec
 UPDATE products
 SET
-    active = $1,
-    title = $2,
-    body_html = $3,
-    category = $4,
-    vendor = $5,
-    product_type = $6,
-    updated_at = $7
+    title = COALESCE($1, title),
+    body_html = COALESCE($2, body_html),
+    category = COALESCE($3, category),
+    vendor = COALESCE($4, vendor),
+    product_type = COALESCE($5, product_type),
+    updated_at = $6
 WHERE id = (
     SELECT
         product_id
     FROM variants
-    WHERE sku = $8
+    WHERE sku = $7
 )
 `
 
 type UpdateProductBySKUParams struct {
-	Active      string         `json:"active"`
 	Title       sql.NullString `json:"title"`
 	BodyHtml    sql.NullString `json:"body_html"`
 	Category    sql.NullString `json:"category"`
@@ -1055,7 +1072,6 @@ type UpdateProductBySKUParams struct {
 
 func (q *Queries) UpdateProductBySKU(ctx context.Context, arg UpdateProductBySKUParams) error {
 	_, err := q.db.ExecContext(ctx, updateProductBySKU,
-		arg.Active,
 		arg.Title,
 		arg.BodyHtml,
 		arg.Category,

@@ -29,7 +29,8 @@ ORDER BY instruction asc, created_at desc
 LIMIT 1;
 
 -- name: GetQueueSize :one
-SELECT COUNT(*) FROM queue_items;
+SELECT COUNT(*) FROM queue_items
+WHERE "status" IN ('in-queue', 'processing');
 
 -- name: GetQueueItemByID :one
 SELECT * FROM queue_items

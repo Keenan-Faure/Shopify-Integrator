@@ -21,6 +21,90 @@ import (
 	"github.com/google/uuid"
 )
 
+// PUT /api/push/restriction
+func (dbconfig *DbConfig) PushRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := DecodeRestriction(dbconfig, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = RestrictionValidation(restrictions)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	for _, value := range restrictions {
+		err = dbconfig.DB.UpdatePushRestriction(r.Context(), database.UpdatePushRestrictionParams{
+			Flag:      value.Flag,
+			UpdatedAt: time.Now().UTC(),
+			Field:     value.Field,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
+// GET /api/push/restriction
+func (dbconfig *DbConfig) GetPushRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, "no push restrictions found found")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, restrictions)
+}
+
+// GET /api/fetch/restriction
+func (dbconfig *DbConfig) GetFetchRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := dbconfig.DB.GetFetchRestriction(context.Background())
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, "no fetch restrictions found found")
+			return
+		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, restrictions)
+}
+
+// PUT /api/fetch/restriction
+func (dbconfig *DbConfig) FetchRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	restrictions, err := DecodeRestriction(dbconfig, r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	err = RestrictionValidation(restrictions)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	for _, value := range restrictions {
+		err = dbconfig.DB.UpdateFetchRestriction(r.Context(), database.UpdateFetchRestrictionParams{
+			Flag:      value.Flag,
+			UpdatedAt: time.Now().UTC(),
+			Field:     value.Field,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
 // POST /api/worker/fetch
 func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	// create database table containing the status of this
@@ -31,6 +115,20 @@ func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *ht
 			RespondWithError(w, http.StatusConflict, err.Error())
 			return
 		}
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
+}
+
+// should never be used in production
+
+// PUT /api/shopify/reset_fetch
+func (dbconfig *DbConfig) ResetShopifyFetchHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	err := dbconfig.DB.ResetFetchWorker(context.Background(), "0")
+	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -56,7 +154,7 @@ func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.R
 		// check if the warehouse exists internally
 		warehouse_db, err := dbconfig.DB.GetWarehouseByName(r.Context(), warehouse.Name)
 		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
+			if err.Error() != "sql: no rows in result set" {
 				RespondWithError(w, http.StatusInternalServerError, err.Error())
 				return
 			} else {
@@ -210,7 +308,7 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	validation := ProductValidation(params)
+	validation := ProductValidation(dbconfig, params)
 	if validation != nil {
 		RespondWithError(w, http.StatusBadRequest, validation.Error())
 		return
@@ -270,15 +368,22 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 		}
 		// update variant pricing and qty here
 		for _, price_lists := range variant.VariantPricing {
-			err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-				Name:      price_lists.Name,
-				Value:     utils.ConvertStringToSQL(price_lists.Value),
-				Isdefault: price_lists.IsDefault,
-				Sku:       variant.Sku,
-				Name_2:    price_lists.Name,
-			})
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			// check if the pricing is acceptable
+			if price_lists.Name == "Selling Price" || price_lists.Name == "Compare At Price" {
+				err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
+					Name:      price_lists.Name,
+					Value:     utils.ConvertStringToSQL(price_lists.Value),
+					Isdefault: price_lists.IsDefault,
+					UpdatedAt: time.Now().UTC(),
+					Sku:       variant.Sku,
+					Name_2:    price_lists.Name,
+				})
+				if err != nil {
+					RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+					return
+				}
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, "invalid price tier "+price_lists.Name)
 				return
 			}
 		}
@@ -299,6 +404,21 @@ func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Req
 	updated_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+	}
+	// only update if the active = 1
+	if updated_data.Active == "1" {
+		err = CompileInstructionProduct(dbconfig, updated_data, dbUser)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		for _, variant := range updated_data.Variants {
+			err = CompileInstructionVariant(dbconfig, variant, updated_data, dbUser)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
 	}
 	RespondWithJSON(w, http.StatusOK, updated_data)
 }
@@ -531,7 +651,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 	if test == "true" {
 		// generate the file for the test and ignore upload form
 		data := [][]string{
-			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_default"},
+			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price"},
 			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00"},
 		}
 		_, err := iocsv.WriteFile(data, "test_import")
@@ -548,7 +668,6 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			return
 		}
 		file_name_global = file_name
-		fmt.Println(file_name)
 	}
 	wd, err := os.Getwd()
 	if err != nil {
@@ -693,13 +812,15 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 					continue
 				}
 				variants_updated++
+			} else {
+				log.Println(err)
+				failure_counter++
 				continue
 			}
-			log.Println(err)
-			failure_counter++
-			continue
 		}
-		variants_added++
+		if err == nil {
+			variants_added++
+		}
 		if variant.ID == uuid.Nil {
 			variant.ID, err = dbconfig.DB.GetVariantIDByCode(r.Context(), csv_product.SKU)
 			if err != nil {
@@ -709,9 +830,16 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 			}
 		}
 		for _, pricing_value := range csv_product.Pricing {
-			err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
-			if err != nil {
-				log.Println(err)
+			// check if the price is acceptable
+			if pricing_value.Name == "Selling Price" || pricing_value.Name == "Compare At Price" {
+				err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
+				if err != nil {
+					log.Println(err)
+					failure_counter++
+					continue
+				}
+			} else {
+				log.Println("invalid price tier " + pricing_value.Name)
 				failure_counter++
 				continue
 			}
@@ -804,15 +932,20 @@ func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Requ
 
 // POST /api/orders?token={{token}}&api_key={{key}}
 // ngrok exposed url
-func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request) {
 	web_token := r.URL.Query().Get("token")
 	if TokenValidation(web_token) != nil {
 		RespondWithError(w, http.StatusBadRequest, "invalid token")
 		return
 	}
+	api_key := r.URL.Query().Get("api_key")
+	if TokenValidation(api_key) != nil {
+		RespondWithError(w, http.StatusBadRequest, "invalid api_key")
+		return
+	}
 	_, err := dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
 		WebhookToken: web_token,
-		ApiKey:       dbUser.ApiKey,
+		ApiKey:       api_key,
 	})
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -834,23 +967,23 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.OrderNumber)))
+	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.Name)))
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
-			log.Println(err)
+			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
-	if db_order.WebCode.String == fmt.Sprint(order_body.OrderNumber) {
+	if db_order.WebCode.String == fmt.Sprint(order_body.Name) {
 		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
 			Type:        "order",
 			Status:      "in-queue",
 			Instruction: "update_order",
 			Endpoint:    "queue",
-			ApiKey:      dbUser.ApiKey,
+			ApiKey:      api_key,
 			Method:      http.MethodPost,
 			Object:      order_body,
-		}, nil)
+		})
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 			return
@@ -862,10 +995,10 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			Status:      "in-queue",
 			Instruction: "add_order",
 			Endpoint:    "queue",
-			ApiKey:      dbUser.ApiKey,
+			ApiKey:      api_key,
 			Method:      http.MethodPost,
 			Object:      order_body,
-		}, &buffer)
+		})
 		if err != nil {
 			RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 			return
@@ -874,7 +1007,7 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// DELETE /api/products?id={{product_id}}
+// DELETE /api/products/{id}
 func (dbconfig *DbConfig) RemoveProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	product_id := chi.URLParam(r, "id")
 	err := IDValidation(product_id)
@@ -927,7 +1060,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
-	validation := ProductValidation(params)
+	validation := ProductValidation(dbconfig, params)
 	if validation != nil {
 		RespondWithError(w, http.StatusBadRequest, validation.Error())
 		return
@@ -958,7 +1091,7 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 	// add product to database
 	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
 		ID:          uuid.New(),
-		Active:      params.Active,
+		Active:      "1",
 		ProductCode: params.ProductCode,
 		Title:       utils.ConvertStringToSQL(params.Title),
 		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
@@ -969,7 +1102,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
-		log.Println("1: " + err.Error())
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
@@ -981,7 +1113,6 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			Position:  int32(key + 1),
 		})
 		if err != nil {
-			log.Println("2: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
@@ -1000,24 +1131,30 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
-			log.Println("3: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 		// variant pricing & variant qty
 		for key_pricing := range params.Variants[key].VariantPricing {
-			_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
-				ID:        uuid.New(),
-				VariantID: variant.ID,
-				Name:      params.Variants[key].VariantPricing[key_pricing].Name,
-				Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
-				Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				log.Println("4: " + err.Error())
-				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+			// check if the price tier name is acceptable
+			if params.Variants[key].VariantPricing[key_pricing].Name == "Selling Price" ||
+				params.Variants[key].VariantPricing[key_pricing].Name == "Compare At Price" {
+				_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
+					ID:        uuid.New(),
+					VariantID: variant.ID,
+					Name:      params.Variants[key].VariantPricing[key_pricing].Name,
+					Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
+					Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
+					CreatedAt: time.Now().UTC(),
+					UpdatedAt: time.Now().UTC(),
+				})
+				if err != nil {
+					RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+					return
+				}
+			} else {
+				RespondWithError(w, http.StatusInternalServerError, "invalid price tier"+
+					params.Variants[key].VariantPricing[key_pricing].Name)
 				return
 			}
 		}
@@ -1044,24 +1181,36 @@ func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Reque
 				Name_2:    warehouse_name,
 			})
 			if err != nil {
-				log.Println("5: " + err.Error())
 				RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 				return
 			}
 		}
 		if err != nil {
-			log.Println("6: " + err.Error())
 			RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 			return
 		}
 	}
-	// TODO is it necessary to respond with the created product data
 	product_added, err := CompileProductData(dbconfig, product.ID, r.Context(), false)
 	if err != nil {
-		log.Println("7: " + err.Error())
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
 	}
-	RespondWithJSON(w, http.StatusCreated, product_added)
+	// queue new products to be added to shopify
+	err = CompileInstructionProduct(dbconfig, product_added, dbUser)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	for _, variant := range product_added.Variants {
+		err = CompileInstructionVariant(dbconfig, variant, product_added, dbUser)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // GET /api/customers/search?q=value
@@ -1229,17 +1378,12 @@ func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
 		return
 	}
-	sku_search, err := dbconfig.DB.GetProductsSearchSKU(r.Context(), utils.ConvertStringToLike(search_query))
+	search, err := dbconfig.DB.GetProductsSearch(r.Context(), utils.ConvertStringToLike(search_query))
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	title_search, err := dbconfig.DB.GetProductsSearchTitle(r.Context(), utils.ConvertStringToSQL(utils.ConvertStringToLike(search_query)))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
-		return
-	}
-	compiled, err := CompileSearchResult(dbconfig, r.Context(), sku_search, title_search)
+	compiled, err := CompileSearchResult(dbconfig, r.Context(), search)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -1300,7 +1444,9 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 
 // POST /api/login
 func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	RespondWithJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	RespondWithJSON(w, http.StatusOK, objects.RequestString{
+		Message: "success",
+	})
 }
 
 // POST /api/preregister

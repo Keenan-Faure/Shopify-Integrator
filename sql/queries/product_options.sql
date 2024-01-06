@@ -2,7 +2,7 @@
 INSERT INTO product_options(
     id,
     product_id,
-    name,
+    "name",
     position
 ) VALUES (
     $1, $2, $3, $4
@@ -12,15 +12,15 @@ RETURNING *;
 -- name: UpdateProductOption :one
 UPDATE product_options
 SET
-    name = $1,
-    position = $2
+    "name" = COALESCE($1, "name"),
+    position = COALESCE($2, position)
 WHERE product_id = $3
 and position = $4
 RETURNING *;
 
 -- name: GetProductOptions :many
 SELECT
-    name,
+    "name",
     position
 FROM product_options
 WHERE product_id = $1
@@ -28,7 +28,7 @@ ORDER BY position ASC;
 
 -- name: GetProductOptionsByCode :many
 SELECT
-    name,
+    "name",
     position
 FROM product_options
 WHERE product_id IN (

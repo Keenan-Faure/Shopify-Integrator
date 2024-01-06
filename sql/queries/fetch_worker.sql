@@ -24,3 +24,6 @@ SET
     fetch_url = $4,
     updated_at = $5
 WHERE id = $6;
+
+-- name: ResetFetchWorker :exec
+UPDATE fetch_worker SET status = $1;

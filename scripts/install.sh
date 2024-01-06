@@ -53,8 +53,7 @@ else
     done
 
     echo "---Running database migrations---"
-    chmod +x ./sql/schema/migrations.sh
-    docker exec $SERVER_CONTAINER_NAME bash -c ./sql/schema/migrations.sh
+    docker exec $SERVER_CONTAINER_NAME bash -c "/keenan/scripts/migrations.sh"
 
     sleep 3;
     

@@ -69,6 +69,31 @@ func (q *Queries) GetPIDByProductCode(ctx context.Context, productCode string) (
 	return i, err
 }
 
+const getPIDBySKU = `-- name: GetPIDBySKU :one
+SELECT
+    shopify_product_id
+FROM shopify_pid
+WHERE product_code IN (
+    SELECT
+        product_code
+    FROM products
+    WHERE id IN (
+        SELECT
+            product_id
+        FROM variants
+        WHERE sku = $1
+    )
+)
+LIMIT 1
+`
+
+func (q *Queries) GetPIDBySKU(ctx context.Context, sku string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getPIDBySKU, sku)
+	var shopify_product_id string
+	err := row.Scan(&shopify_product_id)
+	return shopify_product_id, err
+}
+
 const updatePID = `-- name: UpdatePID :exec
 UPDATE shopify_pid
 SET

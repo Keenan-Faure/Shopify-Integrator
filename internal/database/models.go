@@ -57,6 +57,14 @@ type Customerorder struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+type FetchRestriction struct {
+	ID        uuid.UUID `json:"id"`
+	Field     string    `json:"field"`
+	Flag      string    `json:"flag"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type FetchStat struct {
 	ID               uuid.UUID `json:"id"`
 	AmountOfProducts int32     `json:"amount_of_products"`
@@ -146,6 +154,14 @@ type ProductOption struct {
 	Position  int32     `json:"position"`
 }
 
+type PushRestriction struct {
+	ID        uuid.UUID `json:"id"`
+	Field     string    `json:"field"`
+	Flag      string    `json:"flag"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type QueueItem struct {
 	ID          uuid.UUID       `json:"id"`
 	QueueType   string          `json:"queue_type"`
@@ -169,7 +185,7 @@ type RegisterToken struct {
 type ShopifyCollection struct {
 	ID                  uuid.UUID      `json:"id"`
 	ProductCollection   sql.NullString `json:"product_collection"`
-	ShopifyCollectionID int32          `json:"shopify_collection_id"`
+	ShopifyCollectionID string         `json:"shopify_collection_id"`
 	CreatedAt           time.Time      `json:"created_at"`
 	UpdatedAt           time.Time      `json:"updated_at"`
 }
