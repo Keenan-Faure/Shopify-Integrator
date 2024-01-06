@@ -131,6 +131,7 @@ A friendly list of features currently supported and available:
 - Adjustable settings via the API or on the app front-end.
 - Neat and easy to follow front-end design using Popular HTML Framework React.
 - Dockerized for portibility - _If it works on your PC, then we'll ship your PC_.
-- Queue feature (coming soon) with support to view and retry queue items.
+- Additional features, like restrictions & global warehousing, to make pushing and fetching shopify data easier and more controllable 
+- Queue feature
 
 [def]: https://github.com/keenan-faure/learn-cicd-starter/actions/workflows/ci.yml/badge.svg
