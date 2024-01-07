@@ -68,7 +68,7 @@ Please read this guide [here](https://support.google.com/mail/answer/185833?hl=e
 
 ### Configuring app and shopify setting
 
-The application consists of settings that needs to be configured, which are, of course, import in the functions of each feature. These are outlined below:
+The application consists of settings that needs to be configured, which are, of course, important in the functions of each feature. These can be done either over the API using a client like [Postman](https://www.postman.com) or using the front-end of the application.
 
 ### Installing Golang
 
@@ -90,7 +90,7 @@ After successfully creating an account, an `authtoken` needs to be retrieved and
 ${pwd}/ngrok/ngrok.yml
 ```
 
-**Please dont alter any of the data in the `ngrok.yml` file**
+**Please dont alter any of the other data in the `ngrok.yml` file when replacing the `authToken`**
 
 ## Configuring custom ngrok URL for orders
 
@@ -100,7 +100,15 @@ This application, which runs on your local machine `localhost`, cannot be access
 application called `ngrok` to do this for us.
 
 The `install.sh` script installs ngrok for you, however, to create the webhook url that is used when creating orders
-you can just retrieve it in the dashboard of the application.
+you can just retrieve it in the settings page of the application on the front-end or over the API.
+
+Please see the small guide below on how to setup the webhook URL on Shopify.
+
+_note that this assumes that you have a shopify store with a valid ngrok authToken_
+
+- [Guide on how to link Ngrok with your Shopify webhook] (https://ngrok.com/docs/integrations/shopify/webhooks/)
+
+**Note that your ngrok domain name can be found on the logs of the docker container. Also the ngrok domain changes each time when using a free ngrok account plan**
 
 ## How to run the project
 
@@ -131,7 +139,8 @@ A friendly list of features currently supported and available:
 - Adjustable settings via the API or on the app front-end.
 - Neat and easy to follow front-end design using Popular HTML Framework React.
 - Dockerized for portibility - _If it works on your PC, then we'll ship your PC_.
-- Additional features, like restrictions & global warehousing, to make pushing and fetching shopify data easier and more controllable 
+- Additional features, like restrictions & global warehousing, to make pushing and fetching shopify data easier and more controllable
+- Automatic Ngrok integration with your Shopify Webhook.
 - Queue feature
 
 [def]: https://github.com/keenan-faure/learn-cicd-starter/actions/workflows/ci.yml/badge.svg
