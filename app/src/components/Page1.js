@@ -585,8 +585,12 @@ function Page1(props)
                 <div className = "vendor"></div>
                 <div className = "type"></div>
                 <div className = "category"></div>
-                <button id = "clear_filter"className = "filter-button">Clear Filter</button>
-                <button id = "_filter"className = "filter-button">Filter Results</button>
+
+                <div id = "button-hold">
+                    <button id = "clear_filter"className = "filter-button">Clear Filter</button>
+                    <button id = "_filter"className = "filter-button">Filter Results</button>
+                </div>
+                
 
                 <br/><br/><br/>
                 <div className = "filter-title"><b>Product Sync</b></div>
