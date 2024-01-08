@@ -58,13 +58,13 @@
     border-bottom: 1px solid aliceblue; 
     color: white;
 }
-.setting, .setting_main, .setting_ware 
+.setting, .setting_main, .setting_ware, .restriction_setting
 {
     position: relative;
     margin-top: 15px;
     margin-bottom: 15px;
     display: block;
-    width: 70%;
+    width: 720px;
     height: auto;
     left: 50%;
     transform: translate(-50%);
@@ -182,7 +182,6 @@ input[type = setting]
     font-size: 16px;
     color: rgb(255, 255, 255);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    border-bottom: 1px solid rgb(255, 255, 255);
     padding: 10px;
     user-select: none;
 }
@@ -199,26 +198,7 @@ input[type = setting]
     padding: 10px;
     user-select: none;
 }
-.a
-{
-    position: absolute;
-    height: 25px;
-    width: 25px;
-    left: 47px;
-    display: block;
-    background-size: cover;
-    background-image: url(../media/icons8-settings-50.png);
-}
-.b 
-{
-    position: absolute;
-    height: 25px;
-    width: 25px;
-    left: 60px;
-    display: block;
-    background-size: cover;
-    background-image: url(../media/icons8-shopify-50.png);
-}
+
 .mini-setting 
 {
     position: relative;
@@ -232,7 +212,7 @@ input[type = setting]
     border-radius: 10px;
     margin-top: 5px;
     border: none;
-    width: 60%;
+    width: 170px;
     display: block;
     height: auto;
     cursor: pointer;
@@ -269,6 +249,16 @@ input[type = setting]
 {
     background-color: rgb(148, 11, 11);
     color: aliceblue;
+}
+.table tr:nth-child(even):hover
+{
+    background-color: #7e7e7e;
+    cursor: pointer;
+}
+.table tr:nth-child(odd):hover
+{
+    background-color: #7e7e7e;
+    cursor: pointer;
 }
 
 .warehouse-mapp
@@ -415,4 +405,3 @@ select {
     background-color: transparent;
     cursor: initial;
 }
-

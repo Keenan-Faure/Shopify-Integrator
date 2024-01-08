@@ -226,9 +226,6 @@ function Detailed_product(props)
         {
             slider_.checked = false;
         }
-        
-        
-        
 
     }, []);
 
@@ -252,7 +249,7 @@ function Detailed_product(props)
                                     <div id = "title" style = {{display: 'inline-block'}}>{props.Product_Title}</div> 
                                     <label className = "switch" id = "slider">
                                         <input type = "checkbox" id = "lide" />
-                                        <span className = "slider round"title = "Activty of Element"/>
+                                        <span className = "slider round" title = "Activty of Element"/>
                                     </label>
                                 </div>
                             </div>

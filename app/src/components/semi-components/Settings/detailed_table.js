@@ -1,4 +1,3 @@
-import {useEffect} from 'react';
 import '../../../CSS/detailed.css';
 
 function Detailed_table(props)

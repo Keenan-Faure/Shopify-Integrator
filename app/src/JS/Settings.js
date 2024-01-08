@@ -3,6 +3,8 @@ import {useEffect} from 'react';
 import { createRoot } from 'react-dom/client';
 import $ from 'jquery';
 import Setting_details from '../components/semi-components/settings-details';
+import Restriction_details from '../components/semi-components/restriction-details.js';
+import Detailed_Restriction from '../components/semi-components/Settings/detailed-restrictions.js';
 import Detailed_warehousing from '../components/semi-components/Settings/detailed_warehousing';
 import Detailed_table from '../components/semi-components/Settings/detailed_table';
 
@@ -209,8 +211,6 @@ function Settings()
                     div.innerHTML = _data[i].field_name;
                     setting_2.appendChild(div);
                 }
-                console.log(setting_2);
-                console.log(div);
             
                 /* Scroll into View Button Event */
                 let a_settings = div.childNodes;
@@ -360,7 +360,6 @@ function Settings()
                         
                     })
                 }
-                
             }
         })
         .fail( function(xhr) 
@@ -368,23 +367,218 @@ function Settings()
             alert(xhr.responseText); 
         });
 
-        let edit = document.getElementById("edit");
+        /* Restrictions Settings */
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+        $.get("http://localhost:8080/api/fetch/restriction", [], [], 'json')
+        .done(function( _data) 
+        {
+            
+            let root;
+            let _main = document.querySelector(".restriction-settings");
+
+            if(document.getElementById("r_settings") != null && document.getElementById("restriction_settings") != null)
+            {
+                document.getElementById("r_settings").remove();
+                document.getElementById("restriction_settings").remove();
+
+                let settings_2 = document.getElementById("r-s");
+                let div = document.createElement("div");
+                div.id = "r_settings";
+                _main.appendChild(div);
+                root = createRoot(div);
+                root.render(<Restriction_details key={`${_data.id}`} restriction = { _data.map((el, i) => <Detailed_Restriction key={`${el.title}_${i}`} 
+                Name = {el.field[0].toUpperCase() + el.field.slice(1)} Flag = {el.flag}
+                />)}/>)
+
+                //create new setting_2
+                let setting_2 = document.createElement("div");
+                setting_2.id = "restriction_settings";
+                settings_2.appendChild(setting_2);
+
+                for(let i = 0; i < 1; i++)
+                {
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = "Fetch Restrictions";
+                    setting_2.appendChild(div);
+                }
+            
+                /* Scroll into View Button Event */
+                let r_settings = div.childNodes;
+                let rest_button = setting_2.children;
+                for(let i = 0; i < 1; i++)
+                {
+                    rest_button[i].addEventListener("click", () =>
+                    {
+                        r_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            r_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { r_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                    });
+                }
+            }
+            else 
+            {
+                let settings_2 = document.getElementById("r-s");
+                let div = document.createElement("div");
+                div.id = "r_settings";
+                _main.appendChild(div);
+                root = createRoot(div);
+                root.render(<Restriction_details key={`${_data.id}`} restriction = { _data.map((el, i) => <Detailed_Restriction key={`${el.title}_${i}`} 
+                Name = {el.field[0].toUpperCase() + el.field.slice(1)} Flag = {el.flag}
+                />)}/>)
+
+                //create new setting_2
+                let setting_2 = document.createElement("div");
+                setting_2.id = "restriction_settings";
+                settings_2.appendChild(setting_2);
+
+                for(let i = 0; i < 1; i++)
+                {
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = "Fetch Restrictions";
+                    setting_2.appendChild(div);
+                }
+            
+                /* Scroll into View Button Event */
+                let r_settings = div.childNodes;
+                let rest_button = setting_2.children;
+                for(let i = 0; i < 1; i++)
+                {
+                    rest_button[i].addEventListener("click", () =>
+                    {
+                        r_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            r_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { r_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                    });
+                }
+            } 
+        })
+        .fail( function(xhr) { alert(xhr.responseText); });
+
+        /* Restrictions Settings */
+        $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+        $.get("http://localhost:8080/api/push/restriction", [], [], 'json')
+        .done(function( _data) 
+        {
+
+            let root;
+            let _main = document.querySelector(".restriction-settings-2");
+
+            if(document.getElementById("r_settings2") != null && document.getElementById("restriction_settings2") != null) 
+            {
+                document.getElementById("r_settings2").remove();
+                document.getElementById("restriction_settings2").remove();
+
+                let settings_2 = document.getElementById("r-s");
+                let div = document.createElement("div");
+                div.id = "r_settings2";
+                _main.appendChild(div);
+                root = createRoot(div);
+                root.render(<Restriction_details key={`${_data.id}`} restriction = { _data.map((el, i) => <Detailed_Restriction key={`${el.title}_${i}`} 
+                Name = {el.field[0].toUpperCase() + el.field.slice(1)} Flag = {el.flag}
+                />)}/>)
+
+                //create new setting_2
+                let setting_2 = document.createElement("div");
+                setting_2.id = "restriction_settings2";
+                settings_2.appendChild(setting_2);
+
+                for(let i = 0; i < 1; i++)
+                {
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = "Push Restrictions";
+                    setting_2.appendChild(div);
+                }
+            
+                /* Scroll into View Button Event */
+                let r_settings = div.childNodes;
+                let rest_button = setting_2.children;
+                for(let i = 0; i < 1; i++)
+                {
+                    rest_button[i].addEventListener("click", () =>
+                    {
+                        r_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            r_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { r_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                    });
+                }
+            }
+            else 
+            {
+                let settings_2 = document.getElementById("r-s");
+                let div = document.createElement("div");
+                div.id = "r_settings2";
+                _main.appendChild(div);
+                root = createRoot(div);
+                root.render(<Restriction_details key={`${_data.id}`} restriction = { _data.map((el, i) => <Detailed_Restriction key={`${el.title}_${i}`} 
+                Name = {el.field[0].toUpperCase() + el.field.slice(1)} Flag = {el.flag}
+                />)}/>)
+
+                //create new setting_2
+                let setting_2 = document.createElement("div");
+                setting_2.id = "restriction_settings2";
+                settings_2.appendChild(setting_2);
+
+                for(let i = 0; i < 1; i++)
+                {
+                    let div = document.createElement("button");
+                    div.className = "mini-setting";
+                    div.innerHTML = "Push Restrictions";
+                    setting_2.appendChild(div);
+                }
+            
+                /* Scroll into View Button Event */
+                let r_settings = div.childNodes;
+                let rest_button = setting_2.children;
+                for(let i = 0; i < 1; i++)
+                {
+                    rest_button[i].addEventListener("click", () =>
+                    {
+                        r_settings[i].scrollIntoView({block: "center", behavior: 'smooth' });
+                        setTimeout(() =>
+                        {
+                            r_settings[i].style.boxShadow = "0 0 20px rgb(173 216 230), 0 0 40px rgb(173 216 230), 0 0 60px rgb(173 216 230), 0 0 80px rgb(173 216 230), 0 0 80px rgb(173 216 230 / 10%)";
+                            setTimeout(() => { r_settings[i].style.boxShadow = ""; }, 1200)
+                        }, 50);
+                    });
+                }
+            }
+            
+        })
+        .fail( function(xhr) { alert(xhr.responseText); });
+
         let confirm_line = document.querySelector(".confirm-line");
     
         let confirm = document.getElementById("confirm");
         confirm.addEventListener("click", () =>
         {
             confirm_line.style.display = "none";
-            let setting_main_title = document.querySelectorAll("._title");
-            let setting_main_value = document.querySelectorAll("._input");
-            let setting_default_value = document.querySelectorAll("._value");
+            let app_div = document.querySelector(".app-settings");
+            let setting_main_title = app_div.querySelectorAll("._title"); let setting_main_value = app_div.querySelectorAll("._input");
+            let setting_default_value = app_div.querySelectorAll("._value");
+
+            let shop_div = document.querySelector(".shopify-settings");
+            let setting_main_title2 = shop_div.querySelectorAll("._title"); let setting_main_value2 = shop_div.querySelectorAll("._input");
+            let setting_default_value2 = shop_div.querySelectorAll("._value");
+
             let button_true = document.querySelectorAll(".true");
             let button_false = document.querySelectorAll(".false");
 
             let app_object = [];
             let _shopify_object = [];
             let _setting = {};
-            for(let i = 0; i < setting_main_title.length - 3; i++)
+            for(let i = 0; i < setting_main_title.length ; i++)
             {
                 if(setting_main_value[i].style.display == "block")
                 {
@@ -445,17 +639,17 @@ function Settings()
             }
 
             let count = 0;
-            for(let i = setting_main_title.length - 3; i < setting_main_title.length; i++)
+            for(let i = 0 ; i < setting_main_title2.length; i++)
             {
-                if(setting_main_value[count].style.display == "block")
+                if(setting_main_value2[count].style.display == "block")
                 {
                     //IF setting is empty, use the original value stored in default
-                    if(setting_main_value[count].value == "")
+                    if(setting_main_value2[count].value == "")
                     {
                         _setting = 
                         {
-                            key : setting_main_title[i].innerHTML,
-                            value : setting_default_value[i].innerHTML
+                            key : setting_main_title2[i].innerHTML,
+                            value : setting_default_value2[i].innerHTML
                         }
                         _shopify_object[count] = _setting;
                     }
@@ -464,8 +658,8 @@ function Settings()
                     {
                         _setting = 
                         {
-                            key : setting_main_title[i].innerHTML,
-                            value : setting_main_value[i].value
+                            key : setting_main_title2[i].innerHTML,
+                            value : setting_main_value2[i].value
                         }
                         _shopify_object[count] = _setting;
                     }
@@ -477,8 +671,8 @@ function Settings()
                     {
                         _setting = 
                         {
-                            key : setting_main_title[i].innerHTML,
-                            value : setting_default_value[i].innerHTML
+                            key : setting_main_title2[i].innerHTML,
+                            value : setting_default_value2[i].innerHTML
                         }
                         _shopify_object[count] = _setting;
                     }   
@@ -487,7 +681,7 @@ function Settings()
                     {
                         _setting = 
                         {
-                            key : setting_main_title[i].innerHTML,
+                            key : setting_main_title2[i].innerHTML,
                             value : button_false[i].innerHTML.toLowerCase()
                         }
                         _shopify_object[count] = _setting;
@@ -497,7 +691,7 @@ function Settings()
                     {
                         _setting = 
                         {
-                            key : setting_main_title[i].innerHTML,
+                            key : setting_main_title2[i].innerHTML,
                             value : button_true[i].innerHTML.toLowerCase()
                         }
                         _shopify_object[count] = _setting;
@@ -506,14 +700,73 @@ function Settings()
                 count += 1;
             }
 
-            /* App settings post request */
+            /* Restrictions */
+            let fetch_restrict = [];
+            let push_restrict = [];
+
+            let rest1 = document.getElementById("r_settings"); let rest2 = document.getElementById("r_settings2");
+            let fetch_field = rest1.querySelectorAll(".restriction_name"); let fetch_flag = rest1.querySelectorAll(".flag_value");
+            let switch_fetch = rest1.querySelectorAll ("#lide"); let switch_push = rest1.querySelectorAll("#lide");
+            let push_field = rest2.querySelectorAll(".restriction_name"); let push_flag = rest2.querySelectorAll(".flag_value");
+
+            let _fetch = {};
+            let _push = {};
+            let _c = 0;
+            let c_ = 0;
+            for(let i = 0; i < fetch_field.length; i++)
+            {
+                if(switch_fetch[i].checked == true)
+                {
+                    _fetch = 
+                    {
+                        field : fetch_field[i].innerHTML.toLowerCase(),
+                        flag : "app"
+                    }
+                    fetch_restrict[_c] = _fetch;
+                }
+                else 
+                {
+                    _fetch = 
+                    {
+                        field : fetch_field[i].innerHTML.toLowerCase(),
+                        flag : "shopify"
+                    }
+                    fetch_restrict[_c] = _fetch;
+                }
+                _c += 1;
+            }
+
+            for(let i = 0; i < push_field.length; i++)
+            {
+                if(switch_push[i].checked == true)
+                {
+                    _push = 
+                    {
+                        field : fetch_field[i].innerHTML.toLowerCase(),
+                        flag : "app"
+                    }
+                    push_restrict[c_] = _push;
+                }
+                else 
+                {
+                    _push = 
+                    {
+                        field : fetch_field[i].innerHTML.toLowerCase(),
+                        flag : "shopify"
+                    }
+                    push_restrict[c_] = _push;
+                }
+                c_ += 1;
+            }
+
             const api_key = localStorage.getItem('api_key');
-            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
-            $.post("http://localhost:8080/api/settings", JSON.stringify(app_object),[], 'json')
-            .done(function( _data) 
+
+            /* Fetch Restriction Put Setting */
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}});
+            $.ajax({ type: 'PUT', url: "http://localhost:8080/api/fetch/restriction", contentType: 'json', data: JSON.stringify(fetch_restrict)})
+            .done(function (_data) 
             {
                 console.log(_data);
-
                 let info = document.getElementById("info-message");
                 info.innerHTML = "success";
                 info.style.display = "block";  
@@ -529,9 +782,50 @@ function Settings()
                 alert(xhr.responseText);
             });
 
-            /* Shopify settings post request */
-            $.post("http://localhost:8080/api/shopify/settings", JSON.stringify(_shopify_object),[], 'json')
-            .done(function( _data) 
+            /* Push Restriction Put Setting */
+            $.ajax({ type: 'PUT', url: "http://localhost:8080/api/push/restriction", contentType: 'json', data: JSON.stringify(push_restrict)})
+            .done(function (_data) 
+            {
+                console.log(_data);
+                let info = document.getElementById("info-message");
+                info.innerHTML = "success";
+                info.style.display = "block";  
+                info.style.color = "white";
+                info.style.backgroundColor = "#1a5e12";
+                setTimeout(() => 
+                {
+                    info.style.display = "none";  
+                }, 2000);
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+            
+            /* App Setting Put Request */
+            $.ajax({ type: 'PUT', url: "http://localhost:8080/api/settings", contentType: 'json', data: JSON.stringify(app_object)})
+            .done(function (_data) 
+            {
+                console.log(_data);
+                let info = document.getElementById("info-message");
+                info.innerHTML = "success";
+                info.style.display = "block";  
+                info.style.color = "white";
+                info.style.backgroundColor = "#1a5e12";
+                setTimeout(() => 
+                {
+                    info.style.display = "none";  
+                }, 2000);
+            })
+            .fail( function(xhr) 
+            {
+                alert(xhr.responseText);
+            });
+
+            /* Shopify Setting Put Request */
+            $.ajax({ type: 'PUT', url: "http://localhost:8080/api/shopify/settings",
+            contentType: 'json', data: JSON.stringify(_shopify_object)})
+            .done(function (_data) 
             {
                 console.log(_data);
                 let info = document.getElementById("info-message");
@@ -609,9 +903,7 @@ function Settings()
                     navigator.clipboard.writeText(copyText);
                     webhook_button.innerHTML = "Copied!";
                 });
-            }
-
-             
+            } 
         });
 
         /* Adds a new Warehouse */
@@ -647,12 +939,10 @@ function Settings()
             });
         });
 
-
         setTimeout(() =>
         {
             let setting_main = document.querySelectorAll(".setting_main");
-            
-            
+
             for(let i=0; i<setting_main.length; i++)
             {
                 let setting_default_value = setting_main[i].querySelector("._value");
@@ -667,7 +957,7 @@ function Settings()
                     true_false.style.display = "none";
                 }
             }
-        }, 200);
+        }, 250);
 
         //If the user changes any of the input fields/buttons show the save button
         setTimeout(() =>
@@ -698,7 +988,7 @@ function Settings()
                     confirm_line.style.display = "block";
                 });
             }
-        }, 100);
+        }, 250);
 
 
         /* Displays the warehouse map */
@@ -779,6 +1069,21 @@ function Settings()
             }, 800);
         });
 
+        setTimeout(() => 
+        {
+            /* Switch event Change*/
+            let _switch = document.querySelectorAll(".switch");
+            let confirm_line = document.querySelector(".confirm-line");
+            for(let i = 0; i < _switch.length; i++)
+            {
+                _switch[i].addEventListener("click", () =>
+                {
+                    confirm_line.style.display = "block";
+                });
+            }
+        }, 300);
+        
+
     }, []);
 
     return (
@@ -837,7 +1142,15 @@ function Settings()
                     <div className = "shopify-settings">
                         <div className = "title">Shopify Settings</div>
                         <div className = "_shopify"></div>
-                    </div>   
+                    </div> 
+                    <div className = "restriction-settings">
+                        <div className = "title" title = "Restricts certain information from Shopify Fetch">Fetch Restrictions</div>
+                    </div> 
+
+                    <div className = "restriction-settings-2">
+                        <div className = "title" title = "Restricts certain information when pushing to Shopify">Push Restrictions</div>
+                    </div>
+
                 </div> 
                 
             </div>
@@ -850,6 +1163,10 @@ function Settings()
                 <div className = "settings-2" id = "s-s" style ={{paddingTop: '0px'}}>
                     <div className = "application"><i className = "b"/>Spotify Settings:</div>
                     <div id = "shopify_settings"></div>
+                </div>
+                <div className = "settings-2" id = "r-s" style ={{paddingTop: '0px'}}>
+                    <div className = "application"><i className = "c"/>Restriction Settings:</div>
+                    <div id = "restrictions"></div>
                 </div>
             </div>
             <div className = "confirm-line">

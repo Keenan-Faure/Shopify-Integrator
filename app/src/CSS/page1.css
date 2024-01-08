@@ -44,21 +44,20 @@ body
 {
     position: relative;
     display: none;
-    margin-top: 10px;
     margin-bottom: 10px;
     text-align: center;
-    
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    width: 100%;
+    width: 80%;
     height: 7%;
     top: 0;
     left: 0;
     transition-duration: 0.5s;
     background-color: rgba(61, 61, 61, 0.55);
-    overflow: auto;
-    padding: 15px;
+    overflow: hidden;
     cursor: pointer;
     color: white;
+    left: 50%;
+    transform: translate(-50%);
 }
 .filter-elements:hover 
 {
@@ -87,21 +86,17 @@ body
 }
 .filter-button 
 {
-    display: none;
-    text-align: center;
     font-size: 12px;
+    position: relative;
     width: 100px;
     height: 40px;
-    position: relative;
-    background-size: cover;
     color: rgb(0 0 0);
-    border: 1px solid #000000;
-    border-radius: 4px;
+    background-color: rgb(107, 107, 107);
     transition-duration: 0.4s;
-    left: 25%;
-    float: left;
+    left: 46%;
+    border: none;
     margin-left: 10px;
-    transform: translate(-10%);
+    transform: translate(-100%);
     cursor: not-allowed;
 }
 .filter-button:hover
@@ -146,21 +141,20 @@ body
 {
     position: relative;
     display: none;
-    margin-top: 10px;
     margin-bottom: 10px;
     text-align: center;
-    font-size: 15px;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    width: 100%;
-    height: 7%;
+    width: 80%;
+    height: 6.5%;
     top: 0;
     left: 0;
     transition-duration: 0.5s;
     background-color: rgba(61, 61, 61, 0.55);
-    overflow: auto;
-    padding: 15px;
+    overflow: hidden;
     cursor: pointer;
     color: white;
+    left: 50%;
+    transform: translate(-50%);
 }
 .retry-sync:hover 
 {
@@ -298,11 +292,13 @@ input.search-area
     user-select: none;
     cursor: pointer;
     overflow: hidden;
-    background: linear-gradient(to left, #202020, #818181);
+    background-color: rgba(75, 75, 75, 0.65);
+    border: 1px solid grey;
+    transition-duration: 0.2s;
 }
 .pan:hover 
 {
-    background-color:rgb(0, 0, 0, 0.9);
+    border: 1px solid rgb(255, 255, 255);
 }
 .pan-img 
 {
@@ -401,6 +397,34 @@ input.search-area
 .p-d-title
 {
     border: none;
+    padding: 5px;
+    font-size: 15px;
+}
+.p-d-code
+{
+    border: none;
+    padding: 5px;
+}
+.p-d-category
+{
+    border: none;
+    padding: 5px;
+    background-color: #8181817e;
+    border-radius: 5px;
+}
+.p-d-type
+{
+    border: none;
+    padding: 5px;
+    background-color: #8181817e;
+    border-radius: 5px;
+}
+.p-d-vendor
+{
+    border: none;
+    padding: 5px;
+    background-color: #8181817e;
+    border-radius: 5px;
 }
 .p-d-status
 {
@@ -585,5 +609,11 @@ a
     background-color: rgba(61, 61, 61, 0.8);
     user-select: none;
 }
-
-
+#button-hold 
+{
+    position: relative;
+    display: none;
+    left: 50%;
+    width: 100%;
+    transform: translate(-50%);
+}

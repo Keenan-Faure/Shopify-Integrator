@@ -578,8 +578,11 @@ function Page2(props)
                     <div className = "customer"></div>
                 </div>
                 <br />
-                <button id = "clear_filter"className = "filter-button">Clear Filter</button>
-                <button id = "_filter"className = "filter-button">Filter Results</button>
+                <div id = "button-hold">
+                    <button id = "clear_filter"className = "filter-button">Clear Filter</button>
+                    <button id = "_filter"className = "filter-button">Filter Results</button>
+                </div>
+                
                 <br /><br /><br /><br /><br />
                 <div className = "queue-view">
                     <div className="graph g1" style = {{width: '95%'}}>
