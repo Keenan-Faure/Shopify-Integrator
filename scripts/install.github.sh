@@ -1,8 +1,5 @@
 #!/bin/bash
 
-build_go
-install_app_gh
-
 function build_go() {
     OS="$(uname -s)"
 
@@ -31,3 +28,6 @@ function install_app_gh() {
         docker restart $SERVER_CONTAINER_NAME
     fi
 }
+
+build_go
+install_app_gh

@@ -43,7 +43,6 @@ if [[ ! $# -eq 0 ]] ; then
       docker_rmi
     fi
 fi
-# docker_rmi
 
 echo "+-------------------------------------+"
 echo "|Please re-run './scripts/install.sh' |"
