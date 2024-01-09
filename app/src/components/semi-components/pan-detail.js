@@ -34,12 +34,16 @@ function Pan_details(props)
                 option[i].className = "p-d-false";
             }
         }
-        let category = document.querySelector(".p-d-category"); let type = document.querySelector(".p-d-type");
-        let vendor = document.querySelector(".p-d-vendor");
+        let category = document.querySelectorAll(".p-d-category"); let type = document.querySelectorAll(".p-d-type");
+        let vendor = document.querySelectorAll(".p-d-vendor");
 
-        if(category.innerHTML == "") { category.style.display = "none"; }
-        if(type.innerHTML == "") { type.style.display = "none"; }
-        if(vendor.innerHTML == "") { vendor.style.display = "none"; }
+        for(let i = 0; i < category.length; i++)
+        {
+            if(category[i].innerHTML == "") { category[i].style.display = "none"; }
+            if(type[i].innerHTML == "") { type[i].style.display = "none"; }
+            if(vendor[i].innerHTML == "") { vendor[i].style.display = "none"; }
+        }
+        
     }, []);
 
     return (
