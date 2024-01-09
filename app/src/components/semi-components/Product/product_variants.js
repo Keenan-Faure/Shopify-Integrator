@@ -1,8 +1,18 @@
+import {useEffect} from 'react';
 import '../../../CSS/detailed.css';
 
 const userName = localStorage.getItem('username').toUpperCase();
 function Product_Variants(props)
 {
+    useEffect(()=> 
+    {
+
+        const userName = localStorage.getItem('username').toUpperCase();
+
+        let user_ = document.getElementById("user");
+        user_.innerHTML = userName;
+        
+    }, []);
     return (
         <div style={{marginBottom: '5px'}}>
             <table style={{marginBottom: '25px'}}>

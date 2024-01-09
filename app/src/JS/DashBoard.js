@@ -52,6 +52,9 @@ function Dashboard()
             logout.style.display = "none";
             navigation.style.display = "none";
             header.style.display = "none";
+            
+            localStorage.removeItem("username");
+            localStorage.removeItem("api_key");
 
             /* Session Destroy */
             window.location.href = '/';
