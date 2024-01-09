@@ -31,7 +31,7 @@ INSERT INTO app_settings(
     'app_shopify_fetch_time',
     'Duration between each product fetch from Shopify.',
     'Fetch Interval',
-    'false',
+    '5',
     NOW(),
     NOW()
 ), (
