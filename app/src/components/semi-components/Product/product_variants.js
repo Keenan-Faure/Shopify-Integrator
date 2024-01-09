@@ -1,7 +1,6 @@
 import {useEffect} from 'react';
 import '../../../CSS/detailed.css';
 
-const userName = localStorage.getItem('username').toUpperCase();
 function Product_Variants(props)
 {
     useEffect(()=> 
@@ -62,7 +61,7 @@ function Product_Variants(props)
                         </tbody>
                     </table>
                 </div>
-                <div className = "variant-updateDate">Updated by <b>{userName}</b> at: <b>{props.Variant_UpdateDate}</b></div>
+                <div className = "variant-updateDate">Updated by <b id = "user"></b> at: <b>{props.Variant_UpdateDate}</b></div>
             </div>
         </div>
     );
