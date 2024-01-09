@@ -14,7 +14,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_enable_shopify_fetch',
     'Enables the automatic pulling of products from Shopify.',
-    'App Enable Shopify Fetch',
+    'Enable Shopify Fetch',
     'false',
     NOW(),
     NOW()
@@ -22,7 +22,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_enable_queue_worker',
     'Enables the queue worker to process queue items.',
-    'App Enable Queue Worker',
+    'Enable Queue Worker',
     'true',
     NOW(),
     NOW()
@@ -30,7 +30,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_shopify_fetch_time',
     'Duration between each product fetch from Shopify.',
-    'App Shopify Fetch Time',
+    'Fetch Interval',
     'false',
     NOW(),
     NOW()
@@ -38,7 +38,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_enable_shopify_push',
     'Enables products to be pushed to Shopify.',
-    'App Enable Shopify Push',
+    'Enable Shopify Push',
     'false',
     NOW(),
     NOW()
@@ -46,7 +46,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_queue_size',
     'Maximum amount of queue items that can exist in the queue at any time.',
-    'App Queue Size',
+    'Queue Size',
     '500',
     NOW(),
     NOW()
@@ -54,7 +54,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_queue_process_limit',
     'Maximum amount of queue items that can be processed each iteration.',
-    'App Queue Process Limit',
+    'Queue Process Limit',
     '20',
     NOW(),
     NOW()
@@ -62,7 +62,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_queue_cron_time',
     'Interval between each run of the queue worker.',
-    'App Queue Cron Time',
+    'Queue Cron Time',
     '5',
     NOW(),
     NOW()
@@ -70,15 +70,15 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_fetch_add_products',
     'Enables the creation of products that does not exist locally when fetching data from Shopify.',
-    'App Fetch Add Products',
+    'Add Fetched Products',
     'false',
     NOW(),
     NOW()
 ), (
     uuid_generate_v4(),
     'app_fetch_overwrite_products',
-    'Enables local data to be overwritten by Shopify data if the product exists locally.',
-    'App Fetch Overwrite Products',
+    'Enables local data to be overwritten by Shopify data if the product exists locally. Restrictions still apply',
+    'Fetch Overwrite Products',
     'false',
     NOW(),
     NOW()
@@ -86,7 +86,7 @@ INSERT INTO app_settings(
     uuid_generate_v4(),
     'app_fetch_sync_images',
     'Enabled products to be pulled from Shopify when fetching data.',
-    'App Fetch Sync Images',
+    'Add Shopify Images',
     'false',
     NOW(),
     NOW()
