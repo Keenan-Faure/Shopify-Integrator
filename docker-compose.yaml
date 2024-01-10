@@ -43,7 +43,7 @@ services:
         volumes:
             - ./ngrok/ngrok.yml:/etc/ngrok.yml
         ports:
-          - 4040:4040
+            - 8888:4040
         depends_on:
             - server
 
