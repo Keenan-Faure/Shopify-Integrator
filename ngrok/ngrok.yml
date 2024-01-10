@@ -1,7 +1,6 @@
 # Please enter your authToken below
-authtoken: 
+authtoken:
 version: 2
-web_addr: 127.0.0.1:8888
 tunnels:
     website:
         addr: 8080
