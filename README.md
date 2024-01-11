@@ -2,7 +2,7 @@
 
 Pushes and pulls data from Shopify with some additional features.
 
-1. [Description of project](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#description-of-project)
+1. [Description of project](#description-of-project)
 2. [Setup Project](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#setup-project)
    1. [What is already done](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#what-is-already-done)
    2. [Configuring .env file](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#configuring-env-file)
