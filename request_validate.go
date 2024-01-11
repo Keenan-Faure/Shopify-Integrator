@@ -494,9 +494,12 @@ func IDValidation(id string) error {
 }
 
 // User: data validation
-func UserValidation(user objects.RequestBodyUser) error {
-	if user.Name == "" {
-		return errors.New("empty name not allowed")
+func UserValidation(username, password string) error {
+	if username == "" || len(username) == 0 {
+		return errors.New("empty username not allowed")
+	}
+	if password == "" || len(password) == 0 {
+		return errors.New("empty password not allowed")
 	}
 	return nil
 }
@@ -660,6 +663,20 @@ func DecodeProductRequestBody(r *http.Request) (objects.RequestBodyProduct, erro
 func DecodeUserRequestBody(r *http.Request) (objects.RequestBodyUser, error) {
 	decoder := json.NewDecoder(r.Body)
 	params := objects.RequestBodyUser{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		if err.Error() == "" {
+			return params, errors.New("invalid request body")
+		}
+		return params, err
+	}
+	return params, nil
+}
+
+// Login: decodes the request body
+func DecodeLoginRequestBody(r *http.Request) (objects.RequestBodyLogin, error) {
+	decoder := json.NewDecoder(r.Body)
+	params := objects.RequestBodyLogin{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		if err.Error() == "" {

@@ -164,6 +164,24 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 	return false, nil
 }
 
+// checks if the credentials in the request body refer to a user
+func (dbconfig *DbConfig) CheckUserCredentials(
+	request_body objects.RequestBodyLogin,
+	r *http.Request,
+) (database.GetUserCredentialsRow, bool, error) {
+	db_user, err := dbconfig.DB.GetUserCredentials(r.Context(), database.GetUserCredentialsParams{
+		Name:     request_body.Username,
+		Password: request_body.Password,
+	})
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			return database.GetUserCredentialsRow{}, false, err
+		}
+		return database.GetUserCredentialsRow{}, false, nil
+	}
+	return db_user, true, nil
+}
+
 // checks if a token already exists in the database
 func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreRegister, r *http.Request) (uuid.UUID, bool, error) {
 	token, err := dbconfig.DB.GetToken(r.Context(), request_body.Email)
