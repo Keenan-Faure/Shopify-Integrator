@@ -542,12 +542,15 @@ function Page1(props)
             Filter_Pagintation(1);
         });
 
-        /* Retry Sync Button */
-        let retry = document.querySelector(".retry-sync");
-        retry.addEventListener("click", () =>
+        /* Fetch-Products Button */
+        let fetch = document.getElementById("fetch");
+        fetch.addEventListener("click", () =>
         {
-            retry.disabled = true;
-            retry.style.cursor = "progress";
+            fetch.disabled = true;
+            fetch.style.cursor = "not-allowed";
+
+            let message = document.getElementById("message");
+            message.style.display = "block";
 
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -555,11 +558,58 @@ function Page1(props)
             .done(function( _data) 
             {
                 console.log(_data);
-                retry.disabled = false;
-                retry.style.cursor = "pointer";
+                fetch.disabled = false;
+                fetch.style.cursor = "pointer";
+
+                message.innerHTML = "success";
+                message.style.background = "#1a5e12";
+                setTimeout(() =>
+                {
+                    message.innerHTML = "";
+                    message.style.backgroundColor = "transparent";
+                    message.style.display = "none";
+                }, 2000);
+            })
+            .fail( function(xhr) { alert(xhr.responseText); }); 
+            
+        });
+
+
+        /* Push(SYNC)-Products Button */
+        let push = document.getElementById("push");
+        push.addEventListener("click", () =>
+        {
+            push.disabled = true;
+            push.style.cursor = "not-allowed";
+
+            let message = document.getElementById("message");
+            message.style.display = "block";
+
+            const api_key = localStorage.getItem('api_key');
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
+            $.get("http://localhost:8080/api//shopify/sync", [], [])
+            .done(function( _data) 
+            {
+                console.log(_data);
+                push.disabled = false;
+                push.style.cursor = "pointer";
+
+                message.innerHTML = _data.message;
+                message.style.background = "#1a5e12";
+                setTimeout(() =>
+                {
+                    message.innerHTML = "";
+                    message.style.backgroundColor = "transparent";
+                    message.style.display = "none";
+                }, 2000);
             })
             .fail( function(xhr) { alert(xhr.responseText); }); 
         });
+        
+        
+        
+
+
     }, []);
 
     return (
@@ -591,10 +641,12 @@ function Page1(props)
                     <button id = "_filter"className = "filter-button">Filter Results</button>
                 </div>
                 
-
-                <br/><br/><br/>
+                <br/><br/>
                 <div className = "filter-title"><b>Product Sync</b></div>
-                <div className = "retry-sync"><div className = "filter-elements-text">Fetch Products</div></div>
+                <div className = "fetch-product" id = "fetch"><div className = "filter-elements-text">Fetch Products</div></div>
+                <div className = "push-product" id = "push"><div className = "filter-elements-text">Push Products</div></div>
+
+                
             </div>
             <div className = "filter-selection-main">
                 <div className = "filter-input">
@@ -630,6 +682,7 @@ function Page1(props)
                     </form>
                 </div>
             </div>
+            <div className = 'info-message' id = 'message' />
         </>
     );
 }

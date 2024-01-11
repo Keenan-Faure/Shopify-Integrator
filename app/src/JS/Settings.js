@@ -1091,7 +1091,7 @@ function Settings()
             <div className = "main-container">
                 <div className = "settings">
                     <div className = "app-settings" style= {{position: 'relative', top:'15px'}}>
-                        <div className = "title" style = {{marginTop: '20px'}}>App Settings</div>
+                        <div className = "title" title = "Application Settings" style = {{marginTop: '20px'}}>App Settings</div>
                         <div className = "_app">
                             <div className = "setting" style = {{height: '220px', fontSize: '12px'}}>
                                 <div className = "setting-title">Warehouse Location</div>
@@ -1140,7 +1140,7 @@ function Settings()
                         
                     </div>
                     <div className = "shopify-settings">
-                        <div className = "title">Shopify Settings</div>
+                        <div className = "title" title = "Shopify Settings">Shopify Settings</div>
                         <div className = "_shopify"></div>
                     </div> 
                     <div className = "restriction-settings">

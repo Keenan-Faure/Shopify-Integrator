@@ -215,21 +215,12 @@ function Login()
         
         let clip = document.getElementById("clip");
         clip.addEventListener("click", () =>
-        {
-            let copyText = document.getElementById("myInput");
-          
-            navigator.clipboard.writeText(copyText.innerHTML);
-            
+        {   
             setTimeout(() =>
             {
                 let re = document.querySelector(".result-container");
                 let form2 = document.getElementById("form2");
-                let message = document.getElementById("message");
 
-                message.style.display = "block";
-                message.innerHTML = "Copied to Clipboard";
-
-                message.style.backgroundColor = "rgb(6, 133, 6)";
                 re.style.animation = "Fadeout 2s ease-out";
                 form2.style.animation = "Fadeout 2s ease-out";
                 
@@ -331,8 +322,9 @@ function Login()
             </form>
 
             <form style = {{display: 'none'}} className = 'modal-content'  method = 'post' onSubmit={(event) => Register_auth(event)} autoComplete='off' id = 'form2'>
+                
                 <div className = 'modal-container'>
-                    
+                <div className = 'return-button'/>
                     <label id = "info" style = {{fontSize: '18px'}}><b><u>Register a New Account</u></b></label>
                     <br /><br /><br />
                     <label><b>Username</b></label>
@@ -351,7 +343,8 @@ function Login()
             <form style = {{display: 'none'}} className = 'modal-content'  method = 'post' onSubmit={(event) => Register(event)} autoComplete='off' id = 'form3'>
                 <div className = 'modal-container' id = "main2">
                     <div className = 'reg-portion' id = "reg-portion">
-                        <label><b>Authentication Token</b></label>
+                    <div className = 'return-button2'/>
+                        <label style ={{color: 'white'}}><b>Authentication Token</b></label>
                         <br />
                         <div className = "message">A Token was sent to the email address</div>
                         <br /><br />
@@ -363,21 +356,17 @@ function Login()
             </form>
             <div className = 'result-container'>
                 <div className = 'reg-portion'>
-                    <label><b>Information Returned</b></label>
+                    <label style ={{color: 'white', fontSize: ' 15px'}}><b>Information Returned</b></label>
                     <div className = "message" style ={{color: 'white'}}>You are recommended to save this information!</div>
                     <br />
                     <pre id = "myInput" style={{display: 'none'}}/>
                     <pre className = "pre"/>
                     <br /><br />
-                    <button className = 'button' type = 'button' id = "clip">Copy to Clipboard</button>
+                    <button className = 'button' type = 'button' id = "clip">Proceed</button>
                 </div>
             </div>
 
-            
-
-            <div className = 'return-button'></div>
-            <div className = 'return-button2'></div>
-            <div className = 'info-message' id = 'message'></div>
+            <div className = 'info-message' id = 'message' />
         </div>
 
         

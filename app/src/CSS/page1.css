@@ -33,7 +33,6 @@ body
     font-size: 18px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     width: 100%;
-    height: 10%;
     top: 0;
     left: 0;
     border-bottom: 1px solid rgb(255, 255, 255);
@@ -124,8 +123,8 @@ body
 .filter-input
 {   
     position: relative;
-    width: 40%;
-    height: 30%;
+    width: 560px;
+    height: 210px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
@@ -137,7 +136,7 @@ body
 {
     display: none;
 }
-.retry-sync 
+.fetch-product, .push-product 
 {
     position: relative;
     display: none;
@@ -156,7 +155,7 @@ body
     left: 50%;
     transform: translate(-50%);
 }
-.retry-sync:hover 
+.fetch-product:hover, .push-product:hover
 {
     background-color: rgba(61, 61, 61, 1);
     color: aliceblue;

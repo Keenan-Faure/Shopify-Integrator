@@ -68,7 +68,7 @@ input[type = text], input[type = password], input[type = email]
 {
 	width: 450px;
 	padding: 15px;
-	margin: 5px 0; 
+    margin: 10px 0;
     border-top: transparent;
     border-left: transparent;
     border-right: transparent;
@@ -185,8 +185,8 @@ input[type = return]
     display: none;
     width: 30px;
     height: 30px;
-    top: 60px;
-    left: 5px;
+    top: 10px;
+    left: 10px;
     background-image: url(../media/return.png);
     background-size: cover;
     background-position: center;

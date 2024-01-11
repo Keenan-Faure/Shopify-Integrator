@@ -79,12 +79,14 @@
     overflow: hidden;
     top: 5px;
     left: 10px;
+    cursor: pointer;
 }
 
 .disabled_status {
-    width: 20px;
+    width: 30px;
     overflow: hidden;
-    height: 20px;
+    display: inline-block;
+    height: 30px;
     padding: 2px;
     border-radius: 10px;
     font-family: system-ui;
@@ -96,12 +98,8 @@
     overflow: hidden;
     top: 5px;
     left: 10px;
+    cursor: pointer;
 }
-
-.disabled_status:hover {
-    width: 90px;
-}
-
 
 .logo {
     height: 25px;
@@ -148,6 +146,7 @@
     top: 50px;
     color: white;
     display: none;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0.1));
 }
 
 .welcome_text {

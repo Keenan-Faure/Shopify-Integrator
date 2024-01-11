@@ -7,7 +7,6 @@ function Detailed_Options(props)
             <td style= {{width: '50%'}}>{props.Option_Value}</td>
             <td style= {{width: '50%'}}>{props.Option_Name}</td>
         </tr>
-      
     );
 };
 

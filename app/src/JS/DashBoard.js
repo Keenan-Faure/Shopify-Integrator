@@ -69,10 +69,12 @@ function Dashboard()
         $.get("http://localhost:8080/api/stats/fetch", [], [], 'json')
         .done(function( _data) 
         {
-            console.log(_data);
-            if(_data == "")
+
+            if(_data.amounts == "" && _data.hours == "")
             {
                 status.className = "disabled_status";
+                status.title = "Fetch Disabled";
+                console.log("xd");
             }
             graph_data = _data;
 
@@ -233,7 +235,7 @@ function Dashboard()
                 <div className="header">
                     <div className="fetch_status_text">
                         Fetch Status
-                        <div className="enabled_status">
+                        <div className="enabled_status" title = "Fetch Enabled">
                             <img className="logo" src= {image} />
                         </div>
                     </div>

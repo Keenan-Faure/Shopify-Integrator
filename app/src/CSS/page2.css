@@ -57,6 +57,7 @@
     font-size: 20px;
     border-bottom: 1px solid aliceblue; 
     color: white;
+    cursor: pointer;
 }
 .setting, .setting_main, .setting_ware, .restriction_setting
 {

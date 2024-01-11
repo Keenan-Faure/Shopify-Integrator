@@ -3,6 +3,10 @@ import {useState} from "react";
 import $ from 'jquery';
 import '../../CSS/login.css';
 
+import FroalaEditorComponent from 'react-froala-wysiwyg';
+import 'froala-editor/css/froala_style.min.css';
+import 'froala-editor/css/froala_editor.pkgd.min.css';
+
 function Export_Product()
 {
     const[inputs, setInputs] = useState({});
@@ -16,8 +20,6 @@ function Export_Product()
     const ExportProduct = (event) =>
     {
         event.preventDefault();
-
-
         
         const api_key = localStorage.getItem('api_key');
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });

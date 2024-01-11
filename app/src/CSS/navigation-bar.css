@@ -11,7 +11,7 @@
 
 .navbar 
 {
-    background-color: rgba(165, 165, 165, 0.95);
+    background-color: rgba(201, 201, 201, 0.95);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     transition-duration: 0.2s;
     position: relative;
@@ -21,7 +21,7 @@
 .navbar:hover 
 {
 
-    background-color: rgb(209 209 209 / 98%);
+    background-color: rgba(241, 241, 241, 0.98);
 }
   
 .navbar a 
