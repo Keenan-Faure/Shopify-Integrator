@@ -51,13 +51,8 @@ function Detailed_User(props)
                         <td style= {{width: '25%'}}><button className = 'button' type = 'button'>Copy to Clipboard</button></td>
                     </tr>
                     <tr>
-                        <td style= {{width: '25%'}}>Api_Key</td>
+                        <td style= {{width: '25%'}}>Api Key</td>
                         <td style= {{width: '25%'}} className = 'user_info'>{props.api_key}</td>
-                        <td style= {{width: '25%'}}><button className = 'button' type = 'button'>Copy to Clipboard</button></td>
-                    </tr>
-                    <tr>
-                        <td style= {{width: '25%'}}>Webhook_Token</td>
-                        <td style= {{width: '25%'}} className = 'user_info'>{props.web_token}</td>
                         <td style= {{width: '25%'}}><button className = 'button' type = 'button'>Copy to Clipboard</button></td>
                     </tr>
                 </tbody>

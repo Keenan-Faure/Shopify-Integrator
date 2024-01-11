@@ -30,18 +30,15 @@ function Login()
         let message = document.getElementById("message");
         message.style.display = "block";
 
-        $.ajaxSetup
-        ({
-            headers: { 'Authorization': 'ApiKey ' + inputs.password }
-        });
 
+        
         $.post("http://localhost:8080/api/login", JSON.stringify(inputs),[], 'json')
         .done(function( _data) 
         {
             console.log(_data);
 
             /* Sets the user information for this session */
-            localStorage.setItem('api_key', inputs.password);
+            localStorage.setItem('api_key', _data.api_key);
             localStorage.setItem('username', inputs.username);
 
             message.innerHTML = "Login Sucessful";
@@ -69,6 +66,7 @@ function Login()
                 window.location.reload();
             }, 1000);
         });
+        
     }
 
     const Register = (event) =>
@@ -81,6 +79,8 @@ function Login()
         let main2 = document.getElementById("main2");
         let message = document.getElementById("message");
         message.style.display = "block";
+        
+        console.log(inputs);
         
         $.post("http://localhost:8080/api/register", JSON.stringify(inputs),[], 'json')
         .done(function( _data) 
@@ -109,7 +109,7 @@ function Login()
         .fail( function(xhr) 
         {
             alert(xhr.responseText);
-            message.innerHTML = "Error - Ensure the Token is correct";
+            message.innerHTML = "Error - Ensure the Token is entered correct";
             message.style.background = "#9f0a0a";
             setTimeout(() =>
             {
@@ -145,11 +145,12 @@ function Login()
             let form2 = document.getElementById("form2");
             let form3 = document.getElementById("form3");
             let return_button2 = document.querySelector(".return-button2");
-            form2.style.animation = "Fadeout ease-out 1s";
-            form2.style.display = "none";
-            form3.style.animation = "FadeIn ease-in 1s";
-            form3.style.display = "block";
+            let message_1 = document.getElementById("message-1");
+            form2.style.animation = "Fadeout ease-out 1s"; form2.style.display = "none";
+            form3.style.animation = "FadeIn ease-in 1s"; form3.style.display = "block";
             return_button2.style.display = "block"; 
+            message_1.innerHTML = "A Token was sent to the email address: " + inputs.email;
+
         })
         .fail( function(xhr) 
         { 
@@ -313,9 +314,9 @@ function Login()
                     <br />
                     <span><input type = 'text' placeholder = "Name" name = "username" value = {inputs.username || ""}  onChange = {handleChange} required></input></span>
                     <br /><br /><br />
-                    <label><b>Api Key</b></label>
+                    <label><b>Password</b></label>
                     <br />
-                    <span><input type = 'password' placeholder = "Api-Key" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
+                    <span><input type = 'password' placeholder = "Password" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
                     <br /><br />
                     <button className = 'button' type = 'submit'>Proceed</button> <div id = "reg" className = 'text'>Or Register</div>
                 </div>
@@ -346,9 +347,15 @@ function Login()
                     <div className = 'return-button2'/>
                         <label style ={{color: 'white'}}><b>Authentication Token</b></label>
                         <br />
-                        <div className = "message">A Token was sent to the email address</div>
+                        <div className = "message" id = "message-1">A Token was sent to the email address</div>
                         <br /><br />
+                        <label><b>Token</b></label>
+                        <br />
                         <span><input type = 'password' placeholder = "Enter Token" name = "token" value = {inputs.token || ""} onChange = {handleChange} required></input></span>
+                        <br />
+                        <label><b>Password</b></label>
+                        <br />
+                        <span><input type = 'password' placeholder = "Enter Unique Password" name = "password" value = {inputs.password || ""} onChange = {handleChange} required></input></span>
                         <br /><br /><br />
                         <button className = 'button' id = "reg-auth" type = 'submit'>Register</button>
                     </div>
