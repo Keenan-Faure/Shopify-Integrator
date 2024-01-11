@@ -11,6 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
+// Convert Database.User to objects.ResponseRegister
+func ConvertDatabaseToRegister(user database.User) objects.ResponseRegister {
+	return objects.ResponseRegister{
+		Name:   user.Name,
+		Email:  user.Email,
+		ApiKey: user.ApiKey,
+	}
+}
+
 // Convert database.warehouse into warehouses object
 func ConvertDatabaseToWarehouse(warehouses []database.GetWarehousesRow) []objects.Warehouse {
 	warehouses_object := []objects.Warehouse{}

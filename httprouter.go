@@ -1443,9 +1443,28 @@ func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request,
 }
 
 // POST /api/login
-func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	RespondWithJSON(w, http.StatusOK, objects.RequestString{
-		Message: "success",
+func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request) {
+	body, err := DecodeLoginRequestBody(r)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+		return
+	}
+	err = UserValidation(body.Username, body.Password)
+	if err != nil {
+		RespondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	db_user, exists, err := dbconfig.CheckUserCredentials(body, r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if !exists {
+		RespondWithError(w, http.StatusNotFound, "invalid username and password combination")
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseLogin{
+		ApiKey: db_user.ApiKey,
 	})
 }
 
@@ -1475,10 +1494,10 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 	}
 	if !exists {
 		token, err := dbconfig.DB.CreateToken(r.Context(), database.CreateTokenParams{
-			Token:     uuid.New(),
 			ID:        uuid.New(),
 			Name:      request_body.Name,
 			Email:     request_body.Email,
+			Token:     uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 		})
@@ -1528,7 +1547,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		RespondWithError(w, http.StatusNotFound, "invalid token for user")
 		return
 	}
-	if UserValidation(body) != nil {
+	if UserValidation(body.Name, body.Password) != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
@@ -1541,6 +1560,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		ID:        uuid.New(),
 		Name:      body.Name,
 		Email:     body.Email,
+		Password:  body.Password,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
@@ -1548,7 +1568,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
 	}
-	RespondWithJSON(w, http.StatusCreated, user)
+	RespondWithJSON(w, http.StatusCreated, ConvertDatabaseToRegister(user))
 }
 
 // GET /api/ready

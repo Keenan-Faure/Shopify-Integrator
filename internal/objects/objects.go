@@ -6,8 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// teststrs
-
 // restrictions
 type RestrictionRequest struct {
 	Field string `json:"field"`
@@ -444,11 +442,21 @@ type ResponseString struct {
 	Message string `json:"message"`
 }
 
+type ResponseLogin struct {
+	ApiKey string `json:"api_key"`
+}
+
 type RequestString struct {
 	Message string `json:"message"`
 }
 
 // request_validation.go
+
+type ResponseRegister struct {
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	ApiKey string `json:"api_key"`
+}
 type RequestGlobalWarehouse struct {
 	Name string `json:"name"`
 }
@@ -459,9 +467,14 @@ type RequestWarehouseLocation struct {
 	ShopifyWarehouseName string `json:"shopify_warehouse_name"`
 }
 type RequestBodyUser struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Token string `json:"token"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Token    string `json:"token"`
+}
+type RequestBodyLogin struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 type RequestBodyProduct struct {
 	Active         string               `json:"active"`
