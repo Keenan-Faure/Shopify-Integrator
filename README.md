@@ -2,18 +2,18 @@
 
 Pushes and pulls data from Shopify with some additional features.
 
-1. Description of project
-2. Setup Project
-   1. What is already done
-   2. Configuring .env file
-   3. Setting up application passwords for emails
-   4. Configuring app and shopify setting
-   5. Installing Docker
-   6. Creating Ngrok account and authtoken
-3. Configuring custom [ngrok](https://ngrok.com/) URL for orders
-4. How to run the application
-5. How to run a fresh install of the application
-6. List of features
+1. [Description of project](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#description-of-project)
+2. [Setup Project](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#setup-project)
+   1. [What is already done](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#what-is-already-done)
+   2. [Configuring .env file](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#configuring-env-file)
+   3. [Setting up application passwords for emails](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#setting-up-application-passwords-for-emails)
+   4. [Configuring app and shopify setting](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#configuring-app-and-shopify-setting)
+   5. [Installing Golang](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#installing-golang)
+   6. [Installing Docker](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#installing-docker)
+3. [Configuring custom ngrok URL for orders](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#configuring-custom-ngrok-url-for-orders)
+4. [How to run the application](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#how-to-run-the-project)
+5. [How to run a fresh install of the application](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#how-to-run-a-fresh-install-of-the-application)
+6. [List of features](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#list-of-features)
 7. What is next (inc)
 
 ## Description of project
@@ -106,7 +106,7 @@ Please see the small guide below on how to setup the webhook URL on Shopify.
 
 _note that this assumes that you have a shopify store with a valid ngrok authToken_
 
-- [Guide on how to link Ngrok with your Shopify webhook] (https://ngrok.com/docs/integrations/shopify/webhooks/)
+- [Guide on how to link Ngrok with your Shopify webhook](https://ngrok.com/docs/integrations/shopify/webhooks/)
 
 **Note that your ngrok domain name can be found on the logs of the docker container. Also the ngrok domain changes each time when using a free ngrok account plan**
 
