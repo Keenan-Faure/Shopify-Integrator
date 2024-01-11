@@ -3,18 +3,18 @@
 Pushes and pulls data from Shopify with some additional features.
 
 1. [Description of project](#description-of-project)
-2. [Setup Project](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#setup-project)
-   1. [What is already done](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#what-is-already-done)
-   2. [Configuring .env file](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#configuring-env-file)
-   3. [Setting up application passwords for emails](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#setting-up-application-passwords-for-emails)
-   4. [Configuring app and shopify setting](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#configuring-app-and-shopify-setting)
-   5. [Installing Golang](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#installing-golang)
-   6. [Installing Docker](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#installing-docker)
-3. [Configuring custom ngrok URL for orders](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#configuring-custom-ngrok-url-for-orders)
-4. [How to run the application](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#how-to-run-the-project)
-5. [How to run a fresh install of the application](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#how-to-run-a-fresh-install-of-the-application)
-6. [List of features](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#list-of-features)
-7. [What is next](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#what-is-next)
+2. [Setup Project](#setup-project)
+   1. [What is already done](#what-is-already-done)
+   2. [Configuring .env file](#configuring-env-file)
+   3. [Setting up application passwords for emails](#setting-up-application-passwords-for-emails)
+   4. [Configuring app and shopify setting](#configuring-app-and-shopify-setting)
+   5. [Installing Golang](#installing-golang)
+   6. [Installing Docker](#installing-docker)
+3. [Configuring custom ngrok URL for orders](#configuring-custom-ngrok-url-for-orders)
+4. [How to run the application](#how-to-run-the-project)
+5. [How to run a fresh install of the application](#how-to-run-a-fresh-install-of-the-application)
+6. [List of features](#list-of-features)
+7. [What is next](#what-is-next)
 
 ## Description of project
 
