@@ -1547,7 +1547,8 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		RespondWithError(w, http.StatusNotFound, "invalid token for user")
 		return
 	}
-	if UserValidation(body.Name, body.Password) != nil {
+	err = UserValidation(body.Name, body.Password)
+	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
