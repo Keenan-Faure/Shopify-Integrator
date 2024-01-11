@@ -2,8 +2,10 @@ import {useEffect} from 'react';
 import {useState} from "react";
 import $ from 'jquery';
 import '../../CSS/login.css';
-import Background from '../../components/Background';
 
+import FroalaEditorComponent from 'react-froala-wysiwyg';
+import 'froala-editor/css/froala_style.min.css';
+import 'froala-editor/css/froala_editor.pkgd.min.css';
 
 function Add_Product()
 {
@@ -19,11 +21,14 @@ function Add_Product()
     {
         event.preventDefault();
 
+        let element = document.querySelector(".fr-element").firstChild;
+        console.log(element.innerHTML);
+
         let Object = 
         {
             product_code: inputs.product_code, 
             title: inputs.product_title, 
-            body_html: inputs.product_description, 
+            body_html: element.innerHTML, 
             category: inputs.product_category, 
             vendor: inputs.product_vendor,
             product_type: inputs.product_type, 
@@ -68,6 +73,7 @@ function Add_Product()
 
         console.log(Object);
 
+        /*
         const api_key = localStorage.getItem('api_key');
         
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -80,6 +86,7 @@ function Add_Product()
         {
             alert(xhr.responseText);
         });
+        */
     }
 
     useEffect(() =>
@@ -97,65 +104,6 @@ function Add_Product()
         navigation.style.position = "fixed";
         navigation.style.left = "0%";
         navigation.style.width = "100%";
-
-        /* Rain Functions */
-        var makeItRain = function() 
-        {
-            //clear out everything
-            $('.rain').empty();
-          
-            var increment = 0;
-            var drops = "";
-            var backDrops = "";
-          
-            while (increment < 100) 
-            {
-
-                //couple random numbers to use for various randomizations
-                //random number between 98 and 1
-                var randoHundo = (Math.floor(Math.random() * (98 - 1 + 1) + 1));
-                //random number between 5 and 2
-                var randoFiver = (Math.floor(Math.random() * (5 - 2 + 1) + 2));
-                //increment
-                increment += randoFiver;
-                //add in a new raindrop with various randomizations to certain CSS properties
-                drops += '<div class="drop" style="left: ' + increment + '%; bottom: ' 
-                + (randoFiver + randoFiver - 1 + 100) + '%; animation-delay: 0.' + randoHundo 
-                + 's; animation-duration: 0.5' + randoHundo + 's;"><div class="stem" style="animation-delay: 0.' 
-                + randoHundo + 's; animation-duration: 0.5' + randoHundo + 's;"></div><div class="splat" style="animation-delay: 0.' 
-                + randoHundo + 's; animation-duration: 0.5' + randoHundo + 's;"></div></div>';
-                
-                backDrops += '<div class="drop" style="right: ' + increment + '%; bottom: ' 
-                + (randoFiver + randoFiver - 1 + 100) + '%; animation-delay: 0.' + randoHundo 
-                + 's; animation-duration: 0.5' + randoHundo + 's;"><div class="stem" style="animation-delay: 0.' 
-                + randoHundo + 's; animation-duration: 0.5' + randoHundo + 's;"></div><div class="splat" style="animation-delay: 0.' 
-                + randoHundo + 's; animation-duration: 0.5' + randoHundo + 's;"></div></div>';
-            }
-          
-            $('.rain.front-row').append(drops);
-            $('.rain.back-row').append(backDrops);
-        }
-          
-        $('.splat-toggle.toggle').on('click', function() 
-        {
-            $('body').toggleClass('splat-toggle');
-            $('.splat-toggle.toggle').toggleClass('active');
-            makeItRain();
-        });
-          
-        $('.back-row-toggle.toggle').on('click', function() 
-        {
-            $('body').toggleClass('back-row-toggle');
-            $('.back-row-toggle.toggle').toggleClass('active');
-            makeItRain();
-        });
-        
-        $('.single-toggle.toggle').on('click', function() 
-        {
-            $('body').toggleClass('single-toggle');
-            $('.single-toggle.toggle').toggleClass('active');
-            makeItRain();
-        });
 
         function openPage(pageName) 
         {
@@ -238,20 +186,21 @@ function Add_Product()
             label.style.display = "";
             del.style.display = "none";
         });
+
+        /* Styles for fr-box element */
+        setTimeout(() => 
+        {
+            let element_box = document.querySelector(".fr-box");
+            element_box.style.width = "95%"; element_box.style.left = "50%"; element_box.style.transform = "translate(-50%)";
+        }, 20);
+        
+
+
     }, []);
 
     return (
         <>
-            <Background />
             <div className = 'modal1' id = "model" style={{zIndex: '2'}}>
-                <div className = "back-row-toggle splat-toggle">
-                    <div className = "rain front-row"></div>
-                    <div className = "rain back-row"></div>
-                    <div className = "toggles">
-                        <div className = "splat-toggle toggle active"></div>
-                    </div>
-                </div>
-
                 <form className = 'modal-content' style ={{opacity: '1'}} method = 'post' onSubmit={(event) => AddProduct(event)} autoComplete='off' id = 'form1' encType="multipart/form-data" noValidate>
                 <div id = "detailss">
                     <div className = 'rtn-button'></div>
@@ -262,8 +211,7 @@ function Add_Product()
                 
                     <div className="tabcontent" id="_Product" >
                         <div className = "details-details">
-                            <div className = "auto-slideshow-container" />
-                            <div className = "detailed">
+                            <div className = "detailed" style = {{backgroundColor: 'transparent'}}>
                                 <div className = "details-title">
                                     <input type = '_text' style ={{fontSize:'20px', width: '500px'}} placeholder = "Product Title" name = "product_title" value = {inputs.product_title || ""}  
                                     onChange = {handleChange} required></input>
@@ -293,16 +241,13 @@ function Add_Product()
                                     </tbody>
                                 </table> 
                                 <div className = "details-description">Product Description</div>
-                                    <textarea type = '_text' style = {{resize:'none'}} placeholder = "Product Description" name = "product_description" 
-                                    value = {inputs.product_description || ""} onChange = {handleChange} rows = "5" cols = "80"></textarea>
-                                <div className = "details-description">Product Warehousing</div> 
-                                <div className = "details-warehousing">
-                                    <textarea type = '_text' style = {{resize:'none'}} placeholder = "Product Warehousing" name = "product_warehousing" 
-                                    value = {inputs.product_warehousing || ""} onChange = {handleChange} rows = "5" cols = "80"></textarea>
-                                </div>  
+                                    <FroalaEditorComponent name = "product_description" tag = 'textarea' 
+                                    placeholderText = "Product Description" value = {inputs.product_description || ""}/>
+
+                                    
                             </div>
-                            <div className = "details-left"></div>
-                            <div className = "details-right">
+                            <div className = "details-left" style = {{backgroundColor: 'transparent'}}/>
+                            <div className = "details-right" style = {{backgroundColor: 'transparent'}}>
                                 <input id = "image_Input" name = "product_image" value = {inputs.product_image || ""} onChange = {handleChange}
                                 style = {{position: 'relative', top: '5px'}} type="file" accept="image/jpeg, image/png, image/jpg" hidden/>
                                 <label id = "label" htmlFor = "image_Input">Upload Product Image</label>
@@ -314,8 +259,7 @@ function Add_Product()
 
                     <div className="tabcontent" id="_Variants" >
                         <div className = "details-details">
-                            <div className = "auto-slideshow-container" />
-                            <div className = "detailed">
+                            <div className = "detailed" style = {{backgroundColor: 'transparent'}}>
                                 <div className = "details-title">Variants</div>
                                 <div className = "variants" id="_variants" >
                                 <table>
@@ -415,8 +359,8 @@ function Add_Product()
                                     
                                 </div>
                             </div>
-                            <div className = "details-right"></div>
-                            <div className = "details-left"></div>
+                            <div className = "details-right" style = {{backgroundColor: 'transparent'}}/>
+                            <div className = "details-left" style = {{backgroundColor: 'transparent'}}/>
                         </div>
                     </div>
                 </div>

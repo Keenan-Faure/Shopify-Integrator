@@ -70,11 +70,10 @@ function Dashboard()
         .done(function( _data) 
         {
 
-            if(_data.amounts == "" && _data.hours == "")
+            if(_data.amounts.length == "" && _data.hours == "")
             {
                 status.className = "disabled_status";
                 status.title = "Fetch Disabled";
-                console.log("xd");
             }
             graph_data = _data;
 
@@ -236,10 +235,10 @@ function Dashboard()
                     <div className="fetch_status_text">
                         Fetch Status
                         <div className="enabled_status" title = "Fetch Enabled">
-                            <img className="logo" src= {image} />
+                            <img className="logo" alt = "" src= {image} />
                         </div>
                     </div>
-                    <h2 className="welcome_text"></h2>
+                    <h2 className="welcome_text" />
                     <div className = "logout_button" id = "logout">Logout</div>
                 </div>
 

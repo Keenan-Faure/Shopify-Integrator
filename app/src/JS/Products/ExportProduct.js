@@ -3,20 +3,8 @@ import {useState} from "react";
 import $ from 'jquery';
 import '../../CSS/login.css';
 
-import FroalaEditorComponent from 'react-froala-wysiwyg';
-import 'froala-editor/css/froala_style.min.css';
-import 'froala-editor/css/froala_editor.pkgd.min.css';
-
 function Export_Product()
 {
-    const[inputs, setInputs] = useState({});
-
-    const handleChange = (event) =>
-    {
-        const name = event.target.name;
-        const value = event.target.value;
-        setInputs(values => ({...values, [name]: value}))
-    }
     const ExportProduct = (event) =>
     {
         event.preventDefault();
