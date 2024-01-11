@@ -14,7 +14,7 @@ Pushes and pulls data from Shopify with some additional features.
 4. [How to run the application](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#how-to-run-the-project)
 5. [How to run a fresh install of the application](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#how-to-run-a-fresh-install-of-the-application)
 6. [List of features](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#list-of-features)
-7. What is next (inc)
+7. [What is next](https://github.com/Keenan-Faure/Shopify-Integrator?tab=readme-ov-file#what-is-next)
 
 ## Description of project
 
@@ -123,6 +123,13 @@ To run the application simply open the (cloned) local version of the application
 ```bash
 ./scripts/reset.sh
 ```
+
+## What is next
+
+1. Adding additional features that support the use of a 3rd Party ERP system with features that
+   1. Pull Product, Order & customer information
+   2. Push Product, Order information back into the ERP
+2. Creating a CD pipeline that uses Docker images and Github Actions to streamline the work, instead of manually creating an update script
 
 ## List of features
 
