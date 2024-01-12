@@ -12,32 +12,24 @@ function Import_Product()
     {
         setFile(e.target.files[0]);
     };
-
-
-    
     const handleOnSubmit = (e) => 
     {
         e.preventDefault();
-
-
         if (file) 
         {
-
             fileReader.onload = function (event) 
             {
                 const csvOutput = event.target.result;
             };
-            
             fileReader.readAsText(file);
             console.log(file);
-
             const formData = new FormData();
             formData.append('file', file);
             const api_key = localStorage.getItem('api_key');
             
-            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, processData: false, contentType: false, method: 'post',});
+            $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, processData: false, contentType: false});
 
-            $.post("http://localhost:8080/api/products/import?test=false", formData, [], 'multipart/form-data')
+            $.post("http://localhost:8080/api/products/import", formData, [], 'multipart/form-data')
             .done(function( _data) 
             {
                 console.log(_data);
@@ -46,7 +38,6 @@ function Import_Product()
             {
                 alert(xhr.responseText);
             });
-            
         }
     };
 
@@ -55,6 +46,7 @@ function Import_Product()
         /* Fix any incorrect elements */
         let navigation = document.getElementById("navbar");
         let modal = document.getElementById("model");
+        navigation.style.zIndex = "3";
         modal.style.display = "block";
         navigation.style.animation = "MoveRight 1.2s ease";
         navigation.style.position = "fixed";
@@ -80,7 +72,7 @@ function Import_Product()
                         <label style = {{color: 'white'}}><b>Imports customized products to the application</b></label>
                         <br /><br /><br />
                         
-                        <input style = {{color: 'white'}} type={"file"} id = "file-upload-button" name = "_import" accept={".csv"} onChange={handleOnChange}/>
+                        <input style = {{color: 'white'}} type={"file"} id = "file-upload-button" name = "file" accept={".csv"} onChange={handleOnChange}/>
                         <br /><br />
                         <button className = "button" onClick={(e) => { handleOnSubmit(e); }}>IMPORT CSV</button>
                     </div>
@@ -91,9 +83,5 @@ function Import_Product()
         </>
     );
 };
-  
-Import_Product.defaultProps = 
-{
 
-};
 export default Import_Product;

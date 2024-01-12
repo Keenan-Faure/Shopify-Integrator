@@ -73,7 +73,7 @@ function Add_Product()
 
         console.log(Object);
 
-        /*
+        
         const api_key = localStorage.getItem('api_key');
         
         $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key} });
@@ -86,7 +86,7 @@ function Add_Product()
         {
             alert(xhr.responseText);
         });
-        */
+        
     }
 
     useEffect(() =>

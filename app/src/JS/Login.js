@@ -50,7 +50,7 @@ function Login()
                 message.style.backgroundColor = "transparent";
                 message.style.display = "none";
                 window.location.href = '/dashboard';
-            }, 1000);
+            }, 10000);
         })
         .fail( function(xhr) 
         {
