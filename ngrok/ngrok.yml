@@ -1,9 +1,0 @@
-# Please enter your authToken below
-authtoken:
-version: 2
-tunnels:
-    website:
-        addr: 8080
-        schemes:
-            - https
-        proto: http

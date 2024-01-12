@@ -12,6 +12,4 @@ COPY ./ /keenan/
 
 RUN ["chmod", "+x", "/keenan/scripts/migrations.sh"]
 
-RUN cd /keenan/
-
 ENTRYPOINT [ "/bin/sh", "-c" , "go build -buildvcs=false -o integrator && ./integrator"]
