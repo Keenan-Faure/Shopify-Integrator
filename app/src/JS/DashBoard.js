@@ -39,6 +39,7 @@ function Dashboard()
         setTimeout(() =>
         {
             header.style.animation = "appear 1s ease-in"; header.style.display = "block"; 
+            header.style.top = "50px"; header.style.position = "relative";
         }, 1500)
 
 

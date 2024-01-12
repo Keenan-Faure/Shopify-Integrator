@@ -54,12 +54,36 @@ function Detailed_product(props)
             }, 500);
             setTimeout(() =>{ window.location.reload(); }, 400);
         });
+    
+        /*  Edit Feature  */
 
-        /* Edit Feature */
+        //Create a td element for product options 
+        
         let edit = document.getElementById("Edit"); let confirm = document.querySelector(".confirm-line");
         let slider = document.querySelector(".switch"); let title = document.querySelector("#title");
         edit.addEventListener("click", () =>
         {
+            /* find the number of product_options */
+            let product_options = document.querySelectorAll(".product_options"); 
+            let d_options = document.getElementById("d_options");
+            let c = 1;
+            for(let i = product_options.length; i < 3; i++)
+            {
+                
+                let tr = document.createElement("tr"); tr.id = "_td"; 
+                for(let t = 0; t < 2; t++)
+                {
+                    
+                    let td = document.createElement("td"); 
+                    td.style.width = "50%"; td.innerHTML = "";
+                    if(t / 2 == 0) { td.innerHTML = c;}
+                    tr.appendChild(td);
+                }
+                d_options.appendChild(tr);
+                c += 1;
+            }
+
+
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
             let variant_updateDate = document.querySelector(".variant-updateDate");
             slider.style.pointerEvents = "auto";
@@ -79,6 +103,14 @@ function Detailed_product(props)
             let barcode = document.querySelectorAll(".barcode"); let sku = document.querySelectorAll(".sku"); 
             let option1 = document.querySelectorAll(".option1"); let option2 = document.querySelectorAll(".option2"); let option3 = document.querySelectorAll(".option3");
             let slider_ = document.getElementById("lide"); let activity;
+
+            let d_options = document.getElementById("d_options");
+            let tr = d_options.querySelectorAll("tr");
+            for(let i = 0; i < tr.length; i++)
+            if(tr[i].lastChild.innerHTML == "")
+            {
+                tr[i].style.display = "none";
+            }
 
             confirm.style.display = "none";
 
@@ -119,10 +151,14 @@ function Detailed_product(props)
             let quantities = {};
             let options = {};
             
-            let _quantities = document.querySelectorAll(".quantities");
+            let quantity_name = document.querySelectorAll(".quantity_name");
+            let quantity_value = document.querySelectorAll(".quantity_value");
             let price_name = document.querySelectorAll(".price_name");
             let price_value = document.querySelectorAll(".price_value");
             let _options = document.querySelectorAll(".product_options");
+
+            console.log(quantity_name);
+            console.log(quantity_value);
 
             /* Options object */
             for(let i = 0; i < _options.length; i++)
@@ -152,7 +188,7 @@ function Detailed_product(props)
                 /* Keep variants variable inside, so it can start fresh when the for loop restarts */
                 let variants = {};
 
-                if(_quantities[i].childNodes.length <= 1)
+                if(quantity_name.length < 1)
                 {
                     quantities =
                     [{
@@ -165,8 +201,8 @@ function Detailed_product(props)
                 {
                     quantities =
                     [{
-                        name: _quantities[i].childNodes[0].innerHTML,
-                        value: parseInt(_quantities[i].childNodes[1].innerHTML)
+                        name: quantity_name[i].innerHTML,
+                        value: parseInt(quantity_value[i].innerHTML)
                     }];
                 }
                 variants.sku = sku[i].innerHTML; 
@@ -204,6 +240,7 @@ function Detailed_product(props)
             {
                 alert(xhr.responseText);
             });
+            
         });
 
         /* Activity of pan elements */
@@ -275,12 +312,12 @@ function Detailed_product(props)
                         <div className = "description" id = "description" style = {{resize:'none'}} rows = "5" cols = "80">{props.Product_Description}</div>
 
                         <div className = "details-description">Product Options</div> 
-                        <div className = "details-options" style={{marginBottom: '15px'}}>
-                            <table>
+                        <div className = "details-options">
+                            <table id = "d_options">
                                 <tbody>
                                     <tr>
-                                        <th style= {{width: '50%'}}>Value</th>
                                         <th style= {{width: '50%'}}>Position</th>
+                                        <th style= {{width: '50%'}}>Value</th>
                                     </tr>
                                     <>
                                         {props.Product_Options}

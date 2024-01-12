@@ -4,8 +4,8 @@ function Detailed_Options(props)
 {
     return (
         <tr className = "product_options">
-            <td style= {{width: '50%'}}>{props.Option_Value}</td>
             <td style= {{width: '50%'}}>{props.Option_Name}</td>
+            <td style= {{width: '50%'}}>{props.Option_Value}</td>
         </tr>
     );
 };

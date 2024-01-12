@@ -63,6 +63,7 @@ function Product_Variants(props)
                 </div>
                 <div className = "variant-updateDate">Updated by <b id = "user"></b> at: <b>{props.Variant_UpdateDate}</b></div>
             </div>
+            <hr />
         </div>
     );
 };
