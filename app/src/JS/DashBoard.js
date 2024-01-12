@@ -21,26 +21,13 @@ function Dashboard()
         let graph2 = document.querySelector('.g2');
         let main = document.querySelector(".container");
 
-        window.onload = function(event)
-        {
-            navigation.style.left = "0%";
-            navigation.style.position = "absolute";
-            navigation.style.width = "100%";
-            logout.style.display = "block"; 
-        }
 
-        /* Sets the initial Look of the Page */
-        setTimeout(() => 
-        {
-            graph1.style.animation = "appear 1s ease-in";
-            graph1.style.display = "block"; graph2.style.animation = "appear 1s ease-in"; graph2.style.display = "block";
-        }, 2200);
+        navigation.style.left = "0%";
+        navigation.style.position = "absolute";
+        navigation.style.width = "100%";
+        logout.style.display = "block"; 
 
-        setTimeout(() =>
-        {
-            header.style.animation = "appear 1s ease-in"; header.style.display = "block"; 
-            header.style.top = "50px"; header.style.position = "relative";
-        }, 1500)
+
 
 
         const userName = localStorage.getItem('username');
@@ -175,7 +162,7 @@ function Dashboard()
                     }
                 }
             });
-        }, 100);
+        }, 200);
 
         /* Settings Notifications */
         $.get("http://localhost:8080/api/inventory/warehouse", [], [], 'json')
@@ -215,13 +202,24 @@ function Dashboard()
             alert(xhr.responseText);
         });
         
-
-        
         setTimeout(() => 
         {
             let bubble = document.querySelectorAll(".bubble");
             for(let i = 0; i < bubble.length; i++){ bubble[i].style.display = "block"; }
         }, 3200);
+
+        /* Sets the initial Look of the Page */
+        setTimeout(() => 
+        {
+            graph1.style.animation = "appear 1s ease-in";
+            graph1.style.display = "block"; graph2.style.animation = "appear 1s ease-in"; graph2.style.display = "block";
+        }, 2200);
+
+        setTimeout(() =>
+        {
+            header.style.animation = "appear 1s ease-in"; header.style.display = "block"; 
+            header.style.position = "relative";
+        }, 1500);
 
 
     }, []);
@@ -230,7 +228,6 @@ function Dashboard()
         
         <div className = "dashboard" id = "dashboard">
             <div className = "container">
-
                 <div className="header">
                     <div className="fetch_status_text">
                         Fetch Status
