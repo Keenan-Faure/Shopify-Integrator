@@ -453,20 +453,20 @@ input.search-area
 
 @keyframes MoveLeft 
 {
-    from {position: relative; z-index: 1; width: 100%; left: 0%;}
-    to {z-index: 1; width: 70%; left: 30%;}
+    from {position: relative; z-index: 3; width: 100%; left: 0%;}
+    to {z-index: 3; width: 70%; left: 30%;}
 }
 @keyframes MoveLeft2
 {
-    from {position: relative; z-index: 1; width: 100%; left: 0%;}
-    to {z-index: 1; width: 75%; left: 25%;}
+    from {position: relative; z-index: 3; width: 100%; left: 0%;}
+    to {z-index: 3; width: 75%; left: 25%;}
 }
 
 @keyframes MoveRight
 {
 
-    from {z-index: 1; width: 70%; left: 30%;}
-    to {position: relative; z-index: 1; width: 100%; left: 0%;}
+    from {z-index: 3; width: 70%; left: 30%;}
+    to {position: relative; z-index: 3; width: 100%; left: 0%;}
 }
 
 @keyframes appear 
