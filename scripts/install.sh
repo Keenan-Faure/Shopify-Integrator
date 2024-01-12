@@ -5,6 +5,7 @@
 # chmod +x ./scripts/install.sh
 
 function create_worspace() {
+    ## Shopify Integrator Docs
     cd ../
     echo "---creating workspace---"
 
@@ -17,9 +18,24 @@ function create_worspace() {
         git clone "https://github.com/Keenan-Faure/Shopify-Integrator-docs"
         cd Shopify-Integrator-docs
     fi
+
+    ## Shopify Integrator
     cd ../Shopify-Integrator
     echo "pulling latest 'Shopify-Integrator'"
     git pull
+
+    ## Shopify Integrator App
+    echo "pulling latest 'Shopify-Integrator App'"
+    if [ -d "app" ]
+    then
+        cd app
+        echo "pulling latest 'Shopify-Integrator-docs'"
+        git pull
+    else
+        mkdir app && cd app
+        git clone "https://github.com/MrKkyle/Shopify-Integrator-App" .
+        cd ../
+    fi
 }
 
 function check_go() {

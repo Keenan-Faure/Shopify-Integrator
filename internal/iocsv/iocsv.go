@@ -23,7 +23,8 @@ const csv_remove_time = 5 * time.Minute // 5 minutes
 const import_directory = "import"
 
 // Handles the import and upload of the file onto the server
-func UploadFile(r *http.Request, relative_directory string) (string, error) {
+func UploadFile(r *http.Request) (string, error) {
+	fmt.Println("---importing file start---")
 	// Parse our multipart form, 10 << 20 specifies a maximum
 	// upload of 10 MB files.
 	err := r.ParseMultipartForm(10 << 20)
@@ -34,16 +35,16 @@ func UploadFile(r *http.Request, relative_directory string) (string, error) {
 	// FormFile returns the first file for the given key `_import`
 	// it also returns the FileHeader so we can get the Filename,
 	// the Header and the size of the file
-	file, handler, err := r.FormFile("_import")
+	file, handler, err := r.FormFile("file")
 	if err != nil {
-		fmt.Println("Error Retrieving the File")
+		fmt.Println("Error Retrieving the File with error: " + err.Error())
 		return "", err
 	}
 	defer file.Close()
 
 	// Displays properties of file that is uploaded
-	// fmt.Printf("Uploaded File: %+v\n", handler.Filename)
-	// fmt.Printf("File Size: %+v\n", handler.Size)
+	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+	fmt.Printf("File Size: %+v\n", handler.Size)
 
 	// Only accept text/csv file types
 	if handler.Header.Get("Content-Type") != "text/csv" {
@@ -77,6 +78,7 @@ func UploadFile(r *http.Request, relative_directory string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("---importing file end---")
 	// return that we have successfully uploaded our file!
 	return (tempFile.Name()), nil
 }
@@ -95,7 +97,7 @@ func CSVProductHeaders(product objects.Product) []string {
 	return headers
 }
 
-func CSVProductValuesByVariant(product objects.Product, variant objects.ProductVariant, pricing_max, qty_max int) []string {
+func CSVProductValuesByVariant(product objects.Product, variant objects.ProductVariant, images_max, pricing_max, qty_max int) []string {
 	headers := []string{}
 	product_fields := structs.Values(product)
 	for _, value := range product_fields {
@@ -116,7 +118,7 @@ func CSVProductValuesByVariant(product objects.Product, variant objects.ProductV
 	headers = append(headers, CSVVariantOptions(product, variant)...)
 	headers = append(headers, getVariantPricingCSV(variant, pricing_max, false)...)
 	headers = append(headers, getVariantQtyCSV(variant, qty_max, false)...)
-	headers = append(headers, GetProductImagesCSV(product.ProductImages, 0, false)...)
+	headers = append(headers, GetProductImagesCSV(product.ProductImages, images_max, false)...)
 	return headers
 }
 
@@ -214,6 +216,13 @@ func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []st
 	} else {
 		for _, image := range images {
 			image_headers = append(image_headers, fmt.Sprintf("%v", image.Src))
+		}
+		fmt.Println("----")
+		fmt.Println(len(images))
+		fmt.Println(max)
+		fmt.Println("----")
+		for i := 1; i <= (max - len(images)); i++ {
+			image_headers = append(image_headers, fmt.Sprintf("%v", ""))
 		}
 	}
 	return image_headers

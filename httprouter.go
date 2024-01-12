@@ -626,7 +626,7 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 	csv_data = append(csv_data, headers)
 	for _, product := range products {
 		for _, variant := range product.Variants {
-			row := iocsv.CSVProductValuesByVariant(product, variant, pricing_max, qty_max)
+			row := iocsv.CSVProductValuesByVariant(product, variant, int(images_max), pricing_max, qty_max)
 			csv_data = append(csv_data, row)
 		}
 	}
@@ -644,7 +644,7 @@ func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Re
 	})
 }
 
-// POST /api/products/import?test=true
+// POST /api/products/import
 func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	test := r.URL.Query().Get("test")
 	file_name_global := "test_import.csv"
@@ -662,7 +662,7 @@ func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Req
 	} else {
 		// if in production then expect form data &&
 		// file to exist in import
-		file_name, err := iocsv.UploadFile(r, "")
+		file_name, err := iocsv.UploadFile(r)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
