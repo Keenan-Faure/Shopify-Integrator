@@ -185,6 +185,8 @@ input[type = setting]
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     padding: 10px;
     user-select: none;
+    background-color:#c5c5c511;
+
 }
 .shopify 
 {
@@ -223,6 +225,36 @@ input[type = setting]
 {
     background-color: rgb(64, 97, 128);
     color: aliceblue;
+}
+.a
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 4px; 
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/icons8-settings-50.png);
+}
+.b 
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 5px; 
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/icons8-shopify-50.png);
+}
+.c
+{
+    position: relative;
+    height: 20px;
+    width: 20px;
+    top: 5px; 
+    display: inline-block;
+    background-size: cover;
+    background-image: url(../media/notAllowed.png);
 }
 .true, .false
 {

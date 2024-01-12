@@ -56,9 +56,8 @@ function Detailed_product(props)
         });
 
         /* Edit Feature */
-        let edit = document.getElementById("Edit");
-        let confirm = document.querySelector(".confirm-line");
-        let slider = document.querySelector(".switch");
+        let edit = document.getElementById("Edit"); let confirm = document.querySelector(".confirm-line");
+        let slider = document.querySelector(".switch"); let title = document.querySelector("#title");
         edit.addEventListener("click", () =>
         {
             let td_list = document.querySelectorAll("td"); let description = document.getElementById("description");
@@ -69,7 +68,7 @@ function Detailed_product(props)
             {
                 td_list[i].contentEditable = "true";
             }
-            description.contentEditable = "true"; variant_updateDate.contentEditable = "true";
+            description.contentEditable = "true"; variant_updateDate.contentEditable = "true"; title.contentEditable = "true";
             
         });
 
@@ -190,6 +189,7 @@ function Detailed_product(props)
             let id = document.querySelector("._id").innerHTML;
             console.log(object);
             
+            
             const api_key = localStorage.getItem('api_key');
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}, type: 'PUT' });
 
@@ -204,7 +204,6 @@ function Detailed_product(props)
             {
                 alert(xhr.responseText);
             });
-
         });
 
         /* Activity of pan elements */

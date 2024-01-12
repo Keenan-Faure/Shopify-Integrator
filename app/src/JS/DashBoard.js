@@ -26,7 +26,6 @@ function Dashboard()
             navigation.style.left = "0%";
             navigation.style.position = "absolute";
             navigation.style.width = "100%";
-            navigation.style.display = "block";
             logout.style.display = "block"; 
         }
 

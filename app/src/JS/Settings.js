@@ -25,8 +25,8 @@ function Settings()
         let info_icon = document.querySelector(".info_icon");
         info_icon.addEventListener("click", () =>
         {
-            alert("You will be forwarded to dashboard.ngrok.com");
-            window.open('https://dashboard.ngrok.com', '_blank')
+            alert("You will be forwarded to ngrok web-interface");
+            window.open('http://localhost:8888/inspect/http', '_blank')
         })
 
         let _location_id = [];
@@ -705,9 +705,9 @@ function Settings()
             let push_restrict = [];
 
             let rest1 = document.getElementById("r_settings"); let rest2 = document.getElementById("r_settings2");
-            let fetch_field = rest1.querySelectorAll(".restriction_name"); let fetch_flag = rest1.querySelectorAll(".flag_value");
-            let switch_fetch = rest1.querySelectorAll ("#lide"); let switch_push = rest1.querySelectorAll("#lide");
-            let push_field = rest2.querySelectorAll(".restriction_name"); let push_flag = rest2.querySelectorAll(".flag_value");
+            let fetch_field = rest1.querySelectorAll(".restriction_name");
+            let switch_fetch = rest1.querySelectorAll ("#lide"); let switch_push = rest2.querySelectorAll("#lide");
+            let push_field = rest2.querySelectorAll(".restriction_name");
 
             let _fetch = {};
             let _push = {};
@@ -761,6 +761,9 @@ function Settings()
 
             const api_key = localStorage.getItem('api_key');
 
+            console.log(fetch_restrict);
+            console.log(push_restrict);
+
             /* Fetch Restriction Put Setting */
             $.ajaxSetup({ headers: { 'Authorization': 'ApiKey ' + api_key}});
             $.ajax({ type: 'PUT', url: "http://localhost:8080/api/fetch/restriction", contentType: 'json', data: JSON.stringify(fetch_restrict)})
@@ -801,6 +804,7 @@ function Settings()
             {
                 alert(xhr.responseText);
             });
+            
             
             /* App Setting Put Request */
             $.ajax({ type: 'PUT', url: "http://localhost:8080/api/settings", contentType: 'json', data: JSON.stringify(app_object)})
@@ -867,7 +871,6 @@ function Settings()
                 {
                     domain: domain_name
                 }
-                console.log(JSON.stringify(domain));
                 
                 let copyText;
                 let data;
@@ -881,7 +884,7 @@ function Settings()
                     console.log(_data);
 
                     let info = document.getElementById("info-message");
-                    info.innerHTML = _data.message;
+                    info.innerHTML = "success";
                     info.style.display = "block"; 
                     info.style.color = "white";
                     info.style.backgroundColor = "#1a5e12";
