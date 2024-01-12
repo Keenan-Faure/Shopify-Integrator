@@ -16,7 +16,7 @@ jobs:
                   go-version: "1.20"
 
             - name: Check out code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Run install script
               run: |
@@ -32,6 +32,31 @@ jobs:
 
             - name: 🔎 Security check
               run: gosec -exclude-generated ./...
+
+    build:
+        name: build docker image
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build and push
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  file: ./setup/server/Dockerfile
+                  push: true
+                  tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ secrets.DOCKER_IMAGE_NAME }}:latest
 
     style:
         name: style
