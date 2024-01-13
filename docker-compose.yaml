@@ -50,7 +50,7 @@ services:
     app:
         build:
             context: ./
-            dockerfile: setup/app/Dockerfile
+            dockerfile: app/setup/Dockerfile
         ports:
             - "${APP_PORT}:${APP_PORT}"
         container_name: ${APP_CONTAINER_NAME}
