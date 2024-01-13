@@ -1,4 +1,4 @@
-# Shopify-Integrator  • ![code coverage badge][def]
+# Shopify-Integrator  • [![ci](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml/badge.svg)](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml)
 
 Pushes and pulls data from Shopify with some additional features.
 
@@ -149,5 +149,3 @@ A friendly list of features currently supported and available:
 - Additional features, like restrictions & global warehousing, to make pushing and fetching shopify data easier and more controllable
 - Automatic Ngrok integration with your Shopify Webhook.
 - Queue feature
-
-[def]: https://github.com/keenan-faure/learn-cicd-starter/actions/workflows/ci.yml/badge.svg
