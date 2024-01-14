@@ -38,9 +38,9 @@ With the use of [Docker](https://www.docker.com/) containers, many of the prereq
 
 ### Configuring .env file
 
-The environment variable file contains variables that are used by the application. Of course, if one is removed, please do not expect the application to work correctly.
+The environment variable file contains variables that are used by the application. Of course, if one is not set correctly or removed, please do not expect the application to work correctly. Once the repository has been cloned, there exists a file `.example.env` that needs to be renamed to `.env` and thereafter  needs to be replaced with the respective values
 
-The default `.env` file contains the default values that needs to be changed and can be found below:
+The default `.example.env` file contains the default values that needs to be changed and can be found below:
 
 #### Postgresql
 
@@ -58,6 +58,8 @@ SHOPIFY_API_PASSWORD - API Password generated on Shopify
 SHOPIFY_API_VERSION - Shopify API version to use
 ```
 
+**Please do not rename the variables or alter any of the ones not mentioned above**
+
 ### Setting up application passwords for emails
 
 This application consists of a `preregistrater` and `registrater` endpoints. This means that the user that wishes to register as a user to the application will first need enter his email address and after a token has been sent to the respective email, and received, it can then be used in the register endpoint.
@@ -69,6 +71,10 @@ Please read this guide [here](https://support.google.com/mail/answer/185833?hl=e
 ### Configuring app and shopify setting
 
 The application consists of settings that needs to be configured, which are, of course, important in the functions of each feature. These can be done either over the API using a client like [Postman](https://www.postman.com) or using the front-end of the application.
+
+Configuring on the front-end can be done by simply heading to the settings page after logging in and then adjusting the setting values.
+
+Unsaved setting values will not be updated.
 
 ### Installing Golang
 
@@ -90,6 +96,8 @@ After successfully creating an account, an `authtoken` needs to be retrieved and
 ${pwd}/ngrok/ngrok.yml
 ```
 
+This ngrok `authToken` is used in the step below
+
 **Please dont alter any of the other data in the `ngrok.yml` file when replacing the `authToken`**
 
 ## Configuring custom ngrok URL for orders
@@ -104,11 +112,11 @@ you can just retrieve it in the settings page of the application on the front-en
 
 Please see the small guide below on how to setup the webhook URL on Shopify.
 
-_note that this assumes that you have a shopify store with a valid ngrok authToken_
+_Note that this assumes that you have a shopify store with a valid ngrok `authToken`_
 
 - [Guide on how to link Ngrok with your Shopify webhook](https://ngrok.com/docs/integrations/shopify/webhooks/)
 
-**Note that your ngrok domain name can be found on the logs of the docker container. Also the ngrok domain changes each time when using a free ngrok account plan**
+**Note that your ngrok domain name can be found on the web interface of the ngrok docker container. Also the ngrok domain changes each time when using a free ngrok account plan**
 
 ## How to run the project
 
@@ -122,6 +130,12 @@ To run the application simply open the (cloned) local version of the application
 
 ```bash
 ./scripts/reset.sh
+```
+
+There exists an optional `rmi` parameter that is used to also remove local images. It is only recommended to use the `rmi` parameter if you wish to remove the application entirely.
+
+```bash
+./scripts/reset.sh rmi
 ```
 
 ## What is next
