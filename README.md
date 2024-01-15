@@ -143,7 +143,7 @@ Lastly, note that the volumes created will not be deleted upon running the `rese
 
 ## Contributing
 
-Shopify-Integrator is currently an entry-level project, hence, it is not any contributors at the moment. Many thanks in advance for your consideration 😄
+Shopify-Integrator is currently an entry-level project, hence, it is not any accepting contributions at the moment. Many thanks in advance for your consideration 😄
 
 ## What is next
 
