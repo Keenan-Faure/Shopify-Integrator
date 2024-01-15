@@ -13,6 +13,14 @@ function build_go() {
     fi
 }
 
+function create_env() {
+    if [ ! -f '.env' ]; then
+        if [ -f '.example.env' ]; then
+            cp .example.env .env
+        fi
+    fi
+}
+
 function install_app_gh() {
     source .env
     docker-compose rm -f
@@ -30,4 +38,5 @@ function install_app_gh() {
 }
 
 build_go
+create_env
 install_app_gh
