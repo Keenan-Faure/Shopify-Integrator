@@ -1,76 +1,70 @@
 version: "2"
 services:
     server:
-        build:
-            context: ./
-            dockerfile: ./setup/server/Dockerfile
-        depends_on:
-            - postgres
+        image: keenansame/shopify-integrator:latest
         ports:
             - "${PORT}:${PORT}"
         container_name: ${SERVER_CONTAINER_NAME}
         env_file:
             - .env
-        networks:
-            - integrator-net
+        depends_on:
+            - postgres
         volumes:
             - ./:/keenan/
+        networks:
+            - integrator-net
 
     docs:
-        build:
-            context: ../Shopify-Integrator-docs
-            dockerfile: ../Shopify-Integrator-docs/setup/Dockerfile
+        image: keenansame/shopify-integrator-docs:latest
         ports:
             - "${DOCS_PORT}:${DOCS_PORT}"
         container_name: ${DOCS_CONTAINER_NAME}
         env_file:
             - ../Shopify-Integrator/.env
-        networks:
-            - integrator-net
         volumes:
             - .env:/keenan/.env
             - ../Shopify-Integrator-docs/swagger.yml:/keenan/docs/swagger.yml
+        networks:
+            - integrator-net
 
     ngrok:
         image: ngrok/ngrok:latest
-        restart: unless-stopped
+        ports:
+            - 8888:4040
         container_name: ${NGROK_CONTAINER_NAME}
+        restart: unless-stopped
         command:
             - "start"
             - "--all"
             - "--config"
             - "/etc/ngrok.yml"
-        volumes:
-            - ./ngrok/ngrok.yml:/etc/ngrok.yml
-        ports:
-            - 8888:4040
         depends_on:
             - server
+        volumes:
+            - ./ngrok/ngrok.yml:/etc/ngrok.yml
 
     app:
-        build:
-            context: ./
-            dockerfile: app/setup/Dockerfile
+        image: mrkkyle/shopify-integrator-app:latest
         ports:
             - "${APP_PORT}:${APP_PORT}"
         container_name: ${APP_CONTAINER_NAME}
-        networks:
-            - integrator-net
         volumes:
             - ./app/src:/keenan/app/src
+        networks:
+            - integrator-net
 
     postgres:
-        restart: always
-        container_name: ${DB_NAME}
         image: postgres
+        container_name: ${DB_NAME}
         ports:
             - "5432:5432"
-        volumes:
-            - integrator-volume:/var/lib/postgresql/data
+        restart: always
         environment:
             - POSTGRES_USER=${DB_USER}
             - POSTGRES_PASSWORD=${DB_PSW}
             - POSTGRES_DB=${DB_NAME}
+        volumes:
+            - integrator-volume:/var/lib/postgresql/data
         networks:
             - integrator-net
 
