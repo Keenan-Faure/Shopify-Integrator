@@ -4,7 +4,7 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/install.sh
 
-function create_worspace() {
+function create_workspace() {
     ## Shopify Integrator Docs
     cd ../
     echo "---creating workspace---"
@@ -82,7 +82,7 @@ function install_app() {
     fi
 }
 
-create_worspace
-check_go
-build_go
+create_workspace
+#check_go
+#build_go
 install_app

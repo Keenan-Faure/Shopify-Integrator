@@ -1,22 +1,23 @@
 # Shopify-Integrator  • [![ci](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml/badge.svg)](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml)
 
-Pushes and pulls data from Shopify with some additional features.
+Integration application for Shopify.
 
-1. [Description of project](#description-of-project)
-2. [Setup Project](#setup-project)
-   1. [What is already done](#what-is-already-done)
-   2. [Configuring .env file](#configuring-env-file)
+1. [Description](#description)
+2. [Why integrate with Shopify?](#why-integrate-with-shopify)
+3. [What is already done](#what-is-already-done)
+4. [Quick start ⚙️](#quick-start-⚙️)
+   1. [Configuring .env file](#configuring-env-file)
+   2. [Installing Docker](#installing-docker)
    3. [Setting up application passwords for emails](#setting-up-application-passwords-for-emails)
    4. [Configuring app and shopify setting](#configuring-app-and-shopify-setting)
-   5. [Installing Golang](#installing-golang)
-   6. [Installing Docker](#installing-docker)
-3. [Configuring custom ngrok URL for orders](#configuring-custom-ngrok-url-for-orders)
-4. [How to run the application](#how-to-run-the-project)
-5. [How to run a fresh install of the application](#how-to-run-a-fresh-install-of-the-application)
-6. [List of features](#list-of-features)
-7. [What is next](#what-is-next)
+   5. [Creating Ngrok account and authtoken](#creating-ngrok-account-and-authtoken)
+5. [Configuring custom ngrok URL for orders](#configuring-custom-ngrok-url-for-orders)
+6. [Usage](#usage)
+7. [Contributing](#contributing)
+7. [List of available features](#list-of-available-features)
+8. [What is next](#what-is-next)
 
-## Description of project
+## Description
 
 Web based application that pulls product data from Shopify at a predefined intervals using [goroutines](https://go.dev/tour/concurrency/1). Furthermore, it allows products to be added, both gradually and using a bulk feature.
 
@@ -24,9 +25,13 @@ The application has it's own RESTful API that allows communication between the a
 
 For a entire list of available features, please see [List of Features](https://google.com).
 
-## Setup Project
+## Why Integrate with Shopify?
 
-### What is already done
+Shopify is one of the biggest E-Commerce platforms world wide. Hence, it only makes sense that many companies will be using their platform for online sales, and furthermore there is an existing need to make this easier for them. From Products and Orders to customer data, Shopify handles all of that in a single web application.
+
+Now, this application simply uses the wonderful [API](https://shopify.dev/docs/api/admin-rest) of Shopify, more specifically the REST Admin API, to perform CRUD operations on the respective objects.
+
+## What is already done
 
 With the use of [Docker](https://www.docker.com/) containers, many of the prerequistes are installed once the shell install script runs. This includes, but not limited to:
 
@@ -36,13 +41,21 @@ With the use of [Docker](https://www.docker.com/) containers, many of the prereq
 - React (Popular HTML framework with which the front-end is built upon)
 - Ngrok
 
+## Quick start ⚙️
+
+After completing the steps below simply run in the (cloned) project directory:
+
+```bash
+./scripts/install.sh
+```
+
 ### Configuring .env file
 
-The environment variable file contains variables that are used by the application. Of course, if one is not set correctly or removed, please do not expect the application to work correctly. Once the repository has been cloned, there exists a file `.example.env` that needs to be renamed to `.env` and thereafter  needs to be replaced with the respective values
+The environment variable file contains variables that are used by the application. Of course, if removed, the application will not function correctly.
 
-The default `.example.env` file contains the default values that needs to be changed and can be found below:
+The default `.example.env` file contains the default values that needs to be changed. Ensure that a copy is made and renamed to `.env`. Thereafter, the values may be updated for personal use
 
-#### Postgresql
+#### PostgresSQL
 
 ```txt
 DB_USER - Database username
@@ -58,7 +71,9 @@ SHOPIFY_API_PASSWORD - API Password generated on Shopify
 SHOPIFY_API_VERSION - Shopify API version to use
 ```
 
-**Please do not rename the variables or alter any of the ones not mentioned above**
+### Installing Docker
+
+It is required to have a valid docker installation to run the containerized application. Please see a guide on how to install [Docker](https://www.docker.com/) on your respective operating system.
 
 ### Setting up application passwords for emails
 
@@ -67,24 +82,6 @@ This application consists of a `preregistrater` and `registrater` endpoints. Thi
 The email sending these tokens would need to be set up and the `application password` saved in the `.env` file. Small guide found below:
 
 Please read this guide [here](https://support.google.com/mail/answer/185833?hl=en)
-
-### Configuring app and shopify setting
-
-The application consists of settings that needs to be configured, which are, of course, important in the functions of each feature. These can be done either over the API using a client like [Postman](https://www.postman.com) or using the front-end of the application.
-
-Configuring on the front-end can be done by simply heading to the settings page after logging in and then adjusting the setting values.
-
-Unsaved setting values will not be updated.
-
-### Installing Golang
-
-Installing golang is required to compile and build the server script. Follow the setup guide below to install Golang on your machine.
-
-[How to install Golang](https://go.dev/doc/install)
-
-### Installing Docker
-
-It is required to have a valid docker installation. Please see a guide on how to install [Docker](https://www.docker.com/).
 
 ### Creating Ngrok account and authtoken
 
@@ -96,9 +93,11 @@ After successfully creating an account, an `authtoken` needs to be retrieved and
 ${pwd}/ngrok/ngrok.yml
 ```
 
-This ngrok `authToken` is used in the step below
-
 **Please dont alter any of the other data in the `ngrok.yml` file when replacing the `authToken`**
+
+### Configuring app and shopify setting
+
+The application consists of settings that needs to be configured, which are, of course, important in the functions of each feature. These can be done either over the API using a client like [Postman](https://www.postman.com) or using the front-end of the application.
 
 ## Configuring custom ngrok URL for orders
 
@@ -112,31 +111,39 @@ you can just retrieve it in the settings page of the application on the front-en
 
 Please see the small guide below on how to setup the webhook URL on Shopify.
 
-_Note that this assumes that you have a shopify store with a valid ngrok `authToken`_
+_note that this assumes that you have a shopify store with a valid ngrok authToken_
 
 - [Guide on how to link Ngrok with your Shopify webhook](https://ngrok.com/docs/integrations/shopify/webhooks/)
 
-**Note that your ngrok domain name can be found on the web interface of the ngrok docker container. Also the ngrok domain changes each time when using a free ngrok account plan**
+**Note that your ngrok domain name can be found on the logs of the docker container. Also the ngrok domain changes each time when using a free ngrok account plan**
 
-## How to run the project
+## Usage
 
-To run the application simply open the (cloned) local version of the application in your favorite command line interface, then run:
+To install the application (uses docker):
 
 ```bash
 ./scripts/install.sh
 ```
 
-## How to run a fresh install of the application
+To reset the application:
 
 ```bash
 ./scripts/reset.sh
 ```
 
-There exists an optional `rmi` parameter that is used to also remove local images. It is only recommended to use the `rmi` parameter if you wish to remove the application entirely.
+Note that there exists an additional `rmi` argument that can be added to the `reset.sh` script.
+
+To stop, remove containers and remove any images downloaded:
 
 ```bash
 ./scripts/reset.sh rmi
 ```
+
+Lastly, note that the volumes created will not be deleted upon running the `reset.sh` script. You may manually delete the volume should you feel the need to.
+
+## Contributing
+
+Shopify-Integrator is currently an entry-level project, hence, it is not any contributors at the moment. Many thanks in advance for your consideration 😄
 
 ## What is next
 
@@ -145,7 +152,7 @@ There exists an optional `rmi` parameter that is used to also remove local image
    2. Push Product, Order information back into the ERP
 2. Creating a CD pipeline that uses Docker images and Github Actions to streamline the work, instead of manually creating an update script
 
-## List of features
+## List of available features
 
 A friendly list of features currently supported and available:
 

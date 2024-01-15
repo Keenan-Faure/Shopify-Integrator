@@ -73,6 +73,7 @@ SELECT
     discount_total,
     updated_at
 FROM orders
+ORDER BY updated_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetOrderByWebCode :one

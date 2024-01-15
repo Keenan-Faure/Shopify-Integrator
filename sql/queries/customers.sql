@@ -31,6 +31,7 @@ SELECT
     phone,
     updated_at
 FROM customers
+ORDER BY updated_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: GetCustomerByID :one
