@@ -1,21 +1,6 @@
 # Shopify-Integrator  • [![ci](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml/badge.svg)](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml)
 
-Integration application for Shopify.
-
-1. [Description](#description)
-2. [Why integrate with Shopify?](#why-integrate-with-shopify)
-3. [What is already done](#what-is-already-done)
-4. [Quick start ⚙️](#quick-start-⚙️)
-   1. [Configuring .env file](#configuring-env-file)
-   2. [Installing Docker](#installing-docker)
-   3. [Setting up application passwords for emails](#setting-up-application-passwords-for-emails)
-   4. [Configuring app and shopify setting](#configuring-app-and-shopify-setting)
-   5. [Creating Ngrok account and authtoken](#creating-ngrok-account-and-authtoken)
-5. [Configuring custom ngrok URL for orders](#configuring-custom-ngrok-url-for-orders)
-6. [Usage](#usage)
-7. [Contributing](#contributing)
-7. [List of available features](#list-of-available-features)
-8. [What is next](#what-is-next)
+Integration application for Shopify that makes use of it's powerful [API](https://shopify.dev/docs/api/admin-rest) to perform CRUD operations.
 
 ## Description
 
@@ -25,11 +10,11 @@ The application has it's own RESTful API that allows communication between the a
 
 For a entire list of available features, please see [List of Features](https://google.com).
 
-## Why Integrate with Shopify?
+## Goals of this project
 
 Shopify is one of the biggest E-Commerce platforms world wide. Hence, it only makes sense that many companies will be using their platform for online sales, and furthermore there is an existing need to make this easier for them. From Products and Orders to customer data, Shopify handles all of that in a single web application.
 
-Now, this application simply uses the wonderful [API](https://shopify.dev/docs/api/admin-rest) of Shopify, more specifically the REST Admin API, to perform CRUD operations on the respective objects.
+Now, this project uses the wonderful [API](https://shopify.dev/docs/api/admin-rest) of Shopify, more specifically the REST Admin API, to perform CRUD operations on the respective objects to automate the syncing of data to the web application. This seeks to remove any manualy work on the shopify interface, like changing a product's pricing etc.
 
 ## What is already done
 
@@ -41,13 +26,17 @@ With the use of [Docker](https://www.docker.com/) containers, many of the prereq
 - React (Popular HTML framework with which the front-end is built upon)
 - Ngrok
 
-## Quick start ⚙️
+## 🚀 Quick start
 
-After completing the steps below simply run in the (cloned) project directory:
+After completing the [prerequisites](#prerequisites) below simply run in the (cloned) project directory:
 
 ```bash
 ./scripts/install.sh
 ```
+
+This will download all necessary files for you and start on the `APP_PORT` on your localhost which by default is `3000`.
+
+## Prerequisites
 
 ### Configuring .env file
 
@@ -58,17 +47,17 @@ The default `.example.env` file contains the default values that needs to be cha
 #### PostgresSQL
 
 ```txt
-DB_USER - Database username
-DB_PSW - Database password
+DB_USER
+DB_PSW
 ```
 
 #### Shopify
 
 ```txt
-SHOPIFY_STORE_NAME - Shopify Store name
-SHOPIFY_API_KEY - API key generated on Shopify
-SHOPIFY_API_PASSWORD - API Password generated on Shopify
-SHOPIFY_API_VERSION - Shopify API version to use
+SHOPIFY_STORE_NAME
+SHOPIFY_API_KEY
+SHOPIFY_API_PASSWORD
+SHOPIFY_API_VERSION
 ```
 
 ### Installing Docker
@@ -77,27 +66,22 @@ It is required to have a valid docker installation to run the containerized appl
 
 ### Setting up application passwords for emails
 
-This application consists of a `preregistrater` and `registrater` endpoints. This means that the user that wishes to register as a user to the application will first need enter his email address and after a token has been sent to the respective email, and received, it can then be used in the register endpoint.
+Please read this guide [here](https://support.google.com/mail/answer/185833?hl=en) on how to setup application passwords. These would need to be saved in the `.env` file
 
-The email sending these tokens would need to be set up and the `application password` saved in the `.env` file. Small guide found below:
-
-Please read this guide [here](https://support.google.com/mail/answer/185833?hl=en)
+```txt
+EMAIL=
+EMAIL_PSW=
+```
 
 ### Creating Ngrok account and authtoken
 
-To use ngrok, an account needs to be created on their [website](https://dashboard.ngrok.com). You can either link you github account or create a new account.
+To properly use the ngrok container, an account needs to be created on their [website](https://dashboard.ngrok.com). You can either link your Github account or create a new account.
 
 After successfully creating an account, an `authtoken` needs to be retrieved and saved into the ngrok config file located in
 
 ```bash
 ${pwd}/ngrok/ngrok.yml
 ```
-
-**Please dont alter any of the other data in the `ngrok.yml` file when replacing the `authToken`**
-
-### Configuring app and shopify setting
-
-The application consists of settings that needs to be configured, which are, of course, important in the functions of each feature. These can be done either over the API using a client like [Postman](https://www.postman.com) or using the front-end of the application.
 
 ## Configuring custom ngrok URL for orders
 
@@ -115,17 +99,17 @@ _note that this assumes that you have a shopify store with a valid ngrok authTok
 
 - [Guide on how to link Ngrok with your Shopify webhook](https://ngrok.com/docs/integrations/shopify/webhooks/)
 
-**Note that your ngrok domain name can be found on the logs of the docker container. Also the ngrok domain changes each time when using a free ngrok account plan**
+**The ngrok domain changes each time the container is reloaded when using a free ngrok account plan**
 
-## Usage
+## ⚙️ Usage
 
-To install the application (uses docker):
+### To install the application (uses docker)
 
 ```bash
 ./scripts/install.sh
 ```
 
-To reset the application:
+### To reset the application
 
 ```bash
 ./scripts/reset.sh
@@ -133,17 +117,92 @@ To reset the application:
 
 Note that there exists an additional `rmi` argument that can be added to the `reset.sh` script.
 
-To stop, remove containers and remove any images downloaded:
+### To stop, remove containers and remove any images downloaded
 
 ```bash
 ./scripts/reset.sh rmi
 ```
 
+### To update the current database to the latest migration
+
+Available flags:
+
+- `production/development` - The database you want to update
+- `up/reset/down` - The Goose command that you wish to do on the database
+
+```bash
+./scripts/update.sh production up
+```
+
+#### Examples
+
+To update the production database inside docker to the latest version:
+
+```bash
+./scripts/update.sh production up
+```
+
+To update the local development database to the latest version:
+
+```bash
+./scripts/update.sh development up
+```
+
+To reset all migrations on the production database:
+
+```bash
+./scripts/update.sh production reset
+```
+
+Note that the above will remove all data on the current database
+
+To migrate one down on the development database:
+
+```bash
+./scripts/update.sh development down
+```
+
+### To install new node modules on the docker app container
+
+```bash
+./scripts/app.update.sh ./app/package.json
+./scripts/app.update.sh ./app/package-lock.json
+```
+
+This copies the respective files and places them inside the app directory on the docker container.
+
+Essentially anything can be copied, but note that it will only place them inside the app directory and attempt to run `npm install`
+
 Lastly, note that the volumes created will not be deleted upon running the `reset.sh` script. You may manually delete the volume should you feel the need to.
 
-## Contributing
+## 🤝 Contributing
 
-Shopify-Integrator is currently an entry-level project, hence, it is not any contributors at the moment. Many thanks in advance for your consideration 😄
+### Clone the repo
+
+```bash
+git clone https://github.com/Keenan-Faure/Shopify-Integrator
+cd Shopify-Integrator
+```
+
+Then complete prerequisites the project
+
+### Run the project
+
+```bash
+./scripts/install.sh
+```
+
+### Run the tests
+
+```bash
+go test ./...
+```
+
+Ensure that the docker container is running.
+
+### Submit a pull request
+
+If you'd like to contribute, please fork the repository and open a pull request to the `main` branch. Feel free to let me know what you think can be done to make it awesome.
 
 ## What is next
 
