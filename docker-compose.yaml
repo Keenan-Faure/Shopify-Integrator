@@ -42,6 +42,8 @@ services:
             - server
         volumes:
             - ./ngrok/ngrok.yml:/etc/ngrok.yml
+        networks:
+            - integrator-net
 
     app:
         image: mrkkyle/shopify-integrator-app:latest

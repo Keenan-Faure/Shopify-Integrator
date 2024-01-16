@@ -83,6 +83,8 @@ After successfully creating an account, an `authtoken` needs to be retrieved and
 ${pwd}/ngrok/ngrok.yml
 ```
 
+Note that the `ngrok.example.yml` file needs to be **renamed** to `ngrok.yml` in order to be recongized by the application.
+
 ## Configuring custom ngrok URL for orders
 
 _This step assumes that you have a valid ngrok account and an `authtoken` populated in the ngrok config file._

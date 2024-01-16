@@ -47,6 +47,15 @@ function check_go() {
     fi
 }
 
+function check_docker() {
+    if ! command -v docker &> /dev/null
+    then
+        echo "Docker required but it's not installed or running"
+        echo "Please visit https://www.docker.com/"
+        exit;
+    fi
+}
+
 function build_go() {
     OS="$(uname -s)"
 
@@ -77,12 +86,20 @@ function install_app() {
         do 
             sleep 3; 
         done
+        # waits for the docker container to be running
+        until
+            [ "$( docker container inspect -f '{{.State.Status}}' $SERVER_CONTAINER_NAME )" = "running" ]
+        do
+            echo "waiting for $SERVER_CONTAINER_NAME"
+            sleep 3;
+        done
         docker exec $SERVER_CONTAINER_NAME bash -c "/keenan/scripts/migrations.sh 'production' 'up'"
         docker restart $SERVER_CONTAINER_NAME
     fi
 }
 
 create_workspace
+check_docker
 #check_go
 #build_go
 install_app
