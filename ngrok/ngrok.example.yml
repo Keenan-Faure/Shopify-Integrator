@@ -3,7 +3,7 @@ authtoken:
 version: 2
 tunnels:
     website:
-        addr: 8080
+        addr: host.docker.internal:8080
         schemes:
             - https
         proto: http
