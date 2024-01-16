@@ -47,6 +47,15 @@ function check_go() {
     fi
 }
 
+function check_docker() {
+    if ! command -v docker &> /dev/null
+    then
+        echo "Docker required but it's not installed or running"
+        echo "Please visit https://www.docker.com/"
+        exit;
+    fi
+}
+
 function build_go() {
     OS="$(uname -s)"
 
@@ -83,6 +92,7 @@ function install_app() {
 }
 
 create_workspace
+check_docker
 #check_go
 #build_go
 install_app
