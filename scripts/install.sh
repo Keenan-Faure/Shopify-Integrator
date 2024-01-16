@@ -29,8 +29,8 @@ function create_workspace() {
     if [ -d "app" ]
     then
         cd app
-        echo "pulling latest 'Shopify-Integrator-docs'"
         git pull
+        cd ../
     else
         mkdir app && cd app
         git clone "https://github.com/MrKkyle/Shopify-Integrator-App" .
