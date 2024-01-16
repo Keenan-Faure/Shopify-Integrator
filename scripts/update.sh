@@ -5,10 +5,10 @@
 # chmod +x ./scripts/update_app.sh
 
 function err_msg() {
-    echo "invalid argument"
-    echo "either enter:"
-    echo "./scripts/update.sh development -  to update your development database"
-    echo "./scripts/update.sh production  -  to update your production (docker) database"
+    echo "error: invalid argument"
+    echo "error: either enter:"
+    echo "error: ./scripts/update.sh development -  to update your development database"
+    echo "error: ./scripts/update.sh production  -  to update your production (docker) database"
     exit 1;
 }
 
@@ -26,15 +26,15 @@ function dev_update() {
 if [[ ! $# -eq 0 ]] ; then
     if [[ "$1" == "development" ]]; then
         if [ -z "$2" ]; then
-            echo "argument 2 must be either 'up' 'down' 'reset'"
-            echo "e.g ./scripts/update.sh development up"
+            echo "error: argument 2 must be either 'up' 'down' 'reset'"
+            echo "error: e.g ./scripts/update.sh development up"
             exit;
         fi
         dev_update "$1" "$2"
     elif [[ "$1" == "production" ]]; then
         if [ -z "$2" ]; then
-            echo "argument 2 must be either 'up' 'down' 'reset'"
-            echo "e.g ./scripts/update.sh development up"
+            echo "error: argument 2 must be either 'up' 'down' 'reset'"
+            echo "error: e.g ./scripts/update.sh development up"
             exit;
         fi
         production_update "$1" "$2"

@@ -4,6 +4,20 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/install.sh
 
+function check_prerequisites() {
+    if [ ! -f '.env' ]
+    then
+        echo "error: .env not configured, please setup."
+        exit;
+    fi
+
+    if [ ! -f './ngrok/ngrok.yml' ]
+    then
+        echo "error: ngrok.yml not configured, please setup."
+        exit;
+    fi
+}
+
 function create_workspace() {
     ## Shopify Integrator Docs
     cd ../
@@ -41,8 +55,8 @@ function create_workspace() {
 function check_go() {
     if ! command -v go &> /dev/null
     then
-        echo "Golang required but it's not installed."
-        echo "Please visit https://go.dev/dl/"
+        echo "error: Golang required but it's not installed."
+        echo "error: Please visit https://go.dev/dl/"
         exit;
     fi
 }
@@ -50,8 +64,8 @@ function check_go() {
 function check_docker() {
     if ! command -v docker &> /dev/null
     then
-        echo "Docker required but it's not installed or running"
-        echo "Please visit https://www.docker.com/"
+        echo "error: Docker required but it's not installed or running"
+        echo "error: Please visit https://www.docker.com/"
         exit;
     fi
 }
@@ -78,6 +92,7 @@ function install_app() {
     # tells docker to recreate all containers regardless of whether
     # the images have been changed or not 
     if ! docker compose up -d --force-recreate; then
+        echo "error: could not run docker compose"
         exit
     else
         source .env
@@ -98,6 +113,7 @@ function install_app() {
     fi
 }
 
+check_prerequisites
 create_workspace
 check_docker
 #check_go
