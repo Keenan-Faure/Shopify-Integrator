@@ -86,6 +86,13 @@ function install_app() {
         do 
             sleep 3; 
         done
+        # waits for the docker container to be running
+        until
+            [ "$( docker container inspect -f '{{.State.Status}}' $SERVER_CONTAINER_NAME )" = "running" ]
+        do
+            echo "waiting for $SERVER_CONTAINER_NAME"
+            sleep 3;
+        done
         docker exec $SERVER_CONTAINER_NAME bash -c "/keenan/scripts/migrations.sh 'production' 'up'"
         docker restart $SERVER_CONTAINER_NAME
     fi
