@@ -5,10 +5,10 @@
 # chmod +x ./scripts/app.update.sh
 
 function err_msg() {
-    echo "invalid argument"
-    echo "either enter:"
-    echo "./scripts/app.update.sh ./app/{{file_name_with_extension}}  -  relative"
-    echo "./scripts/app.update.sh $pwd/{{file_name_with_extension}} -  absolute"
+    echo "error: invalid argument"
+    echo "error: either enter:"
+    echo "error: ./scripts/app.update.sh ./app/{{file_name_with_extension}}  -  relative"
+    echo "error: ./scripts/app.update.sh $pwd/{{file_name_with_extension}} -  absolute"
     exit 1;
 }
 
@@ -25,7 +25,7 @@ function cp_file() {
                     exit;
                 fi
             else
-                echo "File at location '$1' does not exist."
+                echo "error: File at location '$1' does not exist."
                 exit;
             fi
         else

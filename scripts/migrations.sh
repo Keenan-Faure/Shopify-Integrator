@@ -31,10 +31,10 @@ function migrations() {
 }
 
 function err_msg() {
-    echo "invalid argument"
-    echo "either enter:"
-    echo "./scripts/migrations.sh development  -  to update your development database"
-    echo "./scripts/migrations.sh production  -  to update your production (docker) database"
+    echo "error: invalid argument"
+    echo "error: either enter:"
+    echo "error: ./scripts/migrations.sh development  -  to update your development database"
+    echo "error: ./scripts/migrations.sh production  -  to update your production (docker) database"
     exit 1;
 }
 
