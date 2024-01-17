@@ -175,6 +175,22 @@ WHERE vendor ILIKE $1
 AND category ILIKE $2
 LIMIT $3 OFFSET $4;
 
+-- name: GetProductsByTypeAndCategory :many
+SELECT DISTINCT
+    id,
+    active,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE product_type ILIKE $1
+AND category ILIKE $2
+LIMIT $3 OFFSET $4;
+
 -- name: GetProductsFilter :many
 SELECT DISTINCT
     id,

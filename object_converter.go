@@ -532,6 +532,7 @@ func CompileFilterSearch(
 	response := []objects.SearchProduct{}
 	if product_type != "" {
 		if category == "" {
+			// vendor
 			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
 				Vendor: utils.ConvertStringToSQL(vendor),
 				Limit:  10,
@@ -557,10 +558,96 @@ func CompileFilterSearch(
 				})
 			}
 			return response, nil
-		} else {
-			// category & vendor
-			results, err := dbconfig.DB.GetProductsByVendorAndCategory(ctx, database.GetProductsByVendorAndCategoryParams{
-				Vendor:   utils.ConvertStringToSQL(vendor),
+		}
+		// category & vendor
+		results, err := dbconfig.DB.GetProductsByTypeAndCategory(ctx, database.GetProductsByTypeAndCategoryParams{
+			ProductType: utils.ConvertStringToSQL(product_type),
+			Category:    utils.ConvertStringToSQL(category),
+			Limit:       10,
+			Offset:      int32((page - 1) * 10),
+		})
+		if err != nil {
+			return response, err
+		}
+		for _, value := range results {
+			images, err := CompileProductImages(value.ID, ctx, dbconfig)
+			if err != nil {
+				return response, err
+			}
+			response = append(response, objects.SearchProduct{
+				ID:          value.ID,
+				Active:      value.Active,
+				Images:      images,
+				Title:       value.Title.String,
+				Category:    value.Category.String,
+				ProductType: value.ProductType.String,
+				Vendor:      value.Vendor.String,
+				UpdatedAt:   value.UpdatedAt,
+			})
+		}
+		return response, nil
+	}
+	if category != "" {
+		if vendor != "" {
+			// product_type
+			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
+				Vendor: utils.ConvertStringToSQL(vendor),
+				Limit:  10,
+				Offset: int32((page - 1) * 10),
+			})
+			if err != nil {
+				return response, err
+			}
+			for _, value := range results {
+				images, err := CompileProductImages(value.ID, ctx, dbconfig)
+				if err != nil {
+					return response, err
+				}
+				response = append(response, objects.SearchProduct{
+					ID:          value.ID,
+					Active:      value.Active,
+					Images:      images,
+					Title:       value.Title.String,
+					Category:    value.Category.String,
+					ProductType: value.ProductType.String,
+					Vendor:      value.Vendor.String,
+					UpdatedAt:   value.UpdatedAt,
+				})
+			}
+			return response, nil
+		}
+		// category & vendor
+		results, err := dbconfig.DB.GetProductsByVendorAndCategory(ctx, database.GetProductsByVendorAndCategoryParams{
+			Category: utils.ConvertStringToSQL(category),
+			Vendor:   utils.ConvertStringToSQL(vendor),
+			Limit:    10,
+			Offset:   int32((page - 1) * 10),
+		})
+		if err != nil {
+			return response, err
+		}
+		for _, value := range results {
+			images, err := CompileProductImages(value.ID, ctx, dbconfig)
+			if err != nil {
+				return response, err
+			}
+			response = append(response, objects.SearchProduct{
+				ID:          value.ID,
+				Active:      value.Active,
+				Images:      images,
+				Title:       value.Title.String,
+				Category:    value.Category.String,
+				ProductType: value.ProductType.String,
+				Vendor:      value.Vendor.String,
+				UpdatedAt:   value.UpdatedAt,
+			})
+		}
+		return response, nil
+	}
+	if vendor != "" {
+		if product_type == "" {
+			// category
+			results, err := dbconfig.DB.GetProductsByCategory(ctx, database.GetProductsByCategoryParams{
 				Category: utils.ConvertStringToSQL(category),
 				Limit:    10,
 				Offset:   int32((page - 1) * 10),
@@ -586,35 +673,7 @@ func CompileFilterSearch(
 			}
 			return response, nil
 		}
-	}
-	if category != "" {
-		if product_type != "" {
-			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
-				Vendor: utils.ConvertStringToSQL(vendor),
-				Limit:  10,
-				Offset: int32((page - 1) * 10),
-			})
-			if err != nil {
-				return response, err
-			}
-			for _, value := range results {
-				images, err := CompileProductImages(value.ID, ctx, dbconfig)
-				if err != nil {
-					return response, err
-				}
-				response = append(response, objects.SearchProduct{
-					ID:          value.ID,
-					Active:      value.Active,
-					Images:      images,
-					Title:       value.Title.String,
-					Category:    value.Category.String,
-					ProductType: value.ProductType.String,
-					Vendor:      value.Vendor.String,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
+		// vendor & product_type
 		results, err := dbconfig.DB.GetProductsByTypeAndVendor(ctx, database.GetProductsByTypeAndVendorParams{
 			ProductType: utils.ConvertStringToSQL(product_type),
 			Vendor:      utils.ConvertStringToSQL(vendor),
@@ -641,62 +700,6 @@ func CompileFilterSearch(
 			})
 		}
 		return response, nil
-	}
-	if vendor != "" {
-		if product_type == "" {
-			results, err := dbconfig.DB.GetProductsByCategory(ctx, database.GetProductsByCategoryParams{
-				Category: utils.ConvertStringToSQL(category),
-				Limit:    10,
-				Offset:   int32((page - 1) * 10),
-			})
-			if err != nil {
-				return response, err
-			}
-			for _, value := range results {
-				images, err := CompileProductImages(value.ID, ctx, dbconfig)
-				if err != nil {
-					return response, err
-				}
-				response = append(response, objects.SearchProduct{
-					ID:          value.ID,
-					Active:      value.Active,
-					Images:      images,
-					Title:       value.Title.String,
-					Category:    value.Category.String,
-					ProductType: value.ProductType.String,
-					Vendor:      value.Vendor.String,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		} else {
-			results, err := dbconfig.DB.GetProductsByTypeAndVendor(ctx, database.GetProductsByTypeAndVendorParams{
-				ProductType: utils.ConvertStringToSQL(product_type),
-				Vendor:      utils.ConvertStringToSQL(vendor),
-				Limit:       10,
-				Offset:      int32((page - 1) * 10),
-			})
-			if err != nil {
-				return response, err
-			}
-			for _, value := range results {
-				images, err := CompileProductImages(value.ID, ctx, dbconfig)
-				if err != nil {
-					return response, err
-				}
-				response = append(response, objects.SearchProduct{
-					ID:          value.ID,
-					Active:      value.Active,
-					Images:      images,
-					Title:       value.Title.String,
-					Category:    value.Category.String,
-					ProductType: value.ProductType.String,
-					Vendor:      value.Vendor.String,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
 	}
 	results, err := dbconfig.DB.GetProductsFilter(ctx, database.GetProductsFilterParams{
 		Category:    utils.ConvertStringToSQL(category),
