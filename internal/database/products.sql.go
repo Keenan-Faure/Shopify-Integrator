@@ -536,6 +536,80 @@ func (q *Queries) GetProductsByType(ctx context.Context, arg GetProductsByTypePa
 	return items, nil
 }
 
+const getProductsByTypeAndCategory = `-- name: GetProductsByTypeAndCategory :many
+SELECT DISTINCT
+    id,
+    active,
+    product_code,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+FROM products
+WHERE product_type ILIKE $1
+AND category ILIKE $2
+LIMIT $3 OFFSET $4
+`
+
+type GetProductsByTypeAndCategoryParams struct {
+	ProductType sql.NullString `json:"product_type"`
+	Category    sql.NullString `json:"category"`
+	Limit       int32          `json:"limit"`
+	Offset      int32          `json:"offset"`
+}
+
+type GetProductsByTypeAndCategoryRow struct {
+	ID          uuid.UUID      `json:"id"`
+	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetProductsByTypeAndCategory(ctx context.Context, arg GetProductsByTypeAndCategoryParams) ([]GetProductsByTypeAndCategoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProductsByTypeAndCategory,
+		arg.ProductType,
+		arg.Category,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetProductsByTypeAndCategoryRow
+	for rows.Next() {
+		var i GetProductsByTypeAndCategoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Active,
+			&i.ProductCode,
+			&i.Title,
+			&i.BodyHtml,
+			&i.Category,
+			&i.Vendor,
+			&i.ProductType,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProductsByTypeAndVendor = `-- name: GetProductsByTypeAndVendor :many
 SELECT DISTINCT
     id,
