@@ -154,6 +154,9 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Put("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.FetchRestrictionHandle))
 	api.Get("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.GetFetchRestrictionHandle))
 
+	// OAuth2.0
+	api.Get("/google/login", dbconfig.OAuthGoogleLogin)
+	api.Post("/google/callback", dbconfig.OAuthGoogleCallback)
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))
