@@ -18,7 +18,7 @@ import (
 const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
 
 var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  "http://localhost:8000/auth/google/callback",
+	RedirectURL:  "http://localhost:8080/api/google/callback",
 	ClientID:     utils.LoadEnv("OAUTH_CLIENT_ID"),
 	ClientSecret: utils.LoadEnv("OAUTH_SECRET"),
 	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
