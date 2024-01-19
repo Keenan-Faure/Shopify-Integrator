@@ -4,13 +4,17 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"integrator/internal/database"
 	"io"
 	"log"
 	"net/http"
+	"objects"
 	"time"
 	"utils"
 
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -56,10 +60,31 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// GetOrCreate User in your db.
-	// Redirect or response with a token.
-	// More code .....
-	fmt.Fprintf(w, "UserInfo: %s\n", data)
+	// convert to struct
+	oauth_data := objects.ResponseOAuthGoogle{}
+	err = json.Unmarshal(data, &oauth_data)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// write to database
+	err = dbconfig.DB.CreateOAuthRecord(r.Context(), database.CreateOAuthRecordParams{
+		ID:        uuid.New(),
+		GoogleID:  oauth_data.ID,
+		Email:     oauth_data.Email,
+		Picture:   utils.ConvertStringToSQL(oauth_data.Picture),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	// create an oauth table record with a users record
+	// when logging in we inner join the two tables based on the user_id
+	// this way the user still uses's an API Key to access the api's resources
+	fmt.Fprintf(w, "UserInfo: %v\n", oauth_data)
 }
 
 func generateStateOauthCookie(w http.ResponseWriter) string {
