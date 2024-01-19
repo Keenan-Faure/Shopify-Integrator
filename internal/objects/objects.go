@@ -6,6 +6,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// oauth2.0
+type ResponseOAuthGoogle struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	VerifiedEmail bool   `json:"verified_email"`
+	Picture       string `json:"picture"`
+}
+
 // restrictions
 type RestrictionRequest struct {
 	Field string `json:"field"`
