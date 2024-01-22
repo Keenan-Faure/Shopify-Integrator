@@ -3,7 +3,7 @@ CREATE TABLE google_oauth(
     id UUID PRIMARY KEY UNIQUE NOT NULL,
     user_id UUID UNIQUE NOT NULL,
     cookie_secret VARCHAR(64) UNIQUE NOT NULL DEFAULT (encode(sha256(random()::text::bytea), 'hex')),
-    cookie_token VARCHAR(64) NOT NULL,
+    cookie_token BYTEA NOT NULL,
     google_id VARCHAR(32) NOT NULL UNIQUE,
     email VARCHAR(32) NOT NULL,
     picture TEXT,

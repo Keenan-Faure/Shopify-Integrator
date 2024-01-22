@@ -31,7 +31,7 @@ INSERT INTO google_oauth(
 type CreateOAuthRecordParams struct {
 	ID          uuid.UUID      `json:"id"`
 	UserID      uuid.UUID      `json:"user_id"`
-	CookieToken string         `json:"cookie_token"`
+	CookieToken []byte         `json:"cookie_token"`
 	GoogleID    string         `json:"google_id"`
 	Email       string         `json:"email"`
 	Picture     sql.NullString `json:"picture"`

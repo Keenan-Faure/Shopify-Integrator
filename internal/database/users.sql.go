@@ -76,7 +76,7 @@ type GetApiKeyByCookieSecretRow struct {
 	ID_2         uuid.UUID      `json:"id_2"`
 	UserID       uuid.UUID      `json:"user_id"`
 	CookieSecret string         `json:"cookie_secret"`
-	CookieToken  string         `json:"cookie_token"`
+	CookieToken  []byte         `json:"cookie_token"`
 	GoogleID     string         `json:"google_id"`
 	Email_2      string         `json:"email_2"`
 	Picture      sql.NullString `json:"picture"`
