@@ -21,6 +21,24 @@ import (
 	"github.com/google/uuid"
 )
 
+// POST /api/shopify/webhook
+func (dbconfig *DbConfig) PostWebhookHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	// request will take care of the post and put in a single request
+
+	// fetch current webhooks on shopify
+	// create a shopify webhooks if the database does nt have any record of one
+	// otherwise we should update it using it's ID
+}
+
+// DELETE /api/shopify/webhook
+func (dbconfig *DbConfig) DeleteWebhookHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+	// decode the url of the shopify webhook that the person wants to remove (possibly coming from the front-end)
+	// removes the internal value
+	// then removes the webhook on Shopify
+
+	// if all is well, it returns 200 - StatusOK
+}
+
 // PUT /api/push/restriction
 func (dbconfig *DbConfig) PushRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	restrictions, err := DecodeRestriction(dbconfig, r)
