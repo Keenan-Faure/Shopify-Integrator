@@ -88,7 +88,7 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	// creates db user
 	db_user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
 		ID:        uuid.New(),
-		Name:      oauth_data.Name,
+		Name:      oauth_data.GivenName + " " + oauth_data.FamilyName,
 		Email:     oauth_data.Email,
 		Password:  utils.RandStringBytes(10), // generates a random password, but user should never login with password though
 		CreatedAt: time.Now().UTC(),
@@ -100,10 +100,21 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	}
 	// creates the oauth record inside the database
 	// TODO should probably check if the record already exists inside the db
+	db_oauth_record, err := dbconfig.DB.GetUserByGoogleID(r.Context(), oauth_data.ID)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	if db_oauth_record.GoogleID == oauth_data.ID {
+		RespondWithError(w, http.StatusConflict, "user already registered")
+		return
+	}
 	oauth_record, err := dbconfig.DB.CreateOAuthRecord(r.Context(), database.CreateOAuthRecordParams{
 		ID:          uuid.New(),
 		UserID:      db_user.ID,
-		CookieToken: string(hashKey),
+		CookieToken: hashKey,
 		GoogleID:    oauth_data.ID,
 		Email:       oauth_data.Email,
 		Picture:     utils.ConvertStringToSQL(oauth_data.Picture),
@@ -131,7 +142,9 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	// create an oauth table record with a users record
 	// when logging in we inner join the two tables based on the user_id
 	// this way the user still uses's an API Key to access the api's resources
-	fmt.Fprintf(w, "UserInfo: %v\n", oauth_data)
+
+	// redirect back to the application login screen where the user logins in automatically
+	// using the new credentials
 }
 
 func generateStateOauthCookie(w http.ResponseWriter) string {
