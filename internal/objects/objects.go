@@ -6,8 +6,40 @@ import (
 	"github.com/google/uuid"
 )
 
-// oauth2.0
+// shopify.go
+type ShopifyWebhookRequest struct {
+	ShopifyWebhook `json:"webhook,omitempty"`
+}
 
+type ShopifyWebhook struct {
+	ID                         int64  `json:"id,omitempty"`
+	Address                    string `json:"address,omitempty"`
+	Topic                      string `json:"topic,omitempty"`
+	CreatedAt                  string `json:"created_at,omitempty"`
+	UpdatedAt                  string `json:"updated_at,omitempty"`
+	Format                     string `json:"format,omitempty"`
+	Fields                     []any  `json:"fields,omitempty"`
+	MetafieldNamespaces        []any  `json:"metafield_namespaces,omitempty"`
+	APIVersion                 string `json:"api_version,omitempty"`
+	PrivateMetafieldNamespaces []any  `json:"private_metafield_namespaces,omitempty"`
+}
+
+type ShopifyWebhookResponse struct {
+	Webhooks []struct {
+		ID                         int    `json:"id,omitempty"`
+		Address                    string `json:"address,omitempty"`
+		Topic                      string `json:"topic,omitempty"`
+		CreatedAt                  string `json:"created_at,omitempty"`
+		UpdatedAt                  string `json:"updated_at,omitempty"`
+		Format                     string `json:"format,omitempty"`
+		Fields                     []any  `json:"fields,omitempty"`
+		MetafieldNamespaces        []any  `json:"metafield_namespaces,omitempty"`
+		APIVersion                 string `json:"api_version,omitempty"`
+		PrivateMetafieldNamespaces []any  `json:"private_metafield_namespaces,omitempty"`
+	} `json:"webhooks,omitempty"`
+}
+
+// oauth2.0
 type ResponseUserInfo struct {
 	Sub           string `json:"sub"`
 	Name          string `json:"name"`
