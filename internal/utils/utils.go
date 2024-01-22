@@ -4,12 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // Returns the value of the environment variable
 func LoadEnv(key string) string {
@@ -166,4 +169,13 @@ func GetNextURL(next string) string {
 		return next
 	}
 	return ""
+}
+
+// Generates a random password
+func RandStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }

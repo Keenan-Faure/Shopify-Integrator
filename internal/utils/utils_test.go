@@ -181,6 +181,27 @@ func TestGetAppSettings(t *testing.T) {
 	}
 }
 
+func TestRandomPassword(t *testing.T) {
+	fmt.Println("Test Case 1 - Generating a random password of 10 length")
+	first_rand_psw := RandStringBytes(10)
+	if first_rand_psw == "" || len(first_rand_psw) == 0 {
+		t.Errorf("expected 10 but found " + fmt.Sprint(len(first_rand_psw)))
+	}
+	fmt.Println("Test Case 2 - Generating a random password of 20 length")
+	second_rand_psw := RandStringBytes(20)
+	if second_rand_psw == "" || len(second_rand_psw) == 0 {
+		t.Errorf("expected 20 but found " + fmt.Sprint(len(second_rand_psw)))
+	}
+	fmt.Println("Test Case 3 - Generating a random password of 10 length and compare")
+	third_rand_psw := RandStringBytes(10)
+	if third_rand_psw == "" || len(third_rand_psw) == 0 {
+		t.Errorf("expected 20 but found " + fmt.Sprint(len(third_rand_psw)))
+	}
+	if first_rand_psw == third_rand_psw {
+		t.Errorf("expected non-equality but found " + fmt.Sprint(first_rand_psw == third_rand_psw))
+	}
+}
+
 func TestGetNextURL(t *testing.T) {
 	fmt.Println("Test Case 1 - String with semicolon and html tags <>")
 	strng_case_1 := "<https://keenan-faure.myshopify.com/admin/api/2023-10/products.json?limit=50&page_info=eyJsYXN0X2lkIjo3MDczNTAwNzI1MzA5LCJsYXN0X3ZhbHVlIjoiU2F2aW9yIEZyb20gQW5vdGhlciBXb3JsZCAtIEFsb3kiLCJkaXJlY3Rpb24iOiJuZXh0In0>; rel='next'"
