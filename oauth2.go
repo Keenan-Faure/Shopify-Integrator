@@ -23,6 +23,13 @@ import (
 // Hash keys should be at least 32 bytes long
 var hashKey = []byte(securecookie.GenerateRandomKey(64))
 
+/*
+General name of the cookie of the application for google accounts.
+If the user logs in with another account the cookie should be the same name,
+just updated.
+*/
+const cookie_name = "si_googleauth"
+
 // Block keys should be 16 bytes (AES-128) or 32 bytes (AES-256) long.
 // Shorter keys may weaken the encryption used.
 var s = securecookie.New(hashKey, nil)
@@ -44,6 +51,8 @@ var googleOauthConfig = &oauth2.Config{
 // GET /api/google/cookie/login
 func (dbconfig *DbConfig) OAuthGoogleCookie(w http.ResponseWriter, r *http.Request) {
 	// retrieve the cookie and check if the user record exists in the database...
+
+	// get cookie secret from the database
 }
 
 // GET /api/google/login
@@ -84,6 +93,21 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	// creates the oauth record inside the database
+	db_oauth_record, err := dbconfig.DB.GetUserByGoogleID(r.Context(), oauth_data.ID)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+	if db_oauth_record.GoogleID == oauth_data.ID {
+		RespondWithError(w, http.StatusConflict, "user already registered")
+		// TODO
+		// what should happen here if the user is already
+		// registed? Maybe a redirect? (what if the cookie expired)?
+		return
+	}
 
 	// creates db user
 	db_user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
@@ -96,19 +120,6 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	// creates the oauth record inside the database
-	// TODO should probably check if the record already exists inside the db
-	db_oauth_record, err := dbconfig.DB.GetUserByGoogleID(r.Context(), oauth_data.ID)
-	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	if db_oauth_record.GoogleID == oauth_data.ID {
-		RespondWithError(w, http.StatusConflict, "user already registered")
 		return
 	}
 	oauth_record, err := dbconfig.DB.CreateOAuthRecord(r.Context(), database.CreateOAuthRecordParams{
@@ -127,11 +138,11 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	}
 	// create cookie containing the cookie_secret
 	value := map[string]string{
-		"si_googleauth": oauth_record.CookieSecret,
+		cookie_name: oauth_record.CookieSecret,
 	}
-	if encoded, err := s.Encode("si_googleauth", value); err == nil {
+	if encoded, err := s.Encode(cookie_name, value); err == nil {
 		cookie := &http.Cookie{
-			Name:     "si_googleauth",
+			Name:     cookie_name,
 			Value:    encoded,
 			Path:     "/",
 			Secure:   true,
