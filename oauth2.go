@@ -20,13 +20,14 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-// Hash keys should be at least 32 bytes long
-var hashKey = []byte(securecookie.GenerateRandomKey(64))
+// Hash keys should be at least 32 bytes long.
+// Hash key is a constant
+var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAvlGYpmv")
 
 /*
 General name of the cookie of the application for google accounts.
 If the user logs in with another account the cookie should be the same name,
-just updated.
+just updated
 */
 const cookie_name = "si_googleauth"
 
@@ -44,23 +45,41 @@ var googleOauthConfig = &oauth2.Config{
 	Scopes: []string{
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/userinfo.profile",
-		"openid"},
+		"openid",
+	},
 	Endpoint: google.Endpoint,
 }
 
-// GET /api/google/cookie/login
-func (dbconfig *DbConfig) OAuthGoogleCookie(w http.ResponseWriter, r *http.Request) {
-	// retrieve the cookie and check if the user record exists in the database...
-
-	// get cookie secret from the database
+// GET /api/google/oauth2/login
+func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Request) {
+	if cookie, err := r.Cookie(cookie_name); err == nil {
+		value := make(map[string]string)
+		if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
+			// retrieve the cookie value from the map and search it's value inside the DB
+			// to confirm if the value is correct.
+			cookie_secret := value[cookie_name]
+			user, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
+			if err != nil {
+				RespondWithError(w, http.StatusNotFound, err.Error())
+				return
+			}
+			// returns the API Key
+			RespondWithJSON(w, http.StatusOK, user.ApiKey)
+			return
+		} else {
+			RespondWithError(w, http.StatusNotFound, err.Error())
+			return
+		}
+	} else {
+		RespondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
 }
 
 // GET /api/google/login
 func (dbconfig *DbConfig) OAuthGoogleLogin(w http.ResponseWriter, r *http.Request) {
-
 	// Create oauthState cookie
 	oauthState := generateStateOauthCookie(w)
-
 	/*
 		AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
 		validate that it matches the the state query parameter on your redirect callback.
@@ -104,11 +123,12 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	if db_oauth_record.GoogleID == oauth_data.ID {
 		RespondWithError(w, http.StatusConflict, "user already registered")
 		// TODO
-		// what should happen here if the user is already
-		// registed? Maybe a redirect? (what if the cookie expired)?
+		/*
+			what should happen here if the user is already
+			registed? Maybe a redirect? (what if the cookie expired)?
+		*/
 		return
 	}
-
 	// creates db user
 	db_user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
 		ID:        uuid.New(),
@@ -150,12 +170,9 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		}
 		http.SetCookie(w, cookie)
 	}
-	// create an oauth table record with a users record
-	// when logging in we inner join the two tables based on the user_id
-	// this way the user still uses's an API Key to access the api's resources
-
 	// redirect back to the application login screen where the user logins in automatically
 	// using the new credentials
+	http.Redirect(w, r, "http://localhost:3000/", http.StatusSeeOther)
 }
 
 func generateStateOauthCookie(w http.ResponseWriter) string {
