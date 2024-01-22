@@ -1,8 +1,8 @@
 -- +goose Up
 CREATE TABLE users(
     id UUID UNIQUE PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
-    email TEXT NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     api_key VARCHAR(64) UNIQUE NOT NULL DEFAULT (encode(sha256(random()::text::bytea), 'hex')),
     webhook_token VARCHAR(64) UNIQUE NOT NULL DEFAULT (encode(sha256(random()::text::bytea), 'hex')),
