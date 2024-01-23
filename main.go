@@ -158,6 +158,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/google/login", dbconfig.OAuthGoogleLogin)
 	api.Get("/google/callback", dbconfig.OAuthGoogleCallback)
 	api.Get("/google/oauth2/login", dbconfig.OAuthGoogleOAuth)
+
 	r.Mount("/api", api)
 
 	fs := http.FileServer(http.Dir(file_path))

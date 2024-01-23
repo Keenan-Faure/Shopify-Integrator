@@ -9,6 +9,7 @@ import (
 	"iocsv"
 	"log"
 	"net/http"
+	"ngrok"
 	"objects"
 	"os"
 	"shopify"
@@ -24,19 +25,119 @@ import (
 // POST /api/shopify/webhook
 func (dbconfig *DbConfig) PostWebhookHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	// request will take care of the post and put in a single request
+	ngrok_tunnels, err := ngrok.FetchNgrokTunnels()
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	domain_url := ngrok.FetchWebsiteTunnel(ngrok_tunnels)
+	if domain_url == "" {
+		RespondWithError(w, http.StatusInternalServerError, "could not locate ngrok tunnel")
+		return
+	}
 
-	// fetch current webhooks on shopify
-	// create a shopify webhooks if the database does nt have any record of one
-	// otherwise we should update it using it's ID
+	// checks if there is an internal record of a webhook URL inside the database
+	// by default there should always only be one
+	db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	shopifyConfig := shopify.InitConfigShopify()
+
+	// create new webhook on Shopify
+	if db_shopify_webhook.ShopifyWebhookID != "" {
+		webhook_response, err := shopifyConfig.CreateShopifyWebhook(
+			ngrok.SetUpWebhookURL(
+				domain_url,
+				dbUser.ApiKey,
+				dbUser.WebhookToken,
+			),
+		)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		err = dbconfig.DB.UpdateShopifyWebhook(r.Context(), database.UpdateShopifyWebhookParams{
+			ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
+			WebhookUrl:       webhook_response.Address,
+			Topic:            webhook_response.Topic,
+			ID:               db_shopify_webhook.ID,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
+			Message: "success",
+		})
+		return
+	} else {
+		// update existing webhook on Shopify
+		webhook_response, err := shopifyConfig.UpdateShopifyWebhook(
+			db_shopify_webhook.ShopifyWebhookID,
+			ngrok.SetUpWebhookURL(
+				domain_url,
+				dbUser.ApiKey,
+				dbUser.WebhookToken,
+			),
+		)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		err = dbconfig.DB.UpdateShopifyWebhook(r.Context(), database.UpdateShopifyWebhookParams{
+			ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
+			WebhookUrl:       webhook_response.Address,
+			Topic:            webhook_response.Topic,
+			ID:               db_shopify_webhook.ID,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
 }
 
 // DELETE /api/shopify/webhook
 func (dbconfig *DbConfig) DeleteWebhookHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// decode the url of the shopify webhook that the person wants to remove (possibly coming from the front-end)
-	// removes the internal value
-	// then removes the webhook on Shopify
+	// fetches data of internal shopify webhook and confirms if it's set
+	db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(r.Context())
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
-	// if all is well, it returns 200 - StatusOK
+	// delete the webhook on Shopify
+	if db_shopify_webhook.ShopifyWebhookID != "" {
+		shopifyConfig := shopify.InitConfigShopify()
+		_, err := shopifyConfig.DeleteShopifyWebhook(db_shopify_webhook.ShopifyWebhookID)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		err = dbconfig.DB.UpdateShopifyWebhook(r.Context(), database.UpdateShopifyWebhookParams{
+			ShopifyWebhookID: "",
+			WebhookUrl:       "",
+			Topic:            "",
+			ID:               db_shopify_webhook.ID,
+		})
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // PUT /api/push/restriction

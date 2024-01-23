@@ -1,8 +1,9 @@
-go 1.21
+go 1.21.6
 
 use (
 	.
 	./internal/iocsv
+	./internal/ngrok
 	./internal/objects
 	./internal/shopify
 	./internal/utils
