@@ -135,7 +135,6 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/queue/view", dbconfig.middlewareAuth(dbconfig.QueueView))
 	api.Get("/queue/processing", dbconfig.middlewareAuth(dbconfig.QueueViewCurrentItem))
 	api.Post("/queue", dbconfig.middlewareAuth(dbconfig.QueuePush))
-	api.Post("/shopify/sync", dbconfig.middlewareAuth(dbconfig.Synchronize))
 	// api.Post("/queue/worker", dbconfig.middlewareAuth(dbconfig.QueuePopAndProcess))
 	api.Delete("/queue/{id}", dbconfig.middlewareAuth(dbconfig.ClearQueueByID))
 	api.Delete("/queue", dbconfig.middlewareAuth(dbconfig.ClearQueueByFilter))
@@ -153,6 +152,13 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 
 	api.Put("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.FetchRestrictionHandle))
 	api.Get("/fetch/restriction", dbconfig.middlewareAuth(dbconfig.GetFetchRestrictionHandle))
+
+	// Shopify
+	api.Post("/shopify/sync", dbconfig.middlewareAuth(dbconfig.Synchronize))
+
+	// webhooks
+	api.Post("/shopify/webhook", dbconfig.middlewareAuth(dbconfig.PostWebhookHandle))
+	api.Delete("/shopify/webhook", dbconfig.middlewareAuth(dbconfig.DeleteWebhookHandle))
 
 	// OAuth2.0
 	api.Get("/google/login", dbconfig.OAuthGoogleLogin)
