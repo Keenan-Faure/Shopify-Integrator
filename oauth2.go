@@ -121,12 +121,22 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		}
 	}
 	if db_oauth_record.GoogleID == oauth_data.ID {
-		RespondWithError(w, http.StatusConflict, "user already registered")
-		// TODO
-		/*
-			what should happen here if the user is already
-			registed? Maybe a redirect? (what if the cookie expired)?
-		*/
+		// If the user already registers, we create a new cookie
+		// and then redirect to the dashboard
+		value := map[string]string{
+			cookie_name: db_oauth_record.CookieSecret,
+		}
+		if encoded, err := s.Encode(cookie_name, value); err == nil {
+			cookie := &http.Cookie{
+				Name:     cookie_name,
+				Value:    encoded,
+				Path:     "/",
+				Secure:   true,
+				HttpOnly: true,
+			}
+			http.SetCookie(w, cookie)
+		}
+		http.Redirect(w, r, "http://localhost:3000/", http.StatusSeeOther)
 		return
 	}
 	// creates db user
@@ -134,7 +144,7 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		ID:        uuid.New(),
 		Name:      oauth_data.GivenName + " " + oauth_data.FamilyName,
 		Email:     oauth_data.Email,
-		Password:  utils.RandStringBytes(10), // generates a random password, but user should never login with password though
+		Password:  utils.RandStringBytes(20), // generates a random password, but user should never login with password though
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
@@ -143,14 +153,13 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		return
 	}
 	oauth_record, err := dbconfig.DB.CreateOAuthRecord(r.Context(), database.CreateOAuthRecordParams{
-		ID:          uuid.New(),
-		UserID:      db_user.ID,
-		CookieToken: hashKey,
-		GoogleID:    oauth_data.ID,
-		Email:       oauth_data.Email,
-		Picture:     utils.ConvertStringToSQL(oauth_data.Picture),
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		ID:        uuid.New(),
+		UserID:    db_user.ID,
+		GoogleID:  oauth_data.ID,
+		Email:     oauth_data.Email,
+		Picture:   utils.ConvertStringToSQL(oauth_data.Picture),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, err.Error())

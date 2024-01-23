@@ -48,7 +48,10 @@ func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id stri
 }
 
 // Deletes a webhook on Shopify
-func (configShopify *ConfigShopify) UpdateShopifyWebhook(shopify_webhook_id, webhook_url string) (any, error) {
+func (configShopify *ConfigShopify) UpdateShopifyWebhook(
+	shopify_webhook_id,
+	webhook_url string,
+) (objects.ShopifyWebhookRequest, error) {
 	int_webhook_id, err := strconv.Atoi(shopify_webhook_id)
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
