@@ -96,10 +96,9 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 func (configShopify *ConfigShopify) CreateShopifyWebhook(webhook_url string) (objects.ShopifyWebhookRequest, error) {
 	webhook := objects.ShopifyWebhookRequest{
 		ShopifyWebhook: objects.ShopifyWebhook{
-			Address:    webhook_url,
-			Topic:      "order/updated",
-			Format:     "json",
-			APIVersion: "latest",
+			Address: webhook_url,
+			Topic:   "orders/updated",
+			Format:  "json",
 		},
 	}
 	var buffer bytes.Buffer
@@ -110,7 +109,7 @@ func (configShopify *ConfigShopify) CreateShopifyWebhook(webhook_url string) (ob
 	res, err := configShopify.FetchHelper(
 		"webhooks.json",
 		http.MethodPost,
-		nil,
+		&buffer,
 	)
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
