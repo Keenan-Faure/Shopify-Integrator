@@ -7,7 +7,7 @@
 function err_msg() {
     echo "error: invalid argument"
     echo "error: either enter:"
-    echo "error: ./scripts/app.update.sh ./app/{{file_name_with_extension}}  -  relative"
+    echo "error: ./scripts/app.update.sh ./app/{{file_name_with_extension}} npm -  relative"
     echo "error: ./scripts/app.update.sh $pwd/{{file_name_with_extension}} -  absolute"
     exit 1;
 }
@@ -19,8 +19,10 @@ function cp_file() {
                 source .env
                 echo "$APP_CONTAINER_NAME"
                 if docker cp $1 $APP_CONTAINER_NAME:/keenan/$1 ; then
-                    docker exec $APP_CONTAINER_NAME /bin/sh -c "cd /keenan/app/ && npm install"
-                    docker restart $APP_CONTAINER_NAME
+                    if [[ "$2" == "npm" ]]; then
+                        docker exec $APP_CONTAINER_NAME /bin/sh -c "cd /keenan/app/ && npm install"
+                        docker restart $APP_CONTAINER_NAME
+                    fi
                 else
                     exit;
                 fi
