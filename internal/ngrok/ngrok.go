@@ -15,7 +15,7 @@ const tunnel_name = "website"
 
 // GET /api/tunnels
 func FetchNgrokTunnels() (objects.NgrokTunnelResponse, error) {
-	res, err := fetchHelper("api/tunnel", http.MethodGet, nil)
+	res, err := fetchHelper("api/tunnels", http.MethodGet, nil)
 	if err != nil {
 		return objects.NgrokTunnelResponse{}, err
 	}
@@ -34,7 +34,7 @@ func FetchNgrokTunnels() (objects.NgrokTunnelResponse, error) {
 		log.Println(err)
 		return objects.NgrokTunnelResponse{}, err
 	}
-	return objects.NgrokTunnelResponse{}, nil
+	return tunnels, nil
 }
 
 // Returns the specific ngrok tunnel
