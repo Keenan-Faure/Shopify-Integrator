@@ -35,7 +35,6 @@ func (dbconfig *DbConfig) PostWebhookHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusInternalServerError, "could not locate ngrok tunnel")
 		return
 	}
-
 	// checks if there is an internal record of a webhook URL inside the database
 	// by default there should always only be one
 	db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(r.Context())
@@ -47,7 +46,7 @@ func (dbconfig *DbConfig) PostWebhookHandle(w http.ResponseWriter, r *http.Reque
 	shopifyConfig := shopify.InitConfigShopify()
 
 	// create new webhook on Shopify
-	if db_shopify_webhook.ShopifyWebhookID != "" {
+	if db_shopify_webhook.ShopifyWebhookID == "" {
 		webhook_response, err := shopifyConfig.CreateShopifyWebhook(
 			ngrok.SetUpWebhookURL(
 				domain_url,
