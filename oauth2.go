@@ -52,6 +52,7 @@ var googleOauthConfig = &oauth2.Config{
 
 // GET /api/google/oauth2/login
 func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Request) {
+	// cookies should be sent with the ajax request
 	if cookie, err := r.Cookie(cookie_name); err == nil {
 		value := make(map[string]string)
 		if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
@@ -60,18 +61,18 @@ func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Reques
 			cookie_secret := value[cookie_name]
 			user, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
 			if err != nil {
-				RespondWithError(w, http.StatusNotFound, err.Error())
+				RespondWithError(w, http.StatusUnauthorized, err.Error())
 				return
 			}
 			// returns the API Key
 			RespondWithJSON(w, http.StatusOK, user.ApiKey)
 			return
 		} else {
-			RespondWithError(w, http.StatusNotFound, err.Error())
+			RespondWithError(w, http.StatusUnauthorized, err.Error())
 			return
 		}
 	} else {
-		RespondWithError(w, http.StatusNotFound, err.Error())
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 }
@@ -91,6 +92,7 @@ func (dbconfig *DbConfig) OAuthGoogleLogin(w http.ResponseWriter, r *http.Reques
 // GET /api/google/callback
 func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	// Read oauthState from Cookie
+
 	oauthState, _ := r.Cookie("oauthstate")
 
 	if r.FormValue("state") != oauthState.Value {
@@ -128,12 +130,13 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		}
 		if encoded, err := s.Encode(cookie_name, value); err == nil {
 			cookie := &http.Cookie{
-				Name:     cookie_name,
-				Value:    encoded,
-				Path:     "/",
-				Secure:   true,
-				HttpOnly: true,
+				Name:   cookie_name,
+				Value:  encoded,
+				Secure: false,
+				Path:   "/",
 			}
+			fmt.Println("cookie already exist - updating")
+			fmt.Println(cookie)
 			http.SetCookie(w, cookie)
 		}
 		http.Redirect(w, r, "http://localhost:3000/", http.StatusSeeOther)
@@ -144,7 +147,7 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		ID:        uuid.New(),
 		Name:      oauth_data.GivenName + " " + oauth_data.FamilyName,
 		Email:     oauth_data.Email,
-		Password:  utils.RandStringBytes(20), // generates a random password, but user should never login with password though
+		Password:  utils.RandStringBytes(20), // generates a random password, but user should never login with password
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
@@ -171,12 +174,13 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	}
 	if encoded, err := s.Encode(cookie_name, value); err == nil {
 		cookie := &http.Cookie{
-			Name:     cookie_name,
-			Value:    encoded,
-			Path:     "/",
-			Secure:   true,
-			HttpOnly: true,
+			Name:   cookie_name,
+			Value:  encoded,
+			Secure: false,
+			Path:   "/",
 		}
+		fmt.Println("setting cookie")
+		fmt.Println(cookie)
 		http.SetCookie(w, cookie)
 	}
 	// redirect back to the application login screen where the user logins in automatically
