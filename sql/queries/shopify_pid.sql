@@ -17,6 +17,18 @@ SET
     updated_at = $2
 WHERE product_code = $3;
 
+-- name: UpsertPID :exec
+INSERT INTO shopify_pid(
+    shopify_product_id,
+    updated_at
+) VALUES ($1, $2)
+ON CONFLICT(product_code)
+DO UPDATE
+SET
+    shopify_product_id = COALESCE($1, shopify_product_id),
+    updated_at = $2
+;
+
 -- name: GetPIDByProductCode :one
 SELECT
     product_code,

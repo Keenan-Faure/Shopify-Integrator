@@ -55,6 +55,28 @@ WHERE id = (
     WHERE sku = $7
 );
 
+-- name: UpsertProductUpdate :exec
+INSERT INTO products(
+    product_code,
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT(product_code)
+DO UPDATE 
+SET
+    active = COALESCE($1, active),
+    title = COALESCE($2, title),
+    body_html = COALESCE($3, body_html),
+    category = COALESCE($4, category),
+    vendor = COALESCE($5, vendor),
+    product_type = COALESCE($6, product_type),
+    updated_at = $7
+;
 
 -- name: GetProductByID :one
 SELECT
