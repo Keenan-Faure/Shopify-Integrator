@@ -17,8 +17,8 @@ function cp_file() {
         if [ ! -z "$1" ]; then
             if [ -f $1 ]; then
                 source .env
-                echo "$APP_CONTAINER_NAME"
-                if docker cp $1 $APP_CONTAINER_NAME:/keenan/$1 ; then
+                docker cp $1 $APP_CONTAINER_NAME:/keenan/$1
+                if [ $? -eq 0 ]; then
                     if [[ "$2" == "npm" ]]; then
                         docker exec $APP_CONTAINER_NAME /bin/sh -c "cd /keenan/app/ && npm install"
                         docker restart $APP_CONTAINER_NAME
@@ -38,4 +38,4 @@ function cp_file() {
     fi
 }
 
-cp_file $1
+cp_file $1 $2
