@@ -27,7 +27,7 @@ var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAv
 /*
 General name of the cookie of the application for google accounts.
 If the user logs in with another account the cookie should be the same name,
-just updated
+just updated and overwritten
 */
 const cookie_name = "si_googleauth"
 
@@ -135,8 +135,6 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 				Secure: false,
 				Path:   "/",
 			}
-			fmt.Println("cookie already exist - updating")
-			fmt.Println(cookie)
 			http.SetCookie(w, cookie)
 		}
 		http.Redirect(w, r, "http://localhost:3000/", http.StatusSeeOther)
@@ -179,8 +177,6 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 			Secure: false,
 			Path:   "/",
 		}
-		fmt.Println("setting cookie")
-		fmt.Println(cookie)
 		http.SetCookie(w, cookie)
 	}
 	// redirect back to the application login screen where the user logins in automatically

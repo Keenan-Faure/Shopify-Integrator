@@ -1713,7 +1713,7 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.WriteHeader(code)
 		_, err = w.Write(response)
 		if err != nil {
@@ -1729,7 +1729,7 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.WriteHeader(code)
 		_, err = w.Write(response)
 		if err != nil {
@@ -1751,7 +1751,7 @@ func MiddleWare() cors.Options {
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"*"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}
 }
