@@ -89,6 +89,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Post("/register", dbconfig.RegisterHandle)
 	api.Post("/preregister", dbconfig.PreRegisterHandle)
 	api.Post("/login", dbconfig.LoginHandle)
+	api.Post("/logout", dbconfig.LogoutHandle)
 
 	// products
 	api.Post("/products/import", dbconfig.middlewareAuth(dbconfig.ProductImportHandle))

@@ -1587,6 +1587,39 @@ func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// POST /api/logout
+func (dbconfig *DbConfig) LogoutHandle(w http.ResponseWriter, r *http.Request) {
+	// cookies should be sent with the ajax request
+	if cookie, err := r.Cookie(cookie_name); err == nil {
+		value := make(map[string]string)
+		if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
+			// retrieve the cookie value from the map and search it's value inside the DB
+			// to confirm if the value is correct.
+			cookie_secret := value[cookie_name]
+			_, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
+			if err != nil {
+				RespondWithError(w, http.StatusUnauthorized, err.Error())
+				return
+			}
+			// removes the cookie
+			cookie := &http.Cookie{
+				Name:   cookie_name,
+				Value:  "",
+				Secure: false,
+				Path:   "/",
+				MaxAge: -1,
+			}
+			http.SetCookie(w, cookie)
+		} else {
+			RespondWithError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+	} else {
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+}
+
 // POST /api/preregister
 func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Request) {
 	email := utils.LoadEnv("email")
