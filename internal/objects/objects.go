@@ -539,7 +539,8 @@ type ResponseString struct {
 }
 
 type ResponseLogin struct {
-	ApiKey string `json:"api_key"`
+	Username string `json:"username"`
+	ApiKey   string `json:"api_key"`
 }
 
 type RequestString struct {

@@ -1582,7 +1582,8 @@ func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, objects.ResponseLogin{
-		ApiKey: db_user.ApiKey,
+		Username: db_user.Name,
+		ApiKey:   db_user.ApiKey,
 	})
 }
 

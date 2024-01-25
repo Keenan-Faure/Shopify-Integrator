@@ -65,7 +65,10 @@ func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Reques
 				return
 			}
 			// returns the API Key
-			RespondWithJSON(w, http.StatusOK, user.ApiKey)
+			RespondWithJSON(w, http.StatusOK, objects.ResponseLogin{
+				Username: user.Name,
+				ApiKey:   user.ApiKey,
+			})
 			return
 		} else {
 			RespondWithError(w, http.StatusUnauthorized, err.Error())
