@@ -25,6 +25,7 @@ type DbConfig struct {
 const file_path = "./app"
 
 func main() {
+	fmt.Println("starting up app")
 	// flags
 	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
 	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
@@ -38,15 +39,13 @@ func main() {
 	}
 	dbCon, err := InitConn(connection_string + host + utils.LoadEnv("db_name") + "?sslmode=disable")
 	if err != nil {
-		log.Fatalf("Error occured %v", err.Error())
+		log.Fatalf("error occured when setting up database: %v", err.Error())
 	}
-
 	// shopify connection config
 	shopifyConfig := shopify.InitConfigShopify()
 
 	// config workers only if flags are set
 	if !*workers {
-		fmt.Println("starting workers")
 		go iocsv.LoopRemoveCSV()
 		if shopifyConfig.Valid {
 			go LoopJSONShopify(&dbCon, shopifyConfig)
@@ -56,7 +55,7 @@ func main() {
 		err = dbCon.DB.ResetFetchWorker(context.Background(), "0")
 		if err != nil {
 			if err.Error()[0:12] != "pq: relation" {
-				log.Fatalf("Error occured %v", err.Error())
+				log.Fatalf("error occured %v", err.Error())
 			}
 		}
 	}
@@ -126,8 +125,6 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 	api.Get("/settings", dbconfig.middlewareAuth(dbconfig.GetAppSettingValue))
 	api.Put("/settings", dbconfig.middlewareAuth(dbconfig.AddAppSetting))
 	api.Delete("/settings", dbconfig.middlewareAuth(dbconfig.RemoveAppSettings))
-	// webhook configuration
-	api.Post("/settings/webhook", dbconfig.middlewareAuth(dbconfig.GetWebhookURL))
 
 	// queue
 	api.Get("/queue/{id}", dbconfig.middlewareAuth(dbconfig.GetQueueItemByID))
@@ -175,7 +172,7 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 
 	port := utils.LoadEnv("port")
 	if port == "" {
-		log.Fatal("Port not defined in Environment")
+		log.Fatal("error port not defined in environment")
 	}
 
 	server := &http.Server{
@@ -184,7 +181,6 @@ func setupAPI(dbconfig DbConfig, shopifyConfig shopify.ConfigShopify) {
 		// 10 second timeout
 		ReadHeaderTimeout: 10 * time.Second,
 	}
-
-	log.Printf("Serving files from %s and listening on port %s", file_path, port)
+	fmt.Println("serving files from " + file_path + " and listening on port " + port)
 	log.Fatal(server.ListenAndServe())
 }

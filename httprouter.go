@@ -577,19 +577,20 @@ func (dbconfig *DbConfig) GetOrderStats(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-// POST /api/settings/webhook
-func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	body, err := DecodeWebhookURL(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
-		return
-	}
-	// create webhook url
-	webhook_url := body.Domain + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: webhook_url,
-	})
-}
+// Legacy function
+// // POST /api/settings/webhook
+// func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
+// 	body, err := DecodeWebhookURL(r)
+// 	if err != nil {
+// 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
+// 		return
+// 	}
+// 	// create webhook url
+// 	webhook_url := body.Domain + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
+// 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+// 		Message: webhook_url,
+// 	})
+// }
 
 // GET /api/inventory/config
 func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.Request, dbUser database.User) {
@@ -1593,9 +1594,6 @@ func (dbconfig *DbConfig) LogoutHandle(w http.ResponseWriter, r *http.Request, d
 	if cookie, err := r.Cookie(cookie_name); err == nil {
 		value := make(map[string]string)
 		if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
-			// retrieve the cookie value from the map and search it's value inside the DB
-			// to confirm if the value is correct.
-			// cookie_secret := value[cookie_name]
 			// removes the cookie
 			cookie := &http.Cookie{
 				Name:   cookie_name,

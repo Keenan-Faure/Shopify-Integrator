@@ -59,7 +59,6 @@ func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Reques
 			// retrieve the cookie value from the map and search it's value inside the DB
 			// to confirm if the value is correct.
 			cookie_secret := value[cookie_name]
-			fmt.Println(cookie_secret)
 			user, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
 			if err != nil {
 				RespondWithError(w, http.StatusUnauthorized, err.Error())
