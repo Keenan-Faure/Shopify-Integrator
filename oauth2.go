@@ -59,6 +59,7 @@ func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Reques
 			// retrieve the cookie value from the map and search it's value inside the DB
 			// to confirm if the value is correct.
 			cookie_secret := value[cookie_name]
+			fmt.Println(cookie_secret)
 			user, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
 			if err != nil {
 				RespondWithError(w, http.StatusUnauthorized, err.Error())
@@ -143,12 +144,23 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 		http.Redirect(w, r, "http://localhost:3000/", http.StatusSeeOther)
 		return
 	}
+	// user validation
+	exists, err := dbconfig.CheckUserEmailType(oauth_data.Email, "google")
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	if exists {
+		RespondWithError(w, http.StatusConflict, "email '"+oauth_data.Email+"' already exists")
+		return
+	}
 	// creates db user
 	db_user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
 		ID:        uuid.New(),
 		Name:      oauth_data.GivenName + " " + oauth_data.FamilyName,
+		UserType:  "google",
 		Email:     oauth_data.Email,
-		Password:  utils.RandStringBytes(20), // generates a random password, but user should never login with password
+		Password:  utils.RandStringBytes(20),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})

@@ -2,12 +2,20 @@
 INSERT INTO users (
     id,
     "name",
+    user_type,
     email,
     "password",
     created_at,
     updated_at
-) VALUES ($1, $2, $3, $4, $5, $6)
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
+
+-- name: GetUserByEmailType :one
+SELECT
+    email
+FROM users
+WHERE email = $1 AND user_type = $2
+LIMIT 1;
 
 -- name: GetUsers :one
 SELECT * FROM users LIMIT 1;

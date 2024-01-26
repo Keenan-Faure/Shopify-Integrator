@@ -261,6 +261,7 @@ type User struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
+	UserType     string    `json:"user_type"`
 	Password     string    `json:"password"`
 	ApiKey       string    `json:"api_key"`
 	WebhookToken string    `json:"webhook_token"`

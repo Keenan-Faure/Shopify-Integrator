@@ -1588,19 +1588,14 @@ func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/logout
-func (dbconfig *DbConfig) LogoutHandle(w http.ResponseWriter, r *http.Request) {
+func (dbconfig *DbConfig) LogoutHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 	// cookies should be sent with the ajax request
 	if cookie, err := r.Cookie(cookie_name); err == nil {
 		value := make(map[string]string)
 		if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
 			// retrieve the cookie value from the map and search it's value inside the DB
 			// to confirm if the value is correct.
-			cookie_secret := value[cookie_name]
-			_, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
-			if err != nil {
-				RespondWithError(w, http.StatusUnauthorized, err.Error())
-				return
-			}
+			// cookie_secret := value[cookie_name]
 			// removes the cookie
 			cookie := &http.Cookie{
 				Name:   cookie_name,
@@ -1610,14 +1605,11 @@ func (dbconfig *DbConfig) LogoutHandle(w http.ResponseWriter, r *http.Request) {
 				MaxAge: -1,
 			}
 			http.SetCookie(w, cookie)
-		} else {
-			RespondWithError(w, http.StatusUnauthorized, err.Error())
-			return
 		}
-	} else {
-		RespondWithError(w, http.StatusUnauthorized, err.Error())
-		return
 	}
+	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
+		Message: "success",
+	})
 }
 
 // POST /api/preregister
@@ -1638,8 +1630,18 @@ func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Reque
 		RespondWithError(w, http.StatusBadRequest, utils.ConfirmError(err))
 		return
 	}
+	// user validation
+	exists, err := dbconfig.CheckUserEmailType(email, "app")
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		return
+	}
+	if exists {
+		RespondWithError(w, http.StatusConflict, "email '"+email+"' already exists")
+		return
+	}
 	token_value := uuid.UUID{}
-	token_value, exists, err := dbconfig.CheckTokenExists(request_body, r)
+	token_value, exists, err = dbconfig.CheckTokenExists(email, r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
 		return
@@ -1712,6 +1714,7 @@ func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request)
 	user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
 		ID:        uuid.New(),
 		Name:      body.Name,
+		UserType:  "app",
 		Email:     body.Email,
 		Password:  body.Password,
 		CreatedAt: time.Now().UTC(),

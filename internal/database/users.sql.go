@@ -17,17 +17,19 @@ const createUser = `-- name: CreateUser :one
 INSERT INTO users (
     id,
     "name",
+    user_type,
     email,
     "password",
     created_at,
     updated_at
-) VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, name, email, password, api_key, webhook_token, created_at, updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, name, email, user_type, password, api_key, webhook_token, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
+	UserType  string    `json:"user_type"`
 	Email     string    `json:"email"`
 	Password  string    `json:"password"`
 	CreatedAt time.Time `json:"created_at"`
@@ -38,6 +40,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
 		arg.Name,
+		arg.UserType,
 		arg.Email,
 		arg.Password,
 		arg.CreatedAt,
@@ -48,6 +51,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.UserType,
 		&i.Password,
 		&i.ApiKey,
 		&i.WebhookToken,
@@ -58,7 +62,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getApiKeyByCookieSecret = `-- name: GetApiKeyByCookieSecret :one
-SELECT users.id, name, users.email, password, api_key, webhook_token, users.created_at, users.updated_at, google_oauth.id, user_id, cookie_secret, google_id, google_oauth.email, picture, google_oauth.created_at, google_oauth.updated_at FROM users
+SELECT users.id, name, users.email, user_type, password, api_key, webhook_token, users.created_at, users.updated_at, google_oauth.id, user_id, cookie_secret, google_id, google_oauth.email, picture, google_oauth.created_at, google_oauth.updated_at FROM users
 INNER JOIN google_oauth
 ON users.id = google_oauth.user_id
 WHERE google_oauth.cookie_secret = $1
@@ -68,6 +72,7 @@ type GetApiKeyByCookieSecretRow struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
 	Email        string         `json:"email"`
+	UserType     string         `json:"user_type"`
 	Password     string         `json:"password"`
 	ApiKey       string         `json:"api_key"`
 	WebhookToken string         `json:"webhook_token"`
@@ -90,6 +95,7 @@ func (q *Queries) GetApiKeyByCookieSecret(ctx context.Context, cookieSecret stri
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.UserType,
 		&i.Password,
 		&i.ApiKey,
 		&i.WebhookToken,
@@ -108,7 +114,7 @@ func (q *Queries) GetApiKeyByCookieSecret(ctx context.Context, cookieSecret stri
 }
 
 const getUserByApiKey = `-- name: GetUserByApiKey :one
-SELECT id, name, email, password, api_key, webhook_token, created_at, updated_at FROM users
+SELECT id, name, email, user_type, password, api_key, webhook_token, created_at, updated_at FROM users
 WHERE api_key = $1
 LIMIT 1
 `
@@ -120,6 +126,7 @@ func (q *Queries) GetUserByApiKey(ctx context.Context, apiKey string) (User, err
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.UserType,
 		&i.Password,
 		&i.ApiKey,
 		&i.WebhookToken,
@@ -130,7 +137,7 @@ func (q *Queries) GetUserByApiKey(ctx context.Context, apiKey string) (User, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, email, password, api_key, webhook_token, created_at, updated_at FROM users
+SELECT id, name, email, user_type, password, api_key, webhook_token, created_at, updated_at FROM users
 WHERE email = $1
 `
 
@@ -141,6 +148,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.UserType,
 		&i.Password,
 		&i.ApiKey,
 		&i.WebhookToken,
@@ -148,6 +156,26 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getUserByEmailType = `-- name: GetUserByEmailType :one
+SELECT
+    email
+FROM users
+WHERE email = $1 AND user_type = $2
+LIMIT 1
+`
+
+type GetUserByEmailTypeParams struct {
+	Email    string `json:"email"`
+	UserType string `json:"user_type"`
+}
+
+func (q *Queries) GetUserByEmailType(ctx context.Context, arg GetUserByEmailTypeParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmailType, arg.Email, arg.UserType)
+	var email string
+	err := row.Scan(&email)
+	return email, err
 }
 
 const getUserByName = `-- name: GetUserByName :one
@@ -194,7 +222,7 @@ func (q *Queries) GetUserCredentials(ctx context.Context, arg GetUserCredentials
 }
 
 const getUsers = `-- name: GetUsers :one
-SELECT id, name, email, password, api_key, webhook_token, created_at, updated_at FROM users LIMIT 1
+SELECT id, name, email, user_type, password, api_key, webhook_token, created_at, updated_at FROM users LIMIT 1
 `
 
 func (q *Queries) GetUsers(ctx context.Context) (User, error) {
@@ -204,6 +232,7 @@ func (q *Queries) GetUsers(ctx context.Context) (User, error) {
 		&i.ID,
 		&i.Name,
 		&i.Email,
+		&i.UserType,
 		&i.Password,
 		&i.ApiKey,
 		&i.WebhookToken,
