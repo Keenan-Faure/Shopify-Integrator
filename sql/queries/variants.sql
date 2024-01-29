@@ -14,6 +14,31 @@ INSERT INTO variants(
 )
 RETURNING *;
 
+-- name: UpsertVariant :one
+INSERT INTO variants(
+    id,
+    product_id,
+    sku,
+    option1,
+    option2,
+    option3,
+    barcode,
+    created_at,
+    updated_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+)
+ON CONFLICT(sku)
+DO UPDATE 
+SET
+    option1 = COALESCE($4, variants.option1),
+    option2 = COALESCE($5, variants.option2),
+    option3 = COALESCE($6, variants.option3),
+    barcode = COALESCE($7, variants.barcode),
+    updated_at = $9
+RETURNING *, (xmax = 0) AS inserted;
+
+
 -- name: UpdateVariant :exec
 UPDATE variants
 SET
