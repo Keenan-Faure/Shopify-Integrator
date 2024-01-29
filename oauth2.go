@@ -61,6 +61,10 @@ func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Reques
 			cookie_secret := value[cookie_name]
 			user, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
 			if err != nil {
+				if err.Error() != "sql: no rows in result set" {
+					RespondWithError(w, http.StatusUnauthorized, err.Error())
+					return
+				}
 				RespondWithError(w, http.StatusUnauthorized, err.Error())
 				return
 			}
@@ -97,7 +101,6 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	// Read oauthState from Cookie
 
 	oauthState, _ := r.Cookie("oauthstate")
-
 	if r.FormValue("state") != oauthState.Value {
 		log.Println("invalid oauth google state")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
