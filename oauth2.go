@@ -149,7 +149,7 @@ func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Req
 	// user validation
 	exists, err := dbconfig.CheckUserEmailType(oauth_data.Email, "google")
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, utils.ConfirmError(err))
+		RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	if exists {

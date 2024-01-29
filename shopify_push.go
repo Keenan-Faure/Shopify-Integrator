@@ -270,7 +270,7 @@ func PushAddShopify(
 				}
 			}
 		}
-		err = dbconfig.DB.CreatePID(context.Background(), database.CreatePIDParams{
+		err = dbconfig.DB.UpsertPID(context.Background(), database.UpsertPIDParams{
 			ID:               uuid.New(),
 			ProductCode:      product.ProductCode,
 			ProductID:        product.ID,
@@ -279,13 +279,6 @@ func PushAddShopify(
 			UpdatedAt:        time.Now().UTC(),
 		})
 		if err != nil {
-			if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-				err = dbconfig.DB.UpdatePID(context.Background(), database.UpdatePIDParams{
-					ShopifyProductID: fmt.Sprint(product_data.Product.ID),
-					UpdatedAt:        time.Now().UTC(),
-					ProductCode:      product.ProductCode,
-				})
-			}
 			return err
 		}
 		return nil
@@ -476,7 +469,7 @@ func (dbconfig *DbConfig) PushVariant(
 	if err != nil {
 		return err
 	}
-	err = dbconfig.DB.CreateVID(context.Background(), database.CreateVIDParams{
+	err = dbconfig.DB.UpsertVID(context.Background(), database.UpsertVIDParams{
 		ID:                 uuid.New(),
 		Sku:                variant.Sku,
 		ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
@@ -486,19 +479,9 @@ func (dbconfig *DbConfig) PushVariant(
 		UpdatedAt:          time.Now().UTC(),
 	})
 	if err != nil {
-		if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-			err = dbconfig.DB.UpdateVID(context.Background(), database.UpdateVIDParams{
-				ShopifyVariantID:   fmt.Sprint(variant_data.Variant.ID),
-				ShopifyInventoryID: fmt.Sprint(variant_data.Variant.InventoryItemID),
-				UpdatedAt:          time.Now().UTC(),
-				Sku:                variant.Sku,
-			})
-			if err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
+
+		return err
+
 	}
 	// determine if warehousing should be updated
 	if DeterPushRestriction(restrictions, "warehousing") {

@@ -113,13 +113,13 @@ func TestConvertIntToSQL(t *testing.T) {
 func TestConfirmError(t *testing.T) {
 	fmt.Println("Test case 1 - Valid Duplicate Error")
 	err := errors.New("pq: duplicate key value violates unique constraint")
-	results := ConfirmError(err)
-	if results != "duplicate fields not allowed" {
+	results := ConfirmError(err.Error())
+	if results != "duplicate fields not allowed - " {
 		t.Errorf("Unexpected results, expected 'duplicate fields not allowed' but found " + results)
 	}
 	fmt.Println("Test case 2 - None Duplicate Error")
 	err = errors.New("Invalid database credentials")
-	results = ConfirmError(err)
+	results = ConfirmError(err.Error())
 	if results == "duplicate fields not allowed" {
 		t.Errorf("Unexpected results, expected 'Invalid database credentials' but found " + results)
 	}

@@ -28,6 +28,23 @@ FROM shopify_vid
 WHERE sku = $1
 LIMIT 1;
 
+-- name: UpsertVID :exec
+INSERT INTO shopify_vid(
+    id,
+    sku,
+    shopify_variant_id,
+    shopify_inventory_id,
+    variant_id,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT(sku)
+DO UPDATE
+SET
+    shopify_variant_id = COALESCE($4, shopify_vid.shopify_variant_id),
+    updated_at = $7
+;
+
 -- name: GetInventoryIDBySKU :one
 select
     sku,
