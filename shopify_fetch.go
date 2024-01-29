@@ -622,6 +622,51 @@ func AddWarehouse(
 	return nil
 }
 
+// Creates/Updates product options for a certain product
+func AddProductOptions(
+	dbconfig *DbConfig,
+	product_id uuid.UUID,
+	product_code string,
+	option_names []string,
+) error {
+	product_options, err := dbconfig.DB.GetProductOptions(context.Background(), product_id)
+	if err != nil {
+		return err
+	}
+	// product does not have any options
+	if len(product_options) == 0 {
+		for key, option_name := range option_names {
+			if option_name != "" {
+				_, err := dbconfig.DB.CreateProductOption(context.Background(), database.CreateProductOptionParams{
+					ID:        uuid.New(),
+					ProductID: product_id,
+					Name:      option_name,
+					Position:  int32(key + 1),
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		// product has options, we should update
+		for key, option_name := range option_names {
+			if option_name != "" {
+				_, err := dbconfig.DB.UpdateProductOption(context.Background(), database.UpdateProductOptionParams{
+					Name:       option_name,
+					Position:   int32(key + 1),
+					ProductID:  product_id,
+					Position_2: int32(key + 1),
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // Checks if the Option1 has a default option
 // and ignores it
 func IgnoreDefaultOption(option string) string {
