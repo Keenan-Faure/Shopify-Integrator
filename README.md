@@ -103,6 +103,12 @@ _note that this assumes that you have a shopify store with a valid ngrok authTok
 
 **The ngrok domain changes each time the container is reloaded when using a free ngrok account plan**
 
+## Creating OAuth Access Tokens in Google
+
+The application (v2) supports OAuth2.0 with google which allows users, if they have a google account, to login using their existing account with google.
+
+To use this feature `OAUTH_CLIENT_ID` AND `OAUTH_SECRET` needs to be configured. To obtain these access tokens, please follow the guide outlined [here](https://developers.google.com/identity/protocols/oauth2)
+
 ## ⚙️ Usage
 
 ### To install the application (uses docker)
