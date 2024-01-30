@@ -1,10 +1,11 @@
 package utils
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"log"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -172,8 +173,9 @@ func GetNextURL(next string) string {
 // Generates a random password
 func RandStringBytes(n int) string {
 	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
 	}
-	return string(b)
+	return base64.StdEncoding.EncodeToString(b)
 }
