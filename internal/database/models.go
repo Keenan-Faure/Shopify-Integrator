@@ -82,6 +82,17 @@ type FetchWorker struct {
 	UpdatedAt           time.Time `json:"updated_at"`
 }
 
+type GoogleOauth struct {
+	ID           uuid.UUID      `json:"id"`
+	UserID       uuid.UUID      `json:"user_id"`
+	CookieSecret string         `json:"cookie_secret"`
+	GoogleID     string         `json:"google_id"`
+	Email        string         `json:"email"`
+	Picture      sql.NullString `json:"picture"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+}
+
 type InventoryLocation struct {
 	ID                uuid.UUID `json:"id"`
 	ShopifyLocationID string    `json:"shopify_location_id"`
@@ -237,10 +248,20 @@ type ShopifyVid struct {
 	ShopifyInventoryID string    `json:"shopify_inventory_id"`
 }
 
+type ShopifyWebhook struct {
+	ID               uuid.UUID `json:"id"`
+	ShopifyWebhookID string    `json:"shopify_webhook_id"`
+	WebhookUrl       string    `json:"webhook_url"`
+	Topic            string    `json:"topic"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
 type User struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
 	Email        string    `json:"email"`
+	UserType     string    `json:"user_type"`
 	Password     string    `json:"password"`
 	ApiKey       string    `json:"api_key"`
 	WebhookToken string    `json:"webhook_token"`

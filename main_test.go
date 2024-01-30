@@ -191,7 +191,9 @@ func CreateDemoUser(dbconfig *DbConfig) database.User {
 		user, err := dbconfig.DB.CreateUser(context.Background(), database.CreateUserParams{
 			ID:        uuid.New(),
 			Name:      "Demo",
+			UserType:  "",
 			Email:     "Demo@test.com",
+			Password:  "",
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 		})

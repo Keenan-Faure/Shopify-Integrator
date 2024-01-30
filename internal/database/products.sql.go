@@ -1157,3 +1157,86 @@ func (q *Queries) UpdateProductBySKU(ctx context.Context, arg UpdateProductBySKU
 	)
 	return err
 }
+
+const upsertProduct = `-- name: UpsertProduct :one
+INSERT INTO products(
+    id,
+    product_code,
+    active,
+    title,
+    body_html,
+    category,
+    vendor,
+    product_type,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+ON CONFLICT(product_code)
+DO UPDATE 
+SET
+    active = COALESCE($3, products.active),
+    title = COALESCE($4, products.title),
+    body_html = COALESCE($5, products.body_html),
+    category = COALESCE($6, products.category),
+    vendor = COALESCE($7, products.vendor),
+    product_type = COALESCE($8, products.product_type),
+    updated_at = $9
+RETURNING id, active, product_code, title, body_html, category, vendor, product_type, created_at, updated_at, (xmax = 0) AS inserted
+`
+
+type UpsertProductParams struct {
+	ID          uuid.UUID      `json:"id"`
+	ProductCode string         `json:"product_code"`
+	Active      string         `json:"active"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+}
+
+type UpsertProductRow struct {
+	ID          uuid.UUID      `json:"id"`
+	Active      string         `json:"active"`
+	ProductCode string         `json:"product_code"`
+	Title       sql.NullString `json:"title"`
+	BodyHtml    sql.NullString `json:"body_html"`
+	Category    sql.NullString `json:"category"`
+	Vendor      sql.NullString `json:"vendor"`
+	ProductType sql.NullString `json:"product_type"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	Inserted    bool           `json:"inserted"`
+}
+
+func (q *Queries) UpsertProduct(ctx context.Context, arg UpsertProductParams) (UpsertProductRow, error) {
+	row := q.db.QueryRowContext(ctx, upsertProduct,
+		arg.ID,
+		arg.ProductCode,
+		arg.Active,
+		arg.Title,
+		arg.BodyHtml,
+		arg.Category,
+		arg.Vendor,
+		arg.ProductType,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i UpsertProductRow
+	err := row.Scan(
+		&i.ID,
+		&i.Active,
+		&i.ProductCode,
+		&i.Title,
+		&i.BodyHtml,
+		&i.Category,
+		&i.Vendor,
+		&i.ProductType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Inserted,
+	)
+	return i, err
+}

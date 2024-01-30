@@ -44,6 +44,7 @@ func CompileQueueFilterSearch(
 	response := []objects.ResponseQueueItemFilter{}
 	if queue_type == "" {
 		if status == "" {
+			// Instruction
 			queue_items, err := dbconfig.DB.GetQueueItemsByInstruction(
 				ctx,
 				database.GetQueueItemsByInstructionParams{
@@ -66,6 +67,7 @@ func CompileQueueFilterSearch(
 			}
 			return response, nil
 		} else {
+			// Status and Instruction
 			queue_items, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(
 				ctx,
 				database.GetQueueItemsByInstructionAndStatusParams{
@@ -92,6 +94,7 @@ func CompileQueueFilterSearch(
 	}
 	if status == "" {
 		if instruction == "" {
+			// Type
 			queue_items, err := dbconfig.DB.GetQueueItemsByType(
 				ctx,
 				database.GetQueueItemsByTypeParams{
@@ -114,6 +117,7 @@ func CompileQueueFilterSearch(
 			}
 			return response, nil
 		} else {
+			// Instruction and Type
 			queue_items, err := dbconfig.DB.GetQueueItemsByInstructionAndType(
 				ctx,
 				database.GetQueueItemsByInstructionAndTypeParams{
@@ -140,6 +144,7 @@ func CompileQueueFilterSearch(
 	}
 	if instruction == "" {
 		if queue_type == "" {
+			// Status
 			queue_items, err := dbconfig.DB.GetQueueItemsByStatus(
 				ctx,
 				database.GetQueueItemsByStatusParams{
@@ -162,6 +167,7 @@ func CompileQueueFilterSearch(
 			}
 			return response, nil
 		} else {
+			// Queue type and status
 			queue_items, err := dbconfig.DB.GetQueueItemsByStatusAndType(
 				ctx,
 				database.GetQueueItemsByStatusAndTypeParams{

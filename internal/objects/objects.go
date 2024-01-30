@@ -6,6 +6,102 @@ import (
 	"github.com/google/uuid"
 )
 
+// ngrok.go
+type NgrokTunnelResponse struct {
+	Tunnels []struct {
+		Name      string `json:"name"`
+		ID        string `json:"ID"`
+		URI       string `json:"uri"`
+		PublicURL string `json:"public_url"`
+		Proto     string `json:"proto"`
+		Config    struct {
+			Addr    string `json:"addr"`
+			Inspect bool   `json:"inspect"`
+		} `json:"config"`
+		Metrics struct {
+			Conns struct {
+				Count  int `json:"count"`
+				Gauge  int `json:"gauge"`
+				Rate1  int `json:"rate1"`
+				Rate5  int `json:"rate5"`
+				Rate15 int `json:"rate15"`
+				P50    int `json:"p50"`
+				P90    int `json:"p90"`
+				P95    int `json:"p95"`
+				P99    int `json:"p99"`
+			} `json:"conns"`
+			HTTP struct {
+				Count  int `json:"count"`
+				Rate1  int `json:"rate1"`
+				Rate5  int `json:"rate5"`
+				Rate15 int `json:"rate15"`
+				P50    int `json:"p50"`
+				P90    int `json:"p90"`
+				P95    int `json:"p95"`
+				P99    int `json:"p99"`
+			} `json:"http"`
+		} `json:"metrics"`
+	} `json:"tunnels"`
+	URI string `json:"uri"`
+}
+
+// shopify.go
+type ShopifyWebhookRequest struct {
+	ShopifyWebhook `json:"webhook,omitempty"`
+}
+
+type ShopifyWebhook struct {
+	ID                         int64  `json:"id,omitempty"`
+	Address                    string `json:"address,omitempty"`
+	Topic                      string `json:"topic,omitempty"`
+	CreatedAt                  string `json:"created_at,omitempty"`
+	UpdatedAt                  string `json:"updated_at,omitempty"`
+	Format                     string `json:"format,omitempty"`
+	Fields                     []any  `json:"fields,omitempty"`
+	MetafieldNamespaces        []any  `json:"metafield_namespaces,omitempty"`
+	APIVersion                 string `json:"api_version,omitempty"`
+	PrivateMetafieldNamespaces []any  `json:"private_metafield_namespaces,omitempty"`
+}
+
+type ShopifyWebhookResponse struct {
+	Webhooks []struct {
+		ID                         int    `json:"id,omitempty"`
+		Address                    string `json:"address,omitempty"`
+		Topic                      string `json:"topic,omitempty"`
+		CreatedAt                  string `json:"created_at,omitempty"`
+		UpdatedAt                  string `json:"updated_at,omitempty"`
+		Format                     string `json:"format,omitempty"`
+		Fields                     []any  `json:"fields,omitempty"`
+		MetafieldNamespaces        []any  `json:"metafield_namespaces,omitempty"`
+		APIVersion                 string `json:"api_version,omitempty"`
+		PrivateMetafieldNamespaces []any  `json:"private_metafield_namespaces,omitempty"`
+	} `json:"webhooks,omitempty"`
+}
+
+// oauth2.0
+type ResponseUserInfo struct {
+	Sub           string `json:"sub"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Profile       string `json:"profile"`
+	Picture       string `json:"picture"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	Gender        string `json:"gender"`
+}
+type ResponseOAuthGoogle struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	VerifiedEmail bool   `json:"verified_email"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Picture       string `json:"picture"`
+	Locale        string `json:"locale"`
+	Hd            string `json:"hd"`
+}
+
 // restrictions
 type RestrictionRequest struct {
 	Field string `json:"field"`
@@ -443,7 +539,8 @@ type ResponseString struct {
 }
 
 type ResponseLogin struct {
-	ApiKey string `json:"api_key"`
+	Username string `json:"username"`
+	ApiKey   string `json:"api_key"`
 }
 
 type RequestString struct {

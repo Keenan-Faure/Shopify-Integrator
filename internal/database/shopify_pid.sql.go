@@ -112,3 +112,40 @@ func (q *Queries) UpdatePID(ctx context.Context, arg UpdatePIDParams) error {
 	_, err := q.db.ExecContext(ctx, updatePID, arg.ShopifyProductID, arg.UpdatedAt, arg.ProductCode)
 	return err
 }
+
+const upsertPID = `-- name: UpsertPID :exec
+INSERT INTO shopify_pid(
+    id,
+    product_code,
+    product_id,
+    shopify_product_id,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT(product_code)
+DO UPDATE
+SET
+    shopify_product_id = COALESCE($4, shopify_pid.shopify_product_id),
+    updated_at = $6
+`
+
+type UpsertPIDParams struct {
+	ID               uuid.UUID `json:"id"`
+	ProductCode      string    `json:"product_code"`
+	ProductID        uuid.UUID `json:"product_id"`
+	ShopifyProductID string    `json:"shopify_product_id"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+func (q *Queries) UpsertPID(ctx context.Context, arg UpsertPIDParams) error {
+	_, err := q.db.ExecContext(ctx, upsertPID,
+		arg.ID,
+		arg.ProductCode,
+		arg.ProductID,
+		arg.ShopifyProductID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}

@@ -29,27 +29,3 @@ func (dbconfig *DbConfig) middlewareAuth(handler authHandler) http.HandlerFunc {
 		handler(w, r, dbUser)
 	}
 }
-
-// custom Authhandler
-// type shopifyHandler func(w http.ResponseWriter, r *http.Request, shopify shopify.ConfigShopify)
-
-// Authentication middleware
-// func (dbconfig *DbConfig) shopifyAuth(handler shopifyHandler) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		apiKey, err := utils.ExtractAPIKey(r.Header.Get("Authorization"))
-// 		if apiKey == "" {
-// 			RespondWithError(w, http.StatusUnauthorized, err.Error())
-// 			return
-// 		}
-// 		_, err = dbconfig.DB.GetUserByApiKey(r.Context(), apiKey)
-// 		if err != nil {
-// 			if err.Error() == "sql: no rows in result set" {
-// 				RespondWithError(w, http.StatusNotFound, "user api_key record not found")
-// 				return
-// 			}
-// 			RespondWithError(w, http.StatusNotFound, err.Error())
-// 			return
-// 		}
-// 		handler(w, r, shopify)
-// 	}
-// }

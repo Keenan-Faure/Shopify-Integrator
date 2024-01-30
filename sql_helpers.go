@@ -183,17 +183,34 @@ func (dbconfig *DbConfig) CheckUserCredentials(
 }
 
 // checks if a token already exists in the database
-func (dbconfig *DbConfig) CheckTokenExists(request_body objects.RequestBodyPreRegister, r *http.Request) (uuid.UUID, bool, error) {
-	token, err := dbconfig.DB.GetToken(r.Context(), request_body.Email)
+func (dbconfig *DbConfig) CheckTokenExists(email string, r *http.Request) (uuid.UUID, bool, error) {
+	token, err := dbconfig.DB.GetToken(r.Context(), email)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			return uuid.UUID{}, false, err
 		}
 	}
-	if token.Email == request_body.Email {
+	if token.Email == email {
 		return token.Token, true, nil
 	}
 	return uuid.UUID{}, false, nil
+}
+
+// checks if a token already exists in the database
+func (dbconfig *DbConfig) CheckUserEmailType(email, user_type string) (bool, error) {
+	db_username, err := dbconfig.DB.GetUserByEmailType(context.Background(), database.GetUserByEmailTypeParams{
+		Email:    email,
+		UserType: user_type,
+	})
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			return false, err
+		}
+	}
+	if db_username == email {
+		return true, nil
+	}
+	return false, nil
 }
 
 // Creates an address

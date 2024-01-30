@@ -301,3 +301,81 @@ func (q *Queries) UpdateVariant(ctx context.Context, arg UpdateVariantParams) er
 	)
 	return err
 }
+
+const upsertVariant = `-- name: UpsertVariant :one
+INSERT INTO variants(
+    id,
+    product_id,
+    sku,
+    option1,
+    option2,
+    option3,
+    barcode,
+    created_at,
+    updated_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+)
+ON CONFLICT(sku)
+DO UPDATE 
+SET
+    option1 = COALESCE($4, variants.option1),
+    option2 = COALESCE($5, variants.option2),
+    option3 = COALESCE($6, variants.option3),
+    barcode = COALESCE($7, variants.barcode),
+    updated_at = $9
+RETURNING id, product_id, sku, option1, option2, option3, barcode, created_at, updated_at, (xmax = 0) AS inserted
+`
+
+type UpsertVariantParams struct {
+	ID        uuid.UUID      `json:"id"`
+	ProductID uuid.UUID      `json:"product_id"`
+	Sku       string         `json:"sku"`
+	Option1   sql.NullString `json:"option1"`
+	Option2   sql.NullString `json:"option2"`
+	Option3   sql.NullString `json:"option3"`
+	Barcode   sql.NullString `json:"barcode"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+}
+
+type UpsertVariantRow struct {
+	ID        uuid.UUID      `json:"id"`
+	ProductID uuid.UUID      `json:"product_id"`
+	Sku       string         `json:"sku"`
+	Option1   sql.NullString `json:"option1"`
+	Option2   sql.NullString `json:"option2"`
+	Option3   sql.NullString `json:"option3"`
+	Barcode   sql.NullString `json:"barcode"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Inserted  bool           `json:"inserted"`
+}
+
+func (q *Queries) UpsertVariant(ctx context.Context, arg UpsertVariantParams) (UpsertVariantRow, error) {
+	row := q.db.QueryRowContext(ctx, upsertVariant,
+		arg.ID,
+		arg.ProductID,
+		arg.Sku,
+		arg.Option1,
+		arg.Option2,
+		arg.Option3,
+		arg.Barcode,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i UpsertVariantRow
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Sku,
+		&i.Option1,
+		&i.Option2,
+		&i.Option3,
+		&i.Barcode,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Inserted,
+	)
+	return i, err
+}

@@ -120,3 +120,43 @@ func (q *Queries) UpdateVID(ctx context.Context, arg UpdateVIDParams) error {
 	)
 	return err
 }
+
+const upsertVID = `-- name: UpsertVID :exec
+INSERT INTO shopify_vid(
+    id,
+    sku,
+    shopify_variant_id,
+    shopify_inventory_id,
+    variant_id,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT(sku)
+DO UPDATE
+SET
+    shopify_variant_id = COALESCE($4, shopify_vid.shopify_variant_id),
+    updated_at = $7
+`
+
+type UpsertVIDParams struct {
+	ID                 uuid.UUID `json:"id"`
+	Sku                string    `json:"sku"`
+	ShopifyVariantID   string    `json:"shopify_variant_id"`
+	ShopifyInventoryID string    `json:"shopify_inventory_id"`
+	VariantID          uuid.UUID `json:"variant_id"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+func (q *Queries) UpsertVID(ctx context.Context, arg UpsertVIDParams) error {
+	_, err := q.db.ExecContext(ctx, upsertVID,
+		arg.ID,
+		arg.Sku,
+		arg.ShopifyVariantID,
+		arg.ShopifyInventoryID,
+		arg.VariantID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}

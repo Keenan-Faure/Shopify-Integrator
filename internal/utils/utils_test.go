@@ -113,13 +113,13 @@ func TestConvertIntToSQL(t *testing.T) {
 func TestConfirmError(t *testing.T) {
 	fmt.Println("Test case 1 - Valid Duplicate Error")
 	err := errors.New("pq: duplicate key value violates unique constraint")
-	results := ConfirmError(err)
-	if results != "duplicate fields not allowed" {
+	results := ConfirmError(err.Error())
+	if results != "duplicate fields not allowed - " {
 		t.Errorf("Unexpected results, expected 'duplicate fields not allowed' but found " + results)
 	}
 	fmt.Println("Test case 2 - None Duplicate Error")
 	err = errors.New("Invalid database credentials")
-	results = ConfirmError(err)
+	results = ConfirmError(err.Error())
 	if results == "duplicate fields not allowed" {
 		t.Errorf("Unexpected results, expected 'Invalid database credentials' but found " + results)
 	}
@@ -171,13 +171,34 @@ func TestGetAppSettings(t *testing.T) {
 	if len(settings_map) == 0 {
 		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(settings_map)))
 	}
-	if settings_map["APP_ENABLE_SHOPIFY_FETCH"] == "" {
+	if settings_map["APP_ENABLE_SHOPIFY_FETCH"] != "" {
 		t.Errorf("Expected 'description' value but found " + settings_map["APP_ENABLE_SHOPIFY_FETCH"])
 	}
 	fmt.Println("Test Case 2 - Returning All Keys for shopify settings")
 	shopify_settings_map := GetAppSettings("shopify")
 	if len(shopify_settings_map) == 0 {
 		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(shopify_settings_map)))
+	}
+}
+
+func TestRandomPassword(t *testing.T) {
+	fmt.Println("Test Case 1 - Generating a random password of 10 length")
+	first_rand_psw := RandStringBytes(10)
+	if first_rand_psw == "" || len(first_rand_psw) == 0 {
+		t.Errorf("expected 10 but found " + fmt.Sprint(len(first_rand_psw)))
+	}
+	fmt.Println("Test Case 2 - Generating a random password of 20 length")
+	second_rand_psw := RandStringBytes(20)
+	if second_rand_psw == "" || len(second_rand_psw) == 0 {
+		t.Errorf("expected 20 but found " + fmt.Sprint(len(second_rand_psw)))
+	}
+	fmt.Println("Test Case 3 - Generating a random password of 10 length and compare")
+	third_rand_psw := RandStringBytes(10)
+	if third_rand_psw == "" || len(third_rand_psw) == 0 {
+		t.Errorf("expected 20 but found " + fmt.Sprint(len(third_rand_psw)))
+	}
+	if first_rand_psw == third_rand_psw {
+		t.Errorf("expected non-equality but found " + fmt.Sprint(first_rand_psw == third_rand_psw))
 	}
 }
 

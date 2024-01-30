@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"objects"
+	"strconv"
 	"time"
 	"utils"
 
@@ -23,6 +24,137 @@ type ConfigShopify struct {
 	Version     string
 	Url         string
 	Valid       bool
+}
+
+// Deletes a webhook on Shopify
+func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id string) (any, error) {
+	res, err := configShopify.FetchHelper(
+		"webhooks/"+shopify_webhook_id+".json",
+		http.MethodDelete,
+		nil,
+	)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+	if res.StatusCode != 200 {
+		return "", errors.New(string(respBody))
+	}
+	return "", nil
+}
+
+// Deletes a webhook on Shopify
+func (configShopify *ConfigShopify) UpdateShopifyWebhook(
+	shopify_webhook_id,
+	webhook_url string,
+) (objects.ShopifyWebhookRequest, error) {
+	int_webhook_id, err := strconv.Atoi(shopify_webhook_id)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	webhook := objects.ShopifyWebhookRequest{
+		ShopifyWebhook: objects.ShopifyWebhook{
+			ID:      int64(int_webhook_id),
+			Address: webhook_url,
+		},
+	}
+	var buffer bytes.Buffer
+	err = json.NewEncoder(&buffer).Encode(webhook)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	res, err := configShopify.FetchHelper(
+		"webhooks.json",
+		http.MethodPut,
+		nil,
+	)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	if res.StatusCode != 201 {
+		return objects.ShopifyWebhookRequest{}, errors.New(string(respBody))
+	}
+	response := objects.ShopifyWebhookRequest{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	return response, nil
+}
+
+// Creates a webhook on Shopify
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/webhook#post-webhooks
+func (configShopify *ConfigShopify) CreateShopifyWebhook(webhook_url string) (objects.ShopifyWebhookRequest, error) {
+	webhook := objects.ShopifyWebhookRequest{
+		ShopifyWebhook: objects.ShopifyWebhook{
+			Address: webhook_url,
+			Topic:   "orders/updated",
+			Format:  "json",
+		},
+	}
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(webhook)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	res, err := configShopify.FetchHelper(
+		"webhooks.json",
+		http.MethodPost,
+		&buffer,
+	)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	if res.StatusCode != 201 {
+		return objects.ShopifyWebhookRequest{}, errors.New(string(respBody))
+	}
+	response := objects.ShopifyWebhookRequest{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.ShopifyWebhookRequest{}, err
+	}
+	return response, nil
+}
+
+// Retrieves a list of webhooks on Shopify
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/webhook#get-webhooks
+func (configShopify *ConfigShopify) GetShopifyWebhooks() ([]objects.ShopifyWebhookResponse, error) {
+	res, err := configShopify.FetchHelper(
+		"webhooks.json?topic=orders/updated",
+		http.MethodGet,
+		nil,
+	)
+	if err != nil {
+		return []objects.ShopifyWebhookResponse{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return []objects.ShopifyWebhookResponse{}, err
+	}
+	if res.StatusCode != 200 {
+		return []objects.ShopifyWebhookResponse{}, errors.New(string(respBody))
+	}
+	response := []objects.ShopifyWebhookResponse{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return []objects.ShopifyWebhookResponse{}, err
+	}
+	return response, nil
 }
 
 // Retrieves a count of products on Shopify

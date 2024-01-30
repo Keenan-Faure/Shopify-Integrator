@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"log"
 	"os"
@@ -10,6 +12,8 @@ import (
 
 	"github.com/joho/godotenv"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // Returns the value of the environment variable
 func LoadEnv(key string) string {
@@ -71,13 +75,11 @@ func ConvertIntToSQL(value int) sql.NullInt32 {
 }
 
 // Checks if the error is a duplicated error
-func ConfirmError(err error) string {
-	if len(err.Error()) >= 50 {
-		if err.Error()[0:50] == "pq: duplicate key value violates unique constraint" {
-			return "duplicate fields not allowed - " + err.Error()[50:]
-		}
+func ConfirmError(err_message string) string {
+	if err_message == "pq: duplicate key value violates unique constraint" {
+		return "duplicate fields not allowed - " + err_message[50:]
 	}
-	return err.Error()
+	return err_message
 }
 
 // Checks if a variable is set (string)
@@ -166,4 +168,14 @@ func GetNextURL(next string) string {
 		return next
 	}
 	return ""
+}
+
+// Generates a random password
+func RandStringBytes(n int) string {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return base64.StdEncoding.EncodeToString(b)
 }

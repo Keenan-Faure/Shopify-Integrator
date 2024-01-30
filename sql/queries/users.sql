@@ -2,12 +2,20 @@
 INSERT INTO users (
     id,
     "name",
+    user_type,
     email,
     "password",
     created_at,
     updated_at
-) VALUES ($1, $2, $3, $4, $5, $6)
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
+
+-- name: GetUserByEmailType :one
+SELECT
+    email
+FROM users
+WHERE email = $1 AND user_type = $2
+LIMIT 1;
 
 -- name: GetUsers :one
 SELECT * FROM users LIMIT 1;
@@ -56,3 +64,9 @@ webhook_token = $1 AND api_key = $2;
 -- name: RemoveUser :exec
 DELETE FROM users
 WHERE api_key = $1;
+
+-- name: GetApiKeyByCookieSecret :one
+SELECT * FROM users
+INNER JOIN google_oauth
+ON users.id = google_oauth.user_id
+WHERE google_oauth.cookie_secret = $1;
