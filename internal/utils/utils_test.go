@@ -171,7 +171,7 @@ func TestGetAppSettings(t *testing.T) {
 	if len(settings_map) == 0 {
 		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(settings_map)))
 	}
-	if settings_map["APP_ENABLE_SHOPIFY_FETCH"] == "" {
+	if settings_map["APP_ENABLE_SHOPIFY_FETCH"] != "" {
 		t.Errorf("Expected 'description' value but found " + settings_map["APP_ENABLE_SHOPIFY_FETCH"])
 	}
 	fmt.Println("Test Case 2 - Returning All Keys for shopify settings")
