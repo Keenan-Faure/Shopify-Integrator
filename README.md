@@ -214,10 +214,12 @@ If you'd like to contribute, please fork the repository and open a pull request 
 
 ## What is next
 
-1. Adding additional features that support the use of a 3rd Party ERP system with features that
+1. Updating code base of application to make use of the [Gin Web Framework](https://gin-gonic.com/docs/introduction/)
+2. Adding additional features that support the use of a 3rd Party ERP system with features that
    1. Pull Product, Order & customer information
    2. Push Product, Order information back into the ERP
-2. Creating a CD pipeline that uses Docker images and Github Actions to streamline the work, instead of manually creating an update script
+   3. Also adding OAuth2.0 to login to the respective 3rd Party ERP for simplified authentication.
+3. OAuth2.0 Login with Github Accounts
 
 ## List of available features
 
