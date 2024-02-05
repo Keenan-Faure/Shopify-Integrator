@@ -7,11 +7,11 @@ import (
 	"integrator/internal/database"
 	"iocsv"
 	"log"
-	"net/http"
 	"shopify"
 	"utils"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
 type DbConfig struct {
@@ -57,15 +57,20 @@ func main() {
 		}
 	}
 	fmt.Println("starting API")
-	setupAPI(dbCon, shopifyConfig)
+	setUpAPI(&dbCon, &shopifyConfig)
 }
 
-func (dbconfig *DbConfig) setUpAPI() {
+func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	r := gin.Default()
-	r.GET("/ready", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "OK",
-		})
-	})
-	r.Run()
+
+	// use basic authentication
+	r.Use(Basic(dbconfig))
+
+	r.ForwardedByClientIP = true
+	r.SetTrustedProxies([]string{"127.0.0.1"})
+
+	r.GET("/ready", dbconfig.ReadyHandle())
+	r.GET("/products/:id", dbconfig.ProductIDHandle())
+
+	r.Run(":8080")
 }
