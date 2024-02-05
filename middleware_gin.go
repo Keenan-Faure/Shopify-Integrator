@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"net/http"
+	"objects"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,17 +12,25 @@ import (
 Middleware that checks if the request is using Basic Authentication.
 The username and password values needs to be passed in the headers of the request
 */
-func Basic() gin.HandlerFunc {
+func Basic(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, password, hasAuth := c.Request.BasicAuth()
 		if hasAuth {
-			// validation
+			_, exists, err := dbconfig.CheckUserCredentials(objects.RequestBodyLogin{
+				Username: user,
+				Password: password,
+			}, c.Request)
+			if err != nil {
+				RespondWithError(c, err, http.StatusUnauthorized)
+				return
+			}
+			if !exists {
+				RespondWithError(c, errors.New("invalid username or password combination"), http.StatusUnauthorized)
+				return
+			}
 		} else {
-			err := errors.New("request did not meet authentication standards")
-			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": err.Error(),
-			})
+			RespondWithError(c, errors.New("no authentication found in request"), http.StatusBadRequest)
+			return
 		}
 	}
 }
