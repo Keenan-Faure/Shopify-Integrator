@@ -64,7 +64,7 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	r := gin.Default()
 
 	// use basic authentication
-	r.Use(Basic(dbconfig))
+	r.Use(ApiKeyHeader(dbconfig))
 
 	r.ForwardedByClientIP = true
 	r.SetTrustedProxies([]string{"127.0.0.1"})

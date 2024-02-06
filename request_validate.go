@@ -126,12 +126,12 @@ func QueueItemProductValidation(queue_item_product objects.RequestQueueItemProdu
 	_, err := uuid.Parse(queue_item_product.SystemProductID)
 	if err != nil {
 		log.Println(err)
-		return errors.New("could not decode feed_id: " + queue_item_product.SystemProductID)
+		return errors.New("could not decode feed_id '" + queue_item_product.SystemProductID + "'")
 	}
 	_, err = uuid.Parse(queue_item_product.SystemVariantID)
 	if err != nil {
 		log.Println(err)
-		return errors.New("could not decode feed_id: " + queue_item_product.SystemVariantID)
+		return errors.New("could not decode feed_id '" + queue_item_product.SystemVariantID + "'")
 	}
 	return nil
 }

@@ -26,24 +26,24 @@ func (dbconfig *DbConfig) ProductIDHandle() gin.HandlerFunc {
 		product_id := c.Param("id")
 		err := IDValidation(product_id)
 		if err != nil {
-			RespondWithError(c, err, http.StatusInternalServerError)
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		product_uuid, err := uuid.Parse(product_id)
 		if err != nil {
-			RespondWithError(c, errors.New("could not decode product id: "+product_id), http.StatusBadRequest)
+			RespondWithError(c, http.StatusBadRequest, "could not decode product id '"+product_id+"'")
 			return
 		}
 		product_data, err := CompileProductData(dbconfig, product_uuid, c.Request.Context(), false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, errors.New("not found"), http.StatusNotFound)
+				RespondWithError(c, http.StatusNotFound, "not found")
 				return
 			}
-			RespondWithError(c, err, http.StatusInternalServerError)
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		RespondWithJSON(c, product_data, http.StatusOK)
+		RespondWithJSON(c, http.StatusOK, product_data)
 	}
 }
 
@@ -59,20 +59,21 @@ HTTP Codes: 200, 503
 func (dbconfig *DbConfig) ReadyHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if dbconfig.Valid {
-			RespondWithJSON(c, gin.H{"message": "OK"}, http.StatusOK)
+			RespondWithJSON(c, http.StatusOK, gin.H{"message": "OK"})
 		} else {
-			RespondWithError(c, errors.New("Unavailable"), http.StatusServiceUnavailable)
+			RespondWithError(c, http.StatusServiceUnavailable, "Unavailable")
 		}
 	}
 }
 
-func RespondWithError(c *gin.Context, err error, http_code int) {
-	c.Error(err)
+// Helper function
+func RespondWithError(c *gin.Context, http_code int, err_message string) {
+	c.Error(errors.New(err_message))
 	c.AbortWithStatusJSON(http_code, gin.H{
-		"message": err.Error(),
+		"message": err_message,
 	})
 }
 
-func RespondWithJSON(c *gin.Context, payload any, http_code int) {
+func RespondWithJSON(c *gin.Context, http_code int, payload any) {
 	c.JSON(http_code, payload)
 }

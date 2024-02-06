@@ -1,9 +1,9 @@
 package main
 
 import (
-	"errors"
 	"net/http"
 	"objects"
+	"utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,15 +21,15 @@ func Basic(dbconfig *DbConfig) gin.HandlerFunc {
 				Password: password,
 			}, c.Request)
 			if err != nil {
-				RespondWithError(c, err, http.StatusUnauthorized)
+				RespondWithError(c, http.StatusUnauthorized, err.Error())
 				return
 			}
 			if !exists {
-				RespondWithError(c, errors.New("invalid username or password combination"), http.StatusUnauthorized)
+				RespondWithError(c, http.StatusUnauthorized, "invalid username or password combination")
 				return
 			}
 		} else {
-			RespondWithError(c, errors.New("no authentication found in request"), http.StatusBadRequest)
+			RespondWithError(c, http.StatusBadRequest, "no authentication found in request")
 			return
 		}
 	}
@@ -40,8 +40,18 @@ Middleware that checks if the request is authenticating sending the api_key as a
 
 Format: {{base_url}}/{{resource}}?api_key={{api_key}}
 */
-func QueryParams() gin.HandlerFunc {
+func QueryParams(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		api_key := c.Query("api_key")
+		_, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "user not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 }
 
@@ -51,7 +61,20 @@ inside the headers
 
 Format: ApiKey {{api_key}}
 */
-func ApiKeyHeader() gin.HandlerFunc {
+func ApiKeyHeader(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		api_key, err := utils.ExtractAPIKey(c.Request.Header["Authorization"][0]) // uses the first Authorization Header in request
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+		}
+		_, err = dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "user not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 }

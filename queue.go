@@ -484,7 +484,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		}
 		product_id, err := uuid.Parse(queue_object.SystemProductID)
 		if err != nil {
-			return errors.New("could not decode product_id: " + queue_object.SystemProductID)
+			return errors.New("could not decode product_id '" + queue_object.SystemProductID + "'")
 		}
 		shopifyConfig := shopify.InitConfigShopify()
 		product, err := CompileProductData(dbconfig, product_id, context.Background(), false)
@@ -522,7 +522,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		}
 		variant_id, err := uuid.Parse(queue_object.SystemVariantID)
 		if err != nil {
-			return errors.New("could not decode variant_id: " + queue_object.SystemVariantID)
+			return errors.New("could not decode variant_id '" + queue_object.SystemVariantID + "'")
 		}
 		variant, err := CompileVariantData(dbconfig, variant_id, context.Background())
 		if err != nil {
