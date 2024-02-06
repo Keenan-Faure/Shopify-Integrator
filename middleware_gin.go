@@ -10,27 +10,32 @@ import (
 
 /*
 Middleware that checks if the request is using Basic Authentication.
-The username and password values needs to be passed in the headers of the request
 */
 func Basic(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, password, hasAuth := c.Request.BasicAuth()
-		if hasAuth {
-			_, exists, err := dbconfig.CheckUserCredentials(objects.RequestBodyLogin{
-				Username: user,
-				Password: password,
-			}, c.Request)
-			if err != nil {
-				RespondWithError(c, http.StatusUnauthorized, err.Error())
-				return
-			}
-			if !exists {
-				RespondWithError(c, http.StatusUnauthorized, "invalid username or password combination")
-				return
+		if authorized, exists := c.Get("authorized"); exists {
+			if authorized == true {
+				c.Next()
 			}
 		} else {
-			RespondWithError(c, http.StatusBadRequest, "no authentication found in request")
-			return
+			user, password, hasAuth := c.Request.BasicAuth()
+			if hasAuth {
+				_, exists, err := dbconfig.CheckUserCredentials(objects.RequestBodyLogin{
+					Username: user,
+					Password: password,
+				}, c.Request)
+				if err != nil {
+					RespondWithError(c, http.StatusUnauthorized, err.Error())
+					return
+				}
+				if !exists {
+					RespondWithError(c, http.StatusUnauthorized, "invalid username or password combination")
+					return
+				}
+			} else {
+				RespondWithError(c, http.StatusBadRequest, "no authentication found in request")
+				return
+			}
 		}
 	}
 }
@@ -46,11 +51,13 @@ func QueryParams(dbconfig *DbConfig) gin.HandlerFunc {
 		_, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusNotFound, "user not found")
+				c.Next()
 				return
 			}
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			AppendErrorNext(c, http.StatusInternalServerError, err.Error())
 			return
+		} else {
+			c.Set("authorized", true)
 		}
 	}
 }
@@ -63,18 +70,29 @@ Format: ApiKey {{api_key}}
 */
 func ApiKeyHeader(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		api_key, err := utils.ExtractAPIKey(c.Request.Header["Authorization"][0]) // uses the first Authorization Header in request
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, err.Error())
+		if authorized, exists := c.Get("authorized"); exists {
+			if authorized == true {
+				c.Next()
+			}
 		}
-		_, err = dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
-		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusNotFound, "user not found")
+		auth_headers := c.Request.Header["Authorization"]
+		if len(auth_headers) > 0 {
+			api_key, err := utils.ExtractAPIKey(auth_headers[0]) // uses the first Authorization Header in request
+			if err != nil {
+				c.Next()
 				return
 			}
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
+			_, err = dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					c.Next()
+					return
+				}
+				AppendErrorNext(c, http.StatusInternalServerError, err.Error())
+				return
+			} else {
+				c.Set("authorized", true)
+			}
 		}
 	}
 }

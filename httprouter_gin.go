@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -66,9 +67,12 @@ func (dbconfig *DbConfig) ReadyHandle() gin.HandlerFunc {
 	}
 }
 
-// Helper function
 func RespondWithError(c *gin.Context, http_code int, err_message string) {
-	c.Error(errors.New(err_message))
+	for _, err := range c.Errors {
+		// TODO log previous errors from the authentication middlewares inside database table
+		log.Println(err.Err.Error())
+		break
+	}
 	c.AbortWithStatusJSON(http_code, gin.H{
 		"message": err_message,
 	})
@@ -76,4 +80,9 @@ func RespondWithError(c *gin.Context, http_code int, err_message string) {
 
 func RespondWithJSON(c *gin.Context, http_code int, payload any) {
 	c.JSON(http_code, payload)
+}
+
+func AppendErrorNext(c *gin.Context, http_code int, err_message string) {
+	c.Error(errors.New(err_message))
+	c.Next()
 }
