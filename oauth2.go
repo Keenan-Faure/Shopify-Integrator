@@ -1,5 +1,7 @@
 package main
 
+import "github.com/gorilla/securecookie"
+
 // import (
 // 	"context"
 // 	"crypto/rand"
@@ -22,18 +24,18 @@ package main
 
 // // Hash keys should be at least 32 bytes long.
 // // Hash key is a constant
-// var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAvlGYpmv")
+var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAvlGYpmv")
 
-// /*
-// General name of the cookie of the application for google accounts.
-// If the user logs in with another account the cookie should be the same name,
-// just updated and overwritten
-// */
-// const cookie_name = "si_googleauth"
+/*
+General name of the cookie of the application for google accounts.
+If the user logs in with another account the cookie should be the same name,
+just updated and overwritten
+*/
+const cookie_name = "si_googleauth"
 
-// // Block keys should be 16 bytes (AES-128) or 32 bytes (AES-256) long.
-// // Shorter keys may weaken the encryption used.
-// var s = securecookie.New(hashKey, nil)
+// Block keys should be 16 bytes (AES-128) or 32 bytes (AES-256) long.
+// Shorter keys may weaken the encryption used.
+var s = securecookie.New(hashKey, nil)
 
 // const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
 

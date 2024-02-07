@@ -1508,7 +1508,7 @@ package main
 // 	})
 // }
 
-// // POST /api/logout
+// POST /api/logout
 // func (dbconfig *DbConfig) LogoutHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
 // 	// cookies should be sent with the ajax request
 // 	if cookie, err := r.Cookie(cookie_name); err == nil {

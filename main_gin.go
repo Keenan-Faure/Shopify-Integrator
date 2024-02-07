@@ -67,8 +67,12 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	r.ForwardedByClientIP = true
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 
+	r.POST("/preregister", dbconfig.PreRegisterHandle())
+	r.POST("/register", dbconfig.RegisterHandle())
+	r.POST("/logout", dbconfig.LogoutHandle())
+	r.POST("/login", dbconfig.LoginHandle())
+
 	r.GET("/ready", dbconfig.ReadyHandle())
-	r.GET("/products/:id", dbconfig.ProductIDHandle())
 
 	r.Run(":8080")
 }
