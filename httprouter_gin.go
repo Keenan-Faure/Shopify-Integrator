@@ -15,17 +15,180 @@ import (
 )
 
 /*
+Returns the results of a search query by the customer name and web code of the order
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) OrderSearchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search_query := c.Query("q")
+		if search_query != "" || len(search_query) == 0 {
+			RespondWithError(c, http.StatusBadRequest, "Invalid search param")
+			return
+		}
+		customer_orders, err := dbconfig.DB.GetOrdersSearchByCustomer(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		RespondWithJSON(c, http.StatusOK, CompileOrderSearchResult(customer_orders, webcode_orders))
+	}
+}
+
+/*
+Returns the order data having the specific id
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) OrderIDHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		order_id := c.Param("id")
+		err := IDValidation(order_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		order_uuid, err := uuid.Parse(order_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode order id: "+order_id)
+			return
+		}
+		order_data, err := CompileOrderData(dbconfig, order_uuid, c.Request.Context(), false)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, order_data)
+	}
+}
+
+/*
+Returns the respective page of order data from the database
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) OrdersHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil {
+			page = 1
+		}
+		dbOrders, err := dbconfig.DB.GetOrders(c.Request.Context(), database.GetOrdersParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		orders := []objects.Order{}
+		for _, value := range dbOrders {
+			ord, err := CompileOrderData(dbconfig, value.ID, c.Request.Context(), true)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			orders = append(orders, ord)
+		}
+		RespondWithJSON(c, http.StatusOK, orders)
+	}
+}
+
+/*
+Filter Searches for certain products based on their vendor, product type and collection
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ProductFilterHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil {
+			page = 1
+		}
+		query_param_type := utils.ConfirmFilters(c.Query("type"))
+		query_param_category := utils.ConfirmFilters(c.Query("category"))
+		query_param_vendor := utils.ConfirmFilters(c.Query("vendor"))
+		response, err := CompileFilterSearch(
+			dbconfig,
+			c.Request.Context(),
+			page,
+			utils.ConvertStringToLike(query_param_type),
+			utils.ConvertStringToLike(query_param_category),
+			utils.ConvertStringToLike(query_param_vendor),
+		)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, response)
+	}
+}
+
+/*
+Returns the results of a search query by a product Title and SKU
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ProductSearchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search_query := c.Query("q")
+		if search_query == "" || len(search_query) == 0 {
+			RespondWithError(c, http.StatusBadRequest, "Invalid search param")
+			return
+		}
+		search, err := dbconfig.DB.GetProductsSearch(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		compiled, err := CompileSearchResult(dbconfig, c.Request.Context(), search)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, compiled)
+	}
+}
+
+/*
 Returns the respective page of product data from the database
 
 Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
-Possible HTTP Codes: 200, 400, 401, 500
+Possible HTTP Codes: 200, 400, 404, 401, 500
 */
 func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		page, err := strconv.Atoi(c.Request.URL.Query().Get("page"))
+		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil {
 			page = 1
 		}
@@ -57,7 +220,7 @@ Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
-Possible HTTP Codes: 200, 400, 401, 500
+Possible HTTP Codes: 200, 400, 404, 401, 500
 */
 func (dbconfig *DbConfig) ProductIDHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
