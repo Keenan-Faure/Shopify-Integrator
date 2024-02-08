@@ -6,12 +6,49 @@ import (
 	"log"
 	"net/http"
 	"objects"
+	"strconv"
 	"time"
 	"utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+/*
+Returns the respective page of product data from the database
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 500
+*/
+func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Request.URL.Query().Get("page"))
+		if err != nil {
+			page = 1
+		}
+		dbProducts, err := dbconfig.DB.GetProducts(c.Request.Context(), database.GetProductsParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		products := []objects.Product{}
+		for _, value := range dbProducts {
+			prod, err := CompileProductData(dbconfig, value.ID, c.Request.Context(), false)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			products = append(products, prod)
+		}
+		RespondWithJSON(c, http.StatusOK, products)
+	}
+}
 
 /*
 Returns the product data having the specific id
