@@ -60,19 +60,30 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	// hover for more details
 	// Middleware runs in the format specficied
 	// query_params -> api_keys inside header -> Basic authentication
-	r.Use(QueryParams(dbconfig))
-	r.Use(ApiKeyHeader(dbconfig))
-	r.Use(Basic(dbconfig))
 
 	r.ForwardedByClientIP = true
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 
-	r.POST("/preregister", dbconfig.PreRegisterHandle())
-	r.POST("/register", dbconfig.RegisterHandle())
-	r.POST("/logout", dbconfig.LogoutHandle())
-	r.POST("/login", dbconfig.LoginHandle())
+	/* --------- Auth routes --------- */
+	auth := r.Group("/api")
 
-	r.GET("/ready", dbconfig.ReadyHandle())
+	auth.Use(QueryParams(dbconfig))
+	auth.Use(ApiKeyHeader(dbconfig))
+	auth.Use(Basic(dbconfig))
+
+	auth.POST("/preregister", dbconfig.PreRegisterHandle())
+	auth.POST("/register", dbconfig.RegisterHandle())
+	auth.POST("/logout", dbconfig.LogoutHandle())
+	auth.POST("/login", dbconfig.LoginHandle())
+
+	auth.GET("/products", dbconfig.ProductsHandle())
+	auth.GET("/products/:id", dbconfig.ProductIDHandle())
+
+	/* --------- N/A Auth routes --------- */
+
+	nauth := r.Group("/api")
+
+	nauth.GET("/ready", dbconfig.ReadyHandle())
 
 	r.Run(":8080")
 }
