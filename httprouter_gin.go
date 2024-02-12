@@ -1,11 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"integrator/internal/database"
+	"iocsv"
 	"log"
 	"net/http"
 	"objects"
+	"os"
 	"strconv"
 	"time"
 	"utils"
@@ -13,6 +19,72 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+/*
+Creates and adds a new customer to the application
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PostCustomerHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customer_body, err := DecodeCustomerRequestBody(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if CustomerValidation(customer_body) != nil {
+			RespondWithError(c, http.StatusBadRequest, "data validation error")
+			return
+		}
+		customer, err := dbconfig.DB.CreateCustomer(c.Request.Context(), database.CreateCustomerParams{
+			ID:        uuid.New(),
+			FirstName: customer_body.FirstName,
+			LastName:  customer_body.LastName,
+			Email:     utils.ConvertStringToSQL(customer_body.Email),
+			Phone:     utils.ConvertStringToSQL(customer_body.Phone),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		for key := range customer_body.Address {
+			_, err := dbconfig.DB.CreateAddress(c.Request.Context(), database.CreateAddressParams{
+				ID:         uuid.New(),
+				CustomerID: customer.ID,
+				Type:       utils.ConvertStringToSQL(customer_body.Address[key].Type),
+				FirstName:  customer_body.Address[key].FirstName,
+				LastName:   customer_body.Address[key].LastName,
+				Address1:   utils.ConvertStringToSQL(customer_body.Address[key].Address1),
+				Address2:   utils.ConvertStringToSQL(customer_body.Address[key].Address2),
+				Suburb:     utils.ConvertStringToSQL(""),
+				City:       utils.ConvertStringToSQL(customer_body.Address[key].City),
+				Province:   utils.ConvertStringToSQL(customer_body.Address[key].Province),
+				PostalCode: utils.ConvertStringToSQL(customer_body.Address[key].PostalCode),
+				Company:    utils.ConvertStringToSQL(customer_body.Address[key].Company),
+				CreatedAt:  time.Now().UTC(),
+				UpdatedAt:  time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		customer_data, err := CompileCustomerData(dbconfig, customer.ID, c.Request.Context(), false)
+		if err != nil {
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		RespondWithJSON(c, http.StatusCreated, customer_data)
+	}
+}
 
 /*
 Returns the results of a search query by the customer name and web code of the order
@@ -106,6 +178,92 @@ func (dbconfig *DbConfig) CustomersHandle() gin.HandlerFunc {
 			customers = append(customers, cust)
 		}
 		RespondWithJSON(c, http.StatusOK, customers)
+	}
+}
+
+/*
+Queues the respective order to be added to the application from Shopify
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		web_token := c.Query("token")
+		if TokenValidation(web_token) != nil {
+			RespondWithError(c, http.StatusBadRequest, "invalid token")
+			return
+		}
+		api_key := c.Query("api_key")
+		if TokenValidation(api_key) != nil {
+			RespondWithError(c, http.StatusBadRequest, "invalid api_key")
+			return
+		}
+		_, err := dbconfig.DB.ValidateWebhookByUser(c.Request.Context(), database.ValidateWebhookByUserParams{
+			WebhookToken: web_token,
+			ApiKey:       api_key,
+		})
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, "invalid token for user")
+				return
+			} else {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		order_body, err := DecodeOrderRequestBody(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		var buffer bytes.Buffer
+		err = json.NewEncoder(&buffer).Encode(order_body)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.Name)))
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		if db_order.WebCode.String == fmt.Sprint(order_body.Name) {
+			response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
+				Type:        "order",
+				Status:      "in-queue",
+				Instruction: "update_order",
+				Endpoint:    "queue",
+				ApiKey:      api_key,
+				Method:      http.MethodPost,
+				Object:      order_body,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusBadRequest, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusOK, response_payload)
+		} else {
+			response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
+				Type:        "order",
+				Status:      "in-queue",
+				Instruction: "add_order",
+				Endpoint:    "queue",
+				ApiKey:      api_key,
+				Method:      http.MethodPost,
+				Object:      order_body,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusBadRequest, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusCreated, response_payload)
+		}
 	}
 }
 
@@ -205,6 +363,491 @@ func (dbconfig *DbConfig) OrdersHandle() gin.HandlerFunc {
 			orders = append(orders, ord)
 		}
 		RespondWithJSON(c, http.StatusOK, orders)
+	}
+}
+
+/*
+Removes the specific product from the application
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) RemoveProductHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		product_id := c.Param("id")
+		err := IDValidation(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		product_uuid, err := uuid.Parse(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode product id: "+product_id)
+			return
+		}
+		err = dbconfig.DB.RemoveProduct(c.Request.Context(), product_uuid)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Removes the specific variant from a product
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) RemoveProductVariantHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		variant_id := c.Param("variant_id")
+		err := IDValidation(variant_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		variant_uuid, err := uuid.Parse(variant_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode variant id: "+variant_id)
+			return
+		}
+		err = dbconfig.DB.RemoveVariant(c.Request.Context(), variant_uuid)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Exports product data to a .CSV file.
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ExportProductsHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		test := c.Query("test")
+		product_ids, err := dbconfig.DB.GetProductIDs(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		products := []objects.Product{}
+		for _, product_id := range product_ids {
+			product, err := CompileProductData(dbconfig, product_id, c.Request.Context(), false)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			products = append(products, product)
+		}
+		csv_data := [][]string{}
+		headers := []string{}
+		if len(products) > 0 {
+			headers = iocsv.CSVProductHeaders(products[0])
+		}
+		// Adds (distinct) pricing and warehouses headers
+		price_tiers, err := AddPricingHeaders(dbconfig, c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		headers = append(headers, price_tiers...)
+		qty_warehouses, err := AddQtyHeaders(dbconfig, c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		headers = append(headers, qty_warehouses...)
+
+		images_max, err := IOGetMax(dbconfig, c.Request.Context(), "image")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		pricing_max, err := IOGetMax(dbconfig, c.Request.Context(), "price")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		qty_max, err := IOGetMax(dbconfig, c.Request.Context(), "qty")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if len(products) > 0 {
+			image_headers := iocsv.GetProductImagesCSV(products[0].ProductImages, int(images_max), true)
+			headers = append(headers, image_headers...)
+		}
+		csv_data = append(csv_data, headers)
+		for _, product := range products {
+			for _, variant := range product.Variants {
+				row := iocsv.CSVProductValuesByVariant(product, variant, int(images_max), pricing_max, qty_max)
+				csv_data = append(csv_data, row)
+			}
+		}
+		file_name, err := iocsv.WriteFile(csv_data, "")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// removes the product from the server if there are tests
+		if test == "true" {
+			defer os.Remove(file_name)
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: file_name,
+		})
+	}
+}
+
+/*
+Uses a .CSV file to bulk import products into the application. The file must be sent with the request.
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		test := c.Query("test")
+		file_name_global := "test_import.csv"
+		if test == "true" {
+			// generate the file for the test and ignore upload form
+			data := [][]string{
+				{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price"},
+				{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00"},
+			}
+			_, err := iocsv.WriteFile(data, "test_import")
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		} else {
+			// if in production then expect form data &&
+			// file to exist in import
+			file_name, err := iocsv.UploadFile(c.Request)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			file_name_global = file_name
+		}
+		wd, err := os.Getwd()
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		csv_products, err := iocsv.ReadFile(wd + "/" + file_name_global)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		processed_counter := 0
+		failure_counter := 0
+		products_added := 0
+		products_updated := 0
+		variants_updated := 0
+		variants_added := 0
+		for _, csv_product := range csv_products {
+			product, err := dbconfig.DB.UpsertProduct(c.Request.Context(), database.UpsertProductParams{
+				ID:          uuid.New(),
+				ProductCode: csv_product.ProductCode,
+				Active:      csv_product.Active,
+				Title:       utils.ConvertStringToSQL(csv_product.Title),
+				BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
+				Category:    utils.ConvertStringToSQL(csv_product.Category),
+				Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
+				ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
+				CreatedAt:   time.Now().UTC(),
+				UpdatedAt:   time.Now().UTC(),
+			})
+			if err != nil {
+				log.Println(err)
+				failure_counter++
+				continue
+			}
+			if product.Inserted {
+				products_added++
+			} else {
+				products_updated++
+			}
+			option_names := CreateOptionNamesMap(csv_product)
+			err = AddProductOptions(dbconfig, product.ID, product.ProductCode, option_names)
+			if err != nil {
+				log.Println(err)
+				failure_counter++
+				continue
+			}
+
+			// add images to product
+			// overwrite ones with the same position
+			images := CreateImageMap(csv_product)
+			for key := range images {
+				if images[key] != "" {
+					err = AddImagery(dbconfig, product.ID, images[key], key+1)
+					if err != nil {
+						log.Println(err)
+						failure_counter++
+						continue
+					}
+				}
+			}
+			// create variant
+			variant, err := dbconfig.DB.UpsertVariant(c.Request.Context(), database.UpsertVariantParams{
+				ID:        uuid.New(),
+				ProductID: product.ID,
+				Sku:       csv_product.SKU,
+				Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
+				Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
+				Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
+				Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err == nil {
+				variants_added++
+			}
+			if variant.Inserted {
+				variants_added++
+			} else {
+				variants_updated++
+			}
+			for _, pricing_value := range csv_product.Pricing {
+				// check if the price is acceptable
+				if pricing_value.Name == "Selling Price" || pricing_value.Name == "Compare At Price" {
+					err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
+					if err != nil {
+						log.Println(err)
+						failure_counter++
+						continue
+					}
+				} else {
+					log.Println("invalid price tier " + pricing_value.Name)
+					failure_counter++
+					continue
+				}
+			}
+			for _, qty_value := range csv_product.Warehouses {
+				err = AddWarehouse(dbconfig, variant.Sku, variant.ID, qty_value.Name, qty_value.Value)
+				if err != nil {
+					log.Println(err)
+					failure_counter++
+					continue
+				}
+			}
+			if err != nil {
+				log.Println(err)
+				failure_counter++
+				continue
+			}
+			processed_counter++
+		}
+		err = iocsv.RemoveFile(file_name_global)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ImportResponse{
+			ProcessedCounter: processed_counter,
+			FailCounter:      failure_counter,
+			ProductsAdded:    products_added,
+			ProductsUpdated:  products_updated,
+			VariantsAdded:    variants_added,
+			VariantsUpdated:  variants_updated,
+		})
+	}
+}
+
+/*
+Creates and adds a new product to the application
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var params objects.RequestBodyProduct
+		err := c.Bind(params)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		validation := ProductValidation(dbconfig, params)
+		if validation != nil {
+			RespondWithError(c, http.StatusBadRequest, validation.Error())
+			return
+		}
+		err = ValidateDuplicateOption(params)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = ValidateDuplicateSKU(params, dbconfig, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusConflict, err.Error())
+			return
+		}
+		err = DuplicateOptionValues(params)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		csv_products := ConvertProductToCSV(params)
+		for _, csv_product := range csv_products {
+			err = ProductValidationDatabase(csv_product, dbconfig, c.Request)
+			if err != nil {
+				RespondWithError(c, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+		product, err := dbconfig.DB.CreateProduct(c.Request.Context(), database.CreateProductParams{
+			ID:          uuid.New(),
+			Active:      "1",
+			ProductCode: params.ProductCode,
+			Title:       utils.ConvertStringToSQL(params.Title),
+			BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
+			Category:    utils.ConvertStringToSQL(params.Category),
+			Vendor:      utils.ConvertStringToSQL(params.Vendor),
+			ProductType: utils.ConvertStringToSQL(params.ProductType),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		for key := range params.ProductOptions {
+			_, err := dbconfig.DB.CreateProductOption(c.Request.Context(), database.CreateProductOptionParams{
+				ID:        uuid.New(),
+				ProductID: product.ID,
+				Name:      params.ProductOptions[key].Value,
+				Position:  int32(key + 1),
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		for key := range params.Variants {
+			variant, err := dbconfig.DB.CreateVariant(c.Request.Context(), database.CreateVariantParams{
+				ID:        uuid.New(),
+				ProductID: product.ID,
+				Sku:       params.Variants[key].Sku,
+				Option1:   utils.ConvertStringToSQL(params.Variants[key].Option1),
+				Option2:   utils.ConvertStringToSQL(params.Variants[key].Option2),
+				Option3:   utils.ConvertStringToSQL(params.Variants[key].Option3),
+				Barcode:   utils.ConvertStringToSQL(params.Variants[key].Barcode),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			// variant pricing & variant qty
+			for key_pricing := range params.Variants[key].VariantPricing {
+				// check if the price tier name is acceptable
+				if params.Variants[key].VariantPricing[key_pricing].Name == "Selling Price" ||
+					params.Variants[key].VariantPricing[key_pricing].Name == "Compare At Price" {
+					_, err := dbconfig.DB.CreateVariantPricing(c.Request.Context(), database.CreateVariantPricingParams{
+						ID:        uuid.New(),
+						VariantID: variant.ID,
+						Name:      params.Variants[key].VariantPricing[key_pricing].Name,
+						Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
+						Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
+						CreatedAt: time.Now().UTC(),
+						UpdatedAt: time.Now().UTC(),
+					})
+					if err != nil {
+						RespondWithError(c, http.StatusInternalServerError, err.Error())
+						return
+					}
+				} else {
+					RespondWithError(c, http.StatusInternalServerError, "invalid price tier"+
+						params.Variants[key].VariantPricing[key_pricing].Name)
+					return
+				}
+			}
+			for key_qty := range params.Variants[key].VariantQuantity {
+				// check if the warehouse exists, then we update the quantity
+				warehouse_name := params.Variants[key].VariantQuantity[key_qty].Name
+				warehouse_qty := params.Variants[key].VariantQuantity[key_qty].Value
+				_, err = dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
+				if err != nil {
+					if err.Error() == "sql: no rows in result set" {
+						RespondWithError(c, http.StatusInternalServerError, "warehouse "+warehouse_name+" not found")
+						return
+					}
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
+					return
+				}
+				// if warehouse is found, we update the qty, we cannot create a new one
+				err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
+					Name:      warehouse_name,
+					Value:     utils.ConvertIntToSQL(warehouse_qty),
+					Isdefault: false,
+					UpdatedAt: time.Now().UTC(),
+					Sku:       variant.Sku,
+					Name_2:    warehouse_name,
+				})
+				if err != nil {
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
+					return
+				}
+			}
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		product_added, err := CompileProductData(dbconfig, product.ID, c.Request.Context(), false)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// queue new products to be added to shopify
+		api_key := c.GetString("api_key")
+		if api_key != "" {
+			c.Next()
+		}
+		err = CompileInstructionProduct(dbconfig, product_added, api_key)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		for _, variant := range product_added.Variants {
+			err = CompileInstructionVariant(dbconfig, variant, product_added, api_key)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+			Message: "success",
+		})
 	}
 }
 
