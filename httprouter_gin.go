@@ -23,6 +23,101 @@ Response-Type: application/json
 
 Possible HTTP Codes: 200, 400, 401, 404, 500
 */
+func (dbconfig *DbConfig) CustomerSearchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search_query := c.Query("q")
+		if search_query != "" || len(search_query) == 0 {
+			RespondWithError(c, http.StatusBadRequest, "Invalid search param")
+			return
+		}
+		customers_by_name, err := dbconfig.DB.GetCustomersByName(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		RespondWithJSON(c, http.StatusOK, customers_by_name)
+	}
+}
+
+/*
+Returns the customer data having the specific id
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) CustomerIDHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customer_id := c.Param("id")
+		err := IDValidation(customer_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		customer_uuid, err := uuid.Parse(customer_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode customer id: "+customer_id)
+			return
+		}
+		customer, err := CompileCustomerData(dbconfig, customer_uuid, c.Request.Context(), false)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, customer)
+	}
+}
+
+/*
+Returns the respective page of customer data from the database
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) CustomersHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil {
+			page = 1
+		}
+		dbCustomers, err := dbconfig.DB.GetCustomers(c.Request.Context(), database.GetCustomersParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		customers := []objects.Customer{}
+		for _, value := range dbCustomers {
+			cust, err := CompileCustomerData(dbconfig, value.ID, c.Request.Context(), true)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			customers = append(customers, cust)
+		}
+		RespondWithJSON(c, http.StatusOK, customers)
+	}
+}
+
+/*
+Returns the results of a search query by the customer name and web code of the order
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
 func (dbconfig *DbConfig) OrderSearchHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		search_query := c.Query("q")
