@@ -13,7 +13,9 @@ SELECT
     id,
     name,
     updated_at
-FROM warehouses;
+FROM warehouses
+ORDER BY "name" DESC
+LIMIT $1 OFFSET $2;
 
 -- name: RemoveWarehouse :exec
 DELETE FROM warehouses

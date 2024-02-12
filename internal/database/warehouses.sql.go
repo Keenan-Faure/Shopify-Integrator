@@ -80,7 +80,14 @@ SELECT
     name,
     updated_at
 FROM warehouses
+ORDER BY "name" DESC
+LIMIT $1 OFFSET $2
 `
+
+type GetWarehousesParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
 
 type GetWarehousesRow struct {
 	ID        uuid.UUID `json:"id"`
@@ -88,8 +95,8 @@ type GetWarehousesRow struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (q *Queries) GetWarehouses(ctx context.Context) ([]GetWarehousesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getWarehouses)
+func (q *Queries) GetWarehouses(ctx context.Context, arg GetWarehousesParams) ([]GetWarehousesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getWarehouses, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
