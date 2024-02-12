@@ -493,13 +493,13 @@ func (dbconfig *DbConfig) PushVariant(
 	return nil
 }
 
-func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUser database.User) error {
+func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, api_key string) error {
 	queue_item := objects.RequestQueueHelper{
 		Type:        "product",
 		Status:      "in-queue",
 		Instruction: "add_product",
 		Endpoint:    "queue",
-		ApiKey:      dbUser.ApiKey,
+		ApiKey:      api_key,
 		Method:      http.MethodPost,
 		Object:      nil,
 	}
@@ -538,13 +538,13 @@ func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUs
 	return nil
 }
 
-func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVariant, product objects.Product, dbUser database.User) error {
+func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVariant, product objects.Product, api_key string) error {
 	queue_item := objects.RequestQueueHelper{
 		Type:        "product_variant",
 		Status:      "in-queue",
 		Instruction: "add_variant",
 		Endpoint:    "queue",
-		ApiKey:      dbUser.ApiKey,
+		ApiKey:      api_key,
 		Method:      http.MethodPost,
 		Object:      nil,
 	}
