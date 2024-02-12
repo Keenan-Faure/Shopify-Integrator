@@ -13,10 +13,9 @@ Middleware that checks if the request is using Basic Authentication.
 */
 func Basic(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if authorized, exists := c.Get("authorized"); exists {
-			if authorized == true {
-				c.Next()
-			}
+		api_key := c.GetString("api_key")
+		if api_key != "" {
+			c.Next()
 		} else {
 			user, password, hasAuth := c.Request.BasicAuth()
 			if hasAuth {
@@ -48,7 +47,7 @@ Format: {{base_url}}/{{resource}}?api_key={{api_key}}
 func QueryParams(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		api_key := c.Query("api_key")
-		_, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
+		db_user, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
 				c.Next()
@@ -57,7 +56,7 @@ func QueryParams(dbconfig *DbConfig) gin.HandlerFunc {
 			AppendErrorNext(c, http.StatusInternalServerError, err.Error())
 			return
 		} else {
-			c.Set("authorized", true)
+			c.Set("api_key", db_user.ApiKey)
 		}
 	}
 }
@@ -70,10 +69,9 @@ Format: ApiKey {{api_key}}
 */
 func ApiKeyHeader(dbconfig *DbConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if authorized, exists := c.Get("authorized"); exists {
-			if authorized == true {
-				c.Next()
-			}
+		api_key := c.GetString("api_key")
+		if api_key != "" {
+			c.Next()
 		}
 		auth_headers := c.Request.Header["Authorization"]
 		if len(auth_headers) > 0 {
@@ -82,7 +80,7 @@ func ApiKeyHeader(dbconfig *DbConfig) gin.HandlerFunc {
 				c.Next()
 				return
 			}
-			_, err = dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
+			db_user, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), api_key)
 			if err != nil {
 				if err.Error() == "sql: no rows in result set" {
 					c.Next()
@@ -91,7 +89,7 @@ func ApiKeyHeader(dbconfig *DbConfig) gin.HandlerFunc {
 				AppendErrorNext(c, http.StatusInternalServerError, err.Error())
 				return
 			} else {
-				c.Set("authorized", true)
+				c.Set("api_key", db_user.ApiKey)
 			}
 		}
 	}
