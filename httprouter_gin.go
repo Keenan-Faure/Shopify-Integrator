@@ -10,6 +10,7 @@ import (
 	"iocsv"
 	"log"
 	"net/http"
+	"ngrok"
 	"objects"
 	"os"
 	"shopify"
@@ -20,6 +21,422 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+/*
+Creates a new webhook on Shopify
+
+Route: /api/shopify/webhook
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) AddWebhookHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		//request will take care of the post and put in a single request
+		ngrok_tunnels, err := ngrok.FetchNgrokTunnels()
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		domain_url := ngrok.FetchWebsiteTunnel(ngrok_tunnels)
+		if domain_url == "" {
+			RespondWithError(c, http.StatusInternalServerError, "could not locate ngrok tunnel")
+			return
+		}
+		// checks if there is an internal record of a webhook URL inside the database
+		// by default there should always only be one
+		db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		shopifyConfig := shopify.InitConfigShopify()
+		dbUser, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), c.GetString("api_key"))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// create new webhook on Shopify
+		if db_shopify_webhook.ShopifyWebhookID == "" {
+			webhook_response, err := shopifyConfig.CreateShopifyWebhook(
+				ngrok.SetUpWebhookURL(
+					domain_url,
+					dbUser.ApiKey,
+					dbUser.WebhookToken,
+				),
+			)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			err = dbconfig.DB.UpdateShopifyWebhook(c.Request.Context(), database.UpdateShopifyWebhookParams{
+				ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
+				WebhookUrl:       webhook_response.Address,
+				Topic:            webhook_response.Topic,
+				ID:               db_shopify_webhook.ID,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		} else {
+			// update existing webhook on Shopify
+			webhook_response, err := shopifyConfig.UpdateShopifyWebhook(
+				db_shopify_webhook.ShopifyWebhookID,
+				ngrok.SetUpWebhookURL(
+					domain_url,
+					dbUser.ApiKey,
+					dbUser.WebhookToken,
+				),
+			)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			err = dbconfig.DB.UpdateShopifyWebhook(c.Request.Context(), database.UpdateShopifyWebhookParams{
+				ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
+				WebhookUrl:       webhook_response.Address,
+				Topic:            webhook_response.Topic,
+				ID:               db_shopify_webhook.ID,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+		}
+	}
+}
+
+/*
+Deletes the webhook on Shopify
+
+Route: /api/shopify/webhook
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) DeleteWebhookHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// fetches data of internal shopify webhook and confirms if it's set
+		db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// delete the webhook on Shopify
+		if db_shopify_webhook.ShopifyWebhookID != "" {
+			shopifyConfig := shopify.InitConfigShopify()
+			_, err := shopifyConfig.DeleteShopifyWebhook(db_shopify_webhook.ShopifyWebhookID)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			err = dbconfig.DB.UpdateShopifyWebhook(c.Request.Context(), database.UpdateShopifyWebhookParams{
+				ShopifyWebhookID: "",
+				WebhookUrl:       "",
+				Topic:            "",
+				ID:               db_shopify_webhook.ID,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Updates the push restriction.
+
+Route: /api/push/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PushRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := DecodeRestriction(dbconfig, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = RestrictionValidation(restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		for _, value := range restrictions {
+			err = dbconfig.DB.UpdatePushRestriction(c.Request.Context(), database.UpdatePushRestrictionParams{
+				Flag:      value.Flag,
+				UpdatedAt: time.Now().UTC(),
+				Field:     value.Field,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Returns all push restriction values
+
+Route: /api/push/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetPushRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, "no push restrictions found found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, restrictions)
+	}
+}
+
+/*
+Returns all fetch restriction values
+
+Route: /api/fetch/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetFetchRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := dbconfig.DB.GetFetchRestriction(context.Background())
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, "no fetch restrictions found found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, restrictions)
+	}
+}
+
+/*
+Updates the fetch restriction.
+
+Route: /api/fetch/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) FetchRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := DecodeRestriction(dbconfig, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = RestrictionValidation(restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		for _, value := range restrictions {
+			err = dbconfig.DB.UpdateFetchRestriction(c.Request.Context(), database.UpdateFetchRestrictionParams{
+				Flag:      value.Flag,
+				UpdatedAt: time.Now().UTC(),
+				Field:     value.Field,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Runs the worker that fetch products from shopify.
+
+Route: /api/worker/fetch
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) WorkerFetchProductsHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// create database table containing the status of this
+		shopifyConfig := shopify.InitConfigShopify()
+		err := FetchShopifyProducts(dbconfig, shopifyConfig)
+		if err != nil {
+			if err.Error() == "worker is currently running" {
+				RespondWithError(c, http.StatusConflict, err.Error())
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Resets the fetch worker of the application.
+
+Route: /api/shopify/reset_fetch
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ResetShopifyFetchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := dbconfig.DB.ResetFetchWorker(context.Background(), "0")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Adds a new internal Warehouse to the application. Comes with an additional reindex param
+that will set missing warehouses for older products.
+
+Route: /api/inventory/warehouse?reindex=false
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reindex := c.Query("reindex")
+		warehouse, err := DecodeGlobalWarehouse(dbconfig, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = GlobalWarehouseValidation(warehouse)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if reindex == "true" {
+			// check if the warehouse exists internally
+			warehouse_db, err := dbconfig.DB.GetWarehouseByName(c.Request.Context(), warehouse.Name)
+			if err != nil {
+				if err.Error() != "sql: no rows in result set" {
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
+					return
+				} else {
+					RespondWithError(c, http.StatusInternalServerError, "cannot reindex an invalid warehouse")
+					return
+				}
+			}
+			// reindex warehouse that was found
+			err = InsertGlobalWarehouse(dbconfig, c.Request.Context(), warehouse_db.Name, true)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		}
+		// check if a warehouse already exists
+		warehouses_db, err := dbconfig.DB.GetWarehouses(c.Request.Context(), database.GetWarehousesParams{
+			Limit:  100, // TODO might need to properly configure this
+			Offset: 0,
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		for _, warehouse_db := range warehouses_db {
+			if warehouse_db.Name == warehouse.Name {
+				RespondWithError(c, http.StatusBadRequest, "warehouse already exists")
+				return
+			}
+		}
+		err = dbconfig.DB.CreateWarehouse(c.Request.Context(), database.CreateWarehouseParams{
+			ID:        uuid.New(),
+			Name:      warehouse.Name,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		err = InsertGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, false)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
 
 /*
 Gets the paginated list of warehouse from the application
@@ -396,7 +813,7 @@ Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
-Possible HTTP Codes: 200, 400, 401, 404, 500
+Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -511,7 +928,7 @@ Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
-Possible HTTP Codes: 200, 400, 401, 404, 500
+Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) PostCustomerHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -680,7 +1097,7 @@ Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
-Possible HTTP Codes: 200, 400, 401, 404, 500
+Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -945,7 +1362,7 @@ Response-Type: application/json
 
 Possible HTTP Codes: 200, 400, 401, 404, 500
 */
-func (dbconfig *DbConfig) ExportProductsHandle() gin.HandlerFunc {
+func (dbconfig *DbConfig) ProductExportHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		test := c.Query("test")
 		product_ids, err := dbconfig.DB.GetProductIDs(c.Request.Context())
@@ -1193,7 +1610,7 @@ Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
-Possible HTTP Codes: 200, 400, 401, 404, 500
+Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {

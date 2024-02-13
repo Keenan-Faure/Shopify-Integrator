@@ -71,19 +71,77 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	auth.Use(ApiKeyHeader(dbconfig))
 	auth.Use(Basic(dbconfig))
 
-	auth.POST("/preregister", dbconfig.PreRegisterHandle())
-	auth.POST("/register", dbconfig.RegisterHandle())
 	auth.POST("/logout", dbconfig.LogoutHandle())
 	auth.POST("/login", dbconfig.LoginHandle())
 
+	/* Products */
 	auth.GET("/products", dbconfig.ProductsHandle())
 	auth.GET("/products/:id", dbconfig.ProductIDHandle())
+	auth.GET("/products/search", dbconfig.ProductSearchHandle())
+	auth.GET("/products/filter", dbconfig.ProductFilterHandle())
+
+	auth.PUT("/products/:id", dbconfig.UpdateProductHandle())
+
+	auth.POST("/products", dbconfig.PostProductHandle())
+	auth.POST("/products/import", dbconfig.ProductImportHandle())
+	auth.POST("/products/export", dbconfig.ProductExportHandle())
+
+	auth.DELETE("/products/:variant_id", dbconfig.RemoveProductVariantHandle())
+	auth.DELETE("/products/:id", dbconfig.RemoveProductHandle())
+
+	/* Orders */
+	auth.GET("/orders", dbconfig.OrdersHandle())
+	auth.GET("/orders/:id", dbconfig.OrderIDHandle())
+	auth.GET("/orders/search", dbconfig.OrderSearchHandle())
+
+	auth.POST("/orders", dbconfig.PostOrderHandle())
+
+	/* Customers */
+	auth.GET("/customers", dbconfig.CustomersHandle())
+	auth.GET("/customers/:id", dbconfig.CustomerIDHandle())
+	auth.GET("/customers/search", dbconfig.CustomerSearchHandle())
+
+	auth.POST("/customers", dbconfig.PostCustomerHandle())
+
+	/* Inventory Config Handle */
+	auth.GET("/inventory/config", dbconfig.ConfigLocationWarehouseHandle())
+
+	/* Inventory Map */
+	auth.GET("/inventory/map", dbconfig.LocationWarehouseHandle())
+	auth.POST("/inventory/map", dbconfig.AddWarehouseLocationMap())
+	auth.DELETE("/inventory/map", dbconfig.RemoveWarehouseLocation())
+
+	/* Statistics */
+	auth.GET("/stats/orders", dbconfig.GetOrderStats())
+	auth.GET("/stats/fetch", dbconfig.GetFetchStats())
+
+	/* Inventory Warehouses */
+	auth.GET("/inventory/warehouse/:id", dbconfig.GetInventoryWarehouse())
+	auth.GET("/inventory/warehouse", dbconfig.GetInventoryWarehouses())
+	auth.POST("/inventory/warehouse", dbconfig.AddInventoryWarehouseHandle())
+	auth.DELETE("/inventory/warehouse/:id", dbconfig.DeleteInventoryWarehouse())
+
+	/* Fetch Worker */
+	auth.POST("/worker/fetch", dbconfig.WorkerFetchProductsHandle())
+
+	/* Restrictions */
+	auth.GET("/fetch/restriction", dbconfig.GetFetchRestrictionHandle())
+	auth.PUT("/fetch/restriction", dbconfig.FetchRestrictionHandle())
+
+	auth.GET("/push/restriction", dbconfig.GetPushRestrictionHandle())
+	auth.PUT("/push/restriction", dbconfig.PushRestrictionHandle())
+
+	/* Webhooks */
+	auth.POST("/shopify/webhook", dbconfig.AddWebhookHandle())
+	auth.DELETE("/shopify/webhook", dbconfig.DeleteWebhookHandle())
 
 	/* --------- N/A Auth routes --------- */
 
 	nauth := r.Group("/api")
 
 	nauth.GET("/ready", dbconfig.ReadyHandle())
+	nauth.POST("/preregister", dbconfig.PreRegisterHandle())
+	nauth.POST("/register", dbconfig.RegisterHandle())
 
 	r.Run(":8080")
 }
