@@ -39,6 +39,9 @@ SELECT
     updated_at
 FROM shopify_settings;
 
+-- name: GetShopifySettingsList :many
+SELECT DISTINCT("key") FROM shopify_settings;
+
 -- name: RemoveShopifySetting :exec
 DELETE FROM shopify_settings
 WHERE key = $1;

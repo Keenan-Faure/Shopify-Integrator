@@ -116,25 +116,6 @@ func ExtractVID(id string) string {
 	return ""
 }
 
-// Gets all the available settings and returns them as a map[string]string
-func GetAppSettings(key string) map[string]string {
-	result := make(map[string]string)
-	app_keys := []string{"APP_ENABLE_SHOPIFY_FETCH", "APP_ENABLE_QUEUE_WORKER", "APP_SHOPIFY_FETCH_TIME",
-		"APP_ENABLE_SHOPIFY_PUSH", "APP_QUEUE_SIZE", "APP_QUEUE_PROCESS_LIMIT", "APP_QUEUE_CRON_TIME",
-		"APP_FETCH_ADD_PRODUCTS", "APP_FETCH_OVERWRITE_PRODUCTS", "APP_FETCH_SYNC_IMAGES"}
-	shopify_keys := []string{"SHOPIFY_ENABLE_DYNAMIC_SKU_SEARCH"}
-	if key == "app" {
-		for iterator, value := range app_keys {
-			result[app_keys[iterator]] = LoadEnv(value)
-		}
-	} else if key == "shopify" {
-		for iterator, value := range shopify_keys {
-			result[shopify_keys[iterator]] = LoadEnv(value)
-		}
-	}
-	return result
-}
-
 // Returns the next URL in the Shopify Response header
 func GetNextURL(next string) string {
 	result := strings.Split(next, ", ")

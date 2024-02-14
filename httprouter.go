@@ -1695,10 +1695,6 @@ package main
 // 	}
 // }
 
-// func RespondWithError(w http.ResponseWriter, code int, msg string) {
-// 	RespondWithJSON(w, code, map[string]string{"error": utils.ConfirmError(msg)})
-// }
-
 // // Middleware that determines which headers, http methods and orgins are allowed
 // func MiddleWare() cors.Options {
 // 	return cors.Options{

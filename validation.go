@@ -186,14 +186,14 @@ func DecodeQueueItem(r *http.Request) (objects.RequestQueueItem, error) {
 // Validate: ShopifySettings
 func SettingsValidation(
 	request_settings_map []objects.RequestSettings,
-	setting_keys map[string]string) error {
+	setting_keys []string) error {
 	for _, map_value := range request_settings_map {
 		found := false
 		if map_value.Key == "" {
 			return errors.New("settings key cannot be blank")
 		}
-		for key := range setting_keys {
-			if map_value.Key == strings.ToLower(key) {
+		for _, value := range setting_keys {
+			if map_value.Key == strings.ToLower(value) {
 				found = true
 			}
 		}
@@ -207,13 +207,13 @@ func SettingsValidation(
 // Validate: ShopifySetting
 func SettingValidation(
 	shopify_settings_map objects.RequestSettings,
-	setting_keys map[string]string) error {
+	setting_keys []string) error {
 	found := false
 	if shopify_settings_map.Key == "" {
 		return errors.New("settings key cannot be blank")
 	}
-	for key := range setting_keys {
-		if shopify_settings_map.Key == strings.ToLower(key) {
+	for _, value := range setting_keys {
+		if shopify_settings_map.Key == strings.ToLower(value) {
 			found = true
 		}
 	}

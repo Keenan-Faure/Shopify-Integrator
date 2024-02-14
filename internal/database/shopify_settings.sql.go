@@ -134,6 +134,33 @@ func (q *Queries) GetShopifySettings(ctx context.Context) ([]GetShopifySettingsR
 	return items, nil
 }
 
+const getShopifySettingsList = `-- name: GetShopifySettingsList :many
+SELECT DISTINCT("key") FROM shopify_settings
+`
+
+func (q *Queries) GetShopifySettingsList(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getShopifySettingsList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
+		}
+		items = append(items, key)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeShopifySetting = `-- name: RemoveShopifySetting :exec
 DELETE FROM shopify_settings
 WHERE key = $1
