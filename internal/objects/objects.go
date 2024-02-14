@@ -499,7 +499,7 @@ type ImportResponse struct {
 	VariantsUpdated  int `json:"variants_updated"`
 }
 
-type CSVProduct struct {
+type AppProduct struct {
 	ProductCode  string        `csv:"product_code"`
 	Active       string        `csv:"active"`
 	Title        string        `csv:"title"`

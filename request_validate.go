@@ -274,7 +274,7 @@ func DecodeInventoryMap(r *http.Request) (objects.RequestWarehouseLocation, erro
 }
 
 // Validation: Product Import
-func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
+func ProductValidationDatabase(csv_product objects.AppProduct, dbconfig *DbConfig, r *http.Request) error {
 	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)
 	if err != nil {
 		return err

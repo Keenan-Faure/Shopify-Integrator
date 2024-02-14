@@ -1640,7 +1640,7 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		csv_products := ConvertProductToCSV(params)
+		csv_products := ConvertProductToAppProduct(params)
 		for _, csv_product := range csv_products {
 			err = ProductValidationDatabase(csv_product, dbconfig, c.Request)
 			if err != nil {
@@ -2053,7 +2053,7 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		err = SendEmail(token_value, request_body.Email, request_body.Name)
+		err = Email(token_value, request_body.Email, request_body.Name)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return

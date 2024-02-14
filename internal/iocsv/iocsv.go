@@ -270,31 +270,31 @@ func WriteFile(data [][]string, file_name string) (string, error) {
 }
 
 // Reads a csv file contents
-func ReadFile(file_name string) ([]objects.CSVProduct, error) {
+func ReadFile(file_name string) ([]objects.AppProduct, error) {
 	if file_name == "" {
-		return []objects.CSVProduct{}, errors.New("invalid file")
+		return []objects.AppProduct{}, errors.New("invalid file")
 	}
 	file_data, err := os.Open(filepath.Clean(file_name))
 	if err != nil {
-		return []objects.CSVProduct{}, err
+		return []objects.AppProduct{}, err
 	}
 	file_data2, err := os.Open(filepath.Clean(file_name))
 	if err != nil {
-		return []objects.CSVProduct{}, err
+		return []objects.AppProduct{}, err
 	}
 	defer file_data.Close()
 	defer file_data2.Close()
 	fileReader := csv.NewReader(file_data)
 	records, err := fileReader.ReadAll()
 	if err != nil {
-		return []objects.CSVProduct{}, err
+		return []objects.AppProduct{}, err
 	}
-	products := []objects.CSVProduct{}
-	returned_products := []objects.CSVProduct{}
+	products := []objects.AppProduct{}
+	returned_products := []objects.AppProduct{}
 	qty_header_map := make(map[int]string)
 	price_header_map := make(map[int]string)
 	if err := gocsv.UnmarshalFile(file_data2, &products); err != nil {
-		return []objects.CSVProduct{}, err
+		return []objects.AppProduct{}, err
 	}
 	for key, value := range records {
 		if key == 0 {
@@ -322,7 +322,7 @@ func ReadFile(file_name string) ([]objects.CSVProduct, error) {
 				Value: utils.IssetString(records[key][price_key]),
 			})
 		}
-		returned_products = append(returned_products, objects.CSVProduct{
+		returned_products = append(returned_products, objects.AppProduct{
 			ProductCode:  products[key-1].ProductCode,
 			Active:       products[key-1].Active,
 			Title:        products[key-1].Title,
