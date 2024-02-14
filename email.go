@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func SendEmail(token uuid.UUID, email, name string) error {
+func Email(token uuid.UUID, email, name string) error {
 	m := mail.NewMessage()
 	m.SetHeader("From", utils.LoadEnv("email"))
 	m.SetHeader("To", email)
