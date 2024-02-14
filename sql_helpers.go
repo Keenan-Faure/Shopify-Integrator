@@ -13,20 +13,271 @@ import (
 	"github.com/google/uuid"
 )
 
-// Removes all qty for the warehouse
-func RemoveGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string) error {
-	_, err := dbconfig.DB.GetVariants(ctx)
+/* ---- Products ----*/
+
+/*
+Checks if the VID exists internally.
+
+Returns an empty string if it doesn't and the VID if it does
+*/
+func (dbconfig *DbConfig) ExistsVID(sku string, r *http.Request) (string, error) {
+	pid, err := dbconfig.DB.GetVIDBySKU(r.Context(), sku)
 	if err != nil {
-		return err
+		return "", err
 	}
-	err = dbconfig.DB.RemoveQtyByWarehouseName(ctx, warehouse_name)
+	if len(pid.ShopifyVariantID) > 0 && pid.ShopifyVariantID != "" {
+		return pid.ShopifyVariantID, nil
+	}
+	return "", nil
+}
+
+/*
+Checks if the PID exists internally
+
+Returns an empty string if it doesn't and the PID if it does
+*/
+func (dbconfig *DbConfig) ExistsPID(product_code string, r *http.Request) (string, error) {
+	pid, err := dbconfig.DB.GetPIDByProductCode(r.Context(), product_code)
+	if err != nil {
+		return "", err
+	}
+	if len(pid.ShopifyProductID) > 0 && pid.ShopifyProductID != "" {
+		return pid.ShopifyProductID, nil
+	}
+	return "", nil
+}
+
+/* Convert Product (POST) into CSVProduct */
+func ConvertProductToAppProduct(products objects.RequestBodyProduct) []objects.AppProduct {
+	csv_products := []objects.AppProduct{}
+	for _, variant := range products.Variants {
+		csv_product := objects.AppProduct{
+			ProductCode:  products.ProductCode,
+			Active:       "1",
+			Title:        products.Title,
+			BodyHTML:     products.BodyHTML,
+			Category:     products.Category,
+			Vendor:       products.Vendor,
+			ProductType:  products.ProductType,
+			SKU:          variant.Sku,
+			Option1Value: variant.Option1,
+			Option2Value: variant.Option2,
+			Option3Value: variant.Option3,
+			Barcode:      variant.Barcode,
+		}
+		if len(products.ProductOptions) == 1 {
+			csv_product.Option1Name = utils.IssetString(products.ProductOptions[0].Value)
+			if len(products.ProductOptions) == 2 {
+				csv_product.Option2Name = utils.IssetString(products.ProductOptions[1].Value)
+				if len(products.ProductOptions) == 3 {
+					csv_product.Option3Name = utils.IssetString(products.ProductOptions[2].Value)
+				}
+			}
+		}
+		csv_products = append(csv_products, csv_product)
+	}
+	return csv_products
+}
+
+/* Checks if a price tier already exists in the database for a certain SKU */
+func CheckExistsPriceTier(dbconfig *DbConfig, ctx context.Context, sku, price_tier string, split bool) (bool, error) {
+	price_tiers, err := dbconfig.DB.GetVariantPricingBySKU(ctx, sku)
+	if err != nil {
+		return false, err
+	}
+	if split {
+		price_tier_split := strings.Split(price_tier, "_")
+		for _, value := range price_tiers {
+			if value.Name == price_tier_split[0] {
+				return true, nil
+			}
+		}
+	} else {
+		for _, value := range price_tiers {
+			if value.Name == price_tier {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+/* Checks if a image already exists on a product */
+func CheckExistsProductImage(dbconfig *DbConfig, ctx context.Context, product_id uuid.UUID, image_url string, position int) (bool, error) {
+	images, err := dbconfig.DB.GetProductImageByProductID(ctx, product_id)
+	if err != nil {
+		return false, err
+	}
+	for _, image := range images {
+		if image.Position == int32(position) {
+			if image.ImageUrl == image_url {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+/* Checks if a warehouse already exists in the database for a certain SKU */
+func CheckExistsWarehouse(dbconfig *DbConfig, ctx context.Context, sku, warehouse string) (bool, error) {
+	// checks if the SKU has the respective warehouse associated to it
+	warehouses, err := dbconfig.DB.GetVariantQtyBySKU(ctx, database.GetVariantQtyBySKUParams{
+		Sku:  sku,
+		Name: warehouse,
+	})
+	if err != nil {
+		return false, err
+	}
+	warehouse_split := strings.Split(warehouse, "_")
+	for _, value := range warehouses {
+		if value.Name == warehouse_split[0] {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+/*
+Returns the maximum count inside the database for the respective column type.
+
+Note images will count the amount of columns where Prices/Warehouse will count the unique price tiers.
+*/
+func IOGetMax(dbconfig *DbConfig, ctx context.Context, column_type string) (int, error) {
+	max := 0
+	if column_type == "image" {
+		max_db, err := dbconfig.DB.GetMaxImagePosition(ctx)
+		if err != nil {
+			return 0, err
+		}
+		max = int(max_db)
+	} else if column_type == "price" {
+		max_db, err := dbconfig.DB.GetCountOfUniquePrices(ctx)
+		if err != nil {
+			return 0, err
+		}
+		max = int(max_db)
+	} else if column_type == "qty" {
+		max_db, err := dbconfig.DB.GetCountOfUniqueWarehouses(ctx)
+		if err != nil {
+			return 0, err
+		}
+		max = int(max_db)
+	} else {
+		return 0, errors.New("invalid column type to retrieve maximum of")
+	}
+	return max, nil
+}
+
+/*
+Returns an array of strings containing the unique price tiers appended with the keyword price_
+*/
+func AddPricingHeaders(dbconfig *DbConfig, ctx context.Context) ([]string, error) {
+	price_tiers := []string{}
+	price_tiers_db, err := dbconfig.DB.GetUniquePriceTiers(ctx)
+	if err != nil {
+		return price_tiers, err
+	}
+	for _, price := range price_tiers_db {
+		price_tiers = append(price_tiers, "price_"+price)
+	}
+	return price_tiers, nil
+}
+
+/*
+Returns an array of strings containing the unique warehouses appended with the keyword qty_
+*/
+func AddQtyHeaders(dbconfig *DbConfig, ctx context.Context) ([]string, error) {
+	warehouses := []string{}
+	warehouses_db, err := dbconfig.DB.GetUniqueWarehouses(ctx)
+	if err != nil {
+		return warehouses, err
+	}
+	for _, warehouse := range warehouses_db {
+		warehouses = append(warehouses, "qty_"+warehouse)
+	}
+	return warehouses, nil
+}
+
+/* ---- Orders ----*/
+
+/* ---- Customers ----*/
+
+/* Creates an address */
+func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
+	return database.CreateAddressParams{
+		ID:         uuid.New(),
+		CustomerID: customer_id,
+		Type:       utils.ConvertStringToSQL("default"),
+		FirstName:  order_body.Customer.DefaultAddress.FirstName,
+		LastName:   order_body.Customer.DefaultAddress.LastName,
+		Address1:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
+		Address2:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
+		Suburb:     utils.ConvertStringToSQL(""),
+		City:       utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.City),
+		Province:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Province),
+		PostalCode: utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Zip),
+		Company:    utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Company),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+}
+
+/* Creates an address */
+func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
+	return database.CreateAddressParams{
+		ID:         uuid.New(),
+		CustomerID: customer_id,
+		Type:       utils.ConvertStringToSQL("shipping"),
+		FirstName:  order_body.ShippingAddress.FirstName,
+		LastName:   order_body.ShippingAddress.LastName,
+		Address1:   utils.ConvertStringToSQL(order_body.ShippingAddress.FirstName),
+		Address2:   utils.ConvertStringToSQL(order_body.ShippingAddress.LastName),
+		Suburb:     utils.ConvertStringToSQL(""),
+		City:       utils.ConvertStringToSQL(order_body.ShippingAddress.City),
+		Province:   utils.ConvertStringToSQL(order_body.ShippingAddress.Province),
+		PostalCode: utils.ConvertStringToSQL(order_body.ShippingAddress.Zip),
+		Company:    utils.ConvertStringToSQL(order_body.ShippingAddress.Company),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+}
+
+/* Creates an address */
+func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
+	return database.CreateAddressParams{
+		ID:         uuid.New(),
+		CustomerID: customer_id,
+		Type:       utils.ConvertStringToSQL("billing"),
+		FirstName:  order_body.BillingAddress.FirstName,
+		LastName:   order_body.BillingAddress.LastName,
+		Address1:   utils.ConvertStringToSQL(order_body.BillingAddress.FirstName),
+		Address2:   utils.ConvertStringToSQL(order_body.BillingAddress.LastName),
+		Suburb:     utils.ConvertStringToSQL(""),
+		City:       utils.ConvertStringToSQL(order_body.BillingAddress.City),
+		Province:   utils.ConvertStringToSQL(order_body.BillingAddress.Province),
+		PostalCode: utils.ConvertStringToSQL(order_body.BillingAddress.Zip),
+		Company:    utils.ConvertStringToSQL(order_body.BillingAddress.Company),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+}
+
+/* ---- Warehouse/Location ----*/
+
+/*
+Removes the inventory warehouse internally.
+
+Note that doing this will remove all quantity from current products in that warehouse
+*/
+func RemoveGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string) error {
+	err := dbconfig.DB.RemoveQtyByWarehouseName(ctx, warehouse_name)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// Inserts new warehouse for all current variations
+/* Inserts new warehouse for all current variations */
 func InsertGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string, reindex bool) error {
 	variants := []uuid.UUID{}
 	// if it should be reindex, then only retrieve the variant ids that doesn't
@@ -62,8 +313,9 @@ func InsertGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_na
 	return nil
 }
 
-// Parses the data and fills in the missing hourly values
-// with a 0 value if it does not exist.
+/* ---- Statistics ----*/
+
+/* Parses the data and fills in the missing hourly values with a 0 value if it does not exist. */
 func ParseFetchStats(data []database.GetFetchStatsRow) objects.FetchAmountResponse {
 	// get the last record (24 hrs back) of time using the first record
 	// which should be the latest
@@ -87,8 +339,7 @@ func ParseFetchStats(data []database.GetFetchStatsRow) objects.FetchAmountRespon
 	// TODO should I return the missing values as well?
 }
 
-// Parses the data and fills in the missing daily values
-// with a 0 value if it does not exist.
+/* Parses the data and fills in the missing daily values with a 0 value if it does not exist. */
 func ParseOrderStatsNotPaid(data []database.FetchOrderStatsNotPaidRow) objects.OrderAmountResponse {
 	// TODO should I return the missing values
 	// if it has 2023-12-05 07, but skips 09 should I make it
@@ -104,8 +355,7 @@ func ParseOrderStatsNotPaid(data []database.FetchOrderStatsNotPaidRow) objects.O
 	}
 }
 
-// Parses the data and fills in the missing daily values
-// with a 0 value if it does not exist.
+/* Parses the data and fills in the missing daily values with a 0 value if it does not exist. */
 func ParseOrderStatsPaid(data []database.FetchOrderStatsPaidRow) objects.OrderAmountResponse {
 	// TODO should I return the missing values
 	// if it has 2023-12-05 07, but skips 09 should I make it
@@ -121,35 +371,9 @@ func ParseOrderStatsPaid(data []database.FetchOrderStatsPaidRow) objects.OrderAm
 	}
 }
 
-// Checks if the VID exists internally.
-// Returns an empty string if it doesn't
-// and the VID if it does
-func (dbconfig *DbConfig) ExistsVID(sku string, r *http.Request) (string, error) {
-	pid, err := dbconfig.DB.GetVIDBySKU(r.Context(), sku)
-	if err != nil {
-		return "", err
-	}
-	if len(pid.ShopifyVariantID) > 0 && pid.ShopifyVariantID != "" {
-		return pid.ShopifyVariantID, nil
-	}
-	return "", nil
-}
+/* ---- Helpers ----*/
 
-// Checks if the PID exists internally
-// Returns an empty string if it doesn't
-// and the PID if it does
-func (dbconfig *DbConfig) ExistsPID(product_code string, r *http.Request) (string, error) {
-	pid, err := dbconfig.DB.GetPIDByProductCode(r.Context(), product_code)
-	if err != nil {
-		return "", err
-	}
-	if len(pid.ShopifyProductID) > 0 && pid.ShopifyProductID != "" {
-		return pid.ShopifyProductID, nil
-	}
-	return "", nil
-}
-
-// checks if a username already exists inside database
+/* Checks if a username already exists inside database */
 func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, error) {
 	username, err := dbconfig.DB.GetUserByName(r.Context(), name)
 	if err != nil {
@@ -164,7 +388,7 @@ func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, er
 	return false, nil
 }
 
-// checks if the credentials in the request body refer to a user
+/* Checks if the credentials in the request body refer to a user */
 func (dbconfig *DbConfig) CheckUserCredentials(
 	request_body objects.RequestBodyLogin,
 	r *http.Request,
@@ -182,7 +406,7 @@ func (dbconfig *DbConfig) CheckUserCredentials(
 	return db_user, true, nil
 }
 
-// checks if a token already exists in the database
+/* Checks if a token already exists in the database */
 func (dbconfig *DbConfig) CheckTokenExists(email string, r *http.Request) (uuid.UUID, bool, error) {
 	token, err := dbconfig.DB.GetToken(r.Context(), email)
 	if err != nil {
@@ -196,7 +420,7 @@ func (dbconfig *DbConfig) CheckTokenExists(email string, r *http.Request) (uuid.
 	return uuid.UUID{}, false, nil
 }
 
-// checks if a token already exists in the database
+/* Checks if a token already exists in the database */
 func (dbconfig *DbConfig) CheckUserEmailType(email, user_type string) (bool, error) {
 	db_username, err := dbconfig.DB.GetUserByEmailType(context.Background(), database.GetUserByEmailTypeParams{
 		Email:    email,
@@ -213,68 +437,7 @@ func (dbconfig *DbConfig) CheckUserEmailType(email, user_type string) (bool, err
 	return false, nil
 }
 
-// Creates an address
-func CreateDefaultAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
-	return database.CreateAddressParams{
-		ID:         uuid.New(),
-		CustomerID: customer_id,
-		Type:       utils.ConvertStringToSQL("default"),
-		FirstName:  order_body.Customer.DefaultAddress.FirstName,
-		LastName:   order_body.Customer.DefaultAddress.LastName,
-		Address1:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
-		Address2:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
-		Suburb:     utils.ConvertStringToSQL(""),
-		City:       utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.City),
-		Province:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Province),
-		PostalCode: utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Zip),
-		Company:    utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Company),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
-	}
-}
-
-// Creates an address
-func CreateShippingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
-	return database.CreateAddressParams{
-		ID:         uuid.New(),
-		CustomerID: customer_id,
-		Type:       utils.ConvertStringToSQL("shipping"),
-		FirstName:  order_body.ShippingAddress.FirstName,
-		LastName:   order_body.ShippingAddress.LastName,
-		Address1:   utils.ConvertStringToSQL(order_body.ShippingAddress.FirstName),
-		Address2:   utils.ConvertStringToSQL(order_body.ShippingAddress.LastName),
-		Suburb:     utils.ConvertStringToSQL(""),
-		City:       utils.ConvertStringToSQL(order_body.ShippingAddress.City),
-		Province:   utils.ConvertStringToSQL(order_body.ShippingAddress.Province),
-		PostalCode: utils.ConvertStringToSQL(order_body.ShippingAddress.Zip),
-		Company:    utils.ConvertStringToSQL(order_body.ShippingAddress.Company),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
-	}
-}
-
-// Creates an address
-func CreateBillingAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID) database.CreateAddressParams {
-	return database.CreateAddressParams{
-		ID:         uuid.New(),
-		CustomerID: customer_id,
-		Type:       utils.ConvertStringToSQL("billing"),
-		FirstName:  order_body.BillingAddress.FirstName,
-		LastName:   order_body.BillingAddress.LastName,
-		Address1:   utils.ConvertStringToSQL(order_body.BillingAddress.FirstName),
-		Address2:   utils.ConvertStringToSQL(order_body.BillingAddress.LastName),
-		Suburb:     utils.ConvertStringToSQL(""),
-		City:       utils.ConvertStringToSQL(order_body.BillingAddress.City),
-		Province:   utils.ConvertStringToSQL(order_body.BillingAddress.Province),
-		PostalCode: utils.ConvertStringToSQL(order_body.BillingAddress.Zip),
-		Company:    utils.ConvertStringToSQL(order_body.BillingAddress.Company),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
-	}
-}
-
-// Creates a map of product options vs their names
-// map[OptionName][OptionValue]
+/* Creates a map of product options vs their names map[OptionName][OptionValue] */
 func CreateOptionMap(
 	option_names []objects.ProductOptions,
 	variants []objects.ProductVariant) map[string][]string {
@@ -294,8 +457,8 @@ func CreateOptionMap(
 	return mapp
 }
 
-// Create Option Name array
-func CreateOptionNamesMap(csv_product objects.CSVProduct) []string {
+/* Create Option Name array */
+func CreateOptionNamesMap(csv_product objects.AppProduct) []string {
 	mapp := []string{}
 	mapp = append(mapp, csv_product.Option1Name)
 	mapp = append(mapp, csv_product.Option2Name)
@@ -303,8 +466,8 @@ func CreateOptionNamesMap(csv_product objects.CSVProduct) []string {
 	return mapp
 }
 
-// Create option Value array
-func CreateOptionValuesMap(csv_product objects.CSVProduct) []string {
+/* Create option Value array */
+func CreateOptionValuesMap(csv_product objects.AppProduct) []string {
 	mapp := []string{}
 	mapp = append(mapp, csv_product.Option1Value)
 	mapp = append(mapp, csv_product.Option2Value)
@@ -312,153 +475,11 @@ func CreateOptionValuesMap(csv_product objects.CSVProduct) []string {
 	return mapp
 }
 
-// Creates a map with images in
-func CreateImageMap(csv_product objects.CSVProduct) []string {
+/* Creates an array map with images  */
+func CreateImageMap(csv_product objects.AppProduct) []string {
 	images := []string{}
 	images = append(images, csv_product.Image1)
 	images = append(images, csv_product.Image2)
 	images = append(images, csv_product.Image3)
 	return images
-}
-
-// Convert Product (POST) into CSVProduct
-func ConvertProductToCSV(products objects.RequestBodyProduct) []objects.CSVProduct {
-	csv_products := []objects.CSVProduct{}
-	for _, variant := range products.Variants {
-		csv_product := objects.CSVProduct{
-			ProductCode:  products.ProductCode,
-			Active:       "1",
-			Title:        products.Title,
-			BodyHTML:     products.BodyHTML,
-			Category:     products.Category,
-			Vendor:       products.Vendor,
-			ProductType:  products.ProductType,
-			SKU:          variant.Sku,
-			Option1Value: variant.Option1,
-			Option2Value: variant.Option2,
-			Option3Value: variant.Option3,
-			Barcode:      variant.Barcode,
-		}
-		if len(products.ProductOptions) == 1 {
-			csv_product.Option1Name = utils.IssetString(products.ProductOptions[0].Value)
-			if len(products.ProductOptions) == 2 {
-				csv_product.Option2Name = utils.IssetString(products.ProductOptions[1].Value)
-				if len(products.ProductOptions) == 3 {
-					csv_product.Option3Name = utils.IssetString(products.ProductOptions[2].Value)
-				}
-			}
-		}
-		csv_products = append(csv_products, csv_product)
-	}
-	return csv_products
-}
-
-// Checks if a price tier already exists
-// in the database for a certain SKU
-func CheckExistsPriceTier(dbconfig *DbConfig, ctx context.Context, sku, price_tier string, split bool) (bool, error) {
-	price_tiers, err := dbconfig.DB.GetVariantPricingBySKU(ctx, sku)
-	if err != nil {
-		return false, err
-	}
-	if split {
-		price_tier_split := strings.Split(price_tier, "_")
-		for _, value := range price_tiers {
-			if value.Name == price_tier_split[0] {
-				return true, nil
-			}
-		}
-	} else {
-		for _, value := range price_tiers {
-			if value.Name == price_tier {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
-}
-
-// Checks if a image already exists on a product
-func CheckExistsProductImage(dbconfig *DbConfig, ctx context.Context, product_id uuid.UUID, image_url string, position int) (bool, error) {
-	images, err := dbconfig.DB.GetProductImageByProductID(ctx, product_id)
-	if err != nil {
-		return false, err
-	}
-	for _, image := range images {
-		if image.Position == int32(position) {
-			if image.ImageUrl == image_url {
-				return true, nil
-			}
-		}
-	}
-	return false, nil
-}
-
-// Checks if a warehouse already exists
-// in the database for a certain SKU
-func CheckExistsWarehouse(dbconfig *DbConfig, ctx context.Context, sku, warehouse string) (bool, error) {
-	// checks if the SKU has the respective warehouse associated to it
-	warehouses, err := dbconfig.DB.GetVariantQtyBySKU(ctx, database.GetVariantQtyBySKUParams{
-		Sku:  sku,
-		Name: warehouse,
-	})
-	if err != nil {
-		return false, err
-	}
-	warehouse_split := strings.Split(warehouse, "_")
-	for _, value := range warehouses {
-		if value.Name == warehouse_split[0] {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func IOGetMax(dbconfig *DbConfig, ctx context.Context, column_type string) (int, error) {
-	max := 0
-	if column_type == "image" {
-		max_db, err := dbconfig.DB.GetMaxImagePosition(ctx)
-		if err != nil {
-			return 0, err
-		}
-		max = int(max_db)
-	} else if column_type == "price" {
-		max_db, err := dbconfig.DB.GetCountOfUniquePrices(ctx)
-		if err != nil {
-			return 0, err
-		}
-		max = int(max_db)
-	} else if column_type == "qty" {
-		max_db, err := dbconfig.DB.GetCountOfUniqueWarehouses(ctx)
-		if err != nil {
-			return 0, err
-		}
-		max = int(max_db)
-	} else {
-		return 0, errors.New("invalid column type to retrieve maximum of")
-	}
-	return max, nil
-}
-
-func AddPricingHeaders(dbconfig *DbConfig, ctx context.Context) ([]string, error) {
-	price_tiers := []string{}
-	price_tiers_db, err := dbconfig.DB.GetUniquePriceTiers(ctx)
-	if err != nil {
-		return price_tiers, err
-	}
-	for _, price := range price_tiers_db {
-		price_tiers = append(price_tiers, "price_"+price)
-	}
-	return price_tiers, nil
-}
-
-func AddQtyHeaders(dbconfig *DbConfig, ctx context.Context) ([]string, error) {
-	warehouses := []string{}
-	warehouses_db, err := dbconfig.DB.GetUniqueWarehouses(ctx)
-	if err != nil {
-		return warehouses, err
-	}
-	for _, warehouse := range warehouses_db {
-		warehouses = append(warehouses, "qty_"+warehouse)
-	}
-	return warehouses, nil
 }
