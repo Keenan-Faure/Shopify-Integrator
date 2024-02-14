@@ -74,14 +74,6 @@ func ConvertIntToSQL(value int) sql.NullInt32 {
 	}
 }
 
-// Checks if the error is a duplicated error
-func ConfirmError(err_message string) string {
-	if err_message == "pq: duplicate key value violates unique constraint" {
-		return "duplicate fields not allowed - " + err_message[50:]
-	}
-	return err_message
-}
-
 // Checks if a variable is set (string)
 func IssetString(variable string) string {
 	if variable != "" || len(variable) != 0 {

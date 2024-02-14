@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -107,21 +106,6 @@ func TestConvertIntToSQL(t *testing.T) {
 	results = ConvertIntToSQL(arg)
 	if !results.Valid {
 		t.Errorf("Expected 'false' but found 'true")
-	}
-}
-
-func TestConfirmError(t *testing.T) {
-	fmt.Println("Test case 1 - Valid Duplicate Error")
-	err := errors.New("pq: duplicate key value violates unique constraint")
-	results := ConfirmError(err.Error())
-	if results != "duplicate fields not allowed - " {
-		t.Errorf("Unexpected results, expected 'duplicate fields not allowed' but found " + results)
-	}
-	fmt.Println("Test case 2 - None Duplicate Error")
-	err = errors.New("Invalid database credentials")
-	results = ConfirmError(err.Error())
-	if results == "duplicate fields not allowed" {
-		t.Errorf("Unexpected results, expected 'Invalid database credentials' but found " + results)
 	}
 }
 
