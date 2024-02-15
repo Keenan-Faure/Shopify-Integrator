@@ -11,6 +11,107 @@ import (
 	"github.com/google/uuid"
 )
 
+// Compile Queue Filter Search into a single object (variable)
+func CompileRemoveQueueFilter(
+	dbconfig *DbConfig,
+	ctx context.Context,
+	queue_type,
+	status,
+	instruction string) (string, error) {
+	if queue_type == "" {
+		if status == "" {
+			err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
+			if err != nil {
+				return "error", err
+			}
+			return "success", nil
+		} else {
+			if instruction == "" {
+				err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
+				if err != nil {
+					return "error", err
+				}
+				return "success", nil
+			}
+			err := dbconfig.DB.RemoveQueueItemsByStatusAndInstruction(
+				ctx,
+				database.RemoveQueueItemsByStatusAndInstructionParams{
+					Instruction: instruction,
+					Status:      status,
+				})
+			if err != nil {
+				return "error", err
+			}
+			return "success", nil
+		}
+	}
+	if status == "" {
+		if instruction == "" {
+			err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
+			if err != nil {
+				return "error", err
+			}
+			return "success", nil
+		} else {
+			if queue_type == "" {
+				err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
+				if err != nil {
+					return "error", err
+				}
+				return "success", nil
+			}
+			err := dbconfig.DB.RemoveQueueItemsByTypeAndInstruction(
+				ctx,
+				database.RemoveQueueItemsByTypeAndInstructionParams{
+					Instruction: instruction,
+					QueueType:   queue_type,
+				})
+			if err != nil {
+				return "error", err
+			}
+			return "success", nil
+		}
+	}
+	if instruction == "" {
+		if queue_type == "" {
+			err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
+			if err != nil {
+				return "error", err
+			}
+			return "success", nil
+		} else {
+			if status == "" {
+				err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
+				if err != nil {
+					return "error", err
+				}
+				return "success", nil
+			}
+			err := dbconfig.DB.RemoveQueueItemsByStatusAndType(
+				ctx,
+				database.RemoveQueueItemsByStatusAndTypeParams{
+					Status:    status,
+					QueueType: queue_type,
+				})
+			if err != nil {
+				return "error", err
+			}
+			return "success", nil
+		}
+	}
+	err := dbconfig.DB.RemoveQueueItemsFilter(
+		ctx,
+		database.RemoveQueueItemsFilterParams{
+			Status:      status,
+			QueueType:   queue_type,
+			Instruction: instruction,
+		})
+	if err != nil {
+		return "error", err
+	}
+	return "success", nil
+}
+
 // Convert Database.User to objects.ResponseRegister
 func ConvertDatabaseToRegister(user database.User) objects.ResponseRegister {
 	return objects.ResponseRegister{
