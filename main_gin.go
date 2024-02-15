@@ -135,6 +135,14 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	auth.POST("/shopify/webhook", dbconfig.AddWebhookHandle())
 	auth.DELETE("/shopify/webhook", dbconfig.DeleteWebhookHandle())
 
+	/* Settings */
+	auth.GET("/shopify/settings", dbconfig.GetShopifySettingValue())
+	auth.PUT("/shopify/settings", dbconfig.AddShopifySetting())
+
+	// app settings
+	auth.GET("/settings", dbconfig.GetAppSettingValue())
+	auth.PUT("/settings", dbconfig.AddAppSetting())
+
 	/* --------- N/A Auth routes --------- */
 
 	nauth := r.Group("/api")
