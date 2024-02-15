@@ -152,3 +152,14 @@ func RandStringBytes(n int) string {
 	}
 	return base64.StdEncoding.EncodeToString(b)
 }
+
+// Helper function: Checks if the worker type is valid
+func CheckWorkerType(worker_type string) error {
+	worker_types := []string{"product", "product_variant", "order"}
+	for _, value := range worker_types {
+		if value == worker_type {
+			return nil
+		}
+	}
+	return errors.New("invalid worker type")
+}

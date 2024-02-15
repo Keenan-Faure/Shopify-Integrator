@@ -208,3 +208,36 @@ func TestGetNextURL(t *testing.T) {
 		t.Errorf("Expected string '>' to be removed from result")
 	}
 }
+
+func TestCheckWorkerType(t *testing.T) {
+	fmt.Println("Test Case 1 - Invalid worker type")
+	worker_type := "script"
+	err := CheckWorkerType(worker_type)
+	if err == nil {
+		t.Errorf("Expected error but found nil")
+	}
+	fmt.Println("Test Case 2 - product worker type")
+	worker_type = "product"
+	err = CheckWorkerType(worker_type)
+	if err != nil {
+		t.Errorf("Expected nil but found error")
+	}
+	fmt.Println("Test Case 3 - product_variant worker type")
+	worker_type = "product_variant"
+	err = CheckWorkerType(worker_type)
+	if err != nil {
+		t.Errorf("Expected nil but found error")
+	}
+	fmt.Println("Test Case 4 - order worker type")
+	worker_type = "order"
+	err = CheckWorkerType(worker_type)
+	if err != nil {
+		t.Errorf("Expected nil but found error")
+	}
+	fmt.Println("Test Case 5 - Invalid worker type - CASE difference")
+	worker_type = "PrOdUcT_vArIant"
+	err = CheckWorkerType(worker_type)
+	if err == nil {
+		t.Errorf("Expected error but found nil")
+	}
+}
