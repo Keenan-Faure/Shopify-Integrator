@@ -28,6 +28,13 @@ func storeConfig(conn *sql.DB) DbConfig {
 		}
 		return config
 	} else {
+		if err.Error() == "sql: no rows in result set" {
+			config := DbConfig{
+				DB:    database.New(conn),
+				Valid: true,
+			}
+			return config
+		}
 		config := DbConfig{
 			DB:    database.New(conn),
 			Valid: false,
