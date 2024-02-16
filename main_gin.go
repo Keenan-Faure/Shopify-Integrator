@@ -18,8 +18,6 @@ type DbConfig struct {
 	Valid bool
 }
 
-const file_path = "./app"
-
 func main() {
 	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
 	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
@@ -64,6 +62,14 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	r.ForwardedByClientIP = true
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 
+	/* --------- N/A Auth routes --------- */
+
+	nauth := r.Group("/api")
+
+	nauth.GET("/ready", dbconfig.ReadyHandle())
+	nauth.POST("/preregister", dbconfig.PreRegisterHandle())
+	nauth.POST("/register", dbconfig.RegisterHandle())
+
 	/* --------- Auth routes --------- */
 	auth := r.Group("/api")
 
@@ -86,7 +92,7 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	auth.POST("/products/import", dbconfig.ProductImportHandle())
 	auth.POST("/products/export", dbconfig.ProductExportHandle())
 
-	auth.DELETE("/products/:variant_id", dbconfig.RemoveProductVariantHandle())
+	auth.DELETE("/products/:id/variants/:variant_id", dbconfig.RemoveProductVariantHandle())
 	auth.DELETE("/products/:id", dbconfig.RemoveProductHandle())
 
 	/* Orders */
@@ -152,13 +158,8 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	auth.DELETE("/queue/{id}", dbconfig.ClearQueueByID())
 	auth.DELETE("/queue", dbconfig.ClearQueueByFilter())
 
-	/* --------- N/A Auth routes --------- */
-
-	nauth := r.Group("/api")
-
-	nauth.GET("/ready", dbconfig.ReadyHandle())
-	nauth.POST("/preregister", dbconfig.PreRegisterHandle())
-	nauth.POST("/register", dbconfig.RegisterHandle())
+	// setup file server
+	r.StaticFS("/static", gin.Dir("./app/export", true))
 
 	r.Run(":8080")
 }
