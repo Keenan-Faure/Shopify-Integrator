@@ -1319,7 +1319,7 @@ func (dbconfig *DbConfig) RemoveProductHandle() gin.HandlerFunc {
 /*
 Removes the specific variant from a product
 
-Route: /api/products/{variant_id}
+Route: /api/products/{id}/variants/{variant_id}
 
 Authorization: Basic, QueryParams, Headers
 
@@ -1329,8 +1329,19 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) RemoveProductVariantHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		product_id := c.Param("id")
+		err := IDValidation(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		product_uuid, err := uuid.Parse(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode variant id: "+product_id)
+			return
+		}
 		variant_id := c.Param("variant_id")
-		err := IDValidation(variant_id)
+		err = IDValidation(variant_id)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
@@ -1340,8 +1351,17 @@ func (dbconfig *DbConfig) RemoveProductVariantHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "could not decode variant id: "+variant_id)
 			return
 		}
-		err = dbconfig.DB.RemoveVariant(c.Request.Context(), variant_uuid)
+		err = dbconfig.DB.RemoveVariant(c.Request.Context(), database.RemoveVariantParams{
+			ID:        variant_uuid,
+			ProductID: product_uuid,
+		})
 		if err != nil {
+			// TODO whether it exists or not is something that the query can decide
+			// or should we do a prior check to avoid unnecessary code from running?
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, err.Error())
+				return
+			}
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
