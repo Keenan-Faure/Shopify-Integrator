@@ -260,11 +260,10 @@ Response-Type: application/json
 Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) QueueViewCurrentItem() gin.HandlerFunc {
-	// TODO is this still used
 	return func(c *gin.Context) {
 		queue_items, err := dbconfig.DB.GetQueueItemsByDate(c.Request.Context(), database.GetQueueItemsByDateParams{
 			Status: "processing",
-			Limit:  1,
+			Limit:  1, // there should onlt be one item
 			Offset: 0,
 		})
 		if err != nil {

@@ -139,9 +139,18 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	auth.GET("/shopify/settings", dbconfig.GetShopifySettingValue())
 	auth.PUT("/shopify/settings", dbconfig.AddShopifySetting())
 
-	// app settings
 	auth.GET("/settings", dbconfig.GetAppSettingValue())
 	auth.PUT("/settings", dbconfig.AddAppSetting())
+
+	/* Queue */
+	auth.GET("/queue/{id}", dbconfig.GetQueueItemByID())
+	auth.GET("/queue", dbconfig.QueueViewNextItems())
+	auth.GET("/queue/filter", dbconfig.FilterQueueItems())
+	auth.GET("/queue/view", dbconfig.QueueView())
+	auth.GET("/queue/processing", dbconfig.QueueViewCurrentItem())
+	auth.POST("/queue", dbconfig.QueuePush())
+	auth.DELETE("/queue/{id}", dbconfig.ClearQueueByID())
+	auth.DELETE("/queue", dbconfig.ClearQueueByFilter())
 
 	/* --------- N/A Auth routes --------- */
 
