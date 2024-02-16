@@ -100,4 +100,4 @@ WHERE id NOT IN (
 
 -- name: RemoveVariant :exec
 DELETE FROM variants
-WHERE id = $1;
+WHERE id = $1 AND product_id = $2;
