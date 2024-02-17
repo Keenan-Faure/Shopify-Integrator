@@ -48,10 +48,11 @@ func main() {
 			}
 		}
 	}
-	setUpAPI(&dbCon, &shopifyConfig)
+	r := setUpAPI(&dbCon, &shopifyConfig)
+	r.Run(":8080")
 }
 
-func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
+func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) *gin.Engine {
 	r := gin.Default()
 
 	// authentication methods
@@ -155,11 +156,16 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) {
 	auth.GET("/queue/view", dbconfig.QueueView())
 	auth.GET("/queue/processing", dbconfig.QueueViewCurrentItem())
 	auth.POST("/queue", dbconfig.QueuePush())
-	auth.DELETE("/queue/{id}", dbconfig.ClearQueueByID())
 	auth.DELETE("/queue", dbconfig.ClearQueueByFilter())
+	auth.DELETE("/queue/{id}", dbconfig.ClearQueueByID())
 
-	// setup file server
+	/* OAuth2.0 */
+	auth.GET("/google/login", dbconfig.OAuthGoogleLogin())
+	auth.GET("/google/callback", dbconfig.OAuthGoogleCallback())
+	auth.GET("/google/oauth2/login", dbconfig.OAuthGoogleOAuth())
+
+	/* setup file server */
 	r.StaticFS("/static", gin.Dir("./app/export", true))
 
-	r.Run(":8080")
+	return r
 }
