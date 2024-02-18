@@ -27,13 +27,9 @@ func TestRegisterRoute(t *testing.T) {
 	shopifyConfig := shopify.InitConfigShopify()
 	router := setUpAPI(&dbconfig, &shopifyConfig)
 
-	product_data := payload("product")
-	database_user := create_database_user(&dbconfig)
-
-	defer dbconfig.DB.RemoveUser(context.Background(), database_user.ApiKey)
-
+	registration_data := payload("registration")
 	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(product_data)
+	err := json.NewEncoder(&buffer).Encode(registration_data)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -48,7 +44,8 @@ func TestRegisterRoute(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	assert.Equal(t, "OK", response.ApiKey)
+	assert.Equal(t, "test", response.Name)
+	dbconfig.DB.RemoveUser(context.Background(), response.ApiKey)
 
 	/* Test 2 - Invalid request body */
 
