@@ -21,6 +21,50 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestProductsRoute(t *testing.T) {
+	/* Test 1 - Invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/products?page=1", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - Invalid page number */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products?page=-1&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	/* Test 4 - Invalid page number (string) */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products?page=two&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	/* Test 5 - Valid request */
+	productData := createDatabaseProduct(&dbconfig)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), productData.ProductCode)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products?page=1&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response := []objects.Product{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.NotEqual(t, 0, len(response))
+}
+
 func TestProductIDRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
@@ -41,6 +85,7 @@ func TestProductIDRoute(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
+
 	/* Test 4 - Invalid product_id (404) */
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products/"+uuid.New().String()+"?api_key="+dbUser.ApiKey, nil)

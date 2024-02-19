@@ -452,7 +452,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) GetInventoryWarehouses() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		warehouses, err := dbconfig.DB.GetWarehouses(c.Request.Context(), database.GetWarehousesParams{
@@ -785,7 +785,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) LocationWarehouseHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		shopify_locations, err := dbconfig.DB.GetShopifyLocations(c.Request.Context(), database.GetShopifyLocationsParams{
@@ -891,7 +891,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) ConfigLocationWarehouseHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		shopifyConfig := shopify.InitConfigShopify()
@@ -1064,7 +1064,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) CustomersHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		dbCustomers, err := dbconfig.DB.GetCustomers(c.Request.Context(), database.GetCustomersParams{
@@ -1257,7 +1257,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) OrdersHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		dbOrders, err := dbconfig.DB.GetOrders(c.Request.Context(), database.GetOrdersParams{
@@ -1807,7 +1807,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) ProductFilterHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		query_param_type := utils.ConfirmFilters(c.Query("type"))
@@ -1875,7 +1875,7 @@ Possible HTTP Codes: 200, 400, 404, 401, 500
 func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		dbProducts, err := dbconfig.DB.GetProducts(c.Request.Context(), database.GetProductsParams{

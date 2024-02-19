@@ -233,7 +233,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) FilterQueueItems() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		param_type := utils.ConfirmFilters(c.Query("type"))
@@ -287,7 +287,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) QueueViewNextItems() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, err := strconv.Atoi(c.Query("page"))
-		if err != nil {
+		if err != nil || page < 0 {
 			page = 1
 		}
 		queue_items, err := dbconfig.DB.GetQueueItemsByDate(c.Request.Context(), database.GetQueueItemsByDateParams{
