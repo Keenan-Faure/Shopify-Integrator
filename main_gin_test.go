@@ -21,35 +21,158 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestProductIDRoute(t *testing.T) {
+	/* Test 1 - Invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/products/abctest123", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - Invalid product_id (malformed) */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/abctest123?api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	/* Test 4 - Invalid product_id (404) */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/"+uuid.New().String()+"?api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+
+	/* Test 5 - Valid request */
+	productData := createDatabaseProduct(&dbconfig)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), productData.ProductCode)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/"+productData.ID.String()+"?api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+}
+
+func TestLoginRoute(t *testing.T) {
+	/* Test 1 - Invalid request - empty username/password */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	loginData := LoginPayload()
+	loginData.Username = ""
+	loginData.Password = ""
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(loginData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/login", &buffer)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+
+	/* Test 2 - Invalid request - non empty username/password but invalid credentials) */
+	loginData = LoginPayload()
+	err = json.NewEncoder(&buffer).Encode(loginData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/login", &buffer)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+	response := objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "invalid username and password combination", response.Message)
+
+	/* Test 3 - Valid request */
+	dbUser := createDatabaseUser(&dbconfig)
+
+	loginData = LoginPayload()
+	loginData.Username = dbUser.Name
+	loginData.Password = dbUser.Password
+	err = json.NewEncoder(&buffer).Encode(loginData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/login", &buffer)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	responseLogin := objects.ResponseLogin{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseLogin)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "test", responseLogin.Username)
+	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+}
+
+func TestLogoutHandle(t *testing.T) {
+	/* Test 1 - Invalid request - no cookies and no authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/logout", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+
+	/* Test 2 - Invalid request - no cookies sent with request */
+	dbUser := createDatabaseUser(&dbconfig)
+	shopifyConfig = shopify.InitConfigShopify()
+	router = setUpAPI(&dbconfig, &shopifyConfig)
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/logout?api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+}
+
 func TestPreregisterRoute(t *testing.T) {
 	/* Test 1 - Invalid request (empty email) */
 	dbconfig := setupDatabase("", "", "", false)
 	shopifyConfig := shopify.InitConfigShopify()
 	router := setUpAPI(&dbconfig, &shopifyConfig)
 
-	preregister_data := PreRegisterPayload()
-	preregister_data.Email = ""
-	preregister_data.Name = ""
+	preregisterData := PreRegisterPayload()
+	preregisterData.Email = ""
+	preregisterData.Name = ""
 	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(preregister_data)
+	err := json.NewEncoder(&buffer).Encode(preregisterData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/preregister", &buffer)
+	req, _ := http.NewRequest("POST", "/api/login", &buffer)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
 
 	/* Test 2 - Email already exists */
-	db_user := createDatabaseUser(&dbconfig)
-	dbconfig = setupDatabase("", "", "", false)
-	shopifyConfig = shopify.InitConfigShopify()
-	router = setUpAPI(&dbconfig, &shopifyConfig)
+	dbUser := createDatabaseUser(&dbconfig)
 
-	preregister_data = PreRegisterPayload()
-	err = json.NewEncoder(&buffer).Encode(preregister_data)
+	preregisterData = PreRegisterPayload()
+	err = json.NewEncoder(&buffer).Encode(preregisterData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -64,16 +187,12 @@ func TestPreregisterRoute(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	assert.Equal(t, "email '"+preregister_data.Email+"' already exists", response.Message)
-	dbconfig.DB.RemoveUser(context.Background(), db_user.ApiKey)
+	assert.Equal(t, "email '"+preregisterData.Email+"' already exists", response.Message)
+	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 
 	/* Test 3 - Valid request */
-	dbconfig = setupDatabase("", "", "", false)
-	shopifyConfig = shopify.InitConfigShopify()
-	router = setUpAPI(&dbconfig, &shopifyConfig)
-
-	preregister_data = PreRegisterPayload()
-	err = json.NewEncoder(&buffer).Encode(preregister_data)
+	preregisterData = PreRegisterPayload()
+	err = json.NewEncoder(&buffer).Encode(preregisterData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -90,8 +209,8 @@ func TestPreregisterRoute(t *testing.T) {
 	}
 	assert.Equal(t, "email sent", response.Message)
 
-	dbconfig.DB.RemoveUser(context.Background(), db_user.ApiKey)
-	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregister_data.Email)
+	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregisterData.Email)
 }
 
 func TestRegisterRoute(t *testing.T) {
@@ -100,11 +219,11 @@ func TestRegisterRoute(t *testing.T) {
 	shopifyConfig := shopify.InitConfigShopify()
 	router := setUpAPI(&dbconfig, &shopifyConfig)
 
-	registration_data := RegisterPayload()
-	register_data_token := createDatabasePreregister(registration_data.Name, registration_data.Email, &dbconfig)
-	registration_data.Token = register_data_token.Token.String()
+	registrationData := RegisterPayload()
+	register_data_token := createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	registrationData.Token = register_data_token.Token.String()
 	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(registration_data)
+	err := json.NewEncoder(&buffer).Encode(registrationData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -148,9 +267,9 @@ func TestRegisterRoute(t *testing.T) {
 	assert.Equal(t, "", response.Email)
 
 	/* Test 3 - Invalid token */
-	registration_data = RegisterPayload()
-	register_data_token = createDatabasePreregister(registration_data.Name, registration_data.Email, &dbconfig)
-	err = json.NewEncoder(&buffer).Encode(registration_data)
+	registrationData = RegisterPayload()
+	register_data_token = createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	err = json.NewEncoder(&buffer).Encode(registrationData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -171,10 +290,10 @@ func TestRegisterRoute(t *testing.T) {
 	/* Test 4 - User already exist */
 	db_user := createDatabaseUser(&dbconfig)
 
-	registration_data = RegisterPayload()
-	register_data_token = createDatabasePreregister(registration_data.Name, registration_data.Email, &dbconfig)
-	registration_data.Token = register_data_token.Token.String()
-	err = json.NewEncoder(&buffer).Encode(registration_data)
+	registrationData = RegisterPayload()
+	register_data_token = createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	registrationData.Token = register_data_token.Token.String()
+	err = json.NewEncoder(&buffer).Encode(registrationData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -198,12 +317,12 @@ func TestRegisterRoute(t *testing.T) {
 	})
 
 	/* Test 5 - Empty username/password in request */
-	registration_data = RegisterPayload()
-	register_data_token = createDatabasePreregister(registration_data.Name, registration_data.Email, &dbconfig)
-	registration_data.Token = register_data_token.Token.String()
-	registration_data.Name = ""
-	registration_data.Email = ""
-	err = json.NewEncoder(&buffer).Encode(registration_data)
+	registrationData = RegisterPayload()
+	register_data_token = createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	registrationData.Token = register_data_token.Token.String()
+	registrationData.Name = ""
+	registrationData.Email = ""
+	err = json.NewEncoder(&buffer).Encode(registrationData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -316,6 +435,17 @@ func PreRegisterPayload() objects.RequestBodyPreRegister {
 	return preregData
 }
 
+/* Returns a login request body struct */
+func LoginPayload() objects.RequestBodyLogin {
+	fileBytes := payload("login")
+	loginData := objects.RequestBodyLogin{}
+	err := json.Unmarshal(fileBytes, &loginData)
+	if err != nil {
+		log.Println(err)
+	}
+	return loginData
+}
+
 /*
 Returns a byte array representing the file data that was read
 
@@ -335,7 +465,40 @@ func payload(object_type string) []byte {
 }
 
 /*
-Creates a demo user in the database
+Creates a test product in the database
+*/
+func createDatabaseProduct(dbconfig *DbConfig) database.Product {
+	product, err := dbconfig.DB.GetProductByProductCode(context.Background(), "product_code")
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return database.Product{}
+		}
+	}
+	if product.ProductCode == "" {
+		product, err := dbconfig.DB.CreateProduct(context.Background(), database.CreateProductParams{
+			ID:          uuid.New(),
+			ProductCode: "product_code",
+			Active:      "1",
+			Title:       utils.ConvertStringToSQL("test_title"),
+			BodyHtml:    utils.ConvertStringToSQL("test_body_html"),
+			Category:    utils.ConvertStringToSQL("test_category"),
+			Vendor:      utils.ConvertStringToSQL("test_vendor"),
+			ProductType: utils.ConvertStringToSQL("test_product_type"),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+		})
+		if err != nil {
+			log.Println(err)
+			return database.Product{}
+		}
+		return product
+	}
+	return database.Product{}
+}
+
+/*
+Creates a test user in the database
 */
 func createDatabaseUser(dbconfig *DbConfig) database.User {
 	user, err := dbconfig.DB.GetUserByEmail(context.Background(), "test@test.com")
