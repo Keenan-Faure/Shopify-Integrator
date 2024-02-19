@@ -2104,6 +2104,11 @@ func (dbconfig *DbConfig) RegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
+		exists, err := dbconfig.CheckUserExist(body.Name, c.Request)
+		if exists {
+			RespondWithError(c, http.StatusConflict, err.Error())
+			return
+		}
 		err = ValidateTokenValidation(body)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
@@ -2126,11 +2131,6 @@ func (dbconfig *DbConfig) RegisterHandle() gin.HandlerFunc {
 		err = UserValidation(body.Name, body.Password)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
-			return
-		}
-		exists, err := dbconfig.CheckUserExist(body.Name, c.Request)
-		if exists {
-			RespondWithError(c, http.StatusConflict, err.Error())
 			return
 		}
 		user, err := dbconfig.DB.CreateUser(c.Request.Context(), database.CreateUserParams{
