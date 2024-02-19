@@ -384,7 +384,7 @@ func ProductOptionNameValidation(
 }
 
 // ValidateToken: Data validtion
-func ValidateTokenValidation(token_request objects.RequestBodyUser) error {
+func ValidateTokenValidation(token_request objects.RequestBodyRegister) error {
 	if token_request.Name == "" || len(token_request.Name) == 0 {
 		return errors.New("data validation error")
 	} else if token_request.Email == "" || len(token_request.Email) == 0 {
@@ -398,9 +398,9 @@ func ValidateTokenValidation(token_request objects.RequestBodyUser) error {
 }
 
 // ValidateToken: decode the request body
-func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyUser, error) {
+func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyRegister, error) {
 	decoder := json.NewDecoder(r.Body)
-	params := objects.RequestBodyUser{}
+	params := objects.RequestBodyRegister{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		if err.Error() == "" {
@@ -660,9 +660,9 @@ func DecodeProductRequestBody(r *http.Request) (objects.RequestBodyProduct, erro
 }
 
 // User: decodes the request body
-func DecodeUserRequestBody(r *http.Request) (objects.RequestBodyUser, error) {
+func DecodeUserRequestBody(r *http.Request) (objects.RequestBodyRegister, error) {
 	decoder := json.NewDecoder(r.Body)
-	params := objects.RequestBodyUser{}
+	params := objects.RequestBodyRegister{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		if err.Error() == "" {

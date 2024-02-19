@@ -563,7 +563,7 @@ type RequestWarehouseLocation struct {
 	WarehouseName        string `json:"warehouse_name"`
 	ShopifyWarehouseName string `json:"shopify_warehouse_name"`
 }
-type RequestBodyUser struct {
+type RequestBodyRegister struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
