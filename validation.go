@@ -412,8 +412,8 @@ func DecodeValidateTokenRequestBody(r *http.Request) (objects.RequestBodyRegiste
 }
 
 // PreRegister: Data validation
-func PreRegisterValidation(preorder objects.RequestBodyPreRegister) error {
-	if preorder.Name == "" || len(preorder.Name) == 0 || preorder.Email == "" || len(preorder.Email) == 0 {
+func PreRegisterValidation(prereg objects.RequestBodyPreRegister) error {
+	if prereg.Name == "" || len(prereg.Name) == 0 || prereg.Email == "" || len(prereg.Email) == 0 {
 		return errors.New("data validation error")
 	}
 	return nil

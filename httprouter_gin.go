@@ -2022,12 +2022,8 @@ Possible HTTP Codes:  200, 400, 401, 409, 500
 */
 func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		test := c.Query("test")
 		email := utils.LoadEnv("email")
-		email_psw := utils.LoadEnv("email_psw")
-		if email == "" || email_psw == "" {
-			RespondWithError(c, http.StatusInternalServerError, "invalid email or email password")
-			return
-		}
 		request_body, err := DecodePreRegisterRequestBody(c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
@@ -2039,13 +2035,13 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			return
 		}
 		// user validation
-		exists, err := dbconfig.CheckUserEmailType(email, "app")
+		exists, err := dbconfig.CheckUserEmailType(request_body.Email, "app")
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		if exists {
-			RespondWithError(c, http.StatusConflict, "email '"+email+"' already exists")
+			RespondWithError(c, http.StatusConflict, "email '"+request_body.Email+"' already exists")
 			return
 		}
 		token_value := uuid.UUID{}
@@ -2073,10 +2069,12 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		err = Email(token_value, request_body.Email, request_body.Name)
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
+		if test != "true" {
+			err = Email(token_value, request_body.Email, request_body.Name)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 		RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
 			Message: "email sent",

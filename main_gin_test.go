@@ -21,6 +21,79 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPreregisterRoute(t *testing.T) {
+	/* Test 1 - Invalid request (empty email) */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	preregister_data := PreRegisterPayload()
+	preregister_data.Email = ""
+	preregister_data.Name = ""
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(preregister_data)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/preregister", &buffer)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+
+	/* Test 2 - Email already exists */
+	db_user := createDatabaseUser(&dbconfig)
+	dbconfig = setupDatabase("", "", "", false)
+	shopifyConfig = shopify.InitConfigShopify()
+	router = setUpAPI(&dbconfig, &shopifyConfig)
+
+	preregister_data = PreRegisterPayload()
+	err = json.NewEncoder(&buffer).Encode(preregister_data)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/preregister", &buffer)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 409, w.Code)
+	response := objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "email '"+preregister_data.Email+"' already exists", response.Message)
+	dbconfig.DB.RemoveUser(context.Background(), db_user.ApiKey)
+
+	/* Test 3 - Valid request */
+	dbconfig = setupDatabase("", "", "", false)
+	shopifyConfig = shopify.InitConfigShopify()
+	router = setUpAPI(&dbconfig, &shopifyConfig)
+
+	preregister_data = PreRegisterPayload()
+	err = json.NewEncoder(&buffer).Encode(preregister_data)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/preregister?test=true", &buffer)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 201, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "email sent", response.Message)
+
+	dbconfig.DB.RemoveUser(context.Background(), db_user.ApiKey)
+	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregister_data.Email)
+}
+
 func TestRegisterRoute(t *testing.T) {
 	/* Test 1 - Valid request*/
 	dbconfig := setupDatabase("", "", "", false)
@@ -221,7 +294,7 @@ func ProductPayload() objects.RequestBodyProduct {
 	return productData
 }
 
-/* Returns a product request body struct */
+/* Returns a register request body struct */
 func RegisterPayload() objects.RequestBodyRegister {
 	fileBytes := payload("registration")
 	registerData := objects.RequestBodyRegister{}
@@ -230,6 +303,17 @@ func RegisterPayload() objects.RequestBodyRegister {
 		log.Println(err)
 	}
 	return registerData
+}
+
+/* Returns a pre-registrater request body struct */
+func PreRegisterPayload() objects.RequestBodyPreRegister {
+	fileBytes := payload("preregister")
+	preregData := objects.RequestBodyPreRegister{}
+	err := json.Unmarshal(fileBytes, &preregData)
+	if err != nil {
+		log.Println(err)
+	}
+	return preregData
 }
 
 /*
