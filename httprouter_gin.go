@@ -1941,7 +1941,7 @@ Logs a user into the application. This does not set any cookies
 
 Route: /api/login
 
-Authorization: Required
+Authorization: None
 
 Response-Type: application/json
 
@@ -1976,7 +1976,7 @@ func (dbconfig *DbConfig) LoginHandle() gin.HandlerFunc {
 }
 
 /*
-Logs a user out of the application. If cookies are set, they will be  set to be expired
+Logs a user out of the application. If cookies are set, they will be set to be expired
 
 Route: /api/logout
 

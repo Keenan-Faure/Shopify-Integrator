@@ -32,7 +32,7 @@ func Basic(dbconfig *DbConfig) gin.HandlerFunc {
 					return
 				}
 			} else {
-				RespondWithError(c, http.StatusBadRequest, "no authentication found in request")
+				RespondWithError(c, http.StatusUnauthorized, "no authentication found in request")
 				return
 			}
 		}

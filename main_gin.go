@@ -70,6 +70,7 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) *gin.Eng
 	nauth.GET("/ready", dbconfig.ReadyHandle())
 	nauth.POST("/preregister", dbconfig.PreRegisterHandle())
 	nauth.POST("/register", dbconfig.RegisterHandle())
+	nauth.POST("/login", dbconfig.LoginHandle())
 
 	/* --------- Auth routes --------- */
 	auth := r.Group("/api")
@@ -79,7 +80,6 @@ func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) *gin.Eng
 	auth.Use(Basic(dbconfig))
 
 	auth.POST("/logout", dbconfig.LogoutHandle())
-	auth.POST("/login", dbconfig.LoginHandle())
 
 	/* Products */
 	auth.GET("/products", dbconfig.ProductsHandle())
