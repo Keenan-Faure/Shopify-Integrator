@@ -392,7 +392,7 @@ func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
 				}
 			}
 			// reindex warehouse that was found
-			err = InsertGlobalWarehouse(dbconfig, c.Request.Context(), warehouse_db.Name, true)
+			err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse_db.Name, true)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
@@ -427,7 +427,7 @@ func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		err = InsertGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, false)
+		err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, false)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return

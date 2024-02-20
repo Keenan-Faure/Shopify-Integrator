@@ -881,6 +881,38 @@ func CompileSearchResult(
 	return response, nil
 }
 
+// Convert Product (POST) into CSVProduct
+func ConvertProductToAppProduct(products objects.RequestBodyProduct) []objects.AppProduct {
+	csv_products := []objects.AppProduct{}
+	for _, variant := range products.Variants {
+		csv_product := objects.AppProduct{
+			ProductCode:  products.ProductCode,
+			Active:       "1",
+			Title:        products.Title,
+			BodyHTML:     products.BodyHTML,
+			Category:     products.Category,
+			Vendor:       products.Vendor,
+			ProductType:  products.ProductType,
+			SKU:          variant.Sku,
+			Option1Value: variant.Option1,
+			Option2Value: variant.Option2,
+			Option3Value: variant.Option3,
+			Barcode:      variant.Barcode,
+		}
+		if len(products.ProductOptions) == 1 {
+			csv_product.Option1Name = utils.IssetString(products.ProductOptions[0].Value)
+			if len(products.ProductOptions) == 2 {
+				csv_product.Option2Name = utils.IssetString(products.ProductOptions[1].Value)
+				if len(products.ProductOptions) == 3 {
+					csv_product.Option3Name = utils.IssetString(products.ProductOptions[2].Value)
+				}
+			}
+		}
+		csv_products = append(csv_products, csv_product)
+	}
+	return csv_products
+}
+
 // Compiles the product data
 func CompileProductData(
 	dbconfig *DbConfig,

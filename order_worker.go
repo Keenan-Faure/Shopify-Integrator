@@ -32,15 +32,15 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
 	if err != nil {
 		return err
 	}
-	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateDefaultAddress(order_body, customer.ID))
+	_, err = dbconfig.DB.CreateAddress(context.Background(), AddAddress(order_body, customer.ID, "default"))
 	if err != nil {
 		return err
 	}
-	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateShippingAddress(order_body, customer.ID))
+	_, err = dbconfig.DB.CreateAddress(context.Background(), AddAddress(order_body, customer.ID, "shipping"))
 	if err != nil {
 		return err
 	}
-	_, err = dbconfig.DB.CreateAddress(context.Background(), CreateBillingAddress(order_body, customer.ID))
+	_, err = dbconfig.DB.CreateAddress(context.Background(), AddAddress(order_body, customer.ID, "billing"))
 	if err != nil {
 		return err
 	}
@@ -173,15 +173,15 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 		if err != nil {
 			return err
 		}
-		_, err = dbconfig.DB.CreateAddress(context.Background(), CreateDefaultAddress(order_body, customer.ID))
+		_, err = dbconfig.DB.CreateAddress(context.Background(), AddAddress(order_body, customer.ID, "default"))
 		if err != nil {
 			return err
 		}
-		_, err = dbconfig.DB.CreateAddress(context.Background(), CreateShippingAddress(order_body, customer.ID))
+		_, err = dbconfig.DB.CreateAddress(context.Background(), AddAddress(order_body, customer.ID, "shipping"))
 		if err != nil {
 			return err
 		}
-		_, err = dbconfig.DB.CreateAddress(context.Background(), CreateBillingAddress(order_body, customer.ID))
+		_, err = dbconfig.DB.CreateAddress(context.Background(), AddAddress(order_body, customer.ID, "billing"))
 		if err != nil {
 			return err
 		}
