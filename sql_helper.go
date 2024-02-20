@@ -13,6 +13,10 @@ import (
 	"github.com/google/uuid"
 )
 
+/*
+This file contains various functions that act as utilities when adding, returning, responding with data.
+*/
+
 /* ---- Products ----*/
 
 /*
