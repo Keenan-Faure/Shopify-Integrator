@@ -1635,7 +1635,7 @@ Possible HTTP Codes: 201, 400, 401, 404, 500
 func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var params objects.RequestBodyProduct
-		err := c.Bind(params)
+		err := c.Bind(&params)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
@@ -1668,9 +1668,12 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 				return
 			}
 		}
+		if params.Active == "" || len(params.Active) == 0 {
+			params.Active = "0"
+		}
 		product, err := dbconfig.DB.CreateProduct(c.Request.Context(), database.CreateProductParams{
 			ID:          uuid.New(),
-			Active:      "1",
+			Active:      params.Active,
 			ProductCode: params.ProductCode,
 			Title:       utils.ConvertStringToSQL(params.Title),
 			BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
@@ -1774,17 +1777,19 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 			return
 		}
 		// queue new products to be added to shopify
-		api_key := c.GetString("api_key")
-		err = CompileInstructionProduct(dbconfig, product_added, api_key)
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-		for _, variant := range product_added.Variants {
-			err = CompileInstructionVariant(dbconfig, variant, product_added, api_key)
+		if product_added.Active == "1" {
+			api_key := c.GetString("api_key")
+			err = CompileInstructionProduct(dbconfig, product_added, api_key)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
+			}
+			for _, variant := range product_added.Variants {
+				err = CompileInstructionVariant(dbconfig, variant, product_added, api_key)
+				if err != nil {
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
+					return
+				}
 			}
 		}
 		RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
