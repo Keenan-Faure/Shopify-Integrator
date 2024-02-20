@@ -21,6 +21,189 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestProductCreationRoute(t *testing.T) {
+	/* Test 1 - Invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/products", nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - Invalid product data */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	productData := ProductPayload()
+	productData.Title = ""
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(productData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "empty title not allowed", response.Message)
+
+	/* Test 3 - Invalid product options */
+	productData.Title = "product_title"
+	productData.ProductOptions[0].Value = "Colour"
+	err = json.NewEncoder(&buffer).Encode(productData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "duplicate product option names not allowed: Colour", response.Message)
+
+	/* Test 4 - Invalid product sku | duplicated SKU */
+	createDatabaseProduct(&dbconfig)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	productData.ProductOptions[0].Value = "Size"
+
+	err = json.NewEncoder(&buffer).Encode(productData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "duplicate SKUs not allowed: ", response.Message)
+
+	/* Test 5 - Invalid product | duplicate options */
+
+	/* Test 6 - Valid product request | not added to shopify */
+}
+
+func TestProductFilterRoute(t *testing.T) {
+	/* Test 1 - Invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/products/filter?page=1", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - Invalid filter params (empty) */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/filter?page=&type=&category=&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	/* Test 4 - No filter results */
+	productData := createDatabaseProduct(&dbconfig)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), productData.ProductCode)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/filter?type=simple&category=test&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response := []objects.SearchProduct{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(response))
+
+	/* Test 5 - Valid filter request */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/filter?type=product_product_type&vendor=product_vendor&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response = []objects.SearchProduct{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(response))
+}
+
+func TestProductSearchRoute(t *testing.T) {
+	/* Test 1 - Invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	shopifyConfig := shopify.InitConfigShopify()
+	router := setUpAPI(&dbconfig, &shopifyConfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/products/search?q=product_title", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - Invalid search param (empty) */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/search?api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+
+	/* Test 4 - No search results */
+	productData := createDatabaseProduct(&dbconfig)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), productData.ProductCode)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/search?q=simple&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response := []objects.SearchProduct{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(response))
+
+	/* Test 5 - Valid search request */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/products/search?q=product_title&api_key="+dbUser.ApiKey, nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response = []objects.SearchProduct{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(response))
+}
+
 func TestProductsRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
@@ -120,6 +303,7 @@ func TestLoginRoute(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/login", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -133,6 +317,7 @@ func TestLoginRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/login", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 404, w.Code)
@@ -156,6 +341,7 @@ func TestLoginRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/login", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -176,6 +362,7 @@ func TestLogoutHandle(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/logout", nil)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -187,6 +374,7 @@ func TestLogoutHandle(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/logout?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -209,6 +397,7 @@ func TestPreregisterRoute(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/login", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -224,6 +413,7 @@ func TestPreregisterRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/preregister", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 409, w.Code)
@@ -244,6 +434,7 @@ func TestPreregisterRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/preregister?test=true", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 201, w.Code)
@@ -275,6 +466,7 @@ func TestRegisterRoute(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/register", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 201, w.Code)
@@ -300,6 +492,7 @@ func TestRegisterRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/register", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -321,6 +514,7 @@ func TestRegisterRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/register", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 404, w.Code)
@@ -345,6 +539,7 @@ func TestRegisterRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/register", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 409, w.Code)
@@ -374,6 +569,7 @@ func TestRegisterRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/register", &buffer)
+	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -525,11 +721,11 @@ func createDatabaseProduct(dbconfig *DbConfig) database.Product {
 			ID:          uuid.New(),
 			ProductCode: "product_code",
 			Active:      "1",
-			Title:       utils.ConvertStringToSQL("test_title"),
-			BodyHtml:    utils.ConvertStringToSQL("test_body_html"),
-			Category:    utils.ConvertStringToSQL("test_category"),
-			Vendor:      utils.ConvertStringToSQL("test_vendor"),
-			ProductType: utils.ConvertStringToSQL("test_product_type"),
+			Title:       utils.ConvertStringToSQL("product_title"),
+			BodyHtml:    utils.ConvertStringToSQL("product_body_html"),
+			Category:    utils.ConvertStringToSQL("product_category"),
+			Vendor:      utils.ConvertStringToSQL("product_vendor"),
+			ProductType: utils.ConvertStringToSQL("product_product_type"),
 			CreatedAt:   time.Now().UTC(),
 			UpdatedAt:   time.Now().UTC(),
 		})
