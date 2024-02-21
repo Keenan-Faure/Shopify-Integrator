@@ -19,23 +19,62 @@ And keep the code used in the application
 Functions are mostly used to interact with the database.
 */
 
-func AddOrder() {
+/* Adds an order to the application */
+func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
+	exists, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if err := OrderValidation(orderBody); err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+}
+
+/* Adds an order's line items to the database under the specific orderID */
+func AddOrderLine(orderID uuid.UUID) {
 
 }
 
-func AddOrderLine() {
-
+/* Adds a customer to the application */
+func AddCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCustomerCode string) (uuid.UUID, error) {
+	exists, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	if !exists {
+		dbCustomer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
+			ID:              uuid.New(),
+			WebCustomerCode: WebCustomerCode,
+			FirstName:       customer.FirstName,
+			LastName:        customer.LastName,
+			Email:           utils.ConvertStringToSQL(customer.Email),
+			Phone:           utils.ConvertStringToSQL(customer.Phone),
+			CreatedAt:       time.Now().UTC(),
+			UpdatedAt:       time.Now().UTC(),
+		})
+		if err != nil {
+			return dbCustomer.ID, err
+		}
+	}
+	return uuid.UUID{}, nil
 }
 
-func AddCustomer() {
-
+/* Adds a customer address */
+func AddCustomerAddress(dbconfig *DbConfig, orderData objects.RequestBodyOrder, customerID uuid.UUID) {
+	// Add default, shipping, billing address
 }
 
+/* Adds a product to the application */
 func AddProduct() {
 
 }
 
-func AddVariant() {
+/* Adds a product variant to the application. The productID needs to point to a valid product*/
+func AddVariant(productID uuid.UUID) {
 
 }
 
@@ -251,23 +290,27 @@ func AddProductOptions(dbconfig *DbConfig, product_id uuid.UUID, product_code st
 }
 
 /* Creates an address */
-func AddAddress(order_body objects.RequestBodyOrder, customer_id uuid.UUID, address_type string) database.CreateAddressParams {
-	return database.CreateAddressParams{
+func AddAddress(dbconfig *DbConfig, address objects.CustomerAddress, customer_id uuid.UUID, address_type string) error {
+	_, err := dbconfig.DB.CreateAddress(context.Background(), database.CreateAddressParams{
 		ID:         uuid.New(),
 		CustomerID: customer_id,
 		Type:       utils.ConvertStringToSQL(address_type),
-		FirstName:  order_body.Customer.DefaultAddress.FirstName,
-		LastName:   order_body.Customer.DefaultAddress.LastName,
-		Address1:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.FirstName),
-		Address2:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.LastName),
+		FirstName:  address.FirstName,
+		LastName:   address.LastName,
+		Address1:   utils.ConvertStringToSQL(address.FirstName),
+		Address2:   utils.ConvertStringToSQL(address.LastName),
 		Suburb:     utils.ConvertStringToSQL(""),
-		City:       utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.City),
-		Province:   utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Province),
-		PostalCode: utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Zip),
-		Company:    utils.ConvertStringToSQL(order_body.Customer.DefaultAddress.Company),
+		City:       utils.ConvertStringToSQL(address.City),
+		Province:   utils.ConvertStringToSQL(address.Province),
+		PostalCode: utils.ConvertStringToSQL(address.Zip),
+		Company:    utils.ConvertStringToSQL(address.Company),
 		CreatedAt:  time.Now().UTC(),
 		UpdatedAt:  time.Now().UTC(),
+	})
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 /*
@@ -313,6 +356,55 @@ func (dbconfig *DbConfig) CheckPID(product_code string, r *http.Request) (string
 		return pid.ShopifyProductID, nil
 	}
 	return "", nil
+}
+
+/* Checks if an order already exists inside the database using it's web code */
+func CheckExistsOrder(dbconfig *DbConfig, ctx context.Context, order_web_code string) (bool, error) {
+	dbOrder, err := dbconfig.DB.GetOrderByWebCode(ctx, order_web_code)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return false, nil
+		}
+		return false, err
+	}
+	if dbOrder.WebCode == order_web_code {
+		return true, nil
+	}
+	return false, nil
+}
+
+/* Checks if a customer already exists inside the database using it's customer id on the order payload */
+func CheckExistsCustomer(dbconfig *DbConfig, ctx context.Context, customer_id string) (bool, error) {
+	dbCustomer, err := dbconfig.DB.GetCustomerByWebCode(ctx, customer_id)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return false, nil
+		}
+		return false, err
+	}
+	if dbCustomer.WebCustomerCode == customer_id {
+		return true, nil
+	}
+	return false, nil
+}
+
+/* Checks if a customer already exists inside the database using it's customer id on the order payload */
+func CheckExistsCustomerAddress(dbconfig *DbConfig, ctx context.Context, customerID, addressType string) (bool, error) {
+	customerUuid, err := uuid.Parse(customerID)
+	if err != nil {
+		return false, errors.New("could not decode product id: " + customerID)
+	}
+	_, err = dbconfig.DB.GetAddressByCustomerAndType(ctx, database.GetAddressByCustomerAndTypeParams{
+		CustomerID:  customerUuid,
+		AddressType: addressType,
+	})
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 /* Checks if a price tier already exists in the database for a certain SKU */
@@ -374,7 +466,7 @@ func CheckExistsWarehouse(dbconfig *DbConfig, ctx context.Context, sku, warehous
 }
 
 /* Checks if a username already exists inside database */
-func (dbconfig *DbConfig) CheckUserExist(name string, r *http.Request) (bool, error) {
+func (dbconfig *DbConfig) CheckUExistsUser(name string, r *http.Request) (bool, error) {
 	username, err := dbconfig.DB.GetUserByName(r.Context(), name)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
@@ -407,7 +499,7 @@ func (dbconfig *DbConfig) CheckUserCredentials(
 }
 
 /* Checks if a token already exists in the database */
-func (dbconfig *DbConfig) CheckTokenExists(email string, r *http.Request) (uuid.UUID, bool, error) {
+func (dbconfig *DbConfig) CheckExistsToken(email string, r *http.Request) (uuid.UUID, bool, error) {
 	token, err := dbconfig.DB.GetToken(r.Context(), email)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {

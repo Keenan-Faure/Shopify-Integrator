@@ -43,6 +43,25 @@ func (q *Queries) CreateCustomerAddress(ctx context.Context, arg CreateCustomerA
 	return err
 }
 
+const getAddressByCustomerAndType = `-- name: GetAddressByCustomerAndType :one
+SELECT
+    address_id
+FROM customer_address
+WHERE customer_id = $1 AND address_type = $2
+`
+
+type GetAddressByCustomerAndTypeParams struct {
+	CustomerID  uuid.UUID `json:"customer_id"`
+	AddressType string    `json:"address_type"`
+}
+
+func (q *Queries) GetAddressByCustomerAndType(ctx context.Context, arg GetAddressByCustomerAndTypeParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getAddressByCustomerAndType, arg.CustomerID, arg.AddressType)
+	var address_id uuid.UUID
+	err := row.Scan(&address_id)
+	return address_id, err
+}
+
 const getAddressByCustomerID = `-- name: GetAddressByCustomerID :many
 SELECT
     address_id
@@ -71,23 +90,4 @@ func (q *Queries) GetAddressByCustomerID(ctx context.Context, customerID uuid.UU
 		return nil, err
 	}
 	return items, nil
-}
-
-const getAddressIDByCustomerID = `-- name: GetAddressIDByCustomerID :one
-SELECT
-    address_id
-FROM customer_address
-WHERE customer_id = $1 AND address_type = $2
-`
-
-type GetAddressIDByCustomerIDParams struct {
-	CustomerID  uuid.UUID `json:"customer_id"`
-	AddressType string    `json:"address_type"`
-}
-
-func (q *Queries) GetAddressIDByCustomerID(ctx context.Context, arg GetAddressIDByCustomerIDParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getAddressIDByCustomerID, arg.CustomerID, arg.AddressType)
-	var address_id uuid.UUID
-	err := row.Scan(&address_id)
-	return address_id, err
 }

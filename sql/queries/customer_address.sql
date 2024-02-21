@@ -9,7 +9,7 @@ INSERT INTO customer_address (
     $1, $2, $3, $4, $5
 );
 
--- name: GetAddressIDByCustomerID :one
+-- name: GetAddressByCustomerAndType :one
 SELECT
     address_id
 FROM customer_address
