@@ -675,6 +675,7 @@ type CustomerAddress struct {
 	Address2   string `json:"address_2"`
 	Suburb     string `json:"suburb"`
 	City       string `json:"city"`
+	Zip        string `json:"zip"`
 	Province   string `json:"province"`
 	PostalCode string `json:"postal_code"`
 	Company    string `json:"company"`

@@ -57,7 +57,7 @@ SELECT
     o.updated_at
 FROM orders o 
 WHERE orders.id in (
-    SELECT order_id FROM customerorders
+    SELECT order_id FROM customer_orders
     WHERE customer_id = $1
 );
 
@@ -118,7 +118,7 @@ SELECT
     o.updated_at
 FROM orders o
 WHERE o.id in (
-    SELECT order_id FROM customerorders co
+    SELECT order_id FROM customer_orders co
     INNER JOIN customers c
     ON co.customer_id = c.id
     WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1

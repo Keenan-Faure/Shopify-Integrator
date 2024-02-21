@@ -1,6 +1,7 @@
 -- name: CreateCustomer :one
 INSERT INTO customers(
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,
@@ -8,7 +9,7 @@ INSERT INTO customers(
     created_at,
     updated_at
 ) VALUES(
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 )
 RETURNING *;
 
@@ -22,9 +23,20 @@ SET
     updated_at = $5
 WHERE id = $6;
 
+-- name: UpdateCustomerByWebCode :exec
+UPDATE customers
+SET
+    first_name = $1,
+    last_name = $2,
+    email = $3,
+    phone = $4,
+    updated_at = $5
+WHERE web_customer_code = $6;
+
 -- name: GetCustomers :many
 SELECT
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,
@@ -37,6 +49,7 @@ LIMIT $1 OFFSET $2;
 -- name: GetCustomerByID :one
 SELECT
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,
@@ -45,9 +58,22 @@ SELECT
 FROM customers
 WHERE id = $1;
 
+-- name: GetCustomerByWebCode :one
+SELECT
+    id,
+    web_customer_code,
+    first_name,
+    last_name,
+    email,
+    phone,
+    updated_at
+FROM customers
+WHERE web_customer_code = $1;
+
 -- name: GetCustomersByName :many
 SELECT
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,

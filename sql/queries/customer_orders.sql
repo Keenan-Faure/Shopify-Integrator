@@ -1,5 +1,5 @@
 -- name: CreateCustomerOrder :exec
-INSERT INTO customerorders (
+INSERT INTO customer_orders (
     id,
     customer_id,
     order_id,
@@ -12,11 +12,11 @@ INSERT INTO customerorders (
 -- name: GetCustomerByOrderID :one
 SELECT
     customer_id
-FROM customerorders
+FROM customer_orders
 WHERE order_id = $1;
 
 -- name: GetOrdersByCustomerID :many
 SELECT
     order_id
-FROM customerorders
+FROM customer_orders
 WHERE customer_id = $1;

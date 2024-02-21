@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE customerorders(
+CREATE TABLE customer_orders(
     id UUID UNIQUE PRIMARY KEY,
     customer_id UUID NOT NULL,
     order_id UUID NOT NULL,
@@ -16,4 +16,4 @@ CREATE TABLE customerorders(
 );
 
 -- +goose Down
-DROP TABLE customerorders;
+DROP TABLE customer_orders;
