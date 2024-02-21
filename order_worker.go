@@ -48,7 +48,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
 		ID:            uuid.New(),
 		Status:        order_body.FinancialStatus,
 		Notes:         utils.ConvertStringToSQL(""),
-		WebCode:       utils.ConvertStringToSQL(order_body.Name),
+		WebCode:       order_body.Name,
 		TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
 		OrderTotal:    utils.ConvertStringToSQL(order_body.TotalPrice),
 		ShippingTotal: utils.ConvertStringToSQL(order_body.TotalShippingPriceSet.ShopMoney.Amount),
@@ -151,11 +151,11 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 	if err != nil {
 		return nil
 	}
-	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.Name)))
+	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), fmt.Sprint(order_body.Name))
 	if err != nil {
 		return nil
 	}
-	if db_order.WebCode.String == fmt.Sprint(order_body.Name) {
+	if db_order.WebCode == fmt.Sprint(order_body.Name) {
 		// delete order
 		err := dbconfig.DB.RemoveOrder(context.Background(), db_order.ID)
 		if err != nil {
@@ -189,7 +189,7 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 			ID:            db_order.ID,
 			Status:        order_body.FinancialStatus,
 			Notes:         utils.ConvertStringToSQL(""),
-			WebCode:       utils.ConvertStringToSQL(order_body.Name),
+			WebCode:       order_body.Name,
 			TaxTotal:      utils.ConvertStringToSQL(order_body.TotalTax),
 			OrderTotal:    utils.ConvertStringToSQL(order_body.TotalPrice),
 			ShippingTotal: utils.ConvertStringToSQL(order_body.TotalShippingPriceSet.ShopMoney.Amount),
@@ -286,7 +286,6 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 		}
 		return nil
 	} else {
-		// the Order web code is not found
-		return errors.New("could not find order to update with code " + db_order.WebCode.String)
+		return errors.New("could not find order to update with code " + db_order.WebCode)
 	}
 }

@@ -1135,14 +1135,14 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.Name)))
+		db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), fmt.Sprint(order_body.Name))
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
 		}
-		if db_order.WebCode.String == fmt.Sprint(order_body.Name) {
+		if db_order.WebCode == fmt.Sprint(order_body.Name) {
 			response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
 				Type:        "order",
 				Status:      "in-queue",
@@ -2050,7 +2050,7 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			return
 		}
 		token_value := uuid.UUID{}
-		token_value, exists, err = dbconfig.CheckTokenExists(email, c.Request)
+		token_value, exists, err = dbconfig.CheckExistsToken(email, c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -2107,7 +2107,7 @@ func (dbconfig *DbConfig) RegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		exists, err := dbconfig.CheckUserExist(body.Name, c.Request)
+		exists, err := dbconfig.CheckUExistsUser(body.Name, c.Request)
 		if exists {
 			RespondWithError(c, http.StatusConflict, err.Error())
 			return

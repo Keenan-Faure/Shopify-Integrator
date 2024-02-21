@@ -496,7 +496,7 @@ func CompileOrderSearchResult(
 	for _, value := range customer_fl {
 		response = append(response, objects.SearchOrder{
 			Notes:         value.Notes.String,
-			WebCode:       value.WebCode.String,
+			WebCode:       value.WebCode,
 			TaxTotal:      value.TaxTotal.String,
 			OrderTotal:    value.OrderTotal.String,
 			ShippingTotal: value.ShippingTotal.String,
@@ -507,7 +507,7 @@ func CompileOrderSearchResult(
 	for _, value := range webcode {
 		response = append(response, objects.SearchOrder{
 			Notes:         value.Notes.String,
-			WebCode:       value.WebCode.String,
+			WebCode:       value.WebCode,
 			TaxTotal:      value.TaxTotal.String,
 			OrderTotal:    value.OrderTotal.String,
 			ShippingTotal: value.ShippingTotal.String,
@@ -547,7 +547,7 @@ func CompileOrderData(
 			ID:                order.ID,
 			Notes:             order.Notes.String,
 			Status:            order.Status,
-			WebCode:           order.WebCode.String,
+			WebCode:           order.WebCode,
 			TaxTotal:          order.TaxTotal.String,
 			OrderTotal:        order.OrderTotal.String,
 			ShippingTotal:     order.ShippingTotal.String,
@@ -614,7 +614,7 @@ func CompileOrderData(
 		ID:                order_id,
 		Notes:             order.Notes.String,
 		Status:            order.Status,
-		WebCode:           order.WebCode.String,
+		WebCode:           order.WebCode,
 		TaxTotal:          order.TaxTotal.String,
 		OrderTotal:        order.OrderTotal.String,
 		ShippingTotal:     order.ShippingTotal.String,
