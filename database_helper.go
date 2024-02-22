@@ -26,11 +26,25 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 		return err
 	}
 	if !exists {
+		// add order data
 		if err := OrderValidation(orderBody); err != nil {
 			return err
 		}
 		return nil
 	}
+	return nil
+}
+
+/* Updates an order that already exists inside the application */
+func UpdateOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
+	exists, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("order with ID " + orderBody.Name + " does not exist in application")
+	}
+	// update order data
 	return nil
 }
 
