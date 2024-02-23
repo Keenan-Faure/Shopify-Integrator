@@ -597,16 +597,17 @@ func CompileOrderData(
 	OrderCustomerAddress := []objects.CustomerAddress{}
 	for _, value := range order_customer_address {
 		OrderCustomerAddress = append(OrderCustomerAddress, objects.CustomerAddress{
-			Type:       value.Type.String,
-			FirstName:  value.FirstName,
-			LastName:   value.LastName,
-			Address1:   value.Address1.String,
-			Address2:   value.Address2.String,
-			Suburb:     value.Suburb.String,
-			City:       value.City.String,
-			Province:   value.Province.String,
-			PostalCode: value.PostalCode.String,
-			Company:    value.Company.String,
+			Type:         value.Type,
+			FirstName:    value.FirstName,
+			LastName:     value.LastName,
+			Address1:     value.Address1.String,
+			Address2:     value.Address2.String,
+			Suburb:       "",
+			City:         value.City.String,
+			Zip:          "",
+			Province:     value.Province.String,
+			ProvinceCode: "",
+			Company:      value.Company.String,
 		})
 	}
 	OrderCustomer.Address = OrderCustomerAddress

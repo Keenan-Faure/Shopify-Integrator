@@ -557,8 +557,7 @@ func ValidateDuplicateOption(product objects.RequestBodyProduct) error {
 // Product: Duplicate SKU validation
 func ValidateDuplicateSKU(
 	product objects.RequestBodyProduct,
-	dbconfig *DbConfig,
-	r *http.Request) error {
+	dbconfig *DbConfig) error {
 	sku_array := []string{}
 	for _, value := range product.Variants {
 		if slices.Contains(sku_array, value.Sku) {
@@ -567,7 +566,7 @@ func ValidateDuplicateSKU(
 		sku_array = append(sku_array, value.Sku)
 	}
 	for _, value := range sku_array {
-		db_sku, err := dbconfig.DB.GetVariantBySKU(r.Context(), value)
+		db_sku, err := dbconfig.DB.GetVariantBySKU(context.Background(), value)
 		if err != nil {
 			if err.Error() == "record not found" {
 				return nil
