@@ -22,34 +22,32 @@ INSERT INTO address(
     last_name,
     address1,
     address2,
-    suburb,
     city,
     province,
-    postal_code,
+    province_code,
     company,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
 )
-RETURNING id, customer_id, type, first_name, last_name, address1, address2, suburb, city, province, postal_code, company, created_at, updated_at
+RETURNING id, customer_id, type, first_name, last_name, address1, address2, city, province, province_code, company, created_at, updated_at
 `
 
 type CreateAddressParams struct {
-	ID         uuid.UUID      `json:"id"`
-	CustomerID uuid.UUID      `json:"customer_id"`
-	Type       sql.NullString `json:"type"`
-	FirstName  string         `json:"first_name"`
-	LastName   string         `json:"last_name"`
-	Address1   sql.NullString `json:"address1"`
-	Address2   sql.NullString `json:"address2"`
-	Suburb     sql.NullString `json:"suburb"`
-	City       sql.NullString `json:"city"`
-	Province   sql.NullString `json:"province"`
-	PostalCode sql.NullString `json:"postal_code"`
-	Company    sql.NullString `json:"company"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
+	ID           uuid.UUID      `json:"id"`
+	CustomerID   uuid.UUID      `json:"customer_id"`
+	Type         string         `json:"type"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Address1     sql.NullString `json:"address1"`
+	Address2     sql.NullString `json:"address2"`
+	City         sql.NullString `json:"city"`
+	Province     sql.NullString `json:"province"`
+	ProvinceCode sql.NullString `json:"province_code"`
+	Company      sql.NullString `json:"company"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (Address, error) {
@@ -61,10 +59,9 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 		arg.LastName,
 		arg.Address1,
 		arg.Address2,
-		arg.Suburb,
 		arg.City,
 		arg.Province,
-		arg.PostalCode,
+		arg.ProvinceCode,
 		arg.Company,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -78,10 +75,9 @@ func (q *Queries) CreateAddress(ctx context.Context, arg CreateAddressParams) (A
 		&i.LastName,
 		&i.Address1,
 		&i.Address2,
-		&i.Suburb,
 		&i.City,
 		&i.Province,
-		&i.PostalCode,
+		&i.ProvinceCode,
 		&i.Company,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -97,10 +93,9 @@ SELECT
     last_name,
     address1,
     address2,
-    suburb,
     city,
     province,
-    postal_code,
+    province_code,
     company,
     updated_at
 FROM address
@@ -108,18 +103,17 @@ WHERE customer_id = $1
 `
 
 type GetAddressByCustomerRow struct {
-	ID         uuid.UUID      `json:"id"`
-	Type       sql.NullString `json:"type"`
-	FirstName  string         `json:"first_name"`
-	LastName   string         `json:"last_name"`
-	Address1   sql.NullString `json:"address1"`
-	Address2   sql.NullString `json:"address2"`
-	Suburb     sql.NullString `json:"suburb"`
-	City       sql.NullString `json:"city"`
-	Province   sql.NullString `json:"province"`
-	PostalCode sql.NullString `json:"postal_code"`
-	Company    sql.NullString `json:"company"`
-	UpdatedAt  time.Time      `json:"updated_at"`
+	ID           uuid.UUID      `json:"id"`
+	Type         string         `json:"type"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Address1     sql.NullString `json:"address1"`
+	Address2     sql.NullString `json:"address2"`
+	City         sql.NullString `json:"city"`
+	Province     sql.NullString `json:"province"`
+	ProvinceCode sql.NullString `json:"province_code"`
+	Company      sql.NullString `json:"company"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetAddressByCustomer(ctx context.Context, customerID uuid.UUID) ([]GetAddressByCustomerRow, error) {
@@ -138,10 +132,9 @@ func (q *Queries) GetAddressByCustomer(ctx context.Context, customerID uuid.UUID
 			&i.LastName,
 			&i.Address1,
 			&i.Address2,
-			&i.Suburb,
 			&i.City,
 			&i.Province,
-			&i.PostalCode,
+			&i.ProvinceCode,
 			&i.Company,
 			&i.UpdatedAt,
 		); err != nil {
@@ -176,28 +169,26 @@ SET
     last_name = $3,
     address1 = $4,
     address2 = $5,
-    suburb = $6,
-    city = $7,
-    province = $8,
-    postal_code = $9,
-    company = $10,
-    updated_at = $11
-WHERE id = $12
+    city = $6,
+    province = $7,
+    province_code = $8,
+    company = $9,
+    updated_at = $10
+WHERE id = $11
 `
 
 type UpdateAddressParams struct {
-	CustomerID uuid.UUID      `json:"customer_id"`
-	FirstName  string         `json:"first_name"`
-	LastName   string         `json:"last_name"`
-	Address1   sql.NullString `json:"address1"`
-	Address2   sql.NullString `json:"address2"`
-	Suburb     sql.NullString `json:"suburb"`
-	City       sql.NullString `json:"city"`
-	Province   sql.NullString `json:"province"`
-	PostalCode sql.NullString `json:"postal_code"`
-	Company    sql.NullString `json:"company"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	ID         uuid.UUID      `json:"id"`
+	CustomerID   uuid.UUID      `json:"customer_id"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Address1     sql.NullString `json:"address1"`
+	Address2     sql.NullString `json:"address2"`
+	City         sql.NullString `json:"city"`
+	Province     sql.NullString `json:"province"`
+	ProvinceCode sql.NullString `json:"province_code"`
+	Company      sql.NullString `json:"company"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	ID           uuid.UUID      `json:"id"`
 }
 
 func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) error {
@@ -207,10 +198,9 @@ func (q *Queries) UpdateAddress(ctx context.Context, arg UpdateAddressParams) er
 		arg.LastName,
 		arg.Address1,
 		arg.Address2,
-		arg.Suburb,
 		arg.City,
 		arg.Province,
-		arg.PostalCode,
+		arg.ProvinceCode,
 		arg.Company,
 		arg.UpdatedAt,
 		arg.ID,
@@ -226,14 +216,13 @@ SET
     last_name = $3,
     address1 = $4,
     address2 = $5,
-    suburb = $6,
-    city = $7,
-    province = $8,
-    postal_code = $9,
-    company = $10,
-    updated_at = $11
-WHERE type = $12 AND
-customer_id = $13
+    city = $6,
+    province = $7,
+    province_code = $8,
+    company = $9,
+    updated_at = $10
+WHERE type = $11 AND
+customer_id = $12
 `
 
 type UpdateAddressByTypeAndCustomerParams struct {
@@ -242,13 +231,12 @@ type UpdateAddressByTypeAndCustomerParams struct {
 	LastName     string         `json:"last_name"`
 	Address1     sql.NullString `json:"address1"`
 	Address2     sql.NullString `json:"address2"`
-	Suburb       sql.NullString `json:"suburb"`
 	City         sql.NullString `json:"city"`
 	Province     sql.NullString `json:"province"`
-	PostalCode   sql.NullString `json:"postal_code"`
+	ProvinceCode sql.NullString `json:"province_code"`
 	Company      sql.NullString `json:"company"`
 	UpdatedAt    time.Time      `json:"updated_at"`
-	Type         sql.NullString `json:"type"`
+	Type         string         `json:"type"`
 	CustomerID_2 uuid.UUID      `json:"customer_id_2"`
 }
 
@@ -259,10 +247,9 @@ func (q *Queries) UpdateAddressByTypeAndCustomer(ctx context.Context, arg Update
 		arg.LastName,
 		arg.Address1,
 		arg.Address2,
-		arg.Suburb,
 		arg.City,
 		arg.Province,
-		arg.PostalCode,
+		arg.ProvinceCode,
 		arg.Company,
 		arg.UpdatedAt,
 		arg.Type,

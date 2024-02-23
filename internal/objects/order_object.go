@@ -88,7 +88,7 @@ type RequestBodyOrder struct {
 	LocationID             any       `json:"location_id"`
 	MerchantOfRecordAppID  any       `json:"merchant_of_record_app_id"`
 	Name                   string    `json:"name"`
-	Note                   any       `json:"note"`
+	Note                   string    `json:"note"`
 	NoteAttributes         []any     `json:"note_attributes"`
 	Number                 int       `json:"number"`
 	OrderNumber            int       `json:"order_number"`
@@ -220,7 +220,7 @@ type RequestBodyOrder struct {
 		FirstName             string    `json:"first_name"`
 		LastName              string    `json:"last_name"`
 		State                 string    `json:"state"`
-		Note                  any       `json:"note"`
+		Note                  string    `json:"note"`
 		VerifiedEmail         bool      `json:"verified_email"`
 		MultipassIdentifier   any       `json:"multipass_identifier"`
 		TaxExempt             bool      `json:"tax_exempt"`

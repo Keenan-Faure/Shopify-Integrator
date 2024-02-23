@@ -5,7 +5,6 @@ CREATE TABLE order_lines(
     line_type VARCHAR(16),
     sku VARCHAR(64) NOT NULL,
     price DECIMAL(9, 2) DEFAULT 0.00,
-    barcode INTEGER DEFAULT 0,
     qty INTEGER DEFAULT 0,
     tax_total DECIMAL(9, 2) DEFAULT 0.00,
     tax_rate  DECIMAL(9, 2) DEFAULT 0.00,

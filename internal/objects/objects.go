@@ -668,17 +668,16 @@ type Customer struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 type CustomerAddress struct {
-	Type       string `json:"address_type"`
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
-	Address1   string `json:"address_1"`
-	Address2   string `json:"address_2"`
-	Suburb     string `json:"suburb"`
-	City       string `json:"city"`
-	Zip        string `json:"zip"`
-	Province   string `json:"province"`
-	PostalCode string `json:"postal_code"`
-	Company    string `json:"company"`
+	Type         string `json:"address_type"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Address1     string `json:"address_1"`
+	Address2     string `json:"address_2"`
+	City         string `json:"city"`
+	Zip          string `json:"zip"`
+	Province     string `json:"province"`
+	ProvinceCode string `json:"province_code"`
+	Company      string `json:"company"`
 }
 type OrderLines struct {
 	SKU      string `json:"sku"`

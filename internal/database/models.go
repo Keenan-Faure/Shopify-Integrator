@@ -13,20 +13,19 @@ import (
 )
 
 type Address struct {
-	ID         uuid.UUID      `json:"id"`
-	CustomerID uuid.UUID      `json:"customer_id"`
-	Type       sql.NullString `json:"type"`
-	FirstName  string         `json:"first_name"`
-	LastName   string         `json:"last_name"`
-	Address1   sql.NullString `json:"address1"`
-	Address2   sql.NullString `json:"address2"`
-	Suburb     sql.NullString `json:"suburb"`
-	City       sql.NullString `json:"city"`
-	Province   sql.NullString `json:"province"`
-	PostalCode sql.NullString `json:"postal_code"`
-	Company    sql.NullString `json:"company"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
+	ID           uuid.UUID      `json:"id"`
+	CustomerID   uuid.UUID      `json:"customer_id"`
+	Type         string         `json:"type"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Address1     sql.NullString `json:"address1"`
+	Address2     sql.NullString `json:"address2"`
+	City         sql.NullString `json:"city"`
+	Province     sql.NullString `json:"province"`
+	ProvinceCode sql.NullString `json:"province_code"`
+	Company      sql.NullString `json:"company"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 type AppSetting struct {
@@ -131,7 +130,6 @@ type OrderLine struct {
 	LineType  sql.NullString `json:"line_type"`
 	Sku       string         `json:"sku"`
 	Price     sql.NullString `json:"price"`
-	Barcode   sql.NullInt32  `json:"barcode"`
 	Qty       sql.NullInt32  `json:"qty"`
 	TaxTotal  sql.NullString `json:"tax_total"`
 	TaxRate   sql.NullString `json:"tax_rate"`

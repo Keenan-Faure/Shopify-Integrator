@@ -5,14 +5,13 @@ INSERT INTO order_lines(
     line_type,
     sku,
     price,
-    barcode,
     qty,
     tax_rate,
     tax_total,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING *;
 
@@ -23,12 +22,11 @@ SET
     line_type = $2,
     sku = $3,
     price = $4,
-    barcode = $5,
-    qty = $6,
-    tax_rate = $7,
-    tax_total = $8,
-    updated_at = $9
-WHERE id = $10;
+    qty = $5,
+    tax_rate = $6,
+    tax_total = $7,
+    updated_at = $8
+WHERE id = $9;
 
 -- name: UpdateOrderLineByOrderAndSKU :exec
 UPDATE order_lines
@@ -36,20 +34,18 @@ SET
     line_type = $1,
     sku = $2,
     price = $3,
-    barcode = $4,
-    qty = $5,
-    tax_rate = $6,
-    tax_total = $7,
-    updated_at = $8
-WHERE order_id = $9
-AND sku = $10;
+    qty = $4,
+    tax_rate = $5,
+    tax_total = $6,
+    updated_at = $7
+WHERE order_id = $8
+AND sku = $9;
 
 -- name: GetShippingLinesByOrder :many
 SELECT
     sku,
     line_type,
     price,
-    barcode,
     qty,
     tax_rate,
     tax_total,
@@ -62,7 +58,6 @@ SELECT
     sku,
     line_type,
     price,
-    barcode,
     qty,
     tax_rate,
     tax_total,
