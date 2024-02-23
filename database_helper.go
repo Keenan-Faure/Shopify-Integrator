@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"integrator/internal/database"
 	"net/http"
 	"objects"
@@ -26,31 +27,99 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 		return err
 	}
 	if !exists {
-		// add order data
 		if err := OrderValidation(orderBody); err != nil {
 			return err
 		}
-		return nil
+		_, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
+			ID:            uuid.New(),
+			Status:        orderBody.FinancialStatus,
+			Notes:         utils.ConvertStringToSQL(""),
+			WebCode:       orderBody.Name,
+			TaxTotal:      utils.ConvertStringToSQL(orderBody.TotalTax),
+			OrderTotal:    utils.ConvertStringToSQL(orderBody.TotalPrice),
+			ShippingTotal: utils.ConvertStringToSQL(orderBody.TotalShippingPriceSet.ShopMoney.Amount),
+			DiscountTotal: utils.ConvertStringToSQL(orderBody.TotalDiscounts),
+			CreatedAt:     time.Now().UTC(),
+			UpdatedAt:     time.Now().UTC(),
+		})
+		return err
 	}
 	return nil
 }
 
 /* Updates an order that already exists inside the application */
-func UpdateOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
+func UpdateOrder(dbconfig *DbConfig, orderID uuid.UUID, orderBody objects.RequestBodyOrder) error {
 	exists, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
 	if err != nil {
 		return err
 	}
-	if !exists {
-		return errors.New("order with ID " + orderBody.Name + " does not exist in application")
+	if exists {
+		_, err = dbconfig.DB.UpdateOrder(context.Background(), database.UpdateOrderParams{
+			Notes:         utils.ConvertStringToSQL(orderBody.Note),
+			Status:        "",
+			WebCode:       "",
+			TaxTotal:      utils.ConvertStringToSQL(orderBody.TotalTax),
+			OrderTotal:    utils.ConvertStringToSQL(orderBody.TotalPrice),
+			ShippingTotal: utils.ConvertStringToSQL(orderBody.TotalShippingPriceSet.ShopMoney.Amount),
+			DiscountTotal: utils.ConvertStringToSQL(orderBody.TotalDiscounts),
+			UpdatedAt:     time.Now().UTC(),
+			ID:            orderID,
+		})
+		return err
 	}
-	// update order data
 	return nil
 }
 
 /* Adds an order's line items to the database under the specific orderID */
-func AddOrderLine(orderID uuid.UUID) {
+func AddOrderLine(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, orderID uuid.UUID) error {
+	_, err := dbconfig.DB.GetOrderByID(context.Background(), orderID)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("invalid order ID provided: " + orderID.String())
+		}
+	}
+	for _, lineItem := range orderBody.LineItems {
+		_, err = dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
+			ID:        uuid.New(),
+			OrderID:   orderID,
+			LineType:  utils.ConvertStringToSQL("product"),
+			Sku:       lineItem.Sku,
+			Price:     utils.ConvertStringToSQL(lineItem.Price),
+			Qty:       utils.ConvertIntToSQL(lineItem.Quantity),
+			TaxRate:   utils.ConvertStringToSQL(fmt.Sprint(lineItem.TaxLines[0].Rate)), // bad practise
+			TaxTotal:  utils.ConvertStringToSQL(lineItem.TaxLines[0].Price),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	for _, shippingLine := range orderBody.ShippingLines {
+		_, err = dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
+			ID:       uuid.New(),
+			OrderID:  orderID,
+			LineType: utils.ConvertStringToSQL("shipping"),
+			Sku:      shippingLine.Code,
+			Price:    utils.ConvertStringToSQL(shippingLine.Price),
+			// TODO will this always remain as 1?
+			Qty:       utils.ConvertIntToSQL(1),
+			TaxRate:   utils.ConvertStringToSQL(fmt.Sprint(shippingLine.TaxLines[0].Rate)), // bad practise
+			TaxTotal:  utils.ConvertStringToSQL(shippingLine.TaxLines[0].Price),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
+/* Adds an order's line items to the database under the specific orderID */
+func UpdateOrderLine(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, orderID uuid.UUID) {
+	// TODO is this even necessary
+	// since we remove the old order upon receiving the new order?
 }
 
 /* Adds a customer to the application */
@@ -70,25 +139,185 @@ func AddCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCu
 			CreatedAt:       time.Now().UTC(),
 			UpdatedAt:       time.Now().UTC(),
 		})
-		if err != nil {
-			return dbCustomer.ID, err
-		}
+		return dbCustomer.ID, err
 	}
 	return uuid.UUID{}, nil
 }
 
-/* Adds a customer address */
-func AddCustomerAddress(dbconfig *DbConfig, orderData objects.RequestBodyOrder, customerID uuid.UUID) {
-	// Add default, shipping, billing address
+/* Updates a customer inside the application */
+func UpdateCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCustomerCode string) error {
+	exists, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
+	if err != nil {
+		return err
+	}
+	if exists {
+		err := dbconfig.DB.UpdateCustomer(context.Background(), database.UpdateCustomerParams{
+			ID:        uuid.New(),
+			FirstName: customer.FirstName,
+			LastName:  customer.LastName,
+			Email:     utils.ConvertStringToSQL(customer.Email),
+			Phone:     utils.ConvertStringToSQL(customer.Phone),
+			UpdatedAt: time.Now().UTC(),
+		})
+		return err
+	}
+	return nil
+}
+
+/* Adds a customer address which is a link between a customer and it's address */
+func AddCustomerAddress(dbconfig *DbConfig, addressData objects.CustomerAddress, customerID uuid.UUID, addressType string) error {
+	exists, err := CheckExistsCustomerAddress(dbconfig, context.Background(), customerID.String(), addressType)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		err = dbconfig.DB.CreateCustomerAddress(context.Background(), database.CreateCustomerAddressParams{
+			ID:          uuid.New(),
+			CustomerID:  customerID,
+			AddressType: addressType,
+			UpdatedAt:   time.Now().UTC(),
+			CreatedAt:   time.Now().UTC(),
+		})
+		return err
+	}
+	return nil
+}
+
+/* Updates a customer address */
+func UpdateCustomerAddress(dbconfig *DbConfig, orderData objects.RequestBodyOrder, customerID uuid.UUID, addressType string) error {
+	exists, err := CheckExistsCustomerAddress(dbconfig, context.Background(), customerID.String(), addressType)
+	if err != nil {
+		return err
+	}
+	if exists {
+		// TODO should we update customer address
+		// also, does it make sense to update it seeing that it already exists in this block
+		return nil
+	}
+	return nil
 }
 
 /* Adds a product to the application */
-func AddProduct() {
+func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) error {
+	if validation := ProductValidation(dbconfig, productData); validation != nil {
+		return validation
+	}
+	if err := ValidateDuplicateOption(productData); err != nil {
+		return err
+	}
+	if err := ValidateDuplicateSKU(productData, dbconfig); err != nil {
+		return err
+	}
+	if err := DuplicateOptionValues(productData); err != nil {
+		return err
+	}
+	product, err := dbconfig.DB.CreateProduct(context.Background(), database.CreateProductParams{
+		ID:          uuid.New(),
+		Active:      productData.Active,
+		ProductCode: productData.ProductCode,
+		Title:       utils.ConvertStringToSQL(productData.Title),
+		BodyHtml:    utils.ConvertStringToSQL(productData.BodyHTML),
+		Category:    utils.ConvertStringToSQL(productData.Category),
+		Vendor:      utils.ConvertStringToSQL(productData.Vendor),
+		ProductType: utils.ConvertStringToSQL(productData.ProductType),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+	})
+	if err != nil {
+		return err
+	}
+	for key := range productData.ProductOptions {
+		_, err := dbconfig.DB.CreateProductOption(context.Background(), database.CreateProductOptionParams{
+			ID:        uuid.New(),
+			ProductID: product.ID,
+			Name:      productData.ProductOptions[key].Value,
+			Position:  int32(key + 1),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	for _, variant := range productData.Variants {
+		if err := AddVariant(dbconfig, variant, product.ID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+/* Updates a product to the application */
+func UpdateProduct(dbconfig *DbConfig, productID uuid.UUID, productData objects.RequestBodyProduct) {
 
 }
 
 /* Adds a product variant to the application. The productID needs to point to a valid product*/
-func AddVariant(productID uuid.UUID) {
+func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
+	variant, err := dbconfig.DB.CreateVariant(context.Background(), database.CreateVariantParams{
+		ID:        uuid.New(),
+		ProductID: productID,
+		Sku:       variantData.Sku,
+		Option1:   utils.ConvertStringToSQL(variantData.Option1),
+		Option2:   utils.ConvertStringToSQL(variantData.Option2),
+		Option3:   utils.ConvertStringToSQL(variantData.Option3),
+		Barcode:   utils.ConvertStringToSQL(variantData.Barcode),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		return err
+	}
+	for key_pricing := range variantData.VariantPricing {
+		// check if the price tier name is acceptable
+		if variantData.VariantPricing[key_pricing].Name == "Selling Price" ||
+			variantData.VariantPricing[key_pricing].Name == "Compare At Price" {
+			_, err := dbconfig.DB.CreateVariantPricing(context.Background(), database.CreateVariantPricingParams{
+				ID:        uuid.New(),
+				VariantID: variant.ID,
+				Name:      variantData.VariantPricing[key_pricing].Name,
+				Value:     utils.ConvertStringToSQL(variantData.VariantPricing[key_pricing].Value),
+				Isdefault: variantData.VariantPricing[key_pricing].IsDefault,
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("invalid price tier" + variantData.VariantPricing[key_pricing].Name)
+		}
+	}
+	for key_qty := range variantData.VariantQuantity {
+		// check if the warehouse exists, then we update the quantity
+		warehouse_name := variantData.VariantQuantity[key_qty].Name
+		warehouse_qty := variantData.VariantQuantity[key_qty].Value
+		_, err = dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				return errors.New("warehouse " + warehouse_name + " not found")
+			}
+			return err
+		}
+		// if warehouse is found, we update the qty, we cannot create a new one
+		err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
+			Name:      warehouse_name,
+			Value:     utils.ConvertIntToSQL(warehouse_qty),
+			Isdefault: false,
+			UpdatedAt: time.Now().UTC(),
+			Sku:       variant.Sku,
+			Name_2:    warehouse_name,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/* Updates a product variant inside the application. The productID needs to point to a valid product */
+func UpdateVariant(productID uuid.UUID) {
 
 }
 
@@ -304,25 +533,30 @@ func AddProductOptions(dbconfig *DbConfig, product_id uuid.UUID, product_code st
 }
 
 /* Creates an address */
-func AddAddress(dbconfig *DbConfig, address objects.CustomerAddress, customer_id uuid.UUID, address_type string) error {
-	_, err := dbconfig.DB.CreateAddress(context.Background(), database.CreateAddressParams{
-		ID:         uuid.New(),
-		CustomerID: customer_id,
-		Type:       utils.ConvertStringToSQL(address_type),
-		FirstName:  address.FirstName,
-		LastName:   address.LastName,
-		Address1:   utils.ConvertStringToSQL(address.FirstName),
-		Address2:   utils.ConvertStringToSQL(address.LastName),
-		Suburb:     utils.ConvertStringToSQL(""),
-		City:       utils.ConvertStringToSQL(address.City),
-		Province:   utils.ConvertStringToSQL(address.Province),
-		PostalCode: utils.ConvertStringToSQL(address.Zip),
-		Company:    utils.ConvertStringToSQL(address.Company),
-		CreatedAt:  time.Now().UTC(),
-		UpdatedAt:  time.Now().UTC(),
-	})
+func AddAddress(dbconfig *DbConfig, addressData objects.CustomerAddress, customerID uuid.UUID, addressType string) error {
+	exists, err := CheckExistsCustomerAddress(dbconfig, context.Background(), customerID.String(), addressType)
 	if err != nil {
 		return err
+	}
+	if !exists {
+		_, err = dbconfig.DB.CreateAddress(context.Background(), database.CreateAddressParams{
+			ID:           uuid.New(),
+			CustomerID:   customerID,
+			Type:         addressType,
+			FirstName:    addressData.FirstName,
+			LastName:     addressData.LastName,
+			Address1:     utils.ConvertStringToSQL(addressData.Address1),
+			Address2:     utils.ConvertStringToSQL(addressData.Address2),
+			City:         utils.ConvertStringToSQL(addressData.City),
+			Province:     utils.ConvertStringToSQL(addressData.Province),
+			ProvinceCode: utils.ConvertStringToSQL(addressData.ProvinceCode),
+			Company:      utils.ConvertStringToSQL(addressData.Company),
+			CreatedAt:    time.Now().UTC(),
+			UpdatedAt:    time.Now().UTC(),
+		})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
