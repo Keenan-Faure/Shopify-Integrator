@@ -1135,14 +1135,12 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), fmt.Sprint(order_body.Name))
+		exists, err := CheckExistsOrder(dbconfig, c.Request.Context(), fmt.Sprint(order_body.Name))
 		if err != nil {
-			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
-		if db_order.WebCode == fmt.Sprint(order_body.Name) {
+		if exists {
 			response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
 				Type:        "order",
 				Status:      "in-queue",
@@ -1157,22 +1155,22 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 				return
 			}
 			RespondWithJSON(c, http.StatusOK, response_payload)
-		} else {
-			response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
-				Type:        "order",
-				Status:      "in-queue",
-				Instruction: "add_order",
-				Endpoint:    "queue",
-				ApiKey:      api_key,
-				Method:      http.MethodPost,
-				Object:      order_body,
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusBadRequest, err.Error())
-				return
-			}
-			RespondWithJSON(c, http.StatusCreated, response_payload)
+			return
 		}
+		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
+			Type:        "order",
+			Status:      "in-queue",
+			Instruction: "add_order",
+			Endpoint:    "queue",
+			ApiKey:      api_key,
+			Method:      http.MethodPost,
+			Object:      order_body,
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusCreated, response_payload)
 	}
 }
 
@@ -1650,7 +1648,7 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		err = ValidateDuplicateSKU(params, dbconfig, c.Request)
+		err = ValidateDuplicateSKU(params, dbconfig)
 		if err != nil {
 			RespondWithError(c, http.StatusConflict, err.Error())
 			return
@@ -1659,14 +1657,6 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
-		}
-		csv_products := ConvertProductToAppProduct(params)
-		for _, csv_product := range csv_products {
-			err = ProductValidationDatabase(csv_product, dbconfig, c.Request)
-			if err != nil {
-				RespondWithError(c, http.StatusBadRequest, err.Error())
-				return
-			}
 		}
 		if params.Active == "" || len(params.Active) == 0 {
 			params.Active = "0"
