@@ -1,14 +1,46 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"integrator/internal/database"
 	"objects"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 /*
 This file contains various functions that act as utilities when adding, returning, responding with data.
 */
+
+/* Returns a variant ID in UUID format from the database. Uses it's SKU code in the search */
+func QueryVariantIDBySKU(dbconfig *DbConfig, variantData objects.RequestBodyVariant) (uuid.UUID, error) {
+	variantID, err := dbconfig.DB.GetVariantIDBySKU(context.Background(), variantData.Sku)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return uuid.Nil, errors.New("product variant with SKU '" + variantData.Sku + "' not found")
+		}
+		return uuid.Nil, err
+	}
+	return variantID, nil
+}
+
+/* Returns a variant ID in UUID format from the database. Uses it's SKU code in the search */
+func QueryProductByID(dbconfig *DbConfig, product_id string) (uuid.UUID, error) {
+	product_uuid, err := uuid.Parse(product_id)
+	if err != nil {
+		return uuid.Nil, errors.New("could not decode product id: " + product_id)
+	}
+	_, err = dbconfig.DB.GetProductByID(context.Background(), product_uuid)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return uuid.Nil, errors.New("product with id '" + product_id + "' not found")
+		}
+		return uuid.Nil, err
+	}
+	return product_uuid, nil
+}
 
 /* Parses the data and fills in the missing hourly values with a 0 value if it does not exist. */
 func ParseFetchStats(data []database.GetFetchStatsRow) objects.FetchAmountResponse {
