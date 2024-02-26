@@ -73,7 +73,7 @@ SELECT
 FROM variants
 WHERE sku = $1;
 
--- name: GetVariantIDByCode :one
+-- name: GetVariantIDBySKU :one
 SELECT
     id
 FROM variants
