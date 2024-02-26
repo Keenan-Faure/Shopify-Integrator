@@ -2039,7 +2039,7 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusConflict, "email '"+request_body.Email+"' already exists")
 			return
 		}
-		token_value := uuid.UUID{}
+		token_value := uuid.Nil
 		token_value, exists, err = dbconfig.CheckExistsToken(email, c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
