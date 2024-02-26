@@ -126,7 +126,7 @@ func UpdateOrderLine(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, ord
 func AddCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCustomerCode string) (uuid.UUID, error) {
 	exists, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
 	if err != nil {
-		return uuid.UUID{}, err
+		return uuid.Nil, err
 	}
 	if !exists {
 		dbCustomer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
@@ -141,7 +141,7 @@ func AddCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCu
 		})
 		return dbCustomer.ID, err
 	}
-	return uuid.UUID{}, nil
+	return uuid.Nil, nil
 }
 
 /* Updates a customer inside the application */
@@ -190,7 +190,7 @@ func UpdateCustomerAddress(dbconfig *DbConfig, orderData objects.RequestBodyOrde
 		return err
 	}
 	if exists {
-		// TODO should we update customer address
+		// TODO should we update customer address links?
 		// also, does it make sense to update it seeing that it already exists in this block
 		return nil
 	}
@@ -246,8 +246,39 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) erro
 }
 
 /* Updates a product to the application */
-func UpdateProduct(dbconfig *DbConfig, productID uuid.UUID, productData objects.RequestBodyProduct) {
-
+func UpdateProduct(dbconfig *DbConfig, productID string, productData objects.RequestBodyProduct) error {
+	productUUID, err := QueryProductByID(dbconfig, productID)
+	if err != nil {
+		return err
+	}
+	if productData.Active == "" {
+		productData.Active = "0"
+	}
+	err = dbconfig.DB.UpdateProductByID(context.Background(), database.UpdateProductByIDParams{
+		Active:      productData.Active,
+		Title:       utils.ConvertStringToSQL(productData.Title),
+		BodyHtml:    utils.ConvertStringToSQL(productData.BodyHTML),
+		Category:    utils.ConvertStringToSQL(productData.Category),
+		Vendor:      utils.ConvertStringToSQL(productData.Vendor),
+		ProductType: utils.ConvertStringToSQL(productData.ProductCode),
+		UpdatedAt:   time.Now().UTC(),
+		ID:          productUUID,
+	})
+	for productOptionKey := range productData.ProductOptions {
+		_, err = dbconfig.DB.UpdateProductOption(context.Background(), database.UpdateProductOptionParams{
+			Name:       productData.ProductOptions[productOptionKey].Value,
+			Position:   int32(productOptionKey + 1),
+			ProductID:  productUUID,
+			Position_2: int32(productOptionKey + 1),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	for _, variantData := range productData.Variants {
+		err = UpdateVariant(dbconfig, variantData, productID)
+	}
+	return nil
 }
 
 /* Adds a product variant to the application. The productID needs to point to a valid product*/
@@ -267,45 +298,25 @@ func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, prod
 		return err
 	}
 	for key_pricing := range variantData.VariantPricing {
-		// check if the price tier name is acceptable
-		if variantData.VariantPricing[key_pricing].Name == "Selling Price" ||
-			variantData.VariantPricing[key_pricing].Name == "Compare At Price" {
-			_, err := dbconfig.DB.CreateVariantPricing(context.Background(), database.CreateVariantPricingParams{
-				ID:        uuid.New(),
-				VariantID: variant.ID,
-				Name:      variantData.VariantPricing[key_pricing].Name,
-				Value:     utils.ConvertStringToSQL(variantData.VariantPricing[key_pricing].Value),
-				Isdefault: variantData.VariantPricing[key_pricing].IsDefault,
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				return err
-			}
-		} else {
-			return errors.New("invalid price tier" + variantData.VariantPricing[key_pricing].Name)
+		err = AddPricing(
+			dbconfig,
+			variant.Sku,
+			variant.ID,
+			variantData.VariantPricing[key_pricing].Name,
+			variantData.VariantPricing[key_pricing].Value,
+		)
+		if err != nil {
+			return err
 		}
 	}
 	for key_qty := range variantData.VariantQuantity {
-		// check if the warehouse exists, then we update the quantity
-		warehouse_name := variantData.VariantQuantity[key_qty].Name
-		warehouse_qty := variantData.VariantQuantity[key_qty].Value
-		_, err = dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
-		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				return errors.New("warehouse " + warehouse_name + " not found")
-			}
-			return err
-		}
-		// if warehouse is found, we update the qty, we cannot create a new one
-		err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
-			Name:      warehouse_name,
-			Value:     utils.ConvertIntToSQL(warehouse_qty),
-			Isdefault: false,
-			UpdatedAt: time.Now().UTC(),
-			Sku:       variant.Sku,
-			Name_2:    warehouse_name,
-		})
+		err = AddWarehouse(
+			dbconfig,
+			variant.Sku,
+			variant.ID,
+			variantData.VariantQuantity[key_qty].Name,
+			variantData.VariantQuantity[key_qty].Value,
+		)
 		if err != nil {
 			return err
 		}
@@ -317,8 +328,51 @@ func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, prod
 }
 
 /* Updates a product variant inside the application. The productID needs to point to a valid product */
-func UpdateVariant(productID uuid.UUID) {
-
+func UpdateVariant(
+	dbconfig *DbConfig,
+	variantData objects.RequestBodyVariant,
+	productID string,
+) error {
+	dbVariantID, err := QueryVariantIDBySKU(dbconfig, variantData)
+	if err != nil {
+		return err
+	}
+	err = dbconfig.DB.UpdateVariant(context.Background(), database.UpdateVariantParams{
+		Option1:   utils.ConvertStringToSQL(variantData.Option1),
+		Option2:   utils.ConvertStringToSQL(variantData.Option2),
+		Option3:   utils.ConvertStringToSQL(variantData.Option3),
+		Barcode:   utils.ConvertStringToSQL(variantData.Barcode),
+		UpdatedAt: time.Now().UTC(),
+		Sku:       variantData.Sku,
+	})
+	if err != nil {
+		return err
+	}
+	for key_pricing := range variantData.VariantPricing {
+		err = AddPricing(
+			dbconfig,
+			variantData.Sku,
+			dbVariantID,
+			variantData.VariantPricing[key_pricing].Name,
+			variantData.VariantPricing[key_pricing].Value,
+		)
+		if err != nil {
+			return err
+		}
+	}
+	for key_qty := range variantData.VariantQuantity {
+		err = AddWarehouse(
+			dbconfig,
+			variantData.Sku,
+			dbVariantID,
+			variantData.VariantQuantity[key_qty].Name,
+			variantData.VariantQuantity[key_qty].Value,
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 /*
@@ -389,6 +443,9 @@ func AddGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name 
 
 /* Updates or creates the specific price tier for a specific SKU */
 func AddPricing(dbconfig *DbConfig, sku string, variant_id uuid.UUID, pricing_name string, price string) error {
+	if pricing_name != "Selling Price" && pricing_name != "Compare At Price" {
+		return errors.New("invalid price '" + pricing_name + "'")
+	}
 	exists, err := CheckExistsPriceTier(
 		dbconfig,
 		context.Background(),
@@ -579,7 +636,7 @@ Checks if the VID exists internally.
 
 Returns an empty string if it doesn't and the VID if it does
 */
-func (dbconfig *DbConfig) CheckVID(sku string, r *http.Request) (string, error) {
+func CheckVID(dbconfig *DbConfig, sku string, r *http.Request) (string, error) {
 	pid, err := dbconfig.DB.GetVIDBySKU(r.Context(), sku)
 	if err != nil {
 		return "", err
@@ -595,7 +652,7 @@ Checks if the PID exists internally
 
 Returns an empty string if it doesn't and the PID if it does
 */
-func (dbconfig *DbConfig) CheckPID(product_code string, r *http.Request) (string, error) {
+func CheckPID(dbconfig *DbConfig, product_code string, r *http.Request) (string, error) {
 	pid, err := dbconfig.DB.GetPIDByProductCode(r.Context(), product_code)
 	if err != nil {
 		return "", err
@@ -714,7 +771,7 @@ func CheckExistsWarehouse(dbconfig *DbConfig, ctx context.Context, sku, warehous
 }
 
 /* Checks if a username already exists inside database */
-func (dbconfig *DbConfig) CheckUExistsUser(name string, r *http.Request) (bool, error) {
+func CheckUExistsUser(dbconfig *DbConfig, name string, r *http.Request) (bool, error) {
 	username, err := dbconfig.DB.GetUserByName(r.Context(), name)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
@@ -729,7 +786,8 @@ func (dbconfig *DbConfig) CheckUExistsUser(name string, r *http.Request) (bool, 
 }
 
 /* Checks if the credentials in the request body refer to a user */
-func (dbconfig *DbConfig) CheckUserCredentials(
+func CheckUserCredentials(
+	dbconfig *DbConfig,
 	request_body objects.RequestBodyLogin,
 	r *http.Request,
 ) (database.GetUserCredentialsRow, bool, error) {
@@ -747,21 +805,21 @@ func (dbconfig *DbConfig) CheckUserCredentials(
 }
 
 /* Checks if a token already exists in the database */
-func (dbconfig *DbConfig) CheckExistsToken(email string, r *http.Request) (uuid.UUID, bool, error) {
+func CheckExistsToken(dbconfig *DbConfig, email string, r *http.Request) (uuid.UUID, bool, error) {
 	token, err := dbconfig.DB.GetToken(r.Context(), email)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
-			return uuid.UUID{}, false, err
+			return uuid.Nil, false, err
 		}
 	}
 	if token.Email == email {
 		return token.Token, true, nil
 	}
-	return uuid.UUID{}, false, nil
+	return uuid.Nil, false, nil
 }
 
 /* Checks if a token already exists in the database */
-func (dbconfig *DbConfig) CheckUserEmailType(email, user_type string) (bool, error) {
+func CheckUserEmailType(dbconfig *DbConfig, email, user_type string) (bool, error) {
 	db_username, err := dbconfig.DB.GetUserByEmailType(context.Background(), database.GetUserByEmailTypeParams{
 		Email:    email,
 		UserType: user_type,
