@@ -20,6 +20,27 @@ And keep the code used in the application
 Functions are mostly used to interact with the database.
 */
 
+/* Adds a link between a customer and an order */
+func AddCustomerOrder(dbconfig *DbConfig, orderID, customerID uuid.UUID) error {
+	exists, err := CheckExistsCustomerOrder(dbconfig, context.Background(), customerID, orderID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		err = dbconfig.DB.CreateCustomerOrder(context.Background(), database.CreateCustomerOrderParams{
+			ID:         orderID,
+			CustomerID: customerID,
+			OrderID:    orderID,
+			UpdatedAt:  time.Now().UTC(),
+			CreatedAt:  time.Now().UTC(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 /* Adds an order to the application */
 func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 	exists, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
@@ -30,7 +51,7 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 		if err := OrderValidation(orderBody); err != nil {
 			return err
 		}
-		_, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
+		dbOrder, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
 			ID:            uuid.New(),
 			Status:        orderBody.FinancialStatus,
 			Notes:         utils.ConvertStringToSQL(""),
@@ -42,7 +63,15 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 			CreatedAt:     time.Now().UTC(),
 			UpdatedAt:     time.Now().UTC(),
 		})
-		return err
+		dbCustomer, err := AddCustomer(
+			dbconfig,
+			orderBody.Customer,
+			orderBody.Customer.FirstName+" "+orderBody.Customer.LastName,
+		)
+		if err != nil {
+			return err
+		}
+		err = AddCustomerOrder(dbconfig, dbOrder.ID, dbCustomer)
 	}
 	return nil
 }
@@ -139,6 +168,14 @@ func AddCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCu
 			CreatedAt:       time.Now().UTC(),
 			UpdatedAt:       time.Now().UTC(),
 		})
+		err = AddAddress(dbconfig, customer.Address, dbCustomer.ID, "default")
+		if err != nil {
+			return uuid.Nil, err
+		}
+		err = AddCustomerAddress(dbconfig, customer.Address, dbCustomer.ID, "default")
+		if err != nil {
+			return uuid.Nil, err
+		}
 		return dbCustomer.ID, err
 	}
 	return uuid.Nil, nil
@@ -691,6 +728,21 @@ func CheckExistsCustomer(dbconfig *DbConfig, ctx context.Context, customer_id st
 		return true, nil
 	}
 	return false, nil
+}
+
+/* Checks if the customer-order link already exists inside the database */
+func CheckExistsCustomerOrder(dbconfig *DbConfig, ctx context.Context, customerID, orderID uuid.UUID) (bool, error) {
+	_, err := dbconfig.DB.GetOrderIDByCustomerID(ctx, database.GetOrderIDByCustomerIDParams{
+		CustomerID: customerID,
+		OrderID:    orderID,
+	})
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 /* Checks if a customer already exists inside the database using it's customer id on the order payload */
