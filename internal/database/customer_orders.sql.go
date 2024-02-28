@@ -57,6 +57,25 @@ func (q *Queries) GetCustomerByOrderID(ctx context.Context, orderID uuid.UUID) (
 	return customer_id, err
 }
 
+const getOrderIDByCustomerID = `-- name: GetOrderIDByCustomerID :one
+SELECT
+    order_id
+FROM customer_orders
+WHERE customer_id = $1 AND order_id = $2
+`
+
+type GetOrderIDByCustomerIDParams struct {
+	CustomerID uuid.UUID `json:"customer_id"`
+	OrderID    uuid.UUID `json:"order_id"`
+}
+
+func (q *Queries) GetOrderIDByCustomerID(ctx context.Context, arg GetOrderIDByCustomerIDParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getOrderIDByCustomerID, arg.CustomerID, arg.OrderID)
+	var order_id uuid.UUID
+	err := row.Scan(&order_id)
+	return order_id, err
+}
+
 const getOrdersByCustomerID = `-- name: GetOrdersByCustomerID :many
 SELECT
     order_id

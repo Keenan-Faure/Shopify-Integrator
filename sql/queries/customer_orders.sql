@@ -20,3 +20,9 @@ SELECT
     order_id
 FROM customer_orders
 WHERE customer_id = $1;
+
+-- name: GetOrderIDByCustomerID :one
+SELECT
+    order_id
+FROM customer_orders
+WHERE customer_id = $1 AND order_id = $2;

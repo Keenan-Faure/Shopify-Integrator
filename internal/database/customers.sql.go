@@ -331,3 +331,74 @@ func (q *Queries) UpdateCustomerByWebCode(ctx context.Context, arg UpdateCustome
 	)
 	return err
 }
+
+const upsertCustomer = `-- name: UpsertCustomer :one
+INSERT INTO customers(
+    id,
+    web_customer_code,
+    first_name,
+    last_name,
+    email,
+    phone,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT(web_customer_code)
+DO UPDATE 
+SET
+    first_name = COALESCE($3, customers.first_name),
+    last_name = COALESCE($4, customers.last_name),
+    email = COALESCE($5, customers.email),
+    phone = COALESCE($6, customers.phone),
+    updated_at = $8
+RETURNING id, web_customer_code, first_name, last_name, email, phone, created_at, updated_at, (xmax = 0) AS inserted
+`
+
+type UpsertCustomerParams struct {
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+}
+
+type UpsertCustomerRow struct {
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	Inserted        bool           `json:"inserted"`
+}
+
+func (q *Queries) UpsertCustomer(ctx context.Context, arg UpsertCustomerParams) (UpsertCustomerRow, error) {
+	row := q.db.QueryRowContext(ctx, upsertCustomer,
+		arg.ID,
+		arg.WebCustomerCode,
+		arg.FirstName,
+		arg.LastName,
+		arg.Email,
+		arg.Phone,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i UpsertCustomerRow
+	err := row.Scan(
+		&i.ID,
+		&i.WebCustomerCode,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Inserted,
+	)
+	return i, err
+}

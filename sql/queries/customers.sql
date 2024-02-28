@@ -23,6 +23,27 @@ SET
     updated_at = $5
 WHERE id = $6;
 
+-- name: UpsertCustomer :one
+INSERT INTO customers(
+    id,
+    web_customer_code,
+    first_name,
+    last_name,
+    email,
+    phone,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT(web_customer_code)
+DO UPDATE 
+SET
+    first_name = COALESCE($3, customers.first_name),
+    last_name = COALESCE($4, customers.last_name),
+    email = COALESCE($5, customers.email),
+    phone = COALESCE($6, customers.phone),
+    updated_at = $8
+RETURNING *, (xmax = 0) AS inserted;
+
 -- name: UpdateCustomerByWebCode :exec
 UPDATE customers
 SET
