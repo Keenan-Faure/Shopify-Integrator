@@ -597,11 +597,11 @@ type RequestBodyVariant struct {
 }
 
 type RequestBodyCustomer struct {
-	FirstName string            `json:"first_name"`
-	LastName  string            `json:"last_name"`
-	Email     string            `json:"email"`
-	Phone     string            `json:"phone"`
-	Address   []CustomerAddress `json:"address"`
+	FirstName string          `json:"first_name"`
+	LastName  string          `json:"last_name"`
+	Email     string          `json:"email"`
+	Phone     string          `json:"phone"`
+	Address   CustomerAddress `json:"default_address"`
 }
 
 type RequestBodyPreRegister struct {
