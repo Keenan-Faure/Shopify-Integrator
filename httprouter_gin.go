@@ -941,49 +941,12 @@ func (dbconfig *DbConfig) PostCustomerHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "data validation error")
 			return
 		}
-		customer, err := dbconfig.DB.CreateCustomer(c.Request.Context(), database.CreateCustomerParams{
-			ID:        uuid.New(),
-			FirstName: customer_body.FirstName,
-			LastName:  customer_body.LastName,
-			Email:     utils.ConvertStringToSQL(customer_body.Email),
-			Phone:     utils.ConvertStringToSQL(customer_body.Phone),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
+		dbCustomer, err := AddCustomer(dbconfig, customer_body, customer_body.FirstName+" "+customer_body.LastName)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		for key := range customer_body.Address {
-			_, err := dbconfig.DB.CreateAddress(c.Request.Context(), database.CreateAddressParams{
-				ID:         uuid.New(),
-				CustomerID: customer.ID,
-				Type:       utils.ConvertStringToSQL(customer_body.Address[key].Type),
-				FirstName:  customer_body.Address[key].FirstName,
-				LastName:   customer_body.Address[key].LastName,
-				Address1:   utils.ConvertStringToSQL(customer_body.Address[key].Address1),
-				Address2:   utils.ConvertStringToSQL(customer_body.Address[key].Address2),
-				Suburb:     utils.ConvertStringToSQL(""),
-				City:       utils.ConvertStringToSQL(customer_body.Address[key].City),
-				Province:   utils.ConvertStringToSQL(customer_body.Address[key].Province),
-				PostalCode: utils.ConvertStringToSQL(customer_body.Address[key].PostalCode),
-				Company:    utils.ConvertStringToSQL(customer_body.Address[key].Company),
-				CreatedAt:  time.Now().UTC(),
-				UpdatedAt:  time.Now().UTC(),
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
-		customer_data, err := CompileCustomerData(dbconfig, customer.ID, c.Request.Context(), false)
-		if err != nil {
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
-		RespondWithJSON(c, http.StatusCreated, customer_data)
+		RespondWithJSON(c, http.StatusCreated, dbCustomer)
 	}
 }
 
@@ -1954,7 +1917,7 @@ func (dbconfig *DbConfig) LoginHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		db_user, exists, err := dbconfig.CheckUserCredentials(body, c.Request)
+		db_user, exists, err := CheckUserCredentials(dbconfig, body, c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -2030,7 +1993,7 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			return
 		}
 		// user validation
-		exists, err := dbconfig.CheckUserEmailType(request_body.Email, "app")
+		exists, err := CheckUserEmailType(dbconfig, request_body.Email, "app")
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -2039,8 +2002,8 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusConflict, "email '"+request_body.Email+"' already exists")
 			return
 		}
-		token_value := uuid.Nil
-		token_value, exists, err = dbconfig.CheckExistsToken(email, c.Request)
+		token_value := uuid.UUID{}
+		token_value, exists, err = CheckExistsToken(dbconfig, email, c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -2059,10 +2022,6 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 				return
 			}
 			token_value = token.Token
-		}
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
 		}
 		if test != "true" {
 			err = Email(token_value, request_body.Email, request_body.Name)
@@ -2097,7 +2056,7 @@ func (dbconfig *DbConfig) RegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		exists, err := dbconfig.CheckUExistsUser(body.Name, c.Request)
+		exists, err := CheckUExistsUser(dbconfig, body.Name, c.Request)
 		if exists {
 			RespondWithError(c, http.StatusConflict, err.Error())
 			return

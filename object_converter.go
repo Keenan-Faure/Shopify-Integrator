@@ -465,16 +465,15 @@ func CompileCustomerData(
 	CustomerAddress := []objects.CustomerAddress{}
 	for _, value := range customer_address {
 		CustomerAddress = append(CustomerAddress, objects.CustomerAddress{
-			Type:       value.Type.String,
-			FirstName:  value.FirstName,
-			LastName:   value.LastName,
-			Address1:   value.Address1.String,
-			Address2:   value.Address2.String,
-			Suburb:     value.Suburb.String,
-			City:       value.City.String,
-			Province:   value.Province.String,
-			PostalCode: value.PostalCode.String,
-			Company:    value.Company.String,
+			Type:         value.Type,
+			FirstName:    value.FirstName,
+			LastName:     value.LastName,
+			Address1:     value.Address1.String,
+			Address2:     value.Address2.String,
+			City:         value.City.String,
+			Province:     value.Province.String,
+			ProvinceCode: value.ProvinceCode.String,
+			Company:      value.Company.String,
 		})
 	}
 	return objects.Customer{
@@ -573,7 +572,6 @@ func CompileOrderData(
 		LineItems = append(LineItems, objects.OrderLines{
 			SKU:      value.Sku,
 			Price:    value.Price.String,
-			Barcode:  int(value.Barcode.Int32),
 			Qty:      int(value.Qty.Int32),
 			TaxRate:  value.TaxRate.String,
 			TaxTotal: value.TaxTotal.String,
@@ -588,7 +586,6 @@ func CompileOrderData(
 		ShippingLineItems = append(ShippingLineItems, objects.OrderLines{
 			SKU:      value.Sku,
 			Price:    value.Price.String,
-			Barcode:  int(value.Barcode.Int32),
 			Qty:      int(value.Qty.Int32),
 			TaxRate:  value.TaxRate.String,
 			TaxTotal: value.TaxTotal.String,
@@ -602,11 +599,9 @@ func CompileOrderData(
 			LastName:     value.LastName,
 			Address1:     value.Address1.String,
 			Address2:     value.Address2.String,
-			Suburb:       "",
 			City:         value.City.String,
-			Zip:          "",
 			Province:     value.Province.String,
-			ProvinceCode: "",
+			ProvinceCode: value.ProvinceCode.String,
 			Company:      value.Company.String,
 		})
 	}

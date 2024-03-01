@@ -48,11 +48,11 @@ func main() {
 			}
 		}
 	}
-	r := setUpAPI(&dbCon, &shopifyConfig)
+	r := setUpAPI(&dbCon)
 	r.Run(":8080")
 }
 
-func setUpAPI(dbconfig *DbConfig, shopifyconfig *shopify.ConfigShopify) *gin.Engine {
+func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	r := gin.Default()
 
 	// authentication methods

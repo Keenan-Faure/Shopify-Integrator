@@ -63,6 +63,13 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 			CreatedAt:     time.Now().UTC(),
 			UpdatedAt:     time.Now().UTC(),
 		})
+		if err != nil {
+			return err
+		}
+		err = AddOrderLines(dbconfig, orderBody, dbOrder.ID)
+		if err != nil {
+			return err
+		}
 		dbCustomer, err := AddCustomer(
 			dbconfig,
 			orderBody.Customer,
@@ -71,7 +78,10 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 		if err != nil {
 			return err
 		}
-		err = AddCustomerOrder(dbconfig, dbOrder.ID, dbCustomer)
+		err = AddCustomerOrder(dbconfig, dbOrder.ID, dbCustomer.ID)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -85,8 +95,8 @@ func UpdateOrder(dbconfig *DbConfig, orderID uuid.UUID, orderBody objects.Reques
 	if exists {
 		_, err = dbconfig.DB.UpdateOrder(context.Background(), database.UpdateOrderParams{
 			Notes:         utils.ConvertStringToSQL(orderBody.Note),
-			Status:        "",
-			WebCode:       "",
+			Status:        orderBody.FinancialStatus,
+			WebCode:       orderBody.Name,
 			TaxTotal:      utils.ConvertStringToSQL(orderBody.TotalTax),
 			OrderTotal:    utils.ConvertStringToSQL(orderBody.TotalPrice),
 			ShippingTotal: utils.ConvertStringToSQL(orderBody.TotalShippingPriceSet.ShopMoney.Amount),
@@ -94,13 +104,25 @@ func UpdateOrder(dbconfig *DbConfig, orderID uuid.UUID, orderBody objects.Reques
 			UpdatedAt:     time.Now().UTC(),
 			ID:            orderID,
 		})
+		if err != nil {
+			return err
+		}
+		// remove previous order line before adding new ones
+		err = QueryClearOrderLines(dbconfig, orderID)
+		if err != nil {
+			return err
+		}
+		err = AddOrderLines(dbconfig, orderBody, orderID)
+		if err != nil {
+			return err
+		}
 		return err
 	}
 	return nil
 }
 
 /* Adds an order's line items to the database under the specific orderID */
-func AddOrderLine(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, orderID uuid.UUID) error {
+func AddOrderLines(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, orderID uuid.UUID) error {
 	_, err := dbconfig.DB.GetOrderByID(context.Background(), orderID)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -152,10 +174,14 @@ func UpdateOrderLine(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, ord
 }
 
 /* Adds a customer to the application */
-func AddCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCustomerCode string) (uuid.UUID, error) {
+func AddCustomer(
+	dbconfig *DbConfig,
+	customer objects.RequestBodyCustomer,
+	WebCustomerCode string,
+) (database.Customer, error) {
 	exists, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
 	if err != nil {
-		return uuid.Nil, err
+		return database.Customer{}, err
 	}
 	if !exists {
 		dbCustomer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
@@ -168,17 +194,20 @@ func AddCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCu
 			CreatedAt:       time.Now().UTC(),
 			UpdatedAt:       time.Now().UTC(),
 		})
+		if err != nil {
+			return database.Customer{}, err
+		}
 		err = AddAddress(dbconfig, customer.Address, dbCustomer.ID, "default")
 		if err != nil {
-			return uuid.Nil, err
+			return database.Customer{}, err
 		}
 		err = AddCustomerAddress(dbconfig, customer.Address, dbCustomer.ID, "default")
 		if err != nil {
-			return uuid.Nil, err
+			return database.Customer{}, err
 		}
-		return dbCustomer.ID, err
+		return dbCustomer, err
 	}
-	return uuid.Nil, nil
+	return database.Customer{}, nil
 }
 
 /* Updates a customer inside the application */
@@ -301,6 +330,9 @@ func UpdateProduct(dbconfig *DbConfig, productID string, productData objects.Req
 		UpdatedAt:   time.Now().UTC(),
 		ID:          productUUID,
 	})
+	if err != nil {
+		return err
+	}
 	for productOptionKey := range productData.ProductOptions {
 		_, err = dbconfig.DB.UpdateProductOption(context.Background(), database.UpdateProductOptionParams{
 			Name:       productData.ProductOptions[productOptionKey].Value,
@@ -314,6 +346,9 @@ func UpdateProduct(dbconfig *DbConfig, productID string, productData objects.Req
 	}
 	for _, variantData := range productData.Variants {
 		err = UpdateVariant(dbconfig, variantData, productID)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -710,6 +745,21 @@ func CheckExistsOrder(dbconfig *DbConfig, ctx context.Context, order_web_code st
 		return false, err
 	}
 	if dbOrder.WebCode == order_web_code {
+		return true, nil
+	}
+	return false, nil
+}
+
+/* Checks if an order already exists inside the database using it's web code */
+func CheckExistsOrderByID(dbconfig *DbConfig, ctx context.Context, orderID uuid.UUID) (bool, error) {
+	dbOrder, err := dbconfig.DB.GetOrderByID(ctx, orderID)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return false, nil
+		}
+		return false, err
+	}
+	if dbOrder.ID == orderID {
 		return true, nil
 	}
 	return false, nil

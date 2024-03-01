@@ -126,6 +126,12 @@ WHERE o.id in (
     OR c.last_name LIKE $1
 );
 
+-- name: GetOrderIDByWebCode :one
+SELECT
+    id
+FROM orders
+WHERE web_code = $1;
+
 -- name: FetchOrderStatsPaid :many
 SELECT
 	COUNT(id) AS "count",

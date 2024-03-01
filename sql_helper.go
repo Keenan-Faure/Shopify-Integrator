@@ -14,6 +14,23 @@ import (
 This file contains various functions that act as utilities when adding, returning, responding with data.
 */
 
+/* Clears the order_lines table of any line items relating to a certain SKU */
+func QueryClearOrderLines(dbconfig *DbConfig, orderID uuid.UUID) error {
+	exists, err := CheckExistsOrderByID(dbconfig, context.Background(), orderID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		// do nothing, because there is nothing to remove
+		return nil
+	}
+	err = dbconfig.DB.RemoveOrderLinesByOrderID(context.Background(), orderID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /* Returns a variant ID in UUID format from the database. Uses it's SKU code in the search */
 func QueryVariantIDBySKU(dbconfig *DbConfig, variantData objects.RequestBodyVariant) (uuid.UUID, error) {
 	variantID, err := dbconfig.DB.GetVariantIDBySKU(context.Background(), variantData.Sku)

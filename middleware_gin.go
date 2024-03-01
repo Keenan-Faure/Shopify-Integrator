@@ -19,7 +19,7 @@ func Basic(dbconfig *DbConfig) gin.HandlerFunc {
 		} else {
 			user, password, hasAuth := c.Request.BasicAuth()
 			if hasAuth {
-				_, exists, err := dbconfig.CheckUserCredentials(objects.RequestBodyLogin{
+				_, exists, err := CheckUserCredentials(dbconfig, objects.RequestBodyLogin{
 					Username: user,
 					Password: password,
 				}, c.Request)

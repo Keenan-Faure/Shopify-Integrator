@@ -180,10 +180,6 @@ func (dbconfig *DbConfig) QueuePush() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "queue is full, please wait")
 			return
 		}
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, "error checking queue size")
-			return
-		}
 		body, err := DecodeQueueItem(c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())

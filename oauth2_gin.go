@@ -105,7 +105,7 @@ func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
 			return
 		}
 		// user validation
-		exists, err := dbconfig.CheckUserEmailType(oauth_data.Email, "google")
+		exists, err := CheckUserEmailType(dbconfig, oauth_data.Email, "google")
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return

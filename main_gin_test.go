@@ -12,7 +12,6 @@ import (
 	"net/http/httptest"
 	"objects"
 	"os"
-	"shopify"
 	"testing"
 	"time"
 	"utils"
@@ -24,8 +23,7 @@ import (
 func TestProductCreationRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/products", nil)
@@ -107,8 +105,7 @@ func TestProductCreationRoute(t *testing.T) {
 func TestProductFilterRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/products/filter?page=1", nil)
@@ -157,8 +154,7 @@ func TestProductFilterRoute(t *testing.T) {
 func TestProductSearchRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/products/search?q=product_title", nil)
@@ -207,8 +203,7 @@ func TestProductSearchRoute(t *testing.T) {
 func TestProductsRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/products?page=1", nil)
@@ -251,8 +246,7 @@ func TestProductsRoute(t *testing.T) {
 func TestProductIDRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/products/abctest123", nil)
@@ -289,8 +283,7 @@ func TestProductIDRoute(t *testing.T) {
 func TestLoginRoute(t *testing.T) {
 	/* Test 1 - Invalid request - empty username/password */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	loginData := LoginPayload()
 	loginData.Username = ""
@@ -357,8 +350,7 @@ func TestLoginRoute(t *testing.T) {
 func TestLogoutHandle(t *testing.T) {
 	/* Test 1 - Invalid request - no cookies and no authentication */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/logout", nil)
@@ -369,8 +361,7 @@ func TestLogoutHandle(t *testing.T) {
 
 	/* Test 2 - Invalid request - no cookies sent with request */
 	dbUser := createDatabaseUser(&dbconfig)
-	shopifyConfig = shopify.InitConfigShopify()
-	router = setUpAPI(&dbconfig, &shopifyConfig)
+	router = setUpAPI(&dbconfig)
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/logout?api_key="+dbUser.ApiKey, nil)
@@ -383,8 +374,7 @@ func TestLogoutHandle(t *testing.T) {
 func TestPreregisterRoute(t *testing.T) {
 	/* Test 1 - Invalid request (empty email) */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	preregisterData := PreRegisterPayload()
 	preregisterData.Email = ""
@@ -452,8 +442,7 @@ func TestPreregisterRoute(t *testing.T) {
 func TestRegisterRoute(t *testing.T) {
 	/* Test 1 - Valid request*/
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	registrationData := RegisterPayload()
 	register_data_token := createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
@@ -590,8 +579,7 @@ func TestRegisterRoute(t *testing.T) {
 func TestReadyRoute(t *testing.T) {
 	/* Test 1 - Valid database credentials */
 	dbconfig := setupDatabase("", "", "", false)
-	shopifyConfig := shopify.InitConfigShopify()
-	router := setUpAPI(&dbconfig, &shopifyConfig)
+	router := setUpAPI(&dbconfig)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/ready", nil)
@@ -807,7 +795,7 @@ func setupDatabase(param_db_user, param_db_psw, param_db_name string, overwrite 
 	db_psw := utils.LoadEnv("db_psw")
 	db_name := utils.LoadEnv("db_name")
 	if overwrite {
-		db_user = param_db_name
+		db_user = param_db_user
 		db_psw = param_db_psw
 		db_name = param_db_name
 	}

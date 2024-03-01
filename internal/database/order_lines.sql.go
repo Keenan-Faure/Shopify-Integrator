@@ -181,6 +181,16 @@ func (q *Queries) GetShippingLinesByOrder(ctx context.Context, orderID uuid.UUID
 	return items, nil
 }
 
+const removeOrderLinesByOrderID = `-- name: RemoveOrderLinesByOrderID :exec
+DELETE FROM order_lines
+WHERE order_id = $1
+`
+
+func (q *Queries) RemoveOrderLinesByOrderID(ctx context.Context, orderID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, removeOrderLinesByOrderID, orderID)
+	return err
+}
+
 const updateOrderLine = `-- name: UpdateOrderLine :exec
 UPDATE order_lines
 SET
@@ -218,47 +228,6 @@ func (q *Queries) UpdateOrderLine(ctx context.Context, arg UpdateOrderLineParams
 		arg.TaxTotal,
 		arg.UpdatedAt,
 		arg.ID,
-	)
-	return err
-}
-
-const updateOrderLineByOrderAndSKU = `-- name: UpdateOrderLineByOrderAndSKU :exec
-UPDATE order_lines
-SET
-    line_type = $1,
-    sku = $2,
-    price = $3,
-    qty = $4,
-    tax_rate = $5,
-    tax_total = $6,
-    updated_at = $7
-WHERE order_id = $8
-AND sku = $9
-`
-
-type UpdateOrderLineByOrderAndSKUParams struct {
-	LineType  sql.NullString `json:"line_type"`
-	Sku       string         `json:"sku"`
-	Price     sql.NullString `json:"price"`
-	Qty       sql.NullInt32  `json:"qty"`
-	TaxRate   sql.NullString `json:"tax_rate"`
-	TaxTotal  sql.NullString `json:"tax_total"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	OrderID   uuid.UUID      `json:"order_id"`
-	Sku_2     string         `json:"sku_2"`
-}
-
-func (q *Queries) UpdateOrderLineByOrderAndSKU(ctx context.Context, arg UpdateOrderLineByOrderAndSKUParams) error {
-	_, err := q.db.ExecContext(ctx, updateOrderLineByOrderAndSKU,
-		arg.LineType,
-		arg.Sku,
-		arg.Price,
-		arg.Qty,
-		arg.TaxRate,
-		arg.TaxTotal,
-		arg.UpdatedAt,
-		arg.OrderID,
-		arg.Sku_2,
 	)
 	return err
 }

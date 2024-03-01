@@ -28,19 +28,6 @@ SET
     updated_at = $8
 WHERE id = $9;
 
--- name: UpdateOrderLineByOrderAndSKU :exec
-UPDATE order_lines
-SET
-    line_type = $1,
-    sku = $2,
-    price = $3,
-    qty = $4,
-    tax_rate = $5,
-    tax_total = $6,
-    updated_at = $7
-WHERE order_id = $8
-AND sku = $9;
-
 -- name: GetShippingLinesByOrder :many
 SELECT
     sku,
@@ -64,3 +51,7 @@ SELECT
     updated_at
 FROM order_lines
 WHERE order_id = $1 AND line_type = 'product';
+
+-- name: RemoveOrderLinesByOrderID :exec
+DELETE FROM order_lines
+WHERE order_id = $1;

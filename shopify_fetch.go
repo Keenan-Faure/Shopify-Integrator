@@ -226,11 +226,6 @@ func FetchShopifyProducts(dbconfig *DbConfig,
 							// update variant pricing
 							// check if pricing should be updated
 							if DeterFetchRestriction(restrictions_map, "pricing") {
-								if err != nil {
-									if err.Error() != "sql: no rows in result set" {
-										return err
-									}
-								}
 								err = AddPricing(dbconfig, internal_product.Sku, internal_product.ID, "Selling Price", product_variant.Price)
 								if err != nil {
 									return err

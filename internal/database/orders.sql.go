@@ -307,6 +307,20 @@ func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode string) (GetOrd
 	return i, err
 }
 
+const getOrderIDByWebCode = `-- name: GetOrderIDByWebCode :one
+SELECT
+    id
+FROM orders
+WHERE web_code = $1
+`
+
+func (q *Queries) GetOrderIDByWebCode(ctx context.Context, webCode string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getOrderIDByWebCode, webCode)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getOrders = `-- name: GetOrders :many
 SELECT
     id,

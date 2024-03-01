@@ -674,7 +674,6 @@ type CustomerAddress struct {
 	Address1     string `json:"address_1"`
 	Address2     string `json:"address_2"`
 	City         string `json:"city"`
-	Zip          string `json:"zip"`
 	Province     string `json:"province"`
 	ProvinceCode string `json:"province_code"`
 	Company      string `json:"company"`
@@ -682,7 +681,6 @@ type CustomerAddress struct {
 type OrderLines struct {
 	SKU      string `json:"sku"`
 	Price    string `json:"price"`
-	Barcode  int    `json:"barcode"`
 	Qty      int    `json:"qty"`
 	TaxRate  string `json:"tax_rate"`
 	TaxTotal string `json:"tax_total"`
