@@ -1595,141 +1595,50 @@ Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var params objects.RequestBodyProduct
-		err := c.Bind(&params)
+		var requestProduct objects.RequestBodyProduct
+		err := c.Bind(&requestProduct)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		validation := ProductValidation(dbconfig, params)
+		// Validation
+		validation := ProductValidation(dbconfig, requestProduct)
 		if validation != nil {
 			RespondWithError(c, http.StatusBadRequest, validation.Error())
 			return
 		}
-		err = ValidateDuplicateOption(params)
+		err = ValidateDuplicateOption(requestProduct)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		err = ValidateDuplicateSKU(params, dbconfig)
+		err = ValidateDuplicateSKU(requestProduct, dbconfig)
 		if err != nil {
 			RespondWithError(c, http.StatusConflict, err.Error())
 			return
 		}
-		err = DuplicateOptionValues(params)
+		err = DuplicateOptionValues(requestProduct)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		if params.Active == "" || len(params.Active) == 0 {
-			params.Active = "0"
+		if requestProduct.Active == "" || len(requestProduct.Active) == 0 {
+			requestProduct.Active = "0"
 		}
-		product, err := dbconfig.DB.CreateProduct(c.Request.Context(), database.CreateProductParams{
-			ID:          uuid.New(),
-			Active:      params.Active,
-			ProductCode: params.ProductCode,
-			Title:       utils.ConvertStringToSQL(params.Title),
-			BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
-			Category:    utils.ConvertStringToSQL(params.Category),
-			Vendor:      utils.ConvertStringToSQL(params.Vendor),
-			ProductType: utils.ConvertStringToSQL(params.ProductType),
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
-		})
+
+		dbProductID, err := AddProduct(dbconfig, requestProduct)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		for key := range params.ProductOptions {
-			_, err := dbconfig.DB.CreateProductOption(c.Request.Context(), database.CreateProductOptionParams{
-				ID:        uuid.New(),
-				ProductID: product.ID,
-				Name:      params.ProductOptions[key].Value,
-				Position:  int32(key + 1),
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
-		for key := range params.Variants {
-			variant, err := dbconfig.DB.CreateVariant(c.Request.Context(), database.CreateVariantParams{
-				ID:        uuid.New(),
-				ProductID: product.ID,
-				Sku:       params.Variants[key].Sku,
-				Option1:   utils.ConvertStringToSQL(params.Variants[key].Option1),
-				Option2:   utils.ConvertStringToSQL(params.Variants[key].Option2),
-				Option3:   utils.ConvertStringToSQL(params.Variants[key].Option3),
-				Barcode:   utils.ConvertStringToSQL(params.Variants[key].Barcode),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-			// variant pricing & variant qty
-			for key_pricing := range params.Variants[key].VariantPricing {
-				// check if the price tier name is acceptable
-				if params.Variants[key].VariantPricing[key_pricing].Name == "Selling Price" ||
-					params.Variants[key].VariantPricing[key_pricing].Name == "Compare At Price" {
-					_, err := dbconfig.DB.CreateVariantPricing(c.Request.Context(), database.CreateVariantPricingParams{
-						ID:        uuid.New(),
-						VariantID: variant.ID,
-						Name:      params.Variants[key].VariantPricing[key_pricing].Name,
-						Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
-						Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
-						CreatedAt: time.Now().UTC(),
-						UpdatedAt: time.Now().UTC(),
-					})
-					if err != nil {
-						RespondWithError(c, http.StatusInternalServerError, err.Error())
-						return
-					}
-				} else {
-					RespondWithError(c, http.StatusInternalServerError, "invalid price tier"+
-						params.Variants[key].VariantPricing[key_pricing].Name)
-					return
-				}
-			}
-			for key_qty := range params.Variants[key].VariantQuantity {
-				// check if the warehouse exists, then we update the quantity
-				warehouse_name := params.Variants[key].VariantQuantity[key_qty].Name
-				warehouse_qty := params.Variants[key].VariantQuantity[key_qty].Value
-				_, err = dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
-				if err != nil {
-					if err.Error() == "sql: no rows in result set" {
-						RespondWithError(c, http.StatusInternalServerError, "warehouse "+warehouse_name+" not found")
-						return
-					}
-					RespondWithError(c, http.StatusInternalServerError, err.Error())
-					return
-				}
-				// if warehouse is found, we update the qty, we cannot create a new one
-				err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
-					Name:      warehouse_name,
-					Value:     utils.ConvertIntToSQL(warehouse_qty),
-					Isdefault: false,
-					UpdatedAt: time.Now().UTC(),
-					Sku:       variant.Sku,
-					Name_2:    warehouse_name,
-				})
-				if err != nil {
-					RespondWithError(c, http.StatusInternalServerError, err.Error())
-					return
-				}
-			}
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
-		product_added, err := CompileProductData(dbconfig, product.ID, c.Request.Context(), false)
+		product_added, err := CompileProductData(dbconfig, dbProductID, c.Request.Context(), false)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		// queue new products to be added to shopify
+
+		// Only products that are active
+		// should be pushed (automatically) to Shopify
 		if product_added.Active == "1" {
 			api_key := c.GetString("api_key")
 			err = CompileInstructionProduct(dbconfig, product_added, api_key)
