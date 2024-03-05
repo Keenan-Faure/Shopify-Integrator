@@ -20,6 +20,127 @@ And keep the code used in the application
 Functions are mostly used to interact with the database.
 */
 
+/* Upserts a Price */
+func UpsertPrice(
+	dbconfig *DbConfig,
+	currentRecord objects.ImportResponse,
+	product objects.AppProduct,
+	variantID uuid.UUID,
+) objects.ImportResponse {
+	for _, price := range product.Pricing {
+		err := AddPricing(dbconfig, product.SKU, variantID, price.Name, price.Value)
+		if err != nil {
+			currentRecord.FailCounter++
+			continue
+		}
+	}
+	return currentRecord
+}
+
+/* Upserts a Warehouse */
+func UpsertWarehouse(
+	dbconfig *DbConfig,
+	currentRecord objects.ImportResponse,
+	product objects.AppProduct,
+	variantID uuid.UUID,
+) objects.ImportResponse {
+	for _, warehouse := range product.Warehouses {
+		err := AddWarehouse(dbconfig, product.SKU, variantID, warehouse.Name, warehouse.Value)
+		if err != nil {
+			currentRecord.FailCounter++
+			return currentRecord
+		}
+	}
+	return currentRecord
+}
+
+/* Upserts a product */
+func UpsertProduct(
+	dbconfig *DbConfig,
+	currentRecord objects.ImportResponse,
+	product objects.AppProduct,
+) (objects.ImportResponse, uuid.UUID) {
+	dbProduct, err := dbconfig.DB.UpsertProduct(context.Background(), database.UpsertProductParams{
+		ID:          uuid.New(),
+		ProductCode: product.ProductCode,
+		Active:      product.Active,
+		Title:       utils.ConvertStringToSQL(product.Title),
+		BodyHtml:    utils.ConvertStringToSQL(product.BodyHTML),
+		Category:    utils.ConvertStringToSQL(product.Category),
+		Vendor:      utils.ConvertStringToSQL(product.Vendor),
+		ProductType: utils.ConvertStringToSQL(product.ProductType),
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+	})
+	if err != nil {
+		currentRecord.FailCounter++
+		return currentRecord, uuid.Nil
+	}
+	if dbProduct.Inserted {
+		currentRecord.ProductsAdded++
+	} else {
+		currentRecord.ProductsAdded++
+	}
+	option_names := CreateOptionNamesMap(product)
+	err = AddProductOptions(dbconfig, dbProduct.ID, product.ProductCode, option_names)
+	if err != nil {
+		currentRecord.FailCounter++
+		return currentRecord, uuid.Nil
+	}
+	return currentRecord, dbProduct.ID
+}
+
+/* Upsert images */
+func UpsertImages(
+	dbconfig *DbConfig,
+	currentRecord objects.ImportResponse,
+	product objects.AppProduct,
+	productID uuid.UUID,
+) objects.ImportResponse {
+	// overwrite ones with the same position
+	images := CreateImageMap(product)
+	for key := range images {
+		if images[key] != "" {
+			err := AddImagery(dbconfig, productID, images[key], key+1)
+			if err != nil {
+				currentRecord.FailCounter++
+				return currentRecord
+			}
+		}
+	}
+	return currentRecord
+}
+
+/* Upserts a variant into the database */
+func UpsertVariant(
+	dbconfig *DbConfig,
+	currentRecord objects.ImportResponse,
+	appProduct objects.AppProduct,
+	productID uuid.UUID,
+) (objects.ImportResponse, uuid.UUID) {
+	dbVariant, err := dbconfig.DB.UpsertVariant(context.Background(), database.UpsertVariantParams{
+		ID:        uuid.New(),
+		ProductID: productID,
+		Sku:       appProduct.SKU,
+		Option1:   utils.ConvertStringToSQL(appProduct.Option1Value),
+		Option2:   utils.ConvertStringToSQL(appProduct.Option2Value),
+		Option3:   utils.ConvertStringToSQL(appProduct.Option3Value),
+		Barcode:   utils.ConvertStringToSQL(appProduct.Barcode),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		currentRecord.FailCounter++
+		return currentRecord, uuid.Nil
+	}
+	if dbVariant.Inserted {
+		currentRecord.ProductsAdded++
+	} else {
+		currentRecord.ProductsAdded++
+	}
+	return currentRecord, dbVariant.ID
+}
+
 /* Adds a link between a customer and an order */
 func AddCustomerOrder(dbconfig *DbConfig, orderID, customerID uuid.UUID) error {
 	exists, err := CheckExistsCustomerOrder(dbconfig, context.Background(), customerID, orderID)
@@ -264,18 +385,18 @@ func UpdateCustomerAddress(dbconfig *DbConfig, orderData objects.RequestBodyOrde
 }
 
 /* Adds a product to the application */
-func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) error {
+func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uuid.UUID, error) {
 	if validation := ProductValidation(dbconfig, productData); validation != nil {
-		return validation
+		return uuid.Nil, validation
 	}
 	if err := ValidateDuplicateOption(productData); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	if err := ValidateDuplicateSKU(productData, dbconfig); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	if err := DuplicateOptionValues(productData); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	product, err := dbconfig.DB.CreateProduct(context.Background(), database.CreateProductParams{
 		ID:          uuid.New(),
@@ -290,7 +411,7 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) erro
 		UpdatedAt:   time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	for key := range productData.ProductOptions {
 		_, err := dbconfig.DB.CreateProductOption(context.Background(), database.CreateProductOptionParams{
@@ -300,15 +421,15 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) erro
 			Position:  int32(key + 1),
 		})
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
 	}
 	for _, variant := range productData.Variants {
 		if err := AddVariant(dbconfig, variant, product.ID); err != nil {
-			return err
+			return uuid.Nil, err
 		}
 	}
-	return nil
+	return product.ID, nil
 }
 
 /* Updates a product to the application */
