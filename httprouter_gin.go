@@ -1461,124 +1461,33 @@ func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		csv_products, err := iocsv.ReadFile(wd + "/" + file_name_global)
+		appProducts, err := iocsv.ReadFile(wd + "/" + file_name_global)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		processed_counter := 0
-		failure_counter := 0
-		products_added := 0
-		products_updated := 0
-		variants_updated := 0
-		variants_added := 0
-		for _, csv_product := range csv_products {
-			product, err := dbconfig.DB.UpsertProduct(c.Request.Context(), database.UpsertProductParams{
-				ID:          uuid.New(),
-				ProductCode: csv_product.ProductCode,
-				Active:      csv_product.Active,
-				Title:       utils.ConvertStringToSQL(csv_product.Title),
-				BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
-				Category:    utils.ConvertStringToSQL(csv_product.Category),
-				Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
-				ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
-				CreatedAt:   time.Now().UTC(),
-				UpdatedAt:   time.Now().UTC(),
-			})
-			if err != nil {
-				log.Println(err)
-				failure_counter++
-				continue
-			}
-			if product.Inserted {
-				products_added++
-			} else {
-				products_updated++
-			}
-			option_names := CreateOptionNamesMap(csv_product)
-			err = AddProductOptions(dbconfig, product.ID, product.ProductCode, option_names)
-			if err != nil {
-				log.Println(err)
-				failure_counter++
-				continue
-			}
-
-			// add images to product
-			// overwrite ones with the same position
-			images := CreateImageMap(csv_product)
-			for key := range images {
-				if images[key] != "" {
-					err = AddImagery(dbconfig, product.ID, images[key], key+1)
-					if err != nil {
-						log.Println(err)
-						failure_counter++
-						continue
-					}
-				}
-			}
-			// create variant
-			variant, err := dbconfig.DB.UpsertVariant(c.Request.Context(), database.UpsertVariantParams{
-				ID:        uuid.New(),
-				ProductID: product.ID,
-				Sku:       csv_product.SKU,
-				Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
-				Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
-				Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
-				Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
-			if err == nil {
-				variants_added++
-			}
-			if variant.Inserted {
-				variants_added++
-			} else {
-				variants_updated++
-			}
-			for _, pricing_value := range csv_product.Pricing {
-				// check if the price is acceptable
-				if pricing_value.Name == "Selling Price" || pricing_value.Name == "Compare At Price" {
-					err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
-					if err != nil {
-						log.Println(err)
-						failure_counter++
-						continue
-					}
-				} else {
-					log.Println("invalid price tier " + pricing_value.Name)
-					failure_counter++
-					continue
-				}
-			}
-			for _, qty_value := range csv_product.Warehouses {
-				err = AddWarehouse(dbconfig, variant.Sku, variant.ID, qty_value.Name, qty_value.Value)
-				if err != nil {
-					log.Println(err)
-					failure_counter++
-					continue
-				}
-			}
-			if err != nil {
-				log.Println(err)
-				failure_counter++
-				continue
-			}
-			processed_counter++
+		importingRecord := objects.ImportResponse{
+			ProcessedCounter: 0,
+			FailCounter:      0,
+			ProductsAdded:    0,
+			ProductsUpdated:  0,
+			VariantsAdded:    0,
+			VariantsUpdated:  0,
+		}
+		for _, appProduct := range appProducts {
+			importingRecord, productID := UpsertProduct(dbconfig, importingRecord, appProduct)
+			importingRecord = UpsertImages(dbconfig, importingRecord, appProduct, productID)
+			importingRecord, variantID := UpsertVariant(dbconfig, importingRecord, appProduct, productID)
+			importingRecord = UpsertPrice(dbconfig, importingRecord, appProduct, variantID)
+			importingRecord = UpsertWarehouse(dbconfig, importingRecord, appProduct, variantID)
+			importingRecord.ProcessedCounter++
 		}
 		err = iocsv.RemoveFile(file_name_global)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		RespondWithJSON(c, http.StatusOK, objects.ImportResponse{
-			ProcessedCounter: processed_counter,
-			FailCounter:      failure_counter,
-			ProductsAdded:    products_added,
-			ProductsUpdated:  products_updated,
-			VariantsAdded:    variants_added,
-			VariantsUpdated:  variants_updated,
-		})
+		RespondWithJSON(c, http.StatusOK, importingRecord)
 	}
 }
 
