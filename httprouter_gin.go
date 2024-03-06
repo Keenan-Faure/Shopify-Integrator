@@ -561,154 +561,18 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) UpdateProductHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		product_id := c.Param("id")
-		err := IDValidation(product_id)
+		productID := c.Param("id")
+		requestData, err := DecodeProductRequestBody(c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		product_uuid, err := uuid.Parse(product_id)
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, "could not decode product id: "+product_id)
-			return
-		}
-		found := false
-		_, err = dbconfig.DB.GetProductByID(c.Request.Context(), product_uuid)
-		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				found = false
-			} else {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		} else {
-			found = true
-		}
-
-		if !found {
-			RespondWithError(c, http.StatusNotFound, "could not find product id: "+product_id)
-			return
-		}
-
-		params, err := DecodeProductRequestBody(c.Request)
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, err.Error())
-			return
-		}
-		validation := ProductValidation(dbconfig, params)
-		if validation != nil {
-			RespondWithError(c, http.StatusBadRequest, validation.Error())
-			return
-		}
-		err = ValidateDuplicateOption(params)
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, err.Error())
-			return
-		}
-		err = DuplicateOptionValues(params)
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// update product
-		err = dbconfig.DB.UpdateProductByID(c.Request.Context(), database.UpdateProductByIDParams{
-			Active:      params.Active,
-			Title:       utils.ConvertStringToSQL(params.Title),
-			BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
-			Category:    utils.ConvertStringToSQL(params.Category),
-			Vendor:      utils.ConvertStringToSQL(params.Vendor),
-			ProductType: utils.ConvertStringToSQL(params.ProductType),
-			UpdatedAt:   time.Now().UTC(),
-			ID:          product_uuid,
-		})
+		err = UpdateProduct(dbconfig, requestData, productID, c.GetString("api_key"))
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-
-		for key := range params.ProductOptions {
-			// TODO Should we use the position in the POST Body or the key that is it inside the array?
-			_, err = dbconfig.DB.UpdateProductOption(c.Request.Context(), database.UpdateProductOptionParams{
-				Name:       params.ProductOptions[key].Value,
-				Position:   int32(key + 1),
-				ProductID:  product_uuid,
-				Position_2: int32(key + 1),
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		}
-		for _, variant := range params.Variants {
-			err = dbconfig.DB.UpdateVariant(c.Request.Context(), database.UpdateVariantParams{
-				Option1:   utils.ConvertStringToSQL(variant.Option1),
-				Option2:   utils.ConvertStringToSQL(variant.Option2),
-				Option3:   utils.ConvertStringToSQL(variant.Option3),
-				Barcode:   utils.ConvertStringToSQL(variant.Barcode),
-				UpdatedAt: time.Now().UTC(),
-				Sku:       variant.Sku,
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-			// update variant pricing and qty here
-			for _, price_lists := range variant.VariantPricing {
-				// check if the pricing is acceptable
-				if price_lists.Name == "Selling Price" || price_lists.Name == "Compare At Price" {
-					err = dbconfig.DB.UpdateVariantPricing(c.Request.Context(), database.UpdateVariantPricingParams{
-						Name:      price_lists.Name,
-						Value:     utils.ConvertStringToSQL(price_lists.Value),
-						Isdefault: price_lists.IsDefault,
-						UpdatedAt: time.Now().UTC(),
-						Sku:       variant.Sku,
-						Name_2:    price_lists.Name,
-					})
-					if err != nil {
-						RespondWithError(c, http.StatusInternalServerError, err.Error())
-						return
-					}
-				} else {
-					RespondWithError(c, http.StatusInternalServerError, "invalid price tier "+price_lists.Name)
-					return
-				}
-			}
-			for _, warehouses := range variant.VariantQuantity {
-				err = dbconfig.DB.UpdateVariantQty(c.Request.Context(), database.UpdateVariantQtyParams{
-					Name:      warehouses.Name,
-					Value:     utils.ConvertIntToSQL(warehouses.Value),
-					Isdefault: warehouses.IsDefault,
-					Sku:       variant.Sku,
-					Name_2:    warehouses.Name,
-				})
-				if err != nil {
-					RespondWithError(c, http.StatusInternalServerError, err.Error())
-					return
-				}
-			}
-		}
-		updated_data, err := CompileProductData(dbconfig, product_uuid, c.Request.Context(), false)
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-		}
-		// only update if the active = 1
-		if updated_data.Active == "1" {
-			api_key := c.GetString("api_key")
-			err = CompileInstructionProduct(dbconfig, updated_data, api_key)
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-			for _, variant := range updated_data.Variants {
-				err = CompileInstructionVariant(dbconfig, variant, updated_data, api_key)
-				if err != nil {
-					RespondWithError(c, http.StatusInternalServerError, err.Error())
-					return
-				}
-			}
-		}
-		RespondWithJSON(c, http.StatusOK, updated_data)
+		RespondWithJSON(c, http.StatusOK, requestData)
 	}
 }
 
@@ -1353,7 +1217,7 @@ func (dbconfig *DbConfig) ProductExportHandle() gin.HandlerFunc {
 		}
 		products := []objects.Product{}
 		for _, product_id := range product_ids {
-			product, err := CompileProductData(dbconfig, product_id, c.Request.Context(), false)
+			product, err := CompileProduct(dbconfig, product_id, c.Request.Context(), false)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
@@ -1461,7 +1325,7 @@ func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		appProducts, err := iocsv.ReadFile(wd + "/" + file_name_global)
+		CSVProducts, err := iocsv.ReadFile(wd + "/" + file_name_global)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
@@ -1474,12 +1338,12 @@ func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
 			VariantsAdded:    0,
 			VariantsUpdated:  0,
 		}
-		for _, appProduct := range appProducts {
-			importingRecord, productID := UpsertProduct(dbconfig, importingRecord, appProduct)
-			importingRecord = UpsertImages(dbconfig, importingRecord, appProduct, productID)
-			importingRecord, variantID := UpsertVariant(dbconfig, importingRecord, appProduct, productID)
-			importingRecord = UpsertPrice(dbconfig, importingRecord, appProduct, variantID)
-			importingRecord = UpsertWarehouse(dbconfig, importingRecord, appProduct, variantID)
+		for _, CSVProduct := range CSVProducts {
+			importingRecord, productID := UpsertProduct(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertImages(dbconfig, importingRecord, CSVProduct, productID)
+			importingRecord, variantID := UpsertVariant(dbconfig, importingRecord, CSVProduct, productID)
+			importingRecord = UpsertPrice(dbconfig, importingRecord, CSVProduct, variantID)
+			importingRecord = UpsertWarehouse(dbconfig, importingRecord, CSVProduct, variantID)
 			importingRecord.ProcessedCounter++
 		}
 		err = iocsv.RemoveFile(file_name_global)
@@ -1510,37 +1374,15 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		// Validation
-		validation := ProductValidation(dbconfig, requestProduct)
-		if validation != nil {
-			RespondWithError(c, http.StatusBadRequest, validation.Error())
-			return
-		}
-		err = ValidateDuplicateOption(requestProduct)
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, err.Error())
-			return
-		}
-		err = ValidateDuplicateSKU(requestProduct, dbconfig)
-		if err != nil {
-			RespondWithError(c, http.StatusConflict, err.Error())
-			return
-		}
-		err = DuplicateOptionValues(requestProduct)
-		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, err.Error())
-			return
-		}
 		if requestProduct.Active == "" || len(requestProduct.Active) == 0 {
 			requestProduct.Active = "0"
 		}
-
 		dbProductID, err := AddProduct(dbconfig, requestProduct)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		product_added, err := CompileProductData(dbconfig, dbProductID, c.Request.Context(), false)
+		product_added, err := CompileProduct(dbconfig, dbProductID, c.Request.Context(), false)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -1664,7 +1506,7 @@ func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
 		}
 		products := []objects.Product{}
 		for _, value := range dbProducts {
-			prod, err := CompileProductData(dbconfig, value.ID, c.Request.Context(), false)
+			prod, err := CompileProduct(dbconfig, value.ID, c.Request.Context(), false)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
@@ -1699,7 +1541,7 @@ func (dbconfig *DbConfig) ProductIDHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "could not decode product id '"+product_id+"'")
 			return
 		}
-		product_data, err := CompileProductData(dbconfig, product_uuid, c.Request.Context(), false)
+		product_data, err := CompileProduct(dbconfig, product_uuid, c.Request.Context(), false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
 				RespondWithError(c, http.StatusNotFound, "not found")
