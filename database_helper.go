@@ -24,7 +24,7 @@ Functions are mostly used to interact with the database.
 func UpsertPrice(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
-	product objects.AppProduct,
+	product objects.CSVProduct,
 	variantID uuid.UUID,
 ) objects.ImportResponse {
 	for _, price := range product.Pricing {
@@ -41,7 +41,7 @@ func UpsertPrice(
 func UpsertWarehouse(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
-	product objects.AppProduct,
+	product objects.CSVProduct,
 	variantID uuid.UUID,
 ) objects.ImportResponse {
 	for _, warehouse := range product.Warehouses {
@@ -58,7 +58,7 @@ func UpsertWarehouse(
 func UpsertProduct(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
-	product objects.AppProduct,
+	product objects.CSVProduct,
 ) (objects.ImportResponse, uuid.UUID) {
 	dbProduct, err := dbconfig.DB.UpsertProduct(context.Background(), database.UpsertProductParams{
 		ID:          uuid.New(),
@@ -94,7 +94,7 @@ func UpsertProduct(
 func UpsertImages(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
-	product objects.AppProduct,
+	product objects.CSVProduct,
 	productID uuid.UUID,
 ) objects.ImportResponse {
 	// overwrite ones with the same position
@@ -115,17 +115,17 @@ func UpsertImages(
 func UpsertVariant(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
-	appProduct objects.AppProduct,
+	CSVProduct objects.CSVProduct,
 	productID uuid.UUID,
 ) (objects.ImportResponse, uuid.UUID) {
 	dbVariant, err := dbconfig.DB.UpsertVariant(context.Background(), database.UpsertVariantParams{
 		ID:        uuid.New(),
 		ProductID: productID,
-		Sku:       appProduct.SKU,
-		Option1:   utils.ConvertStringToSQL(appProduct.Option1Value),
-		Option2:   utils.ConvertStringToSQL(appProduct.Option2Value),
-		Option3:   utils.ConvertStringToSQL(appProduct.Option3Value),
-		Barcode:   utils.ConvertStringToSQL(appProduct.Barcode),
+		Sku:       CSVProduct.SKU,
+		Option1:   utils.ConvertStringToSQL(CSVProduct.Option1Value),
+		Option2:   utils.ConvertStringToSQL(CSVProduct.Option2Value),
+		Option3:   utils.ConvertStringToSQL(CSVProduct.Option3Value),
+		Barcode:   utils.ConvertStringToSQL(CSVProduct.Barcode),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	})
@@ -395,9 +395,6 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uui
 	if err := ValidateDuplicateSKU(productData, dbconfig); err != nil {
 		return uuid.Nil, err
 	}
-	if err := DuplicateOptionValues(productData); err != nil {
-		return uuid.Nil, err
-	}
 	product, err := dbconfig.DB.CreateProduct(context.Background(), database.CreateProductParams{
 		ID:          uuid.New(),
 		Active:      productData.Active,
@@ -433,7 +430,7 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uui
 }
 
 /* Updates a product to the application */
-func UpdateProduct(dbconfig *DbConfig, productID string, productData objects.RequestBodyProduct) error {
+func UpdateProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct, productID, apiKey string) error {
 	productUUID, err := QueryProductByID(dbconfig, productID)
 	if err != nil {
 		return err
@@ -471,11 +468,39 @@ func UpdateProduct(dbconfig *DbConfig, productID string, productData objects.Req
 			return err
 		}
 	}
+	if productData.Active == "1" {
+		err = UpdateShopifyProduct(dbconfig, productUUID, apiKey)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+/* Pushes an update for a product and it's variants to Shopify if the product is Active */
+func UpdateShopifyProduct(dbconfig *DbConfig, productID uuid.UUID, apiKey string) error {
+	productData, err := CompileProduct(dbconfig, productID, context.Background(), false)
+	if err != nil {
+		return err
+	}
+	err = CompileInstructionProduct(dbconfig, productData, apiKey)
+	if err != nil {
+		return err
+	}
+	for _, variant := range productData.Variants {
+		err = CompileInstructionVariant(dbconfig, variant, productData, apiKey)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 /* Adds a product variant to the application. The productID needs to point to a valid product*/
 func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
+	if err := DuplicateOptionValues(dbconfig, variantData, productID); err != nil {
+		return err
+	}
 	variant, err := dbconfig.DB.CreateVariant(context.Background(), database.CreateVariantParams{
 		ID:        uuid.New(),
 		ProductID: productID,

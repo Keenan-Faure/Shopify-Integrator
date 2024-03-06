@@ -136,7 +136,7 @@ func CreateOptionMap(
 }
 
 /* Create Option Name array */
-func CreateOptionNamesMap(csv_product objects.AppProduct) []string {
+func CreateOptionNamesMap(csv_product objects.CSVProduct) []string {
 	mapp := []string{}
 	mapp = append(mapp, csv_product.Option1Name)
 	mapp = append(mapp, csv_product.Option2Name)
@@ -145,7 +145,7 @@ func CreateOptionNamesMap(csv_product objects.AppProduct) []string {
 }
 
 /* Create option Value array */
-func CreateOptionValuesMap(csv_product objects.AppProduct) []string {
+func CreateOptionValuesMap(csv_product objects.CSVProduct) []string {
 	mapp := []string{}
 	mapp = append(mapp, csv_product.Option1Value)
 	mapp = append(mapp, csv_product.Option2Value)
@@ -154,7 +154,7 @@ func CreateOptionValuesMap(csv_product objects.AppProduct) []string {
 }
 
 /* Creates an array map with images  */
-func CreateImageMap(csv_product objects.AppProduct) []string {
+func CreateImageMap(csv_product objects.CSVProduct) []string {
 	images := []string{}
 	images = append(images, csv_product.Image1)
 	images = append(images, csv_product.Image2)

@@ -274,7 +274,7 @@ func DecodeInventoryMap(r *http.Request) (objects.RequestWarehouseLocation, erro
 }
 
 // Validation: Product Import
-func ProductValidationDatabase(csv_product objects.AppProduct, dbconfig *DbConfig, r *http.Request) error {
+func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
 	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)
 	if err != nil {
 		return err
@@ -584,8 +584,19 @@ func ValidateDuplicateSKU(
 }
 
 // Product: Duplicate Option value validation (variations)
-func DuplicateOptionValues(product objects.RequestBodyProduct) error {
+func DuplicateOptionValues(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
 	// TODO need to fix this.
+	// 1. Get all products from the database from that productID
+	products, err := CompileProduct(dbconfig, productID, context.Background(), false)
+	if err != nil {
+		return err
+	}
+	// 2 Loop through all the products that was fetched:
+	for _, variant := range products.Variants {
+		// 1. If they have the same options (number)
+		// 2. if their values are the same
+		// 3. Check if there are any duplicate product options between this option list and the original
+	}
 	return nil
 }
 

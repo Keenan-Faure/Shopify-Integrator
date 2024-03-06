@@ -75,7 +75,7 @@ func (dbconfig *DbConfig) Synchronize() gin.HandlerFunc {
 				break
 			}
 			for _, product := range products {
-				product_compiled, err := CompileProductData(dbconfig, product.ID, c.Request.Context(), false)
+				product_compiled, err := CompileProduct(dbconfig, product.ID, c.Request.Context(), false)
 				if err != nil {
 					RespondWithError(c, http.StatusInternalServerError, err.Error())
 					return
@@ -509,7 +509,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			return errors.New("could not decode product_id '" + queue_object.SystemProductID + "'")
 		}
 		shopifyConfig := shopify.InitConfigShopify()
-		product, err := CompileProductData(dbconfig, product_id, context.Background(), false)
+		product, err := CompileProduct(dbconfig, product_id, context.Background(), false)
 		if err != nil {
 			return err
 		}
@@ -530,7 +530,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return errors.New("could not decode variant_id '" + queue_object.SystemVariantID + "'")
 		}
-		variant, err := CompileVariantData(dbconfig, variant_id, context.Background())
+		variant, err := CompileVariantByID(dbconfig, variant_id, context.Background())
 		if err != nil {
 			return err
 		}
