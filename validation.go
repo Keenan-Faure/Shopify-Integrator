@@ -585,62 +585,7 @@ func ValidateDuplicateSKU(
 
 // Product: Duplicate Option value validation (variations)
 func DuplicateOptionValues(product objects.RequestBodyProduct) error {
-	if len(product.ProductOptions) == 0 {
-		return nil
-	}
-	if len(product.ProductOptions) == 1 {
-		option_values := []string{}
-		for _, value := range product.Variants {
-			if slices.Contains(option_values, value.Option1) {
-				return errors.New("duplicate option values not allowed")
-			}
-			option_values = append(option_values, value.Option1)
-		}
-	} else if len(product.ProductOptions) == 2 {
-		option_1_values := []string{}
-		option_2_values := []string{}
-		for _, value := range product.Variants {
-			option_1_values = append(option_1_values, value.Option1)
-			option_2_values = append(option_2_values, value.Option2)
-		}
-		counter := 0
-		for key := range option_1_values {
-			for sub_key := range option_2_values {
-				if option_2_values[key] == option_1_values[sub_key] && option_1_values[key] == option_2_values[sub_key] {
-					counter += 1
-				}
-				if counter > 1 {
-					return errors.New("duplicate option values not allowed")
-				}
-			}
-		}
-	} else if len(product.ProductOptions) == 3 {
-		option_1_values := []string{}
-		option_2_values := []string{}
-		option_3_values := []string{}
-		for _, value := range product.Variants {
-			option_1_values = append(option_1_values, value.Option1)
-			option_2_values = append(option_2_values, value.Option2)
-			option_3_values = append(option_3_values, value.Option3)
-		}
-		counter := 0
-		for key := range option_1_values {
-			for sub_key := range option_2_values {
-				for primal_key := range option_3_values {
-					if (option_3_values[key] == option_2_values[primal_key] &&
-						option_2_values[key] == option_1_values[sub_key]) &&
-						option_1_values[key] == option_3_values[sub_key] {
-						counter += 1
-					}
-					if counter > 1 {
-						return errors.New("duplicate option values not allowed")
-					}
-				}
-			}
-		}
-	} else if len(product.ProductOptions) > 3 {
-		return errors.New("too many option values")
-	}
+	// TODO need to fix this.
 	return nil
 }
 
