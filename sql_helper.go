@@ -43,7 +43,7 @@ func QueryVariantIDBySKU(dbconfig *DbConfig, variantData objects.RequestBodyVari
 	return variantID, nil
 }
 
-/* Returns a variant ID in UUID format from the database. Uses it's SKU code in the search */
+/* Returns a product ID in UUID format from the database. Uses it's product ID in the search */
 func QueryProductByID(dbconfig *DbConfig, product_id string) (uuid.UUID, error) {
 	product_uuid, err := uuid.Parse(product_id)
 	if err != nil {
@@ -57,6 +57,18 @@ func QueryProductByID(dbconfig *DbConfig, product_id string) (uuid.UUID, error) 
 		return uuid.Nil, err
 	}
 	return product_uuid, nil
+}
+
+/* Returns a product ID in UUID format from the database. Uses it's Product Code code in the search */
+func QueryProductByProductCode(dbconfig *DbConfig, productCode string) (uuid.UUID, bool, error) {
+	dbProduct, err := dbconfig.DB.GetProductByProductCode(context.Background(), productCode)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return uuid.Nil, false, nil
+		}
+		return uuid.Nil, false, err
+	}
+	return dbProduct.ID, true, nil
 }
 
 /* Parses the data and fills in the missing hourly values with a 0 value if it does not exist. */

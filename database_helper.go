@@ -395,38 +395,47 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uui
 	if err := ValidateDuplicateSKU(productData, dbconfig); err != nil {
 		return uuid.Nil, err
 	}
-	product, err := dbconfig.DB.CreateProduct(context.Background(), database.CreateProductParams{
-		ID:          uuid.New(),
-		Active:      productData.Active,
-		ProductCode: productData.ProductCode,
-		Title:       utils.ConvertStringToSQL(productData.Title),
-		BodyHtml:    utils.ConvertStringToSQL(productData.BodyHTML),
-		Category:    utils.ConvertStringToSQL(productData.Category),
-		Vendor:      utils.ConvertStringToSQL(productData.Vendor),
-		ProductType: utils.ConvertStringToSQL(productData.ProductType),
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
-	})
+	productID, exists, err := QueryProductByProductCode(dbconfig, productData.ProductCode)
 	if err != nil {
 		return uuid.Nil, err
 	}
-	for key := range productData.ProductOptions {
-		_, err := dbconfig.DB.CreateProductOption(context.Background(), database.CreateProductOptionParams{
-			ID:        uuid.New(),
-			ProductID: product.ID,
-			Name:      productData.ProductOptions[key].Value,
-			Position:  int32(key + 1),
+	fmt.Println(productID)
+	fmt.Println(exists)
+	if !exists {
+		product, err := dbconfig.DB.CreateProduct(context.Background(), database.CreateProductParams{
+			ID:          uuid.New(),
+			Active:      productData.Active,
+			ProductCode: productData.ProductCode,
+			Title:       utils.ConvertStringToSQL(productData.Title),
+			BodyHtml:    utils.ConvertStringToSQL(productData.BodyHTML),
+			Category:    utils.ConvertStringToSQL(productData.Category),
+			Vendor:      utils.ConvertStringToSQL(productData.Vendor),
+			ProductType: utils.ConvertStringToSQL(productData.ProductType),
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
 		})
 		if err != nil {
 			return uuid.Nil, err
 		}
+		for key := range productData.ProductOptions {
+			_, err := dbconfig.DB.CreateProductOption(context.Background(), database.CreateProductOptionParams{
+				ID:        uuid.New(),
+				ProductID: product.ID,
+				Name:      productData.ProductOptions[key].Value,
+				Position:  int32(key + 1),
+			})
+			if err != nil {
+				return uuid.Nil, err
+			}
+		}
+		productID = product.ID
 	}
 	for _, variant := range productData.Variants {
-		if err := AddVariant(dbconfig, variant, product.ID); err != nil {
+		if err := AddVariant(dbconfig, variant, productID); err != nil {
 			return uuid.Nil, err
 		}
 	}
-	return product.ID, nil
+	return productID, nil
 }
 
 /* Updates a product to the application */
