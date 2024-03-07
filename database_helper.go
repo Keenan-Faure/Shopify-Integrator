@@ -385,22 +385,20 @@ func UpdateCustomerAddress(dbconfig *DbConfig, orderData objects.RequestBodyOrde
 }
 
 /* Adds a product to the application */
-func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uuid.UUID, error) {
+func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uuid.UUID, int, error) {
 	if validation := ProductValidation(dbconfig, productData); validation != nil {
-		return uuid.Nil, validation
+		return uuid.Nil, http.StatusBadRequest, validation
 	}
 	if err := ValidateDuplicateOption(productData); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, http.StatusBadRequest, err
 	}
 	if err := ValidateDuplicateSKU(productData, dbconfig); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, http.StatusConflict, err
 	}
 	productID, exists, err := QueryProductByProductCode(dbconfig, productData.ProductCode)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, 500, err
 	}
-	fmt.Println(productID)
-	fmt.Println(exists)
 	if !exists {
 		product, err := dbconfig.DB.CreateProduct(context.Background(), database.CreateProductParams{
 			ID:          uuid.New(),
@@ -415,7 +413,7 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uui
 			UpdatedAt:   time.Now().UTC(),
 		})
 		if err != nil {
-			return uuid.Nil, err
+			return uuid.Nil, http.StatusInternalServerError, err
 		}
 		for key := range productData.ProductOptions {
 			_, err := dbconfig.DB.CreateProductOption(context.Background(), database.CreateProductOptionParams{
@@ -425,17 +423,17 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uui
 				Position:  int32(key + 1),
 			})
 			if err != nil {
-				return uuid.Nil, err
+				return uuid.Nil, http.StatusInternalServerError, err
 			}
 		}
 		productID = product.ID
 	}
 	for _, variant := range productData.Variants {
-		if err := AddVariant(dbconfig, variant, productID); err != nil {
-			return uuid.Nil, err
+		if httpCode, err := AddVariant(dbconfig, variant, productID); err != nil {
+			return uuid.Nil, httpCode, err
 		}
 	}
-	return productID, nil
+	return productID, 0, nil
 }
 
 /* Updates a product to the application */
@@ -506,9 +504,9 @@ func UpdateShopifyProduct(dbconfig *DbConfig, productID uuid.UUID, apiKey string
 }
 
 /* Adds a product variant to the application. The productID needs to point to a valid product*/
-func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
+func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) (int, error) {
 	if err := DuplicateOptionValues(dbconfig, variantData, productID); err != nil {
-		return err
+		return http.StatusBadRequest, err
 	}
 	variant, err := dbconfig.DB.CreateVariant(context.Background(), database.CreateVariantParams{
 		ID:        uuid.New(),
@@ -522,7 +520,7 @@ func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, prod
 		UpdatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
 	for key_pricing := range variantData.VariantPricing {
 		err = AddPricing(
@@ -533,7 +531,7 @@ func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, prod
 			variantData.VariantPricing[key_pricing].Value,
 		)
 		if err != nil {
-			return err
+			return http.StatusInternalServerError, err
 		}
 	}
 	for key_qty := range variantData.VariantQuantity {
@@ -545,13 +543,13 @@ func AddVariant(dbconfig *DbConfig, variantData objects.RequestBodyVariant, prod
 			variantData.VariantQuantity[key_qty].Value,
 		)
 		if err != nil {
-			return err
+			return http.StatusInternalServerError, err
 		}
 	}
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
-	return nil
+	return 0, nil
 }
 
 /* Updates a product variant inside the application. The productID needs to point to a valid product */
