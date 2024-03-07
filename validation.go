@@ -588,12 +588,14 @@ func ValidateDuplicateSKU(
 func DuplicateOptionValues(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
 	products, err := CompileProduct(dbconfig, productID, context.Background(), false)
 	if err != nil {
-		return err
+		if err.Error() != "sql: no rows in result set" {
+			return err
+		}
 	}
 	for _, variant := range products.Variants {
 		duplicatedOptions := 0
 		requestVariantOptions := CreateProductOptionSlice(variantData.Option1, variantData.Option2, variantData.Option3)
-		variantOptions := CreateProductOptionSlice(variant.Option1, variant.Option1, variant.Option1)
+		variantOptions := CreateProductOptionSlice(variant.Option1, variant.Option2, variant.Option3)
 		requestOptionsLen := fmt.Sprint(len(requestVariantOptions))
 		variantOptionsLen := fmt.Sprint(len(variantOptions))
 

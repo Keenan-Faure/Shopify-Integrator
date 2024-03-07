@@ -878,10 +878,10 @@ func CompileSearchResult(
 }
 
 // Convert Product (POST) into CSVProduct
-func ConvertProductToAppProduct(products objects.RequestBodyProduct) []objects.AppProduct {
-	csv_products := []objects.AppProduct{}
+func ConvertProductToCSVProduct(products objects.RequestBodyProduct) []objects.CSVProduct {
+	csv_products := []objects.CSVProduct{}
 	for _, variant := range products.Variants {
-		csv_product := objects.AppProduct{
+		csv_product := objects.CSVProduct{
 			ProductCode:  products.ProductCode,
 			Active:       "1",
 			Title:        products.Title,
@@ -910,7 +910,7 @@ func ConvertProductToAppProduct(products objects.RequestBodyProduct) []objects.A
 }
 
 // Compiles the product data
-func CompileProductData(
+func CompileProduct(
 	dbconfig *DbConfig,
 	product_id uuid.UUID,
 	ctx context.Context,
@@ -951,7 +951,7 @@ func CompileProductData(
 		}
 		return product_data, nil
 	}
-	variant_data, err := CompileVariantsData(dbconfig, product_id, ctx)
+	variant_data, err := CompileVariants(dbconfig, product_id, ctx)
 	if err != nil {
 		return objects.Product{}, err
 	}
@@ -973,7 +973,7 @@ func CompileProductData(
 }
 
 // Compiles all variant data for a product
-func CompileVariantsData(
+func CompileVariants(
 	dbconfig *DbConfig,
 	product_id uuid.UUID,
 	ctx context.Context) ([]objects.ProductVariant, error) {
@@ -1022,8 +1022,8 @@ func CompileVariantsData(
 	return variantsArray, nil
 }
 
-// Compiles a variant data of a single product
-func CompileVariantData(
+// Compiles a variant data of a single variant
+func CompileVariantByID(
 	dbconfig *DbConfig,
 	variant_id uuid.UUID,
 	ctx context.Context) (objects.ProductVariant, error) {
