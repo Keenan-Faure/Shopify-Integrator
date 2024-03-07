@@ -1377,9 +1377,9 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 		if requestProduct.Active == "" || len(requestProduct.Active) == 0 {
 			requestProduct.Active = "0"
 		}
-		dbProductID, err := AddProduct(dbconfig, requestProduct)
+		dbProductID, httpCode, err := AddProduct(dbconfig, requestProduct)
 		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, httpCode, err.Error())
 			return
 		}
 		product_added, err := CompileProduct(dbconfig, dbProductID, c.Request.Context(), false)
