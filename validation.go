@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"objects"
@@ -585,19 +586,46 @@ func ValidateDuplicateSKU(
 
 // Product: Duplicate Option value validation (variations)
 func DuplicateOptionValues(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
-	// TODO need to fix this.
-	// 1. Get all products from the database from that productID
 	products, err := CompileProduct(dbconfig, productID, context.Background(), false)
 	if err != nil {
 		return err
 	}
-	// 2 Loop through all the products that was fetched:
 	for _, variant := range products.Variants {
-		// 1. If they have the same options (number)
-		// 2. if their values are the same
-		// 3. Check if there are any duplicate product options between this option list and the original
+		duplicatedOptions := 0
+		requestVariantOptions := CreateProductOptionSlice(variantData.Option1, variantData.Option2, variantData.Option3)
+		variantOptions := CreateProductOptionSlice(variant.Option1, variant.Option1, variant.Option1)
+		requestOptionsLen := fmt.Sprint(len(requestVariantOptions))
+		variantOptionsLen := fmt.Sprint(len(variantOptions))
+
+		for key := range requestVariantOptions {
+			if requestOptionsLen == variantOptionsLen {
+				if requestVariantOptions[key] == variantOptions[key] {
+					duplicatedOptions++
+				}
+			} else {
+				return errors.New("invalid variant option amount, expected '" + variantOptionsLen + "' but found '" + requestOptionsLen + "'")
+			}
+		}
+		if duplicatedOptions >= len(variantOptions) {
+			return errors.New("duplicate option values not allowed")
+		}
 	}
 	return nil
+}
+
+// Product: Creates a slice containing valid strings of product option values
+func CreateProductOptionSlice(option1, option2, option3 string) []string {
+	options := []string{}
+	if len(option1) > 0 && option1 != "" {
+		options = append(options, option1)
+		if len(option2) > 0 && option2 != "" {
+			options = append(options, option2)
+			if len(option3) > 0 && option3 != "" {
+				options = append(options, option3)
+			}
+		}
+	}
+	return options
 }
 
 // Product: decodes the request body
