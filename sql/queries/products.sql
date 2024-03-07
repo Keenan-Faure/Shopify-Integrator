@@ -95,6 +95,7 @@ WHERE id = $1;
 
 -- name: GetProductByProductCode :one
 SELECT DISTINCT
+    id,
     active,
     product_code,
     title,
@@ -104,7 +105,8 @@ SELECT DISTINCT
     product_type,
     updated_at
 FROM products
-WHERE product_code = $1;
+WHERE product_code = $1
+LIMIT 1;
 
 -- name: GetProductsByCategory :many
 SELECT DISTINCT

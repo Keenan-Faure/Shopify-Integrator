@@ -256,6 +256,7 @@ func (q *Queries) GetProductByID(ctx context.Context, id uuid.UUID) (GetProductB
 
 const getProductByProductCode = `-- name: GetProductByProductCode :one
 SELECT DISTINCT
+    id,
     active,
     product_code,
     title,
@@ -266,9 +267,11 @@ SELECT DISTINCT
     updated_at
 FROM products
 WHERE product_code = $1
+LIMIT 1
 `
 
 type GetProductByProductCodeRow struct {
+	ID          uuid.UUID      `json:"id"`
 	Active      string         `json:"active"`
 	ProductCode string         `json:"product_code"`
 	Title       sql.NullString `json:"title"`
@@ -283,6 +286,7 @@ func (q *Queries) GetProductByProductCode(ctx context.Context, productCode strin
 	row := q.db.QueryRowContext(ctx, getProductByProductCode, productCode)
 	var i GetProductByProductCodeRow
 	err := row.Scan(
+		&i.ID,
 		&i.Active,
 		&i.ProductCode,
 		&i.Title,
