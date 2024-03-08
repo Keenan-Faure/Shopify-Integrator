@@ -1297,6 +1297,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10*1024*1024) // 10 Mb
 		file_name, err := iocsv.UploadFile(c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
