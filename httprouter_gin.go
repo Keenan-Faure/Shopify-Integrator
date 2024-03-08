@@ -1297,35 +1297,17 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		test := c.Query("test")
-		file_name_global := "test_import.csv"
-		if test == "true" {
-			// generate the file for the test and ignore upload form
-			data := [][]string{
-				{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price"},
-				{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00"},
-			}
-			_, err := iocsv.WriteFile(data, "test_import")
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-		} else {
-			// if in production then expect form data &&
-			// file to exist in import
-			file_name, err := iocsv.UploadFile(c.Request)
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-			file_name_global = file_name
+		file_name, err := iocsv.UploadFile(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
 		wd, err := os.Getwd()
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		CSVProducts, err := iocsv.ReadFile(wd + "/" + file_name_global)
+		CSVProducts, err := iocsv.ReadFile(wd + "/" + file_name)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
@@ -1346,7 +1328,6 @@ func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
 			importingRecord = UpsertWarehouse(dbconfig, importingRecord, CSVProduct, variantID)
 			importingRecord.ProcessedCounter++
 		}
-		err = iocsv.RemoveFile(file_name_global)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
