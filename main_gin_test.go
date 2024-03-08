@@ -8,6 +8,7 @@ import (
 	"integrator/internal/database"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"objects"
@@ -19,6 +20,65 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestProductImportRoute(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+
+	mpw, multiPartFormData := CreateMultiPartFormData("test-case-invalid-request-no-auth.csv", "file")
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/products/import", &multiPartFormData)
+	req.Header.Set("Content-Type", mpw.FormDataContentType())
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - Invalid request - no file */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+
+	mpw, multiPartFormData = CreateMultiPartFormData("test-case-invalid-request-no-auth.csv", "file")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Set("Content-Type", mpw.FormDataContentType())
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 500, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "http: no such file", response.Message)
+
+	/* Test 3 - Invalid request headers */
+	_, multiPartFormData = CreateMultiPartFormData("test-case-invalid-request-headers.csv", "file")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 500, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "request Content-Type isn't multipart/form-data", response.Message)
+
+	/* Test 4 - Invalid request file too large */
+
+	/* Test 5 - invalid request - incorrect form key */
+
+	/* Test 6 - Valid request - products failed to import (duplicate SKU) */
+
+	/* Test 7 - Valid request - Products/variants created */
+
+	/* Test 8 - Valid request - Products/variants updated (should be zero created) */
+}
 
 func TestProductCreationRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
@@ -647,6 +707,36 @@ func TestReadyRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "Unavailable", response_string.Message)
+}
+
+/* Function that creates a multipart/form request to be used in the import handle */
+func CreateMultiPartFormData(fileName, formKey string) (*multipart.Writer, bytes.Buffer) {
+	var buf bytes.Buffer
+	mpw := multipart.NewWriter(&buf)
+	mpw.Close()
+
+	file, err := os.Open("./test_payloads/import/" + fileName)
+	if err != nil {
+		log.Println(err)
+		return &multipart.Writer{}, buf
+	}
+	defer file.Close()
+
+	w, err := mpw.CreateFormFile(formKey, "./test_payloads/import/"+fileName)
+	if err != nil {
+		log.Println(err)
+		return &multipart.Writer{}, buf
+	}
+	if err := mpw.Close(); err != nil {
+		log.Println(err)
+		return &multipart.Writer{}, buf
+	}
+	if _, err := io.Copy(w, file); err != nil {
+		log.Println(err)
+		return &multipart.Writer{}, buf
+	}
+
+	return mpw, buf
 }
 
 /*
