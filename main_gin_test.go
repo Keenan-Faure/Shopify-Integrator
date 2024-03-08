@@ -37,8 +37,7 @@ func TestProductImportRoute(t *testing.T) {
 	/* Test 2 - Invalid request - no file */
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
-
-	mpw, multiPartFormData = CreateMultiPartFormData("test-case-invalid-request-no-auth.csv", "file")
+	mpw, multiPartFormData = CreateMultiPartFormData("", "file")
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
@@ -51,7 +50,7 @@ func TestProductImportRoute(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	assert.Equal(t, "http: no such file", response.Message)
+	assert.Equal(t, "request Content-Type isn't multipart/form-data", response.Message)
 
 	/* Test 3 - Invalid request headers */
 	_, multiPartFormData = CreateMultiPartFormData("test-case-invalid-request-headers.csv", "file")
@@ -70,14 +69,64 @@ func TestProductImportRoute(t *testing.T) {
 	assert.Equal(t, "request Content-Type isn't multipart/form-data", response.Message)
 
 	/* Test 4 - Invalid request file too large */
+	mpw, multiPartFormData = CreateMultiPartFormData("test-case-invalid-request-file-size.csv", "file")
 
-	/* Test 5 - invalid request - incorrect form key */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Set("Content-Type", mpw.FormDataContentType())
+	router.ServeHTTP(w, req)
 
-	/* Test 6 - Valid request - products failed to import (duplicate SKU) */
+	assert.Equal(t, 500, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "http: request body too large", response.Message)
 
-	/* Test 7 - Valid request - Products/variants created */
+	/* Test 5 - invalid request - not CSV file (not specified) */
+	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request.csv", "file")
 
-	/* Test 8 - Valid request - Products/variants updated (should be zero created) */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Set("Content-Type", mpw.FormDataContentType())
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 500, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "only CSV extensions are supported", response.Message)
+
+	/* Test 6 - invalid request - incorrect form key */
+	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request.csv", "test_file_key")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req.Header.Add("Content-Type", "text/csv")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	successResponse := objects.ImportResponse{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, successResponse.FailCounter)
+	assert.Equal(t, 0, successResponse.ProcessedCounter)
+	assert.Equal(t, 0, successResponse.ProductsAdded)
+	assert.Equal(t, 0, successResponse.ProductsUpdated)
+	assert.Equal(t, 0, successResponse.VariantsAdded)
+	assert.Equal(t, 0, successResponse.VariantsUpdated)
+
+	/* Test 7 - Valid request - products failed to import (duplicate SKU) */
+
+	/* Test 8 - Valid request - Products/variants created */
+
+	/* Test 9 - Valid request - Products/variants updated (should be zero created) */
 }
 
 func TestProductCreationRoute(t *testing.T) {
@@ -711,10 +760,13 @@ func TestReadyRoute(t *testing.T) {
 
 /* Function that creates a multipart/form request to be used in the import handle */
 func CreateMultiPartFormData(fileName, formKey string) (*multipart.Writer, bytes.Buffer) {
+	// Create a buffer to store the request body
 	var buf bytes.Buffer
-	mpw := multipart.NewWriter(&buf)
-	mpw.Close()
 
+	// Create a new multipart writer with the buffer
+	w := multipart.NewWriter(&buf)
+
+	// Add a file to the request
 	file, err := os.Open("./test_payloads/import/" + fileName)
 	if err != nil {
 		log.Println(err)
@@ -722,21 +774,20 @@ func CreateMultiPartFormData(fileName, formKey string) (*multipart.Writer, bytes
 	}
 	defer file.Close()
 
-	w, err := mpw.CreateFormFile(formKey, "./test_payloads/import/"+fileName)
+	// Create a new form field
+	fw, err := w.CreateFormFile("file", "./test_payloads/import/"+fileName)
 	if err != nil {
 		log.Println(err)
 		return &multipart.Writer{}, buf
 	}
-	if err := mpw.Close(); err != nil {
-		log.Println(err)
-		return &multipart.Writer{}, buf
-	}
-	if _, err := io.Copy(w, file); err != nil {
-		log.Println(err)
-		return &multipart.Writer{}, buf
-	}
 
-	return mpw, buf
+	// Copy the contents of the file to the form field
+	if _, err := io.Copy(fw, file); err != nil {
+		log.Println(err)
+		return &multipart.Writer{}, buf
+	}
+	w.Close()
+	return w, buf
 }
 
 /*
