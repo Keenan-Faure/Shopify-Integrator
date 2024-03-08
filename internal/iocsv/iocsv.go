@@ -47,7 +47,13 @@ func UploadFile(r *http.Request) (string, error) {
 	fmt.Printf("File Size: %+v\n", handler.Size)
 
 	// Only accept text/csv file types
-	if handler.Header.Get("Content-Type") != "text/csv" {
+	validCsvRequst := false
+	for _, value := range r.Header.Values("Content-Type") {
+		if value == "text/csv" {
+			validCsvRequst = true
+		}
+	}
+	if !validCsvRequst {
 		return "", errors.New("only CSV extensions are supported")
 	}
 
