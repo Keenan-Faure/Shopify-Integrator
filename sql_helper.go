@@ -32,15 +32,15 @@ func QueryClearOrderLines(dbconfig *DbConfig, orderID uuid.UUID) error {
 }
 
 /* Returns a variant ID in UUID format from the database. Uses it's SKU code in the search */
-func QueryVariantIDBySKU(dbconfig *DbConfig, variantData objects.RequestBodyVariant) (uuid.UUID, error) {
-	variantID, err := dbconfig.DB.GetVariantIDBySKU(context.Background(), variantData.Sku)
+func QueryVariantIDBySKU(dbconfig *DbConfig, sku string) (uuid.UUID, bool, error) {
+	variantID, err := dbconfig.DB.GetVariantIDBySKU(context.Background(), sku)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return uuid.Nil, errors.New("product variant with SKU '" + variantData.Sku + "' not found")
+			return uuid.Nil, false, errors.New("product variant with SKU '" + sku + "' not found")
 		}
-		return uuid.Nil, err
+		return uuid.Nil, false, err
 	}
-	return variantID, nil
+	return variantID, true, nil
 }
 
 /* Returns a product ID in UUID format from the database. Uses it's product ID in the search */
