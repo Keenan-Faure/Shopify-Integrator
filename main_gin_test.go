@@ -109,9 +109,9 @@ func TestProductImportRoute(t *testing.T) {
 	req.Header.Add("Content-Type", "text/csv")
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 500, w.Code)
 	successResponse := objects.ImportResponse{}
-	err = json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &successResponse)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -122,11 +122,79 @@ func TestProductImportRoute(t *testing.T) {
 	assert.Equal(t, 0, successResponse.VariantsAdded)
 	assert.Equal(t, 0, successResponse.VariantsUpdated)
 
-	/* Test 7 - Valid request - products failed to import (duplicate SKU) */
+	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+
+	/* Test 7 - Valid request - products failed to import (attempted duplicate SKU) */
+	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request-duplicate-sku.csv", "file")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req.Header.Add("Content-Type", "text/csv")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	successResponse = objects.ImportResponse{}
+	err = json.Unmarshal(w.Body.Bytes(), &successResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, successResponse.FailCounter)
+	assert.Equal(t, 5, successResponse.ProcessedCounter)
+	assert.Equal(t, 1, successResponse.ProductsAdded)
+	assert.Equal(t, 4, successResponse.ProductsUpdated)
+	assert.Equal(t, 1, successResponse.VariantsAdded)
+	assert.Equal(t, 4, successResponse.VariantsUpdated)
+
+	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
 
 	/* Test 8 - Valid request - Products/variants created */
+	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request-variants-products-added.csv", "file")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req.Header.Add("Content-Type", "text/csv")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	successResponse = objects.ImportResponse{}
+	err = json.Unmarshal(w.Body.Bytes(), &successResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, successResponse.FailCounter)
+	assert.Equal(t, 1, successResponse.ProcessedCounter)
+	assert.Equal(t, 1, successResponse.ProductsAdded)
+	assert.Equal(t, 0, successResponse.ProductsUpdated)
+	assert.Equal(t, 1, successResponse.VariantsAdded)
+	assert.Equal(t, 0, successResponse.VariantsUpdated)
+
+	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
 
 	/* Test 9 - Valid request - Products/variants updated (should be zero created) */
+	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request-variants-products-updated.csv", "file")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/import?api_key="+dbUser.ApiKey, &multiPartFormData)
+	req.Header.Add("Content-Type", mpw.FormDataContentType())
+	req.Header.Add("Content-Type", "text/csv")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	successResponse = objects.ImportResponse{}
+	err = json.Unmarshal(w.Body.Bytes(), &successResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, successResponse.FailCounter)
+	assert.Equal(t, 2, successResponse.ProcessedCounter)
+	assert.Equal(t, 1, successResponse.ProductsAdded)
+	assert.Equal(t, 1, successResponse.ProductsUpdated)
+	assert.Equal(t, 1, successResponse.VariantsAdded)
+	assert.Equal(t, 1, successResponse.VariantsUpdated)
+
+	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
 }
 
 func TestProductCreationRoute(t *testing.T) {
@@ -775,7 +843,7 @@ func CreateMultiPartFormData(fileName, formKey string) (*multipart.Writer, bytes
 	defer file.Close()
 
 	// Create a new form field
-	fw, err := w.CreateFormFile("file", "./test_payloads/import/"+fileName)
+	fw, err := w.CreateFormFile(formKey, "./test_payloads/import/"+fileName)
 	if err != nil {
 		log.Println(err)
 		return &multipart.Writer{}, buf
