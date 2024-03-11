@@ -25,16 +25,25 @@ func UpsertPrice(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
 	product objects.CSVProduct,
-	variantID uuid.UUID,
 ) objects.ImportResponse {
-	for _, price := range product.Pricing {
-		err := AddPricing(dbconfig, product.SKU, variantID, price.Name, price.Value)
-		if err != nil {
-			currentRecord.FailCounter++
-			continue
-		}
+	variantID, exists, err := QueryVariantIDBySKU(dbconfig, product.SKU)
+	if err != nil {
+		currentRecord.FailCounter++
+		return currentRecord
 	}
-	return currentRecord
+	if exists {
+		for _, price := range product.Pricing {
+			err := AddPricing(dbconfig, product.SKU, variantID, price.Name, price.Value)
+			if err != nil {
+				currentRecord.FailCounter++
+				continue
+			}
+		}
+		return currentRecord
+	} else {
+		currentRecord.FailCounter++
+		return currentRecord
+	}
 }
 
 /* Upserts a Warehouse */
@@ -42,16 +51,25 @@ func UpsertWarehouse(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
 	product objects.CSVProduct,
-	variantID uuid.UUID,
 ) objects.ImportResponse {
-	for _, warehouse := range product.Warehouses {
-		err := AddWarehouse(dbconfig, product.SKU, variantID, warehouse.Name, warehouse.Value)
-		if err != nil {
-			currentRecord.FailCounter++
-			return currentRecord
-		}
+	variantID, exists, err := QueryVariantIDBySKU(dbconfig, product.SKU)
+	if err != nil {
+		currentRecord.FailCounter++
+		return currentRecord
 	}
-	return currentRecord
+	if exists {
+		for _, warehouse := range product.Warehouses {
+			err := AddWarehouse(dbconfig, product.SKU, variantID, warehouse.Name, warehouse.Value)
+			if err != nil {
+				currentRecord.FailCounter++
+				return currentRecord
+			}
+		}
+		return currentRecord
+	} else {
+		currentRecord.FailCounter++
+		return currentRecord
+	}
 }
 
 /* Upserts a product */
@@ -59,7 +77,7 @@ func UpsertProduct(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
 	product objects.CSVProduct,
-) (objects.ImportResponse, uuid.UUID) {
+) objects.ImportResponse {
 	dbProduct, err := dbconfig.DB.UpsertProduct(context.Background(), database.UpsertProductParams{
 		ID:          uuid.New(),
 		ProductCode: product.ProductCode,
@@ -74,20 +92,20 @@ func UpsertProduct(
 	})
 	if err != nil {
 		currentRecord.FailCounter++
-		return currentRecord, uuid.Nil
+		return currentRecord
 	}
 	if dbProduct.Inserted {
 		currentRecord.ProductsAdded++
 	} else {
-		currentRecord.ProductsAdded++
+		currentRecord.ProductsUpdated++
 	}
 	option_names := CreateOptionNamesMap(product)
 	err = AddProductOptions(dbconfig, dbProduct.ID, product.ProductCode, option_names)
 	if err != nil {
 		currentRecord.FailCounter++
-		return currentRecord, uuid.Nil
+		return currentRecord
 	}
-	return currentRecord, dbProduct.ID
+	return currentRecord
 }
 
 /* Upsert images */
@@ -95,20 +113,30 @@ func UpsertImages(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
 	product objects.CSVProduct,
-	productID uuid.UUID,
 ) objects.ImportResponse {
 	// overwrite ones with the same position
 	images := CreateImageMap(product)
-	for key := range images {
-		if images[key] != "" {
-			err := AddImagery(dbconfig, productID, images[key], key+1)
-			if err != nil {
-				currentRecord.FailCounter++
-				return currentRecord
+	productID, exists, err := QueryProductByProductCode(dbconfig, product.ProductCode)
+	if err != nil {
+		currentRecord.FailCounter++
+		return currentRecord
+	}
+	if exists {
+		for key := range images {
+			if images[key] != "" {
+				err := AddImagery(dbconfig, productID, images[key], key+1)
+				if err != nil {
+					currentRecord.FailCounter++
+					return currentRecord
+				}
 			}
 		}
+		return currentRecord
+	} else {
+		// not found so it counts as an error
+		currentRecord.FailCounter++
+		return currentRecord
 	}
-	return currentRecord
 }
 
 /* Upserts a variant into the database */
@@ -116,29 +144,38 @@ func UpsertVariant(
 	dbconfig *DbConfig,
 	currentRecord objects.ImportResponse,
 	CSVProduct objects.CSVProduct,
-	productID uuid.UUID,
-) (objects.ImportResponse, uuid.UUID) {
-	dbVariant, err := dbconfig.DB.UpsertVariant(context.Background(), database.UpsertVariantParams{
-		ID:        uuid.New(),
-		ProductID: productID,
-		Sku:       CSVProduct.SKU,
-		Option1:   utils.ConvertStringToSQL(CSVProduct.Option1Value),
-		Option2:   utils.ConvertStringToSQL(CSVProduct.Option2Value),
-		Option3:   utils.ConvertStringToSQL(CSVProduct.Option3Value),
-		Barcode:   utils.ConvertStringToSQL(CSVProduct.Barcode),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
+) objects.ImportResponse {
+	productID, exists, err := QueryProductByProductCode(dbconfig, CSVProduct.ProductCode)
 	if err != nil {
 		currentRecord.FailCounter++
-		return currentRecord, uuid.Nil
+		return currentRecord
 	}
-	if dbVariant.Inserted {
-		currentRecord.ProductsAdded++
+	if exists {
+		dbVariant, err := dbconfig.DB.UpsertVariant(context.Background(), database.UpsertVariantParams{
+			ID:        uuid.New(),
+			ProductID: productID,
+			Sku:       CSVProduct.SKU,
+			Option1:   utils.ConvertStringToSQL(CSVProduct.Option1Value),
+			Option2:   utils.ConvertStringToSQL(CSVProduct.Option2Value),
+			Option3:   utils.ConvertStringToSQL(CSVProduct.Option3Value),
+			Barcode:   utils.ConvertStringToSQL(CSVProduct.Barcode),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			currentRecord.FailCounter++
+			return currentRecord
+		}
+		if dbVariant.Inserted {
+			currentRecord.VariantsAdded++
+		} else {
+			currentRecord.VariantsUpdated++
+		}
+		return currentRecord
 	} else {
-		currentRecord.ProductsAdded++
+		currentRecord.FailCounter++
+		return currentRecord
 	}
-	return currentRecord, dbVariant.ID
 }
 
 /* Adds a link between a customer and an order */
@@ -558,44 +595,48 @@ func UpdateVariant(
 	variantData objects.RequestBodyVariant,
 	productID string,
 ) error {
-	dbVariantID, err := QueryVariantIDBySKU(dbconfig, variantData)
+	dbVariantID, exists, err := QueryVariantIDBySKU(dbconfig, variantData.Sku)
 	if err != nil {
 		return err
 	}
-	err = dbconfig.DB.UpdateVariant(context.Background(), database.UpdateVariantParams{
-		Option1:   utils.ConvertStringToSQL(variantData.Option1),
-		Option2:   utils.ConvertStringToSQL(variantData.Option2),
-		Option3:   utils.ConvertStringToSQL(variantData.Option3),
-		Barcode:   utils.ConvertStringToSQL(variantData.Barcode),
-		UpdatedAt: time.Now().UTC(),
-		Sku:       variantData.Sku,
-	})
-	if err != nil {
-		return err
-	}
-	for key_pricing := range variantData.VariantPricing {
-		err = AddPricing(
-			dbconfig,
-			variantData.Sku,
-			dbVariantID,
-			variantData.VariantPricing[key_pricing].Name,
-			variantData.VariantPricing[key_pricing].Value,
-		)
+	if exists {
+		err = dbconfig.DB.UpdateVariant(context.Background(), database.UpdateVariantParams{
+			Option1:   utils.ConvertStringToSQL(variantData.Option1),
+			Option2:   utils.ConvertStringToSQL(variantData.Option2),
+			Option3:   utils.ConvertStringToSQL(variantData.Option3),
+			Barcode:   utils.ConvertStringToSQL(variantData.Barcode),
+			UpdatedAt: time.Now().UTC(),
+			Sku:       variantData.Sku,
+		})
 		if err != nil {
 			return err
 		}
-	}
-	for key_qty := range variantData.VariantQuantity {
-		err = AddWarehouse(
-			dbconfig,
-			variantData.Sku,
-			dbVariantID,
-			variantData.VariantQuantity[key_qty].Name,
-			variantData.VariantQuantity[key_qty].Value,
-		)
-		if err != nil {
-			return err
+		for key_pricing := range variantData.VariantPricing {
+			err = AddPricing(
+				dbconfig,
+				variantData.Sku,
+				dbVariantID,
+				variantData.VariantPricing[key_pricing].Name,
+				variantData.VariantPricing[key_pricing].Value,
+			)
+			if err != nil {
+				return err
+			}
 		}
+		for key_qty := range variantData.VariantQuantity {
+			err = AddWarehouse(
+				dbconfig,
+				variantData.Sku,
+				dbVariantID,
+				variantData.VariantQuantity[key_qty].Name,
+				variantData.VariantQuantity[key_qty].Value,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		return errors.New("'" + variantData.Sku + "' do not exist")
 	}
 	return nil
 }
