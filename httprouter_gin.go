@@ -1322,16 +1322,12 @@ func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
 			VariantsUpdated:  0,
 		}
 		for _, CSVProduct := range CSVProducts {
-			importingRecord, productID := UpsertProduct(dbconfig, importingRecord, CSVProduct)
-			importingRecord = UpsertImages(dbconfig, importingRecord, CSVProduct, productID)
-			importingRecord, variantID := UpsertVariant(dbconfig, importingRecord, CSVProduct, productID)
-			importingRecord = UpsertPrice(dbconfig, importingRecord, CSVProduct, variantID)
-			importingRecord = UpsertWarehouse(dbconfig, importingRecord, CSVProduct, variantID)
+			importingRecord = UpsertProduct(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertImages(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertVariant(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertPrice(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertWarehouse(dbconfig, importingRecord, CSVProduct)
 			importingRecord.ProcessedCounter++
-		}
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
 		}
 		RespondWithJSON(c, http.StatusOK, importingRecord)
 	}
