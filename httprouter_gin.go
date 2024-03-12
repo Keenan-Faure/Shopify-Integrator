@@ -1209,7 +1209,6 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) ProductExportHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		test := c.Query("test")
 		product_ids, err := dbconfig.DB.GetProductIDs(c.Request.Context())
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -1273,10 +1272,6 @@ func (dbconfig *DbConfig) ProductExportHandle() gin.HandlerFunc {
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
-		}
-		// removes the product from the server if there are tests
-		if test == "true" {
-			defer os.Remove(file_name)
 		}
 		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
 			Message: file_name,
