@@ -1132,6 +1132,10 @@ func (dbconfig *DbConfig) RemoveProductHandle() gin.HandlerFunc {
 		}
 		err = dbconfig.DB.RemoveProduct(c.Request.Context(), product_uuid)
 		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusBadRequest, "not found")
+				return
+			}
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -1184,7 +1188,7 @@ func (dbconfig *DbConfig) RemoveProductVariantHandle() gin.HandlerFunc {
 			// TODO whether it exists or not is something that the query can decide
 			// or should we do a prior check to avoid unnecessary code from running?
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusNotFound, err.Error())
+				RespondWithError(c, http.StatusNotFound, "not found")
 				return
 			}
 			RespondWithError(c, http.StatusBadRequest, err.Error())
@@ -1506,7 +1510,7 @@ func (dbconfig *DbConfig) ProductIDHandle() gin.HandlerFunc {
 		product_id := c.Param("id")
 		err := IDValidation(product_id)
 		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 		product_uuid, err := uuid.Parse(product_id)

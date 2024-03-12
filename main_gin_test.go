@@ -22,6 +22,164 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestOrdersHandle(t *testing.T) {
+}
+
+func TestOrderIDHandle(t *testing.T) {
+}
+
+func TestOrderSearchHandle(t *testing.T) {
+}
+
+func TestProductVariantRemoveIDHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/api/products/id/variants/variant_id", nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid variant ID*/
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/id/variants/variant_id?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode variant id: id", response.Message)
+
+	/* Test 3 - valid product ID but do not exist */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/c2d29867-3d0b-d497-9191-18a9d8ee7830/variants/variant_id?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode variant id: variant_id", response.Message)
+
+	/* Test 4 - valid product ID and variant ID but do not exist */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/c2d29867-3d0b-d497-9191-18a9d8ee7830/variants/c2d29867-3d0b-d497-9191-18a9d8ee7830?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+
+	/* Test 5 - valid request */
+	productUUID := createDatabaseProduct(&dbconfig)
+	dbProduct, _ := CompileProduct(&dbconfig, productUUID, context.Background(), false)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/"+productUUID.String()+"/variants/"+dbProduct.Variants[0].ID.String()+"?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestProductRemoveIDHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/api/products/id", nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid product ID */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/id?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode product id: id", response.Message)
+
+	/* Test 3 - invalid product ID */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/id?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode product id: id", response.Message)
+
+	/* Test 4 - valid product ID but do not exist */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/c2d29867-3d0b-d497-9191-18a9d8ee7830?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+
+	/* Test 5 - valid request */
+	productUUID := createDatabaseProduct(&dbconfig)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("DELETE", "/api/products/"+productUUID.String()+"?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
 func TestProductExportRoute(t *testing.T) {
 	/* Test 1 - invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
