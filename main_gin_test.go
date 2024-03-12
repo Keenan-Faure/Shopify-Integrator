@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"objects"
 	"os"
+	"strings"
 	"testing"
 	"time"
 	"utils"
@@ -20,6 +21,63 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestProductExportRoute(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/products/export", nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - valid request | no products */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/export?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, true, strings.Contains(response.Message, "product_export-"))
+
+	file1, err := os.Stat("." + response.Message[21:])
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.NotEqual(t, 0, file1.Size())
+
+	/* Test 3 - valid request | products */
+	createDatabaseProduct(&dbconfig)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products/export?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, true, strings.Contains(response.Message, "product_export-"))
+
+	file2, err := os.Stat("." + response.Message[21:])
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.NotEqual(t, 0, file2.Size())
+	assert.NotEqual(t, file2.Size(), file1.Size())
+}
 
 func TestProductImportRoute(t *testing.T) {
 	/* Test 1 - invalid authentication */
