@@ -22,6 +22,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPostOrderHandle(t *testing.T) {
+
+}
+
 func TestOrdersHandle(t *testing.T) {
 }
 
@@ -29,6 +33,64 @@ func TestOrderIDHandle(t *testing.T) {
 }
 
 func TestOrderSearchHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/orders/search?q=test", nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid search query param */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders/search?q=&api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "invalid search param", response.Message)
+
+	/* Test 3 - valid search query param | no results */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders/search?q=test_param&api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	orderSearchResponse := []objects.SearchOrder{}
+	err = json.Unmarshal(w.Body.Bytes(), &orderSearchResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(orderSearchResponse))
+
+	/* Test 4 - valid request | results */
+
+	orderUUID := createDatabaseOrder(&dbconfig)
+	defer dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders/search?q=1000&api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	orderSearchResponse = []objects.SearchOrder{}
+	err = json.Unmarshal(w.Body.Bytes(), &orderSearchResponse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(orderSearchResponse))
 }
 
 func TestProductVariantRemoveIDHandle(t *testing.T) {
@@ -1097,6 +1159,17 @@ func createQueueItem(queue_type string) objects.RequestQueueItem {
 	return orderData
 }
 
+/* Returns an order request body struct */
+func OrderPayload() objects.RequestBodyOrder {
+	fileBytes := payload("order")
+	orderData := objects.RequestBodyOrder{}
+	err := json.Unmarshal(fileBytes, &orderData)
+	if err != nil {
+		log.Println(err)
+	}
+	return orderData
+}
+
 /* Returns a product request body struct */
 func ProductPayload() objects.RequestBodyProduct {
 	fileBytes := payload("products")
@@ -1178,6 +1251,29 @@ func createDatabaseProduct(dbconfig *DbConfig) uuid.UUID {
 			return uuid.Nil
 		}
 		return productUUID
+	}
+	return uuid.Nil
+}
+
+/*
+Creates a test order in the database
+*/
+func createDatabaseOrder(dbconfig *DbConfig) uuid.UUID {
+	order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), "1000")
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return uuid.Nil
+		}
+	}
+	if order.WebCode == "" {
+		order := OrderPayload()
+		orderUUID, err := AddOrder(dbconfig, order)
+		if err != nil {
+			log.Println(err)
+			return uuid.Nil
+		}
+		return orderUUID
 	}
 	return uuid.Nil
 }
