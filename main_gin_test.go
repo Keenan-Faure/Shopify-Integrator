@@ -22,14 +22,155 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostOrderHandle(t *testing.T) {
+const PRODUCT_CODE = "product_code"
+const WEB_CUSTOMER_CODE = "9999999999999"
 
+func TestPostOrderHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+
+	/* Test 2 - invalid api_key param */
+
+	/* Test 3 - invalid token param */
+
+	/* Test 4 - valid token | invalid user referenced */
+
+	/* Test 5 - valid request | duplicate order */
+
+	/* Test 6 - valid request | one line item | one shipping item taxes*/
+
+	/* Test 7 - valid request | one line item | one shipping item no taxes */
+
+	/* Test 8 - valid request | one line item | no shipping item / taxes */
+
+	/* Test 9 - valid request | one line item | no shipping item */
+
+	/* Test 10 - valid request | duplicated customer web_code */
+
+	/* Test 11 - valid request | no customer addresses */
+
+	/* Test 12 - valid request | order total of zero */
+
+	/* Test 13 - valid request | non-zero order total */
 }
 
 func TestOrdersHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/orders?page=1", nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid page number */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders?page=-16&api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	responseOrders := []objects.Order{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseOrders)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseOrders))
+
+	/* Test 3 - valid request | no results */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders?page=1&api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	responseOrders = []objects.Order{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseOrders)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseOrders))
+
+	/* Test 4 - valid request | with results */
+	orderUUID := createDatabaseOrder(&dbconfig)
+	defer dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	defer dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders?page=1&api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	responseOrders = []objects.Order{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseOrders)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(responseOrders))
 }
 
 func TestOrderIDHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/orders/id", nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid order ID */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders/id?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode order id: id", response.Message)
+
+	/* Test 3 - valid request | do not exist */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders/c2d29867-3d0b-d497-9191-18a9d8ee7830?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "not found", response.Message)
+
+	/* Test 4 - valid request | exists */
+	orderUUID := createDatabaseOrder(&dbconfig)
+	defer dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	defer dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/api/orders/"+orderUUID.String()+"?api_key="+dbUser.ApiKey, nil)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	responseOrder := objects.Order{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseOrder)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, orderUUID, responseOrder.ID)
 }
 
 func TestOrderSearchHandle(t *testing.T) {
@@ -75,7 +216,6 @@ func TestOrderSearchHandle(t *testing.T) {
 	assert.Equal(t, 0, len(orderSearchResponse))
 
 	/* Test 4 - valid request | results */
-
 	orderUUID := createDatabaseOrder(&dbconfig)
 	defer dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
 
@@ -152,7 +292,7 @@ func TestProductVariantRemoveIDHandle(t *testing.T) {
 	/* Test 5 - valid request */
 	productUUID := createDatabaseProduct(&dbconfig)
 	dbProduct, _ := CompileProduct(&dbconfig, productUUID, context.Background(), false)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("DELETE", "/api/products/"+productUUID.String()+"/variants/"+dbProduct.Variants[0].ID.String()+"?api_key="+dbUser.ApiKey, nil)
@@ -226,7 +366,7 @@ func TestProductRemoveIDHandle(t *testing.T) {
 
 	/* Test 5 - valid request */
 	productUUID := createDatabaseProduct(&dbconfig)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("DELETE", "/api/products/"+productUUID.String()+"?api_key="+dbUser.ApiKey, nil)
@@ -400,7 +540,7 @@ func TestProductImportRoute(t *testing.T) {
 	assert.Equal(t, 0, successResponse.VariantsAdded)
 	assert.Equal(t, 0, successResponse.VariantsUpdated)
 
-	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 7 - Valid request - products failed to import (attempted duplicate SKU) */
 	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request-duplicate-sku.csv", "file")
@@ -424,7 +564,7 @@ func TestProductImportRoute(t *testing.T) {
 	assert.Equal(t, 1, successResponse.VariantsAdded)
 	assert.Equal(t, 4, successResponse.VariantsUpdated)
 
-	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 8 - Valid request - Products/variants created */
 	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request-variants-products-added.csv", "file")
@@ -448,7 +588,7 @@ func TestProductImportRoute(t *testing.T) {
 	assert.Equal(t, 1, successResponse.VariantsAdded)
 	assert.Equal(t, 0, successResponse.VariantsUpdated)
 
-	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 9 - Valid request - Products/variants updated (should be zero created) */
 	mpw, multiPartFormData = CreateMultiPartFormData("test-case-valid-request-variants-products-updated.csv", "file")
@@ -472,7 +612,7 @@ func TestProductImportRoute(t *testing.T) {
 	assert.Equal(t, 1, successResponse.VariantsAdded)
 	assert.Equal(t, 1, successResponse.VariantsUpdated)
 
-	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 }
 
 func TestProductCreationRoute(t *testing.T) {
@@ -550,7 +690,7 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "SKU with code product_sku already exists", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 5 - Invalid product | duplicate options */
 	createDatabaseProduct(&dbconfig)
@@ -576,7 +716,7 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "duplicate option values not allowed", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 6 - Valid product request | not added to shopify */
 
@@ -596,7 +736,7 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "success", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 }
 
 func TestProductFilterRoute(t *testing.T) {
@@ -620,7 +760,7 @@ func TestProductFilterRoute(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	/* Test 4 - No filter results */
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products/filter?type=simple&category=test&api_key="+dbUser.ApiKey, nil)
 	router.ServeHTTP(w, req)
@@ -669,7 +809,7 @@ func TestProductSearchRoute(t *testing.T) {
 
 	/* Test 4 - No search results */
 	createDatabaseProduct(&dbconfig)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products/search?q=simple&api_key="+dbUser.ApiKey, nil)
 	router.ServeHTTP(w, req)
@@ -725,7 +865,7 @@ func TestProductsRoute(t *testing.T) {
 
 	/* Test 5 - Valid request */
 	createDatabaseProduct(&dbconfig)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products?page=1&api_key="+dbUser.ApiKey, nil)
 	router.ServeHTTP(w, req)
@@ -768,7 +908,7 @@ func TestProductIDRoute(t *testing.T) {
 
 	/* Test 5 - Valid request */
 	productUUID := createDatabaseProduct(&dbconfig)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), "product_code")
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products/"+productUUID.String()+"?api_key="+dbUser.ApiKey, nil)
 	router.ServeHTTP(w, req)
