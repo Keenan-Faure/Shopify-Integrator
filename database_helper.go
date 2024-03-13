@@ -657,6 +657,42 @@ func UpdateVariant(
 	return nil
 }
 
+/* Adds a new User to the application */
+func AddUser(dbconfig *DbConfig, userData objects.RequestBodyRegister) (database.User, error) {
+	user, err := dbconfig.DB.CreateUser(context.Background(), database.CreateUserParams{
+		ID:        uuid.New(),
+		Name:      userData.Name,
+		UserType:  "app",
+		Email:     userData.Email,
+		Password:  userData.Password,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		return database.User{}, err
+	}
+	return user, nil
+}
+
+/* Adds a new User to the application */
+func AddUserRegistration(
+	dbconfig *DbConfig,
+	preRegisterDetails objects.RequestBodyPreRegister,
+) (database.RegisterToken, error) {
+	token, err := dbconfig.DB.CreateToken(context.Background(), database.CreateTokenParams{
+		ID:        uuid.New(),
+		Name:      preRegisterDetails.Name,
+		Email:     preRegisterDetails.Email,
+		Token:     uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	})
+	if err != nil {
+		return database.RegisterToken{}, err
+	}
+	return token, nil
+}
+
 /*
 Returns an array of strings containing the unique price tiers appended with the keyword price_
 */
