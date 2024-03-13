@@ -109,3 +109,7 @@ LIMIT 10;
 -- name: RemoveCustomer :exec
 DELETE FROM customers
 WHERE id = $1;
+
+-- name: RemoveCustomerByWebCustomerCode :exec
+DELETE FROM customers
+WHERE web_customer_code = $1;

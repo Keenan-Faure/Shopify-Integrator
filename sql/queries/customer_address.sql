@@ -2,11 +2,12 @@
 INSERT INTO customer_address (
     id,
     customer_id,
+    address_id,
     address_type,
     updated_at,
     created_at
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6
 );
 
 -- name: GetAddressByCustomerAndType :one
