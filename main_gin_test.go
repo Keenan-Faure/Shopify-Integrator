@@ -15,7 +15,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 	"utils"
 
 	"github.com/google/uuid"
@@ -23,18 +22,89 @@ import (
 )
 
 const PRODUCT_CODE = "product_code"
+const PRODUCT_CODE_SIMPLE = "product_code_simple"
 const WEB_CUSTOMER_CODE = "9999999999999"
 
 func TestPostOrderHandle(t *testing.T) {
 	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	orderPayload := OrderPayload("orders")
+	router := setUpAPI(&dbconfig)
 
-	/* Test 2 - invalid api_key param */
+	var buffer bytes.Buffer
+	err := json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/orders", &buffer)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 401, w.Code)
 
 	/* Test 3 - invalid token param */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	err = json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/orders?token=&api_key="+dbUser.ApiKey, &buffer)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "invalid token", response.Message)
 
 	/* Test 4 - valid token | invalid user referenced */
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token=b23a8af2f57870d8afd88fec713c5e59eb84ce8657321aeace26222536fa1565&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "invalid token for user", response.Message)
 
 	/* Test 5 - valid request | duplicate order */
+	orderUUID := createDatabaseOrder(&dbconfig)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	responsePostOrder := objects.ResponseQueueItem{}
+	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.NotEqual(t, uuid.Nil, responsePostOrder.ID)
+	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
 
 	/* Test 6 - valid request | one line item | one shipping item taxes*/
 
@@ -627,11 +697,10 @@ func TestProductCreationRoute(t *testing.T) {
 
 	assert.Equal(t, 401, w.Code)
 
-	/* Test 2 - Invalid product data */
+	/* Test 2 - Invalid simple product data */
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
-	productData := ProductPayload()
-	productData.Title = ""
+	productData := ProductPayload("test-case-invalid-product-title-simple.json")
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(productData)
 	if err != nil {
@@ -650,9 +719,27 @@ func TestProductCreationRoute(t *testing.T) {
 	}
 	assert.Equal(t, "empty title not allowed", response.Message)
 
+	/* Test 3 - Invalid variable product data */
+	productData = ProductPayload("test-case-invalid-product-title-variable.json")
+	err = json.NewEncoder(&buffer).Encode(productData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "empty title not allowed", response.Message)
+
 	/* Test 3 - Invalid product options */
-	productData.Title = "product_title"
-	productData.ProductOptions[0].Value = "Colour"
+	productData = ProductPayload("test-case-invalid-product-variable.json")
 	err = json.NewEncoder(&buffer).Encode(productData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -672,7 +759,7 @@ func TestProductCreationRoute(t *testing.T) {
 
 	/* Test 4 - Invalid product sku | duplicated SKU */
 	createDatabaseProduct(&dbconfig)
-	productData.ProductOptions[0].Value = "Size"
+	productData = ProductPayload("test-case-valid-product-variable.json")
 
 	err = json.NewEncoder(&buffer).Encode(productData)
 	if err != nil {
@@ -694,11 +781,7 @@ func TestProductCreationRoute(t *testing.T) {
 
 	/* Test 5 - Invalid product | duplicate options */
 	createDatabaseProduct(&dbconfig)
-
-	productData.Variants[0].Option1 = "option1"
-	productData.Variants[0].Option2 = "option2"
-	productData.Variants[0].Option3 = "option3"
-	productData.Variants[0].Sku = "product_sku1"
+	productData = ProductPayload("test-case-invalid-product-variable-duplicate-options.json")
 
 	err = json.NewEncoder(&buffer).Encode(productData)
 	if err != nil {
@@ -718,8 +801,29 @@ func TestProductCreationRoute(t *testing.T) {
 	assert.Equal(t, "duplicate option values not allowed", response.Message)
 	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
-	/* Test 6 - Valid product request | not added to shopify */
+	/* Test 6 - Valid variable product request | not added to shopify */
+	productData = ProductPayload("test-case-valid-product-variable.json")
+	err = json.NewEncoder(&buffer).Encode(productData)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
+	req.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
 
+	assert.Equal(t, 201, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE_SIMPLE)
+
+	/* Test 6 - Valid simple product request | not added to shopify */
+	productData = ProductPayload("test-case-valid-product-simple.json")
 	err = json.NewEncoder(&buffer).Encode(productData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -921,7 +1025,7 @@ func TestLoginRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	loginData := LoginPayload()
+	loginData := LoginPayload("test-case-valid-login.json")
 	loginData.Username = ""
 	loginData.Password = ""
 	var buffer bytes.Buffer
@@ -938,7 +1042,7 @@ func TestLoginRoute(t *testing.T) {
 	assert.Equal(t, 400, w.Code)
 
 	/* Test 2 - Invalid request - non empty username/password but invalid credentials) */
-	loginData = LoginPayload()
+	loginData = LoginPayload("test-case-valid-login.json")
 	err = json.NewEncoder(&buffer).Encode(loginData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -960,7 +1064,7 @@ func TestLoginRoute(t *testing.T) {
 	/* Test 3 - Valid request */
 	dbUser := createDatabaseUser(&dbconfig)
 
-	loginData = LoginPayload()
+	loginData = LoginPayload("test-case-valid-login.json")
 	loginData.Username = dbUser.Name
 	loginData.Password = dbUser.Password
 	err = json.NewEncoder(&buffer).Encode(loginData)
@@ -1012,9 +1116,7 @@ func TestPreregisterRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	preregisterData := PreRegisterPayload()
-	preregisterData.Email = ""
-	preregisterData.Name = ""
+	preregisterData := PreRegisterPayload("test-case-invalid-preregister.json")
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(preregisterData)
 	if err != nil {
@@ -1031,7 +1133,7 @@ func TestPreregisterRoute(t *testing.T) {
 	/* Test 2 - Email already exists */
 	dbUser := createDatabaseUser(&dbconfig)
 
-	preregisterData = PreRegisterPayload()
+	preregisterData = PreRegisterPayload("test-case-valid-preregister.json")
 	err = json.NewEncoder(&buffer).Encode(preregisterData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -1052,7 +1154,7 @@ func TestPreregisterRoute(t *testing.T) {
 	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 
 	/* Test 3 - Valid request */
-	preregisterData = PreRegisterPayload()
+	preregisterData = PreRegisterPayload("test-case-invalid-preregister.json")
 	err = json.NewEncoder(&buffer).Encode(preregisterData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -1080,8 +1182,8 @@ func TestRegisterRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	registrationData := RegisterPayload()
-	register_data_token := createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	registrationData := RegisterPayload("test-case-valid-user.json")
+	register_data_token := createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(registrationData)
@@ -1109,7 +1211,7 @@ func TestRegisterRoute(t *testing.T) {
 	})
 
 	/* Test 2 - Invalid request body */
-	new_registration_data := ProductPayload()
+	new_registration_data := ProductPayload("test-case-valid-product-simple.json")
 	err = json.NewEncoder(&buffer).Encode(new_registration_data)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -1130,8 +1232,8 @@ func TestRegisterRoute(t *testing.T) {
 	assert.Equal(t, "", response.Email)
 
 	/* Test 3 - Invalid token */
-	registrationData = RegisterPayload()
-	register_data_token = createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	registrationData = RegisterPayload("test-case-valid-user.json")
+	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	err = json.NewEncoder(&buffer).Encode(registrationData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -1154,8 +1256,8 @@ func TestRegisterRoute(t *testing.T) {
 	/* Test 4 - User already exist */
 	db_user := createDatabaseUser(&dbconfig)
 
-	registrationData = RegisterPayload()
-	register_data_token = createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	registrationData = RegisterPayload("test-case-valid-user.json")
+	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
 	err = json.NewEncoder(&buffer).Encode(registrationData)
 	if err != nil {
@@ -1182,8 +1284,8 @@ func TestRegisterRoute(t *testing.T) {
 	})
 
 	/* Test 5 - Empty username/password in request */
-	registrationData = RegisterPayload()
-	register_data_token = createDatabasePreregister(registrationData.Name, registrationData.Email, &dbconfig)
+	registrationData = RegisterPayload("test-case-invalid-user.json")
+	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
 	registrationData.Name = ""
 	registrationData.Email = ""
@@ -1253,7 +1355,7 @@ func CreateMultiPartFormData(fileName, formKey string) (*multipart.Writer, bytes
 	w := multipart.NewWriter(&buf)
 
 	// Add a file to the request
-	file, err := os.Open("./test_payloads/import/" + fileName)
+	file, err := os.Open("./test_payloads/tests/import/" + fileName)
 	if err != nil {
 		log.Println(err)
 		return &multipart.Writer{}, buf
@@ -1261,7 +1363,7 @@ func CreateMultiPartFormData(fileName, formKey string) (*multipart.Writer, bytes
 	defer file.Close()
 
 	// Create a new form field
-	fw, err := w.CreateFormFile(formKey, "./test_payloads/import/"+fileName)
+	fw, err := w.CreateFormFile(formKey, "./test_payloads/tests/import/"+fileName)
 	if err != nil {
 		log.Println(err)
 		return &multipart.Writer{}, buf
@@ -1300,8 +1402,8 @@ func createQueueItem(queue_type string) objects.RequestQueueItem {
 }
 
 /* Returns an order request body struct */
-func OrderPayload() objects.RequestBodyOrder {
-	fileBytes := payload("order")
+func OrderPayload(fileName string) objects.RequestBodyOrder {
+	fileBytes := payload("./test_payloads/tests/orders/" + fileName)
 	orderData := objects.RequestBodyOrder{}
 	err := json.Unmarshal(fileBytes, &orderData)
 	if err != nil {
@@ -1311,8 +1413,8 @@ func OrderPayload() objects.RequestBodyOrder {
 }
 
 /* Returns a product request body struct */
-func ProductPayload() objects.RequestBodyProduct {
-	fileBytes := payload("products")
+func ProductPayload(fileName string) objects.RequestBodyProduct {
+	fileBytes := payload("./test_payloads/tests/products/" + fileName)
 	productData := objects.RequestBodyProduct{}
 	err := json.Unmarshal(fileBytes, &productData)
 	if err != nil {
@@ -1322,8 +1424,8 @@ func ProductPayload() objects.RequestBodyProduct {
 }
 
 /* Returns a register request body struct */
-func RegisterPayload() objects.RequestBodyRegister {
-	fileBytes := payload("registration")
+func RegisterPayload(fileName string) objects.RequestBodyRegister {
+	fileBytes := payload("./test_payloads/tests/products/" + fileName)
 	registerData := objects.RequestBodyRegister{}
 	err := json.Unmarshal(fileBytes, &registerData)
 	if err != nil {
@@ -1333,8 +1435,8 @@ func RegisterPayload() objects.RequestBodyRegister {
 }
 
 /* Returns a pre-registrater request body struct */
-func PreRegisterPayload() objects.RequestBodyPreRegister {
-	fileBytes := payload("preregister")
+func PreRegisterPayload(fileName string) objects.RequestBodyPreRegister {
+	fileBytes := payload("./test_payloads/tests/products/" + fileName)
 	preregData := objects.RequestBodyPreRegister{}
 	err := json.Unmarshal(fileBytes, &preregData)
 	if err != nil {
@@ -1344,8 +1446,8 @@ func PreRegisterPayload() objects.RequestBodyPreRegister {
 }
 
 /* Returns a login request body struct */
-func LoginPayload() objects.RequestBodyLogin {
-	fileBytes := payload("login")
+func LoginPayload(fileName string) objects.RequestBodyLogin {
+	fileBytes := payload("./test_payloads/tests/products/" + fileName)
 	loginData := objects.RequestBodyLogin{}
 	err := json.Unmarshal(fileBytes, &loginData)
 	if err != nil {
@@ -1354,13 +1456,35 @@ func LoginPayload() objects.RequestBodyLogin {
 	return loginData
 }
 
+/* Returns a test user RequestBodyRegister struct */
+func UserPayload(fileName string) objects.RequestBodyRegister {
+	fileBytes := payload("./test_payloads/tests/users/" + fileName)
+	userRegistrationData := objects.RequestBodyRegister{}
+	err := json.Unmarshal(fileBytes, &userRegistrationData)
+	if err != nil {
+		log.Println(err)
+	}
+	return userRegistrationData
+}
+
+/* Returns a test user RequestBodyRegister struct */
+func CreateTokenPayload(fileName string) objects.RequestBodyPreRegister {
+	fileBytes := payload("./test_payloads/tests/users/" + fileName)
+	userRegistrationData := objects.RequestBodyPreRegister{}
+	err := json.Unmarshal(fileBytes, &userRegistrationData)
+	if err != nil {
+		log.Println(err)
+	}
+	return userRegistrationData
+}
+
 /*
 Returns a byte array representing the file data that was read
 
 Data is retrived from the project directory `test_payloads`
 */
-func payload(object_type string) []byte {
-	file, err := os.Open("./test_payloads/" + object_type + ".json")
+func payload(filePath string) []byte {
+	file, err := os.Open(filePath)
 	if err != nil {
 		log.Println(err)
 	}
@@ -1384,7 +1508,7 @@ func createDatabaseProduct(dbconfig *DbConfig) uuid.UUID {
 		}
 	}
 	if product.ProductCode == "" {
-		product := ProductPayload()
+		product := ProductPayload("test-case-valid-product-variable.json")
 		productUUID, _, err := AddProduct(dbconfig, product)
 		if err != nil {
 			log.Println(err)
@@ -1392,7 +1516,7 @@ func createDatabaseProduct(dbconfig *DbConfig) uuid.UUID {
 		}
 		return productUUID
 	}
-	return uuid.Nil
+	return product.ID
 }
 
 /*
@@ -1407,7 +1531,7 @@ func createDatabaseOrder(dbconfig *DbConfig) uuid.UUID {
 		}
 	}
 	if order.WebCode == "" {
-		order := OrderPayload()
+		order := OrderPayload("test-case-valid-order.json")
 		orderUUID, err := AddOrder(dbconfig, order)
 		if err != nil {
 			log.Println(err)
@@ -1415,7 +1539,7 @@ func createDatabaseOrder(dbconfig *DbConfig) uuid.UUID {
 		}
 		return orderUUID
 	}
-	return uuid.Nil
+	return order.ID
 }
 
 /*
@@ -1430,20 +1554,13 @@ func createDatabaseUser(dbconfig *DbConfig) database.User {
 		}
 	}
 	if user.ApiKey == "" {
-		user, err := dbconfig.DB.CreateUser(context.Background(), database.CreateUserParams{
-			ID:        uuid.New(),
-			Name:      "test",
-			UserType:  "app",
-			Email:     "test@test.com",
-			Password:  utils.RandStringBytes(20),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
+		user := UserPayload("test-case-valid-user.json")
+		dbUser, err := AddUser(dbconfig, user)
 		if err != nil {
 			log.Println(err)
 			return database.User{}
 		}
-		return user
+		return dbUser
 	}
 	return user
 }
@@ -1451,7 +1568,7 @@ func createDatabaseUser(dbconfig *DbConfig) database.User {
 /*
 Creates a demo token in the database for registration
 */
-func createDatabasePreregister(name, email string, dbconfig *DbConfig) database.RegisterToken {
+func createDatabasePreregister(email string, dbconfig *DbConfig) database.RegisterToken {
 	token, err := dbconfig.DB.GetTokenValidation(context.Background(), email)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
@@ -1460,19 +1577,13 @@ func createDatabasePreregister(name, email string, dbconfig *DbConfig) database.
 		}
 	}
 	if token.Token == uuid.Nil {
-		token, err := dbconfig.DB.CreateToken(context.Background(), database.CreateTokenParams{
-			ID:        uuid.New(),
-			Name:      name,
-			Email:     email,
-			Token:     uuid.New(),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
+		token := CreateTokenPayload("test-case-valid-preregister.json")
+		dbToken, err := AddUserRegistration(dbconfig, token)
 		if err != nil {
 			log.Println(err)
 			return database.RegisterToken{}
 		}
-		return token
+		return dbToken
 	}
 	return database.RegisterToken{}
 }
