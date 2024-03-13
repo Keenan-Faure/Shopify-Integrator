@@ -12,7 +12,7 @@ func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
 		log.Println(err)
 		return err
 	}
-	err = AddOrder(dbconfig, order_body)
+	_, err = AddOrder(dbconfig, order_body)
 	if err != nil {
 		return err
 	}

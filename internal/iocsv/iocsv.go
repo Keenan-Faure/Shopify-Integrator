@@ -223,10 +223,6 @@ func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []st
 		for _, image := range images {
 			image_headers = append(image_headers, fmt.Sprintf("%v", image.Src))
 		}
-		fmt.Println("----")
-		fmt.Println(len(images))
-		fmt.Println(max)
-		fmt.Println("----")
 		for i := 1; i <= (max - len(images)); i++ {
 			image_headers = append(image_headers, fmt.Sprintf("%v", ""))
 		}
