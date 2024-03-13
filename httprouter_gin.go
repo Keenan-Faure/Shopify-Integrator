@@ -1015,8 +1015,8 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) OrderSearchHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		search_query := c.Query("q")
-		if search_query != "" || len(search_query) == 0 {
-			RespondWithError(c, http.StatusBadRequest, "Invalid search param")
+		if search_query == "" || len(search_query) == 0 {
+			RespondWithError(c, http.StatusBadRequest, "invalid search param")
 			return
 		}
 		customer_orders, err := dbconfig.DB.GetOrdersSearchByCustomer(c.Request.Context(), utils.ConvertStringToLike(search_query))
