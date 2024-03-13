@@ -200,14 +200,14 @@ func AddCustomerOrder(dbconfig *DbConfig, orderID, customerID uuid.UUID) error {
 }
 
 /* Adds an order to the application */
-func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
+func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID, error) {
 	exists, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	if !exists {
 		if err := OrderValidation(orderBody); err != nil {
-			return err
+			return uuid.Nil, err
 		}
 		dbOrder, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
 			ID:            uuid.New(),
@@ -222,11 +222,11 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 			UpdatedAt:     time.Now().UTC(),
 		})
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
 		err = AddOrderLines(dbconfig, orderBody, dbOrder.ID)
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
 		dbCustomer, err := AddCustomer(
 			dbconfig,
@@ -234,14 +234,15 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) error {
 			orderBody.Customer.FirstName+" "+orderBody.Customer.LastName,
 		)
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
 		err = AddCustomerOrder(dbconfig, dbOrder.ID, dbCustomer.ID)
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
+		return dbOrder.ID, nil
 	}
-	return nil
+	return uuid.Nil, nil
 }
 
 /* Updates an order that already exists inside the application */
