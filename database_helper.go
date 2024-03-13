@@ -186,7 +186,7 @@ func AddCustomerOrder(dbconfig *DbConfig, orderID, customerID uuid.UUID) error {
 	}
 	if !exists {
 		err = dbconfig.DB.CreateCustomerOrder(context.Background(), database.CreateCustomerOrderParams{
-			ID:         orderID,
+			ID:         uuid.New(),
 			CustomerID: customerID,
 			OrderID:    orderID,
 			UpdatedAt:  time.Now().UTC(),
@@ -228,7 +228,7 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID
 		if err != nil {
 			return uuid.Nil, err
 		}
-		dbCustomer, err := AddCustomer(
+		dbCustomerUUID, err := AddCustomer(
 			dbconfig,
 			orderBody.Customer,
 			orderBody.Customer.FirstName+" "+orderBody.Customer.LastName,
@@ -236,7 +236,7 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID
 		if err != nil {
 			return uuid.Nil, err
 		}
-		err = AddCustomerOrder(dbconfig, dbOrder.ID, dbCustomer.ID)
+		err = AddCustomerOrder(dbconfig, dbOrder.ID, dbCustomerUUID)
 		if err != nil {
 			return uuid.Nil, err
 		}
@@ -289,7 +289,7 @@ func AddOrderLines(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, order
 		}
 	}
 	for _, lineItem := range orderBody.LineItems {
-		_, err = dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
+		databaseLineItem := database.CreateOrderLineParams{
 			ID:        uuid.New(),
 			OrderID:   orderID,
 			LineType:  utils.ConvertStringToSQL("product"),
@@ -300,13 +300,18 @@ func AddOrderLines(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, order
 			TaxTotal:  utils.ConvertStringToSQL(lineItem.TaxLines[0].Price),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
-		})
+		}
+		if len(lineItem.TaxLines) > 1 {
+			databaseLineItem.TaxRate = utils.ConvertStringToSQL(fmt.Sprint(lineItem.TaxLines[0].Rate))
+			databaseLineItem.TaxTotal = utils.ConvertStringToSQL(lineItem.TaxLines[0].Price)
+		}
+		_, err = dbconfig.DB.CreateOrderLine(context.Background(), databaseLineItem)
 		if err != nil {
 			return err
 		}
 	}
 	for _, shippingLine := range orderBody.ShippingLines {
-		_, err = dbconfig.DB.CreateOrderLine(context.Background(), database.CreateOrderLineParams{
+		databaseShippingLine := database.CreateOrderLineParams{
 			ID:       uuid.New(),
 			OrderID:  orderID,
 			LineType: utils.ConvertStringToSQL("shipping"),
@@ -314,11 +319,14 @@ func AddOrderLines(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, order
 			Price:    utils.ConvertStringToSQL(shippingLine.Price),
 			// TODO will this always remain as 1?
 			Qty:       utils.ConvertIntToSQL(1),
-			TaxRate:   utils.ConvertStringToSQL(fmt.Sprint(shippingLine.TaxLines[0].Rate)), // bad practise
-			TaxTotal:  utils.ConvertStringToSQL(shippingLine.TaxLines[0].Price),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
-		})
+		}
+		if len(shippingLine.TaxLines) > 1 {
+			databaseShippingLine.TaxRate = utils.ConvertStringToSQL(fmt.Sprint(shippingLine.TaxLines[0].Rate))
+			databaseShippingLine.TaxTotal = utils.ConvertStringToSQL(shippingLine.TaxLines[0].Price)
+		}
+		_, err = dbconfig.DB.CreateOrderLine(context.Background(), databaseShippingLine)
 		if err != nil {
 			return err
 		}
@@ -337,10 +345,10 @@ func AddCustomer(
 	dbconfig *DbConfig,
 	customer objects.RequestBodyCustomer,
 	WebCustomerCode string,
-) (database.Customer, error) {
+) (uuid.UUID, error) {
 	exists, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
 	if err != nil {
-		return database.Customer{}, err
+		return uuid.Nil, err
 	}
 	if !exists {
 		dbCustomer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
@@ -354,19 +362,19 @@ func AddCustomer(
 			UpdatedAt:       time.Now().UTC(),
 		})
 		if err != nil {
-			return database.Customer{}, err
+			return uuid.Nil, err
 		}
-		err = AddAddress(dbconfig, customer.Address, dbCustomer.ID, "default")
+		dbAddressUUID, err := AddAddress(dbconfig, customer.Address, dbCustomer.ID, "default")
 		if err != nil {
-			return database.Customer{}, err
+			return uuid.Nil, err
 		}
-		err = AddCustomerAddress(dbconfig, customer.Address, dbCustomer.ID, "default")
+		err = AddCustomerAddress(dbconfig, customer.Address, dbCustomer.ID, dbAddressUUID, "default")
 		if err != nil {
-			return database.Customer{}, err
+			return uuid.Nil, err
 		}
-		return dbCustomer, err
+		return dbCustomer.ID, nil
 	}
-	return database.Customer{}, nil
+	return uuid.Nil, nil
 }
 
 /* Updates a customer inside the application */
@@ -390,7 +398,13 @@ func UpdateCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, We
 }
 
 /* Adds a customer address which is a link between a customer and it's address */
-func AddCustomerAddress(dbconfig *DbConfig, addressData objects.CustomerAddress, customerID uuid.UUID, addressType string) error {
+func AddCustomerAddress(
+	dbconfig *DbConfig,
+	addressData objects.CustomerAddress,
+	customerID,
+	addressID uuid.UUID,
+	addressType string,
+) error {
 	exists, err := CheckExistsCustomerAddress(dbconfig, context.Background(), customerID.String(), addressType)
 	if err != nil {
 		return err
@@ -399,6 +413,7 @@ func AddCustomerAddress(dbconfig *DbConfig, addressData objects.CustomerAddress,
 		err = dbconfig.DB.CreateCustomerAddress(context.Background(), database.CreateCustomerAddressParams{
 			ID:          uuid.New(),
 			CustomerID:  customerID,
+			AddressID:   addressID,
 			AddressType: addressType,
 			UpdatedAt:   time.Now().UTC(),
 			CreatedAt:   time.Now().UTC(),
@@ -857,13 +872,13 @@ func AddProductOptions(dbconfig *DbConfig, product_id uuid.UUID, product_code st
 }
 
 /* Creates an address */
-func AddAddress(dbconfig *DbConfig, addressData objects.CustomerAddress, customerID uuid.UUID, addressType string) error {
+func AddAddress(dbconfig *DbConfig, addressData objects.CustomerAddress, customerID uuid.UUID, addressType string) (uuid.UUID, error) {
 	exists, err := CheckExistsCustomerAddress(dbconfig, context.Background(), customerID.String(), addressType)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	if !exists {
-		_, err = dbconfig.DB.CreateAddress(context.Background(), database.CreateAddressParams{
+		dbCustomerAddress, err := dbconfig.DB.CreateAddress(context.Background(), database.CreateAddressParams{
 			ID:           uuid.New(),
 			CustomerID:   customerID,
 			Type:         addressType,
@@ -879,10 +894,11 @@ func AddAddress(dbconfig *DbConfig, addressData objects.CustomerAddress, custome
 			UpdatedAt:    time.Now().UTC(),
 		})
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
+		return dbCustomerAddress.ID, err
 	}
-	return nil
+	return uuid.Nil, nil
 }
 
 /*
