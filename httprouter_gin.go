@@ -944,7 +944,7 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 		})
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusInternalServerError, "invalid token for user")
+				RespondWithError(c, http.StatusNotFound, "invalid token for user")
 				return
 			} else {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -978,7 +978,7 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 				Object:      order_body,
 			})
 			if err != nil {
-				RespondWithError(c, http.StatusBadRequest, err.Error())
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
 			RespondWithJSON(c, http.StatusOK, response_payload)
@@ -994,7 +994,7 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 			Object:      order_body,
 		})
 		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, err.Error())
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		RespondWithJSON(c, http.StatusCreated, response_payload)
@@ -1646,19 +1646,12 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			return
 		}
 		if !exists {
-			token, err := dbconfig.DB.CreateToken(c.Request.Context(), database.CreateTokenParams{
-				ID:        uuid.New(),
-				Name:      request_body.Name,
-				Email:     request_body.Email,
-				Token:     uuid.New(),
-				CreatedAt: time.Now().UTC(),
-				UpdatedAt: time.Now().UTC(),
-			})
+			dbTokenDetails, err := AddUserRegistration(dbconfig, request_body)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-			token_value = token.Token
+			token_value = dbTokenDetails.Token
 		}
 		if test != "true" {
 			err = Email(token_value, request_body.Email, request_body.Name)
@@ -1688,54 +1681,46 @@ Possible HTTP Codes: 200, 400, 401, 404, 409, 500
 */
 func (dbconfig *DbConfig) RegisterHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		body, err := DecodeUserRequestBody(c.Request)
+		requestUserData, err := DecodeUserRequestBody(c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		exists, err := CheckUExistsUser(dbconfig, body.Name, c.Request)
+		exists, err := CheckUExistsUser(dbconfig, requestUserData.Name, c.Request)
 		if exists {
 			RespondWithError(c, http.StatusConflict, err.Error())
 			return
 		}
-		err = ValidateTokenValidation(body)
+		err = ValidateTokenValidation(requestUserData)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		token, err := dbconfig.DB.GetTokenValidation(c.Request.Context(), body.Email)
+		token, err := dbconfig.DB.GetTokenValidation(c.Request.Context(), requestUserData.Email)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		request_token, err := uuid.Parse(body.Token)
+		request_token, err := uuid.Parse(requestUserData.Token)
 		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, "could not decode token: "+body.Token)
+			RespondWithError(c, http.StatusBadRequest, "could not decode token: "+requestUserData.Token)
 			return
 		}
 		if token.Token != request_token {
 			RespondWithError(c, http.StatusNotFound, "invalid token for user")
 			return
 		}
-		err = UserValidation(body.Name, body.Password)
+		err = UserValidation(requestUserData.Name, requestUserData.Password)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		user, err := dbconfig.DB.CreateUser(c.Request.Context(), database.CreateUserParams{
-			ID:        uuid.New(),
-			Name:      body.Name,
-			UserType:  "app",
-			Email:     body.Email,
-			Password:  body.Password,
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
+		dbUser, err := AddUser(dbconfig, requestUserData)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		RespondWithJSON(c, http.StatusCreated, ConvertDatabaseToRegister(user))
+		RespondWithJSON(c, http.StatusCreated, ConvertDatabaseToRegister(dbUser))
 	}
 }
 
