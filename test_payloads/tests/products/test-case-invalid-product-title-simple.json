@@ -1,0 +1,25 @@
+{
+    "product_code": "product_code_simple",
+    "title": "",
+    "body_html": "<p>I am a body_html</p>",
+    "category": "product_category",
+    "vendor": "product_vendor",
+    "product_type": "product_product_type",
+    "variants": [
+        {
+            "sku": "product_sku_simple",
+            "option1": "option1",
+            "option2": "option2",
+            "option3": "",
+            "barcode": "2347234-9824",
+            "variant_price_tiers": [
+                {
+                    "name": "Selling Price",
+                    "value": "1500.99"
+                }
+            ],
+            "variant_quantities": []
+        }
+    ],
+    "options": []
+}
