@@ -296,8 +296,6 @@ func AddOrderLines(dbconfig *DbConfig, orderBody objects.RequestBodyOrder, order
 			Sku:       lineItem.Sku,
 			Price:     utils.ConvertStringToSQL(lineItem.Price),
 			Qty:       utils.ConvertIntToSQL(lineItem.Quantity),
-			TaxRate:   utils.ConvertStringToSQL(fmt.Sprint(lineItem.TaxLines[0].Rate)), // bad practise
-			TaxTotal:  utils.ConvertStringToSQL(lineItem.TaxLines[0].Price),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
 		}
