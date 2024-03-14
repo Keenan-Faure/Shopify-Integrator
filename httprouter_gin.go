@@ -928,6 +928,7 @@ Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// mockRequest := c.Request.Header.Get("Mocker")
 		web_token := c.Query("token")
 		if TokenValidation(web_token) != nil {
 			RespondWithError(c, http.StatusBadRequest, "invalid token")
@@ -968,6 +969,9 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 			return
 		}
 		if exists {
+			// TODO Make this change here to include the Mock
+			// if(mockRequest == "true") {
+			// }
 			response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
 				Type:        "order",
 				Status:      "in-queue",
