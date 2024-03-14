@@ -28,7 +28,7 @@ const WEB_CUSTOMER_CODE = "9999999999999"
 func TestPostOrderHandle(t *testing.T) {
 	/* Test 1 - invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
-	orderPayload := OrderPayload("orders")
+	orderPayload := OrderPayload("test-case-valid-order.json")
 	router := setUpAPI(&dbconfig)
 
 	var buffer bytes.Buffer
@@ -40,6 +40,7 @@ func TestPostOrderHandle(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/orders", &buffer)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 401, w.Code)
@@ -55,6 +56,7 @@ func TestPostOrderHandle(t *testing.T) {
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/orders?token=&api_key="+dbUser.ApiKey, &buffer)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
@@ -74,6 +76,7 @@ func TestPostOrderHandle(t *testing.T) {
 		&buffer,
 	)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 404, w.Code)
@@ -94,6 +97,7 @@ func TestPostOrderHandle(t *testing.T) {
 		&buffer,
 	)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mock-Test", "true")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -755,7 +759,7 @@ func TestProductCreationRoute(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	assert.Equal(t, "duplicate product option names not allowed: Colour", response.Message)
+	assert.Equal(t, "duplicate product option names not allowed: Size", response.Message)
 
 	/* Test 4 - Invalid product sku | duplicated SKU */
 	createDatabaseProduct(&dbconfig)
@@ -798,7 +802,7 @@ func TestProductCreationRoute(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	assert.Equal(t, "duplicate option values not allowed", response.Message)
+	assert.Equal(t, "duplicate product option names not allowed: Size", response.Message)
 	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 6 - Valid variable product request | not added to shopify */
@@ -864,7 +868,6 @@ func TestProductFilterRoute(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	/* Test 4 - No filter results */
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products/filter?type=simple&category=test&api_key="+dbUser.ApiKey, nil)
 	router.ServeHTTP(w, req)
@@ -878,6 +881,7 @@ func TestProductFilterRoute(t *testing.T) {
 	assert.Equal(t, 0, len(response))
 
 	/* Test 5 - Valid filter request */
+	createDatabaseProduct(&dbconfig)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products/filter?type=product_product_type&vendor=product_vendor&api_key="+dbUser.ApiKey, nil)
 	router.ServeHTTP(w, req)
@@ -889,6 +893,7 @@ func TestProductFilterRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, 1, len(response))
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 }
 
 func TestProductSearchRoute(t *testing.T) {
@@ -913,7 +918,6 @@ func TestProductSearchRoute(t *testing.T) {
 
 	/* Test 4 - No search results */
 	createDatabaseProduct(&dbconfig)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/api/products/search?q=simple&api_key="+dbUser.ApiKey, nil)
 	router.ServeHTTP(w, req)
@@ -938,6 +942,7 @@ func TestProductSearchRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, 1, len(response))
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 }
 
 func TestProductsRoute(t *testing.T) {
@@ -1025,9 +1030,7 @@ func TestLoginRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	loginData := LoginPayload("test-case-valid-login.json")
-	loginData.Username = ""
-	loginData.Password = ""
+	loginData := LoginPayload("test-case-invalid-login.json")
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(loginData)
 	if err != nil {
@@ -1040,6 +1043,12 @@ func TestLoginRoute(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "empty username not allowed", response.Message)
 
 	/* Test 2 - Invalid request - non empty username/password but invalid credentials) */
 	loginData = LoginPayload("test-case-valid-login.json")
@@ -1054,7 +1063,7 @@ func TestLoginRoute(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 404, w.Code)
-	response := objects.ResponseString{}
+	response = objects.ResponseString{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -1097,7 +1106,7 @@ func TestLogoutHandle(t *testing.T) {
 	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, 400, w.Code)
+	assert.Equal(t, 401, w.Code)
 
 	/* Test 2 - Invalid request - no cookies sent with request */
 	dbUser := createDatabaseUser(&dbconfig)
@@ -1154,7 +1163,7 @@ func TestPreregisterRoute(t *testing.T) {
 	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 
 	/* Test 3 - Valid request */
-	preregisterData = PreRegisterPayload("test-case-invalid-preregister.json")
+	preregisterData = PreRegisterPayload("test-case-valid-preregister.json")
 	err = json.NewEncoder(&buffer).Encode(preregisterData)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
@@ -1178,11 +1187,11 @@ func TestPreregisterRoute(t *testing.T) {
 }
 
 func TestRegisterRoute(t *testing.T) {
-	/* Test 1 - Valid request*/
+	/* Test 1 - Valid request */
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	registrationData := RegisterPayload("test-case-valid-user.json")
+	registrationData := UserPayload("test-case-valid-user.json")
 	register_data_token := createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
 	var buffer bytes.Buffer
@@ -1232,7 +1241,7 @@ func TestRegisterRoute(t *testing.T) {
 	assert.Equal(t, "", response.Email)
 
 	/* Test 3 - Invalid token */
-	registrationData = RegisterPayload("test-case-valid-user.json")
+	registrationData = UserPayload("test-case-valid-user.json")
 	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	err = json.NewEncoder(&buffer).Encode(registrationData)
 	if err != nil {
@@ -1256,7 +1265,7 @@ func TestRegisterRoute(t *testing.T) {
 	/* Test 4 - User already exist */
 	db_user := createDatabaseUser(&dbconfig)
 
-	registrationData = RegisterPayload("test-case-valid-user.json")
+	registrationData = UserPayload("test-case-valid-user.json")
 	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
 	err = json.NewEncoder(&buffer).Encode(registrationData)
@@ -1284,7 +1293,7 @@ func TestRegisterRoute(t *testing.T) {
 	})
 
 	/* Test 5 - Empty username/password in request */
-	registrationData = RegisterPayload("test-case-invalid-user.json")
+	registrationData = UserPayload("test-case-invalid-user.json")
 	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
 	registrationData.Name = ""
@@ -1425,7 +1434,7 @@ func ProductPayload(fileName string) objects.RequestBodyProduct {
 
 /* Returns a register request body struct */
 func RegisterPayload(fileName string) objects.RequestBodyRegister {
-	fileBytes := payload("./test_payloads/tests/products/" + fileName)
+	fileBytes := payload("./test_payloads/tests/register/" + fileName)
 	registerData := objects.RequestBodyRegister{}
 	err := json.Unmarshal(fileBytes, &registerData)
 	if err != nil {
@@ -1436,7 +1445,7 @@ func RegisterPayload(fileName string) objects.RequestBodyRegister {
 
 /* Returns a pre-registrater request body struct */
 func PreRegisterPayload(fileName string) objects.RequestBodyPreRegister {
-	fileBytes := payload("./test_payloads/tests/products/" + fileName)
+	fileBytes := payload("./test_payloads/tests/preregister/" + fileName)
 	preregData := objects.RequestBodyPreRegister{}
 	err := json.Unmarshal(fileBytes, &preregData)
 	if err != nil {
@@ -1447,7 +1456,7 @@ func PreRegisterPayload(fileName string) objects.RequestBodyPreRegister {
 
 /* Returns a login request body struct */
 func LoginPayload(fileName string) objects.RequestBodyLogin {
-	fileBytes := payload("./test_payloads/tests/products/" + fileName)
+	fileBytes := payload("./test_payloads/tests/login/" + fileName)
 	loginData := objects.RequestBodyLogin{}
 	err := json.Unmarshal(fileBytes, &loginData)
 	if err != nil {
@@ -1469,7 +1478,7 @@ func UserPayload(fileName string) objects.RequestBodyRegister {
 
 /* Returns a test user RequestBodyRegister struct */
 func CreateTokenPayload(fileName string) objects.RequestBodyPreRegister {
-	fileBytes := payload("./test_payloads/tests/users/" + fileName)
+	fileBytes := payload("./test_payloads/tests/preregister/" + fileName)
 	userRegistrationData := objects.RequestBodyPreRegister{}
 	err := json.Unmarshal(fileBytes, &userRegistrationData)
 	if err != nil {
