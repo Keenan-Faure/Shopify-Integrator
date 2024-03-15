@@ -928,7 +928,7 @@ Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// mockRequest := c.Request.Header.Get("Mocker")
+		mockRequest := c.Request.Header.Get("Mocker")
 		web_token := c.Query("token")
 		if TokenValidation(web_token) != nil {
 			RespondWithError(c, http.StatusBadRequest, "invalid token")
@@ -968,40 +968,30 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		if exists {
-			// TODO Make this change here to include the Mock
-			// if(mockRequest == "true") {
-			// }
-			response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
-				Type:        "order",
-				Status:      "in-queue",
-				Instruction: "update_order",
-				Endpoint:    "queue",
-				ApiKey:      api_key,
-				Method:      http.MethodPost,
-				Object:      order_body,
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-			RespondWithJSON(c, http.StatusOK, response_payload)
-			return
-		}
-		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
+		queueRequest := objects.RequestQueueHelper{
 			Type:        "order",
 			Status:      "in-queue",
-			Instruction: "add_order",
+			Instruction: "update_order",
 			Endpoint:    "queue",
 			ApiKey:      api_key,
 			Method:      http.MethodPost,
 			Object:      order_body,
-		})
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
 		}
-		RespondWithJSON(c, http.StatusCreated, response_payload)
+		status := http.StatusOK
+		if !exists {
+			queueRequest.Instruction = "add_order"
+			status = http.StatusCreated
+		}
+		if mockRequest != "true" {
+			response_payload, err := dbconfig.QueueHelper(queueRequest)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, status, response_payload)
+		}
+		queueRequest.ApiKey = "***"
+		RespondWithJSON(c, status, queueRequest)
 	}
 }
 
@@ -1621,7 +1611,7 @@ Possible HTTP Codes:  200, 400, 401, 409, 500
 */
 func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		test := c.Query("test")
+		mockRequest := c.Request.Header.Get("Mocker")
 		email := utils.LoadEnv("email")
 		request_body, err := DecodePreRegisterRequestBody(c.Request)
 		if err != nil {
@@ -1657,7 +1647,7 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			}
 			token_value = dbTokenDetails.Token
 		}
-		if test != "true" {
+		if mockRequest != "true" {
 			err = Email(token_value, request_body.Email, request_body.Name)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
