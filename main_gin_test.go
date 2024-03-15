@@ -97,26 +97,76 @@ func TestPostOrderHandle(t *testing.T) {
 		&buffer,
 	)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Mock-Test", "true")
+	req.Header.Add("Mocker", "true")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	responsePostOrder := objects.ResponseQueueItem{}
+	responsePostOrder := objects.RequestQueueHelper{}
 	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
 
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	assert.NotEqual(t, uuid.Nil, responsePostOrder.ID)
+	assert.NotEqual(t, "add_order", responsePostOrder.Instruction)
+	assert.Equal(t, "in-queue", responsePostOrder.Status)
+	assert.Equal(t, "order", responsePostOrder.Type)
 	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
 
 	/* Test 6 - valid request | one line item | one shipping item taxes*/
+	orderPayload = OrderPayload("test-case-valid-order-one-shipping-product-line.json")
+	err = json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 201, w.Code)
+	responsePostOrder = objects.RequestQueueHelper{}
+	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "add_order", responsePostOrder.Instruction)
+	assert.Equal(t, "in-queue", responsePostOrder.Status)
+	assert.Equal(t, "order", responsePostOrder.Type)
+	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
 
 	/* Test 7 - valid request | one line item | one shipping item no taxes */
+	orderPayload = OrderPayload("test-case-valid-order-one-product-line-no-tax.json")
+	err = json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
+	router.ServeHTTP(w, req)
 
-	/* Test 8 - valid request | one line item | no shipping item / taxes */
+	assert.Equal(t, 201, w.Code)
+	responsePostOrder = objects.RequestQueueHelper{}
+	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
 
-	/* Test 9 - valid request | one line item | no shipping item */
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "add_order", responsePostOrder.Instruction)
+	assert.Equal(t, "in-queue", responsePostOrder.Status)
+	assert.Equal(t, "order", responsePostOrder.Type)
+	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
 
 	/* Test 10 - valid request | duplicated customer web_code */
 
@@ -1170,8 +1220,9 @@ func TestPreregisterRoute(t *testing.T) {
 	}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/preregister?test=true", &buffer)
+	req, _ = http.NewRequest("POST", "/api/preregister", &buffer)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 201, w.Code)
