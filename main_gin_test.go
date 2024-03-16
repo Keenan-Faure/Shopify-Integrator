@@ -23,7 +23,7 @@ import (
 
 const PRODUCT_CODE = "product_code"
 const PRODUCT_CODE_SIMPLE = "product_code_simple"
-const WEB_CUSTOMER_CODE = "9999999999999"
+const WEB_CUSTOMER_CODE = "TestFirstName TestLastName"
 
 func TestPostOrderHandle(t *testing.T) {
 	/* Test 1 - invalid authentication */
@@ -167,14 +167,124 @@ func TestPostOrderHandle(t *testing.T) {
 	assert.Equal(t, "in-queue", responsePostOrder.Status)
 	assert.Equal(t, "order", responsePostOrder.Type)
 	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
 
 	/* Test 10 - valid request | duplicated customer web_code */
+	customerUUID := createDatabaseCustomer(&dbconfig)
+	orderPayload = OrderPayload("test-case-valid-order.json")
+	err = json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 201, w.Code)
+	responsePostOrder = objects.RequestQueueHelper{}
+	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "add_order", responsePostOrder.Instruction)
+	assert.Equal(t, "in-queue", responsePostOrder.Status)
+	assert.Equal(t, "order", responsePostOrder.Type)
+	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	dbconfig.DB.RemoveCustomer(context.Background(), customerUUID)
 
 	/* Test 11 - valid request | no customer addresses */
+	orderPayload = OrderPayload("test-case-valid-order-no-customer-address.json")
+	err = json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 201, w.Code)
+	responsePostOrder = objects.RequestQueueHelper{}
+	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "add_order", responsePostOrder.Instruction)
+	assert.Equal(t, "in-queue", responsePostOrder.Status)
+	assert.Equal(t, "order", responsePostOrder.Type)
+	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
 
 	/* Test 12 - valid request | order total of zero */
+	orderPayload = OrderPayload("test-case-valid-order-zero-value-totals.json")
+	err = json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 201, w.Code)
+	responsePostOrder = objects.RequestQueueHelper{}
+	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "add_order", responsePostOrder.Instruction)
+	assert.Equal(t, "in-queue", responsePostOrder.Status)
+	assert.Equal(t, "order", responsePostOrder.Type)
+	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
 
 	/* Test 13 - valid request | non-zero order total */
+	orderPayload = OrderPayload("test-case-valid-order.json")
+	err = json.NewEncoder(&buffer).Encode(orderPayload)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(
+		"POST",
+		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
+		&buffer,
+	)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Mocker", "true")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 201, w.Code)
+	responsePostOrder = objects.RequestQueueHelper{}
+	err = json.Unmarshal(w.Body.Bytes(), &responsePostOrder)
+
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "add_order", responsePostOrder.Instruction)
+	assert.Equal(t, "in-queue", responsePostOrder.Status)
+	assert.Equal(t, "order", responsePostOrder.Type)
+	dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
 }
 
 func TestOrdersHandle(t *testing.T) {
@@ -542,6 +652,7 @@ func TestProductExportRoute(t *testing.T) {
 
 	/* Test 3 - valid request | products */
 	createDatabaseProduct(&dbconfig)
+	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/products/export?api_key="+dbUser.ApiKey, nil)
 	req.Header.Add("Content-Type", "application/json")
@@ -1472,6 +1583,17 @@ func OrderPayload(fileName string) objects.RequestBodyOrder {
 	return orderData
 }
 
+/* Returns an order request body struct */
+func CustomerPayload(fileName string) objects.RequestBodyCustomer {
+	fileBytes := payload("./test_payloads/tests/customers/" + fileName)
+	customerData := objects.RequestBodyCustomer{}
+	err := json.Unmarshal(fileBytes, &customerData)
+	if err != nil {
+		log.Println(err)
+	}
+	return customerData
+}
+
 /* Returns a product request body struct */
 func ProductPayload(fileName string) objects.RequestBodyProduct {
 	fileBytes := payload("./test_payloads/tests/products/" + fileName)
@@ -1577,6 +1699,29 @@ func createDatabaseProduct(dbconfig *DbConfig) uuid.UUID {
 		return productUUID
 	}
 	return product.ID
+}
+
+/*
+Creates a test user in the database
+*/
+func createDatabaseCustomer(dbconfig *DbConfig) uuid.UUID {
+	customer, err := dbconfig.DB.GetCustomerByWebCode(context.Background(), WEB_CUSTOMER_CODE)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return uuid.Nil
+		}
+	}
+	if customer.WebCustomerCode == "" {
+		customer := CustomerPayload("test-case-valid-customer.json")
+		dbCustomer, err := AddCustomer(dbconfig, customer, customer.FirstName+" "+customer.LastName)
+		if err != nil {
+			log.Println(err)
+			return uuid.Nil
+		}
+		return dbCustomer
+	}
+	return customer.ID
 }
 
 /*
