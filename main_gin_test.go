@@ -985,7 +985,6 @@ func TestProductCreationRoute(t *testing.T) {
 	}
 	assert.Equal(t, "success", response.Message)
 	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE_SIMPLE)
 
 	/* Test 6 - Valid simple product request | not added to shopify */
 	productData = ProductPayload("test-case-valid-product-simple.json")
@@ -1005,7 +1004,7 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "success", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
+	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE_SIMPLE)
 }
 
 func TestProductFilterRoute(t *testing.T) {
@@ -1322,6 +1321,7 @@ func TestPreregisterRoute(t *testing.T) {
 	}
 	assert.Equal(t, "email '"+preregisterData.Email+"' already exists", response.Message)
 	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregisterData.Email)
 
 	/* Test 3 - Valid request */
 	preregisterData = PreRegisterPayload("test-case-valid-preregister.json")
