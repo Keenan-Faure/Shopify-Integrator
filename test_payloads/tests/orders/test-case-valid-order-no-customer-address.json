@@ -237,25 +237,7 @@
             "consent_collected_from": "SHOPIFY"
         },
         "admin_graphql_api_id": "gid://shopify/Customer/5514981867581",
-        "default_address": {
-            "id": 6723049816125,
-            "customer_id": 5514981867581,
-            "first_name": "Keenan",
-            "last_name": "Faure",
-            "company": "Stock2ShopLOL",
-            "address1": "14 Tracy Crescent",
-            "address2": "Mitchells Plain",
-            "city": "Cape Town",
-            "province": "Western Cape",
-            "country": "South Africa",
-            "zip": "7786",
-            "phone": "",
-            "name": "Keenan Faure",
-            "province_code": "WC",
-            "country_code": "ZA",
-            "country_name": "South Africa",
-            "default": true
-        }
+        "default_address": null
     },
     "discount_applications": [],
     "fulfillments": [],
