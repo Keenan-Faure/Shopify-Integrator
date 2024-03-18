@@ -1692,6 +1692,10 @@ func (dbconfig *DbConfig) RegisterHandle() gin.HandlerFunc {
 		}
 		token, err := dbconfig.DB.GetTokenValidation(c.Request.Context(), requestUserData.Email)
 		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "not found")
+				return
+			}
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
