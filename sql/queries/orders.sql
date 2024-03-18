@@ -126,6 +126,10 @@ WHERE o.id in (
     OR c.last_name LIKE $1
 );
 
+-- name: RemoveOrderByWebCode :exec
+DELETE FROM orders
+WHERE web_code = $1;
+
 -- name: GetOrderIDByWebCode :one
 SELECT
     id
