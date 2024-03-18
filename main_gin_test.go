@@ -65,9 +65,11 @@ func TestPostOrderHandle(t *testing.T) {
 
 	/* Test 5 - valid request | duplicate order */
 	createDatabaseOrder(&dbconfig)
+	requestHeaders := make(map[string][]string)
+	requestHeaders["Mocker"] = []string{"true"}
 	w = Init(
 		"/api/orders?token="+dbUser.WebhookToken+"&api_key="+dbUser.ApiKey,
-		http.MethodPost, map[string][]string{}, orderPayload, &dbconfig, router,
+		http.MethodPost, requestHeaders, orderPayload, &dbconfig, router,
 	)
 	ClearOrderTestData(&dbconfig)
 
@@ -83,7 +85,7 @@ func TestPostOrderHandle(t *testing.T) {
 
 	/* Test 6 - valid request | one line item | one shipping item taxes */
 	ClearOrderTestData(&dbconfig)
-	requestHeaders := make(map[string][]string)
+	requestHeaders = make(map[string][]string)
 	requestHeaders["Mocker"] = []string{"true"}
 	orderPayload = OrderPayload("test-case-valid-order-one-shipping-product-line.json")
 	w = Init(
@@ -745,11 +747,10 @@ func TestProductCreationRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/products", nil)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w := Init(
+		"/api/products",
+		http.MethodPost, map[string][]string{}, nil, &dbconfig, router,
+	)
 
 	assert.Equal(t, 401, w.Code)
 
@@ -757,19 +758,14 @@ func TestProductCreationRoute(t *testing.T) {
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 	productData := ProductPayload("test-case-invalid-product-title-simple.json")
-	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(productData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, productData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 400, w.Code)
 	response := objects.ResponseString{}
-	err = json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -777,14 +773,10 @@ func TestProductCreationRoute(t *testing.T) {
 
 	/* Test 3 - Invalid variable product data */
 	productData = ProductPayload("test-case-invalid-product-title-variable.json")
-	err = json.NewEncoder(&buffer).Encode(productData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, productData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 400, w.Code)
 	response = objects.ResponseString{}
@@ -796,14 +788,10 @@ func TestProductCreationRoute(t *testing.T) {
 
 	/* Test 3 - Invalid product options */
 	productData = ProductPayload("test-case-invalid-product-variable.json")
-	err = json.NewEncoder(&buffer).Encode(productData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, productData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 400, w.Code)
 	response = objects.ResponseString{}
@@ -816,15 +804,11 @@ func TestProductCreationRoute(t *testing.T) {
 	/* Test 4 - Invalid product sku | duplicated SKU */
 	createDatabaseProduct(&dbconfig)
 	productData = ProductPayload("test-case-valid-product-variable.json")
-
-	err = json.NewEncoder(&buffer).Encode(productData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, productData, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 409, w.Code)
 	response = objects.ResponseString{}
@@ -833,20 +817,15 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "SKU with code product_sku already exists", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 5 - Invalid product | duplicate options */
 	createDatabaseProduct(&dbconfig)
 	productData = ProductPayload("test-case-invalid-product-variable-duplicate-options.json")
-
-	err = json.NewEncoder(&buffer).Encode(productData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, productData, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 400, w.Code)
 	response = objects.ResponseString{}
@@ -855,18 +834,14 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "duplicate product option names not allowed: Size", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 6 - Valid variable product request | not added to shopify */
 	productData = ProductPayload("test-case-valid-product-variable.json")
-	err = json.NewEncoder(&buffer).Encode(productData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, productData, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 201, w.Code)
 	response = objects.ResponseString{}
@@ -875,18 +850,14 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "success", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 
 	/* Test 6 - Valid simple product request | not added to shopify */
 	productData = ProductPayload("test-case-valid-product-simple.json")
-	err = json.NewEncoder(&buffer).Encode(productData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/products?api_key="+dbUser.ApiKey, &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, productData, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 201, w.Code)
 	response = objects.ResponseString{}
@@ -895,7 +866,6 @@ func TestProductCreationRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "success", response.Message)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE_SIMPLE)
 }
 
 func TestProductFilterRoute(t *testing.T) {
@@ -903,25 +873,26 @@ func TestProductFilterRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/products/filter?page=1", nil)
-	router.ServeHTTP(w, req)
-
+	w := Init(
+		"/api/products/filter?page=1",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 401, w.Code)
 
 	/* Test 2 - Invalid filter params (empty) */
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/filter?page=&type=&category=&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/products/filter?page=&type=&category=&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 200, w.Code)
 
 	/* Test 4 - No filter results */
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/filter?type=simple&category=test&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products/filter?type=simple&category=test&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 
 	assert.Equal(t, 200, w.Code)
 	response := []objects.SearchProduct{}
@@ -933,9 +904,11 @@ func TestProductFilterRoute(t *testing.T) {
 
 	/* Test 5 - Valid filter request */
 	createDatabaseProduct(&dbconfig)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/filter?type=product_product_type&vendor=product_vendor&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products/filter?type=product_product_type&vendor=product_vendor&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 200, w.Code)
 	response = []objects.SearchProduct{}
@@ -944,7 +917,6 @@ func TestProductFilterRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, 1, len(response))
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 }
 
 func TestProductSearchRoute(t *testing.T) {
@@ -952,26 +924,27 @@ func TestProductSearchRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/products/search?q=product_title", nil)
-	router.ServeHTTP(w, req)
+	w := Init(
+		"/api/products/search?q=product_title",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 
 	assert.Equal(t, 401, w.Code)
 
 	/* Test 2 - Invalid search param (empty) */
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/search?api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/products/search?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 400, w.Code)
 
 	/* Test 4 - No search results */
-	createDatabaseProduct(&dbconfig)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/search?q=simple&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products/search?q=simple&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 
 	assert.Equal(t, 200, w.Code)
 	response := []objects.SearchProduct{}
@@ -982,9 +955,12 @@ func TestProductSearchRoute(t *testing.T) {
 	assert.Equal(t, 0, len(response))
 
 	/* Test 5 - Valid search request */
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/search?q=product_title&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
+	createDatabaseProduct(&dbconfig)
+	w = Init(
+		"/api/products/search?q=product_title&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 200, w.Code)
 	response = []objects.SearchProduct{}
@@ -993,7 +969,6 @@ func TestProductSearchRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, 1, len(response))
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
 }
 
 func TestProductsRoute(t *testing.T) {
@@ -1001,34 +976,35 @@ func TestProductsRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/products?page=1", nil)
-	router.ServeHTTP(w, req)
-
+	w := Init(
+		"/api/products?page=1",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 401, w.Code)
 
 	/* Test 2 - Invalid page number */
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products?page=-1&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/products?page=-1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 200, w.Code)
 
 	/* Test 4 - Invalid page number (string) */
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products?page=two&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/products?page=two&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 200, w.Code)
 
 	/* Test 5 - Valid request */
 	createDatabaseProduct(&dbconfig)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products?page=1&api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/products?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 200, w.Code)
 	response := []objects.Product{}
@@ -1043,36 +1019,35 @@ func TestProductIDRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/products/abctest123", nil)
-	router.ServeHTTP(w, req)
-
+	w := Init(
+		"/api/products/abctest123",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 401, w.Code)
 
 	/* Test 2 - Invalid product_id (malformed) */
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/abctest123?api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/products/abctest123?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 400, w.Code)
 
 	/* Test 4 - Invalid product_id (404) */
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/"+uuid.New().String()+"?api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/products/"+uuid.New().String()+"?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 404, w.Code)
 
 	/* Test 5 - Valid request */
 	productUUID := createDatabaseProduct(&dbconfig)
-	defer dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/products/"+productUUID.String()+"?api_key="+dbUser.ApiKey, nil)
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/products/"+productUUID.String()+"?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearProductTestData(&dbconfig)
 	assert.Equal(t, 200, w.Code)
 }
 
@@ -1082,20 +1057,13 @@ func TestLoginRoute(t *testing.T) {
 	router := setUpAPI(&dbconfig)
 
 	loginData := LoginPayload("test-case-invalid-login.json")
-	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(loginData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/login", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
+	w := Init(
+		"/api/login",
+		http.MethodPost, map[string][]string{}, loginData, &dbconfig, router,
+	)
 	assert.Equal(t, 400, w.Code)
 	response := objects.ResponseString{}
-	err = json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -1103,16 +1071,10 @@ func TestLoginRoute(t *testing.T) {
 
 	/* Test 2 - Invalid request - non empty username/password but invalid credentials) */
 	loginData = LoginPayload("test-case-valid-login.json")
-	err = json.NewEncoder(&buffer).Encode(loginData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/login", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/login",
+		http.MethodPost, map[string][]string{}, loginData, &dbconfig, router,
+	)
 	assert.Equal(t, 404, w.Code)
 	response = objects.ResponseString{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
@@ -1123,19 +1085,14 @@ func TestLoginRoute(t *testing.T) {
 
 	/* Test 3 - Valid request */
 	dbUser := createDatabaseUser(&dbconfig)
-
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 	loginData = LoginPayload("test-case-valid-login.json")
 	loginData.Username = dbUser.Name
 	loginData.Password = dbUser.Password
-	err = json.NewEncoder(&buffer).Encode(loginData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/login", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/login",
+		http.MethodPost, map[string][]string{}, loginData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 200, w.Code)
 	responseLogin := objects.ResponseLogin{}
@@ -1144,7 +1101,6 @@ func TestLoginRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "test", responseLogin.Username)
-	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 }
 
 func TestLogoutHandle(t *testing.T) {
@@ -1152,22 +1108,20 @@ func TestLogoutHandle(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/logout", nil)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
+	w := Init(
+		"/api/logout",
+		http.MethodPost, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 401, w.Code)
 
 	/* Test 2 - Invalid request - no cookies sent with request */
 	dbUser := createDatabaseUser(&dbconfig)
 	router = setUpAPI(&dbconfig)
 
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/logout?api_key="+dbUser.ApiKey, nil)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
+	w = Init(
+		"/api/logout?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, nil, &dbconfig, router,
+	)
 	assert.Equal(t, 200, w.Code)
 }
 
@@ -1177,55 +1131,39 @@ func TestPreregisterRoute(t *testing.T) {
 	router := setUpAPI(&dbconfig)
 
 	preregisterData := PreRegisterPayload("test-case-invalid-preregister.json")
-	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(preregisterData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/login", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
-
+	w := Init(
+		"/api/preregister",
+		http.MethodPost, map[string][]string{}, preregisterData, &dbconfig, router,
+	)
 	assert.Equal(t, 400, w.Code)
 
 	/* Test 2 - Email already exists */
 	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 
 	preregisterData = PreRegisterPayload("test-case-valid-preregister.json")
-	err = json.NewEncoder(&buffer).Encode(preregisterData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/preregister", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/preregister",
+		http.MethodPost, map[string][]string{}, preregisterData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 409, w.Code)
 	response := objects.ResponseString{}
-	err = json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "email '"+preregisterData.Email+"' already exists", response.Message)
-	dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregisterData.Email)
 
 	/* Test 3 - Valid request */
 	preregisterData = PreRegisterPayload("test-case-valid-preregister.json")
-	err = json.NewEncoder(&buffer).Encode(preregisterData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/preregister", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Mocker", "true")
-	router.ServeHTTP(w, req)
+	requestHeaders := make(map[string][]string)
+	requestHeaders["Mocker"] = []string{"true"}
+	w = Init(
+		"/api/preregister",
+		http.MethodPost, requestHeaders, preregisterData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 201, w.Code)
 	response = objects.ResponseString{}
@@ -1247,25 +1185,20 @@ func TestRegisterRoute(t *testing.T) {
 	registrationData := UserPayload("test-case-valid-user.json")
 	register_data_token := createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
-	var buffer bytes.Buffer
-	err := json.NewEncoder(&buffer).Encode(registrationData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/register", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w := Init(
+		"/api/register",
+		http.MethodPost, map[string][]string{}, registrationData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 201, w.Code)
 	response := objects.ResponseRegister{}
-	err = json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "test", response.Name)
 	assert.Equal(t, "test@test.com", response.Email)
+
 	dbconfig.DB.RemoveUser(context.Background(), response.ApiKey)
 	dbconfig.DB.DeleteToken(context.Background(), database.DeleteTokenParams{
 		Token: register_data_token.Token,
@@ -1274,15 +1207,10 @@ func TestRegisterRoute(t *testing.T) {
 
 	/* Test 2 - Invalid request body */
 	new_registration_data := ProductPayload("test-case-valid-product-simple.json")
-	err = json.NewEncoder(&buffer).Encode(new_registration_data)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/register", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/register",
+		http.MethodPost, map[string][]string{}, new_registration_data, &dbconfig, router,
+	)
 
 	assert.Equal(t, 400, w.Code)
 	response = objects.ResponseRegister{}
@@ -1294,17 +1222,11 @@ func TestRegisterRoute(t *testing.T) {
 	assert.Equal(t, "", response.Email)
 
 	/* Test 3 - Invalid token */
-	registrationData = UserPayload("test-case-valid-user.json")
-	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
-	err = json.NewEncoder(&buffer).Encode(registrationData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/register", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	registrationData = UserPayload("test-case-invalid-user.json")
+	w = Init(
+		"/api/register",
+		http.MethodPost, map[string][]string{}, registrationData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 404, w.Code)
 	response = objects.ResponseRegister{}
@@ -1317,19 +1239,13 @@ func TestRegisterRoute(t *testing.T) {
 
 	/* Test 4 - User already exist */
 	db_user := createDatabaseUser(&dbconfig)
-
 	registrationData = UserPayload("test-case-valid-user.json")
 	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
-	err = json.NewEncoder(&buffer).Encode(registrationData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/register", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/register",
+		http.MethodPost, map[string][]string{}, registrationData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 409, w.Code)
 	response = objects.ResponseRegister{}
@@ -1346,20 +1262,13 @@ func TestRegisterRoute(t *testing.T) {
 	})
 
 	/* Test 5 - Empty username/password in request */
-	registrationData = UserPayload("test-case-invalid-user.json")
+	registrationData = UserPayload("test-case-invalid-user-empty-username-password.json")
 	register_data_token = createDatabasePreregister(registrationData.Email, &dbconfig)
 	registrationData.Token = register_data_token.Token.String()
-	registrationData.Name = ""
-	registrationData.Email = ""
-	err = json.NewEncoder(&buffer).Encode(registrationData)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/register", &buffer)
-	req.Header.Add("Content-Type", "application/json")
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/register",
+		http.MethodPost, map[string][]string{}, registrationData, &dbconfig, router,
+	)
 
 	assert.Equal(t, 400, w.Code)
 	response = objects.ResponseRegister{}
@@ -1381,9 +1290,10 @@ func TestReadyRoute(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/ready", nil)
-	router.ServeHTTP(w, req)
+	w := Init(
+		"/api/ready",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 
 	assert.Equal(t, 200, w.Code)
 	response_string := objects.ResponseString{}
@@ -1395,9 +1305,10 @@ func TestReadyRoute(t *testing.T) {
 
 	/* Test 2 - Invalid database credentials */
 	dbconfig = setupDatabase("test_user", "test_psw", "database_test", true)
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/ready", nil)
-	router.ServeHTTP(w, req)
+	w = Init(
+		"/api/ready",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
 
 	assert.Equal(t, 503, w.Code)
 	response_string = objects.ResponseString{}
@@ -1726,12 +1637,6 @@ func ClearProductTestData(dbconfig *DbConfig) {
 func ClearCustomerTestData(dbconfig *DbConfig) {
 	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
 }
-
-// Header = map[string][]string{
-//     "Accept-Encoding": {"gzip, deflate"},
-//     "Accept-Language": {"en-us"},
-//     "Foo": {"Bar", "two"},
-// }
 
 func Init(
 	requestURL,
