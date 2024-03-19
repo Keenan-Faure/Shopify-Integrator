@@ -125,8 +125,8 @@ type RequestWebhookURL struct {
 }
 
 type ResponseWarehouseLocation struct {
-	Warehouses       []Warehouse `json:"warehouses"`
-	ShopifyLocations any         `json:"shopify_locations"`
+	Warehouses       []Warehouse      `json:"warehouses"`
+	ShopifyLocations ShopifyLocations `json:"shopify_locations"`
 }
 
 type Warehouse struct {

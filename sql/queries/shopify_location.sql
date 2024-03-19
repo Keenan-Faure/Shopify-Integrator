@@ -44,3 +44,11 @@ WHERE shopify_location_id = $1;
 -- name: RemoveShopifyLocationMap :exec
 DELETE FROM shopify_location
 WHERE id = $1;
+
+-- name: RemoveShopifyLocationMapByWarehouse :exec
+DELETE FROM shopify_location
+WHERE warehouse_name = $1;
+
+-- name: RemoveShopifyLocationMapByLocationID :exec
+DELETE FROM shopify_location
+WHERE shopify_location_id = $1;

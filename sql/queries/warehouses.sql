@@ -21,6 +21,10 @@ LIMIT $1 OFFSET $2;
 DELETE FROM warehouses
 WHERE id = $1;
 
+-- name: RemoveWarehouseByName :exec
+DELETE FROM warehouses
+WHERE name = $1;
+
 -- name: GetWarehouseByID :one
 SELECT * FROM warehouses
 WHERE id = $1;

@@ -127,3 +127,13 @@ func (q *Queries) RemoveWarehouse(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, removeWarehouse, id)
 	return err
 }
+
+const removeWarehouseByName = `-- name: RemoveWarehouseByName :exec
+DELETE FROM warehouses
+WHERE name = $1
+`
+
+func (q *Queries) RemoveWarehouseByName(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, removeWarehouseByName, name)
+	return err
+}
