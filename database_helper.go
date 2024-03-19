@@ -20,6 +20,39 @@ And keep the code used in the application
 Functions are mostly used to interact with the database.
 */
 
+/* Updates the fetch worker */
+func UpdateFetchWorker(
+	dbconfig *DbConfig,
+	fetchWorkerID uuid.UUID,
+	fetchURL string,
+	localCount,
+	shopifyProductCount int32,
+) error {
+	err := dbconfig.DB.UpdateFetchWorker(context.Background(), database.UpdateFetchWorkerParams{
+		Status:              "0",
+		FetchUrl:            fetchURL,
+		LocalCount:          localCount,
+		ShopifyProductCount: shopifyProductCount,
+		UpdatedAt:           time.Now().UTC(),
+		ID:                  fetchWorkerID,
+	})
+	return err
+}
+
+/* Adds a fetch stat to the database */
+func AddFetchStat(
+	dbconfig *DbConfig,
+	productCount int,
+) error {
+	err := dbconfig.DB.CreateFetchStat(context.Background(), database.CreateFetchStatParams{
+		ID:               uuid.New(),
+		AmountOfProducts: int32(productCount),
+		CreatedAt:        time.Now().UTC(),
+		UpdatedAt:        time.Now().UTC(),
+	})
+	return err
+}
+
 /* Add a warehouse-location map */
 func AddWarehouseLocation(
 	dbconfig *DbConfig,
@@ -504,6 +537,24 @@ func AddProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct) (uui
 		}
 	}
 	return productID, 0, nil
+}
+
+/* Updates a product using one of it's variants SKU */
+func UpdateProductBySKU(
+	dbconfig *DbConfig,
+	productBody objects.RequestBodyProduct,
+	restrictionMap map[string]string,
+	sku string,
+) error {
+	return dbconfig.DB.UpdateProductBySKU(context.Background(), database.UpdateProductBySKUParams{
+		Title:       utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.Title, "title")),
+		BodyHtml:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.BodyHTML, "body_html")),
+		Category:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.Category, "category")),
+		Vendor:      utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.Vendor, "vendor")),
+		ProductType: utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.ProductType, "product_type")),
+		UpdatedAt:   time.Now().UTC(),
+		Sku:         sku,
+	})
 }
 
 /* Updates a product to the application */
