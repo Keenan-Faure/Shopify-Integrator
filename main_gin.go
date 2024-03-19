@@ -116,7 +116,7 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	/* Inventory Map */
 	auth.GET("/inventory/map", dbconfig.LocationWarehouseHandle())
 	auth.POST("/inventory/map", dbconfig.AddWarehouseLocationMap())
-	auth.DELETE("/inventory/map", dbconfig.RemoveWarehouseLocation())
+	auth.DELETE("/inventory/map/:id", dbconfig.RemoveWarehouseLocation())
 
 	/* Statistics */
 	auth.GET("/stats/orders", dbconfig.GetOrderStats())
