@@ -26,6 +26,218 @@ const PRODUCT_CODE = "product_code"
 const PRODUCT_CODE_SIMPLE = "product_code_simple"
 const WEB_CUSTOMER_CODE = "TestFirstName TestLastName"
 const ORDER_WEB_CODE = "#999999"
+const WAREHOUSE_NAME = "TestHouse"
+
+func TestConfigLocationWarehouseHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/inventory/config?page=1",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid page number */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/inventory/config?page=-16&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseLocationWarehouse := objects.ResponseWarehouseLocation{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseLocationWarehouse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	/* Test 3 - valid request | no results (none created) */
+	w = Init(
+		"/api/inventory/config?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseLocationWarehouse = objects.ResponseWarehouseLocation{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseLocationWarehouse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	/* Test 4 - valid request | with results */
+	createGlobalWarehouse(&dbconfig)
+	w = Init(
+		"/api/inventory/config?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseLocationWarehouse = objects.ResponseWarehouseLocation{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseLocationWarehouse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.NotEqual(t, 0, len(responseLocationWarehouse.Warehouses))
+}
+
+func TestCustomerIDHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/customers/id",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid order ID */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/customers/id?api_key="+dbUser.ApiKey,
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode customer id: id", response.Message)
+
+	/* Test 3 - valid request | do not exist */
+	w = Init(
+		"/api/customers/c2d29867-3d0b-d497-9191-18a9d8ee7830?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 404, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "not found", response.Message)
+
+	/* Test 4 - valid request | exists */
+	customerUUID := createDatabaseCustomer(&dbconfig)
+	w = Init(
+		"/api/customers/"+customerUUID.String()+"?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearCustomerTestData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseCustomer := objects.Customer{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseCustomer)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, customerUUID, responseCustomer.ID)
+}
+
+func TestCustomersHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/customers?page=1",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid page number */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/customers?page=-16&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseCustomers := []objects.Customer{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseCustomers)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseCustomers))
+
+	/* Test 3 - valid request | no results */
+	w = Init(
+		"/api/customers?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseCustomers = []objects.Customer{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseCustomers)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseCustomers))
+
+	/* Test 4 - valid request | with results */
+	createDatabaseCustomer(&dbconfig)
+	w = Init(
+		"/api/customers?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearCustomerTestData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseCustomers = []objects.Customer{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseCustomers)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(responseCustomers))
+}
+
+func TestPostCustomerHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	customerPayload := CustomerPayload("test-case-valid-customer.json")
+	w := Init("/api/customers", http.MethodPost, map[string][]string{}, customerPayload, &dbconfig, router)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test Case 2 - invalid request body */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	customerPayload = CustomerPayload("test-case-invalid-customer.json")
+	w = Init(
+		"/api/customers?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, customerPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "invalid customer first name", response.Message)
+
+	/* Test Case 3 - valid request */
+	customerPayload = CustomerPayload("test-case-valid-customer.json")
+	w = Init(
+		"/api/customers?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, customerPayload, &dbconfig, router,
+	)
+	ClearCustomerTestData(&dbconfig)
+	assert.Equal(t, 201, w.Code)
+	customer_uuid, err := uuid.Parse(w.Body.String())
+	if err != nil {
+		t.Errorf("expected 'nil' but found: could not decode customer id: " + w.Body.String())
+		return
+	}
+	assert.NotEqual(t, uuid.Nil, customer_uuid)
+}
 
 func TestPostOrderHandle(t *testing.T) {
 	/* Test 1 - invalid authentication */
@@ -49,7 +261,7 @@ func TestPostOrderHandle(t *testing.T) {
 	}
 	assert.Equal(t, "invalid token", response.Message)
 
-	/* Test 4 - valid token | invalid user referenced */
+	/* Test 3 - valid token | invalid user referenced */
 	w = Init(
 		"/api/orders?token=b23a8af2f57870d8afd88fec713c5e59eb84ce8657321aeace26222536fa1565&api_key="+dbUser.ApiKey,
 		http.MethodPost, map[string][]string{}, orderPayload, &dbconfig, router,
@@ -63,7 +275,7 @@ func TestPostOrderHandle(t *testing.T) {
 	}
 	assert.Equal(t, "invalid token for user", response.Message)
 
-	/* Test 5 - valid request | duplicate order */
+	/* Test 4 - valid request | duplicate order */
 	createDatabaseOrder(&dbconfig)
 	requestHeaders := make(map[string][]string)
 	requestHeaders["Mocker"] = []string{"true"}
@@ -83,7 +295,7 @@ func TestPostOrderHandle(t *testing.T) {
 	assert.Equal(t, "in-queue", responsePostOrder.Status)
 	assert.Equal(t, "order", responsePostOrder.Type)
 
-	/* Test 6 - valid request | one line item | one shipping item taxes */
+	/* Test 5 - valid request | one line item | one shipping item taxes */
 	ClearOrderTestData(&dbconfig)
 	requestHeaders = make(map[string][]string)
 	requestHeaders["Mocker"] = []string{"true"}
@@ -103,7 +315,7 @@ func TestPostOrderHandle(t *testing.T) {
 	assert.Equal(t, "in-queue", responsePostOrder.Status)
 	assert.Equal(t, "order", responsePostOrder.Type)
 
-	/* Test 7 - valid request | one line item | one shipping item no taxes */
+	/* Test 6 - valid request | one line item | one shipping item no taxes */
 	ClearOrderTestData(&dbconfig)
 	orderPayload = OrderPayload("test-case-valid-order-one-product-line-no-tax.json")
 	w = Init(
@@ -121,7 +333,7 @@ func TestPostOrderHandle(t *testing.T) {
 	assert.Equal(t, "in-queue", responsePostOrder.Status)
 	assert.Equal(t, "order", responsePostOrder.Type)
 
-	/* Test 10 - valid request | duplicated customer web_code */
+	/* Test 7 - valid request | duplicated customer web_code */
 	createDatabaseCustomer(&dbconfig)
 	ClearOrderTestData(&dbconfig)
 	orderPayload = OrderPayload("test-case-valid-order.json")
@@ -140,7 +352,7 @@ func TestPostOrderHandle(t *testing.T) {
 	assert.Equal(t, "in-queue", responsePostOrder.Status)
 	assert.Equal(t, "order", responsePostOrder.Type)
 
-	/* Test 11 - valid request | no customer addresses */
+	/* Test 8 - valid request | no customer addresses */
 	ClearOrderTestData(&dbconfig)
 	orderPayload = OrderPayload("test-case-valid-order-no-customer-address.json")
 	w = Init(
@@ -158,7 +370,7 @@ func TestPostOrderHandle(t *testing.T) {
 	assert.Equal(t, "in-queue", responsePostOrder.Status)
 	assert.Equal(t, "order", responsePostOrder.Type)
 
-	/* Test 12 - valid request | order total of zero */
+	/* Test 9 - valid request | order total of zero */
 	ClearOrderTestData(&dbconfig)
 	orderPayload = OrderPayload("test-case-valid-order-zero-value-totals.json")
 	w = Init(
@@ -176,7 +388,7 @@ func TestPostOrderHandle(t *testing.T) {
 	assert.Equal(t, "in-queue", responsePostOrder.Status)
 	assert.Equal(t, "order", responsePostOrder.Type)
 
-	/* Test 13 - valid request | non-zero order total */
+	/* Test 10 - valid request | non-zero order total */
 	ClearOrderTestData(&dbconfig)
 	orderPayload = OrderPayload("test-case-valid-order.json")
 	w = Init(
@@ -743,7 +955,7 @@ func TestProductImportRoute(t *testing.T) {
 	assert.Equal(t, 1, successResponse.VariantsUpdated)
 }
 
-func TestProductCreationRoute(t *testing.T) {
+func TestProductPostRoute(t *testing.T) {
 	/* Test 1 - Invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
@@ -1374,6 +1586,28 @@ func createQueueItem(queue_type string) objects.RequestQueueItem {
 	return orderData
 }
 
+/* Returns a warehouse request body struct */
+func WarehousePayload(fileName string) objects.RequestGlobalWarehouse {
+	fileBytes := payload("./test_payloads/tests/warehouse/" + fileName)
+	warehouse := objects.RequestGlobalWarehouse{}
+	err := json.Unmarshal(fileBytes, &warehouse)
+	if err != nil {
+		log.Println(err)
+	}
+	return warehouse
+}
+
+/* Returns a warehouse-location request body struct */
+func WarehouseLocationPayload(fileName string) objects.RequestWarehouseLocation {
+	fileBytes := payload("./test_payloads/tests/warehouse-location/" + fileName)
+	warehouseLocation := objects.RequestWarehouseLocation{}
+	err := json.Unmarshal(fileBytes, &warehouseLocation)
+	if err != nil {
+		log.Println(err)
+	}
+	return warehouseLocation
+}
+
 /* Returns an order request body struct */
 func OrderPayload(fileName string) objects.RequestBodyOrder {
 	fileBytes := payload("./test_payloads/tests/orders/" + fileName)
@@ -1478,6 +1712,52 @@ func payload(filePath string) []byte {
 		log.Println(err)
 	}
 	return respBody
+}
+
+/*
+Creates a global warehouse in the database
+*/
+func createGlobalWarehouse(dbconfig *DbConfig) string {
+	warehouseName, err := dbconfig.DB.GetWarehouseByName(context.Background(), WAREHOUSE_NAME)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return ""
+		}
+	}
+	if warehouseName.Name == "" {
+		warehouse := WarehousePayload("test-case-valid-warehouse.json")
+		_, err = AddGlobalWarehouse(dbconfig, context.Background(), warehouse.Name, false)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+		return warehouse.Name
+	}
+	return warehouseName.Name
+}
+
+/*
+Creates a warehouse-location map in the database
+*/
+func createDatabaseLocationWarehouse(dbconfig *DbConfig) string {
+	warehouseLocation, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), WAREHOUSE_NAME)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return ""
+		}
+	}
+	if warehouseLocation.WarehouseName == "" {
+		warehouseLocation := WarehouseLocationPayload("test-case-valid-warehouse-location.json")
+		dbLocationWarehouse, err := AddWarehouseLocation(dbconfig, warehouseLocation)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+		return dbLocationWarehouse.WarehouseName
+	}
+	return warehouseLocation.WarehouseName
 }
 
 /*
@@ -1636,6 +1916,11 @@ func ClearProductTestData(dbconfig *DbConfig) {
 
 func ClearCustomerTestData(dbconfig *DbConfig) {
 	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
+}
+
+func ClearWarehouseLocationData(dbconfig *DbConfig) {
+	dbconfig.DB.RemoveWarehouseByName(context.Background(), WAREHOUSE_NAME)
+	dbconfig.DB.RemoveShopifyLocationMapByWarehouse(context.Background(), WAREHOUSE_NAME)
 }
 
 func Init(
