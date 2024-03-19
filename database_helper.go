@@ -20,6 +20,25 @@ And keep the code used in the application
 Functions are mostly used to interact with the database.
 */
 
+/* Add a warehouse-location map */
+func AddWarehouseLocation(
+	dbconfig *DbConfig,
+	requestBody objects.RequestWarehouseLocation,
+) (database.ShopifyLocation, error) {
+	dbLocationWarehouse, err := dbconfig.DB.CreateShopifyLocation(context.Background(), database.CreateShopifyLocationParams{
+		ID:                   uuid.New(),
+		ShopifyWarehouseName: requestBody.ShopifyWarehouseName,
+		ShopifyLocationID:    requestBody.LocationID,
+		WarehouseName:        requestBody.WarehouseName,
+		CreatedAt:            time.Now().UTC(),
+		UpdatedAt:            time.Now().UTC(),
+	})
+	if err != nil {
+		return database.ShopifyLocation{}, err
+	}
+	return dbLocationWarehouse, nil
+}
+
 /* Upserts a Price */
 func UpsertPrice(
 	dbconfig *DbConfig,
@@ -722,25 +741,50 @@ func AddQtyHeaders(dbconfig *DbConfig, ctx context.Context) ([]string, error) {
 }
 
 /* Inserts new warehouse for all current variations */
-func AddGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string, reindex bool) error {
+func AddGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name string, reindex bool) (int, error) {
 	variants := []uuid.UUID{}
 	// if it should be reindex, then only retrieve the variant ids that doesn't
 	// exist in the variant_qty
 	if reindex {
 		variants_ids, err := dbconfig.DB.GetUnindexedVariants(ctx)
 		if err != nil {
-			return err
+			return 500, err
 		}
 		variants = append(variants, variants_ids...)
 	} else {
 		variants_ids, err := dbconfig.DB.GetVariants(ctx)
 		if err != nil {
-			return err
+			return 500, err
 		}
 		variants = append(variants, variants_ids...)
 	}
+	// check if a warehouse already exists
+	warehouses_db, err := dbconfig.DB.GetWarehouses(ctx, database.GetWarehousesParams{
+		Limit:  100, // TODO might need to properly configure this
+		Offset: 0,
+	})
+	if err != nil {
+		return 500, err
+	}
+	for _, warehouse_db := range warehouses_db {
+		if warehouse_db.Name == warehouse_name {
+			return 400, errors.New("warehouse already exists")
+		}
+	}
+	if !reindex {
+		// create global warehouse
+		err = dbconfig.DB.CreateWarehouse(ctx, database.CreateWarehouseParams{
+			ID:        uuid.New(),
+			Name:      warehouse_name,
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			return 500, nil
+		}
+	}
 	for _, variant := range variants {
-		// update ever variant to contain the new warehouse with a default value of 0
+		// update variants to contain the new warehouse with a default value of 0
 		_, err := dbconfig.DB.CreateVariantQty(ctx, database.CreateVariantQtyParams{
 			ID:        uuid.New(),
 			VariantID: variant,
@@ -751,10 +795,13 @@ func AddGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name 
 			UpdatedAt: time.Now().UTC(),
 		})
 		if err != nil {
-			return err
+			return 500, err
 		}
 	}
-	return nil
+	if reindex {
+		return 200, nil
+	}
+	return 201, nil
 }
 
 /* Updates or creates the specific price tier for a specific SKU */

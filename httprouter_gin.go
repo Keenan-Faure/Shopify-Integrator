@@ -379,60 +379,17 @@ func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
+		err = nil
+		httpStatus := 200
 		if reindex == "true" {
-			// check if the warehouse exists internally
-			warehouse_db, err := dbconfig.DB.GetWarehouseByName(c.Request.Context(), warehouse.Name)
-			if err != nil {
-				if err.Error() != "sql: no rows in result set" {
-					RespondWithError(c, http.StatusInternalServerError, err.Error())
-					return
-				} else {
-					RespondWithError(c, http.StatusInternalServerError, "cannot reindex an invalid warehouse")
-					return
-				}
-			}
-			// reindex warehouse that was found
-			err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse_db.Name, true)
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
-			RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
-				Message: "success",
-			})
-			return
+			httpStatus, err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, true)
+		} else {
+			httpStatus, err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, false)
 		}
-		// check if a warehouse already exists
-		warehouses_db, err := dbconfig.DB.GetWarehouses(c.Request.Context(), database.GetWarehousesParams{
-			Limit:  100, // TODO might need to properly configure this
-			Offset: 0,
-		})
 		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
+			RespondWithError(c, httpStatus, err.Error())
 		}
-		for _, warehouse_db := range warehouses_db {
-			if warehouse_db.Name == warehouse.Name {
-				RespondWithError(c, http.StatusBadRequest, "warehouse already exists")
-				return
-			}
-		}
-		err = dbconfig.DB.CreateWarehouse(c.Request.Context(), database.CreateWarehouseParams{
-			ID:        uuid.New(),
-			Name:      warehouse.Name,
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-		err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, false)
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
-		}
-		RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+		RespondWithJSON(c, httpStatus, objects.ResponseString{
 			Message: "success",
 		})
 	}
@@ -690,14 +647,7 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "data validation error")
 			return
 		}
-		result, err := dbconfig.DB.CreateShopifyLocation(c.Request.Context(), database.CreateShopifyLocationParams{
-			ID:                   uuid.New(),
-			ShopifyWarehouseName: location_map.ShopifyWarehouseName,
-			ShopifyLocationID:    location_map.LocationID,
-			WarehouseName:        location_map.WarehouseName,
-			CreatedAt:            time.Now().UTC(),
-			UpdatedAt:            time.Now().UTC(),
-		})
+		result, err := AddWarehouseLocation(dbconfig, location_map)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -802,7 +752,7 @@ func (dbconfig *DbConfig) PostCustomerHandle() gin.HandlerFunc {
 			return
 		}
 		if CustomerValidation(customer_body) != nil {
-			RespondWithError(c, http.StatusBadRequest, "data validation error")
+			RespondWithError(c, http.StatusBadRequest, "invalid customer first name")
 			return
 		}
 		dbCustomer, err := AddCustomer(dbconfig, customer_body, customer_body.FirstName+" "+customer_body.LastName)
