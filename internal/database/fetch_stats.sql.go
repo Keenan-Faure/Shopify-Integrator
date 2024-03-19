@@ -99,3 +99,12 @@ func (q *Queries) GetFetchStats(ctx context.Context) ([]GetFetchStatsRow, error)
 	}
 	return items, nil
 }
+
+const removeFetchStats = `-- name: RemoveFetchStats :exec
+DELETE FROM fetch_stats
+`
+
+func (q *Queries) RemoveFetchStats(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, removeFetchStats)
+	return err
+}
