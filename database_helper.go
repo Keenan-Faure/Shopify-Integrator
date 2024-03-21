@@ -546,7 +546,7 @@ func UpdateProductBySKU(
 	restrictionMap map[string]string,
 	sku string,
 ) error {
-	return dbconfig.DB.UpdateProductBySKU(context.Background(), database.UpdateProductBySKUParams{
+	err := dbconfig.DB.UpdateProductBySKU(context.Background(), database.UpdateProductBySKUParams{
 		Title:       utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.Title, "title")),
 		BodyHtml:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.BodyHTML, "body_html")),
 		Category:    utils.ConvertStringToSQL(ApplyFetchRestriction(restrictionMap, productBody.Category, "category")),
@@ -555,6 +555,20 @@ func UpdateProductBySKU(
 		UpdatedAt:   time.Now().UTC(),
 		Sku:         sku,
 	})
+	if err != nil {
+		return err
+	}
+	for _, optionValue := range productBody.ProductOptions {
+		err = dbconfig.DB.UpdateProductOptionBySKU(context.Background(), database.UpdateProductOptionBySKUParams{
+			Name:     optionValue.Value,
+			Position: int32(optionValue.Position),
+			Sku:      sku,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 /* Updates a product to the application */
@@ -580,7 +594,7 @@ func UpdateProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct, p
 		return err
 	}
 	for productOptionKey := range productData.ProductOptions {
-		_, err = dbconfig.DB.UpdateProductOption(context.Background(), database.UpdateProductOptionParams{
+		err = dbconfig.DB.UpdateProductOption(context.Background(), database.UpdateProductOptionParams{
 			Name:       productData.ProductOptions[productOptionKey].Value,
 			Position:   int32(productOptionKey + 1),
 			ProductID:  productUUID,
@@ -988,7 +1002,7 @@ func AddProductOptions(dbconfig *DbConfig, product_id uuid.UUID, product_code st
 		// product has options, we should update
 		for key, option_name := range option_names {
 			if option_name != "" {
-				_, err := dbconfig.DB.UpdateProductOption(context.Background(), database.UpdateProductOptionParams{
+				err := dbconfig.DB.UpdateProductOption(context.Background(), database.UpdateProductOptionParams{
 					Name:       option_name,
 					Position:   int32(key + 1),
 					ProductID:  product_id,
