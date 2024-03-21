@@ -254,8 +254,11 @@ func DecodeSetting(r *http.Request) (objects.RequestSettings, error) {
 
 // Validation: Inventory Map
 func InventoryMapValidation(location_map objects.RequestWarehouseLocation) error {
-	if location_map.LocationID == "" || location_map.WarehouseName == "" {
-		return errors.New("data validation error")
+	if location_map.LocationID == "" || len(location_map.LocationID) == 0 {
+		return errors.New("empty location id not allowed")
+	}
+	if location_map.WarehouseName == "" || len(location_map.WarehouseName) == 0 {
+		return errors.New("empty warehouse name not allowed")
 	}
 	return nil
 }
