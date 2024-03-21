@@ -28,6 +28,278 @@ const WEB_CUSTOMER_CODE = "TestFirstName TestLastName"
 const ORDER_WEB_CODE = "#999999"
 const WAREHOUSE_NAME = "TestHouse"
 
+func TestGetFetchStats(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/stats/fetch",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid request | empty return results */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/stats/fetch?api_key="+dbUser.ApiKey+"&status=paid",
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseFetchStats := objects.FetchAmountResponse{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseFetchStats)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseFetchStats.Amounts))
+	assert.Equal(t, 0, len(responseFetchStats.Hours))
+
+	/* Test 3 - valid request | with results */
+	CreateFetchStat(&dbconfig)
+	w = Init(
+		"/api/stats/fetch?api_key="+dbUser.ApiKey+"&status=paid",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearFetchStatData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseFetchStats = objects.FetchAmountResponse{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseFetchStats)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(responseFetchStats.Amounts))
+	assert.Equal(t, 1, len(responseFetchStats.Hours))
+}
+
+func TestGetOrderStats(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/stats/orders",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid request | empty return results */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/stats/orders?api_key="+dbUser.ApiKey+"&status=paid",
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseOrderStats := objects.OrderAmountResponse{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseOrderStats)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseOrderStats.Count))
+	assert.Equal(t, 0, len(responseOrderStats.Days))
+
+	/* Test 3 - invalid request | bad status param */
+	w = Init(
+		"/api/stats/orders?api_key="+dbUser.ApiKey+"&status=abc123test",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "invalid status type", response.Message)
+
+	/* Test 4 - valid request | with results */
+	createDatabaseOrder(&dbconfig)
+	w = Init(
+		"/api/stats/orders?api_key="+dbUser.ApiKey+"&status=paid",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearOrderTestData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseOrderStats = objects.OrderAmountResponse{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseOrderStats)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(responseOrderStats.Count))
+	assert.Equal(t, 1, len(responseOrderStats.Days))
+}
+
+func TestRemoveWarehouseLocation(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/inventory/map/id",
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid ID */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/inventory/map/id?api_key="+dbUser.ApiKey,
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode id: id", response.Message)
+
+	/* Test 3 - valid UUID but do not exist */
+	w = Init(
+		"/api/inventory/map/c2d29867-3d0b-d497-9191-18a9d8ee7830?api_key="+dbUser.ApiKey,
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+
+	/* Test 4 - valid request */
+	warehouseLocationUUID := createDatabaseLocationWarehouse(&dbconfig)
+	w = Init(
+		"/api/inventory/map/"+warehouseLocationUUID.String()+"?api_key="+dbUser.ApiKey,
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestAddWarehouseLocationMap(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	warehouseLocation := WarehouseLocationPayload("test-case-valid-warehouse-location.json")
+	w := Init("/api/inventory/map", http.MethodPost, map[string][]string{}, warehouseLocation, &dbconfig, router)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test Case 2 - invalid request body */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	warehouseLocation = WarehouseLocationPayload("test-case-invalid-warehouse-name.json")
+	w = Init(
+		"/api/inventory/map?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, warehouseLocation, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "empty warehouse name not allowed", response.Message)
+
+	/* Test Case 3 - invalid request body | location_id */
+	dbUser = createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	warehouseLocation = WarehouseLocationPayload("test-case-invalid-location-id.json")
+	w = Init(
+		"/api/inventory/map?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, warehouseLocation, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "empty location id not allowed", response.Message)
+
+	/* Test Case 4 - valid request */
+	warehouseLocation = WarehouseLocationPayload("test-case-valid-warehouse-location.json")
+	w = Init(
+		"/api/inventory/map?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, warehouseLocation, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+	assert.Equal(t, 201, w.Code)
+}
+
+func TestLocationWarehouseHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/inventory/map?page=1",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid page number */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/inventory/map?page=-16&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseLocationWarehouse := []database.ShopifyLocation{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseLocationWarehouse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseLocationWarehouse))
+
+	/* Test 3 - valid request | no results */
+	w = Init(
+		"/api/inventory/map?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseLocationWarehouse = []database.ShopifyLocation{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseLocationWarehouse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseLocationWarehouse))
+
+	/* Test 4 - valid request | with results */
+	createDatabaseLocationWarehouse(&dbconfig)
+	w = Init(
+		"/api/inventory/map?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseLocationWarehouse = []database.ShopifyLocation{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseLocationWarehouse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(responseLocationWarehouse))
+}
+
 func TestConfigLocationWarehouseHandle(t *testing.T) {
 	/* Test 1 - invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
@@ -67,7 +339,7 @@ func TestConfigLocationWarehouseHandle(t *testing.T) {
 	}
 
 	/* Test 4 - valid request | with results */
-	createGlobalWarehouse(&dbconfig)
+	createDatabaseGlobalWarehouse(&dbconfig)
 	w = Init(
 		"/api/inventory/config?page=1&api_key="+dbUser.ApiKey,
 		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
@@ -673,20 +945,6 @@ func TestProductRemoveIDHandle(t *testing.T) {
 	assert.Equal(t, 400, w.Code)
 	response := objects.ResponseString{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
-	if err != nil {
-		t.Errorf("expected 'nil' but found: " + err.Error())
-	}
-	assert.Equal(t, "could not decode product id: id", response.Message)
-
-	/* Test 3 - invalid product ID */
-	w = Init(
-		"/api/products/id?api_key="+dbUser.ApiKey,
-		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
-	)
-
-	assert.Equal(t, 400, w.Code)
-	response = objects.ResponseString{}
-	err = json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
@@ -1717,7 +1975,7 @@ func payload(filePath string) []byte {
 /*
 Creates a global warehouse in the database
 */
-func createGlobalWarehouse(dbconfig *DbConfig) string {
+func createDatabaseGlobalWarehouse(dbconfig *DbConfig) string {
 	warehouseName, err := dbconfig.DB.GetWarehouseByName(context.Background(), WAREHOUSE_NAME)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
@@ -1738,14 +1996,22 @@ func createGlobalWarehouse(dbconfig *DbConfig) string {
 }
 
 /*
+Creates a fetchstat in the database
+*/
+func CreateFetchStat(dbconfig *DbConfig) {
+	ClearFetchStatData(dbconfig)
+	AddFetchStat(dbconfig, 99)
+}
+
+/*
 Creates a warehouse-location map in the database
 */
-func createDatabaseLocationWarehouse(dbconfig *DbConfig) string {
+func createDatabaseLocationWarehouse(dbconfig *DbConfig) uuid.UUID {
 	warehouseLocation, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), WAREHOUSE_NAME)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println(err)
-			return ""
+			return uuid.Nil
 		}
 	}
 	if warehouseLocation.WarehouseName == "" {
@@ -1753,11 +2019,11 @@ func createDatabaseLocationWarehouse(dbconfig *DbConfig) string {
 		dbLocationWarehouse, err := AddWarehouseLocation(dbconfig, warehouseLocation)
 		if err != nil {
 			log.Println(err)
-			return ""
+			return uuid.Nil
 		}
-		return dbLocationWarehouse.WarehouseName
+		return dbLocationWarehouse.ID
 	}
-	return warehouseLocation.WarehouseName
+	return warehouseLocation.ID
 }
 
 /*
@@ -1895,6 +2161,10 @@ func setupDatabase(param_db_user, param_db_psw, param_db_name string, overwrite 
 		log.Fatalf("Error occured %v", err.Error())
 	}
 	return dbCon
+}
+
+func ClearFetchStatData(dbconfig *DbConfig) {
+	dbconfig.DB.RemoveFetchStats(context.Background())
 }
 
 func ClearTestData(dbconfig *DbConfig) {
