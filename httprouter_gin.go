@@ -643,8 +643,8 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		if InventoryMapValidation(location_map) != nil {
-			RespondWithError(c, http.StatusBadRequest, "data validation error")
+		if err := InventoryMapValidation(location_map); err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 		result, err := AddWarehouseLocation(dbconfig, location_map)
