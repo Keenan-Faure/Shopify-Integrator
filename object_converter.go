@@ -11,6 +11,54 @@ import (
 	"github.com/google/uuid"
 )
 
+/*
+Converts a Shopify Product (from fetch) into a requestBodyProductStruct
+*/
+func CompileShopifyToSystemProduct(
+	shopifyProduct objects.ShopifySingleProduct,
+	shopifyVariant objects.ShopifyProductVariant,
+	restrictionMap map[string]string,
+) objects.RequestBodyProduct {
+	// general product values
+	requestBody := objects.RequestBodyProduct{}
+	requestBody.Title = ApplyFetchRestriction(restrictionMap, shopifyProduct.Title, "title")
+	requestBody.BodyHTML = ApplyFetchRestriction(restrictionMap, shopifyProduct.Title, "body_html")
+	requestBody.ProductType = ApplyFetchRestriction(restrictionMap, shopifyProduct.Title, "product_type")
+	requestBody.Vendor = ApplyFetchRestriction(restrictionMap, shopifyProduct.Title, "vendor")
+
+	// product options
+	if DeterFetchRestriction(restrictionMap, "options") {
+		if shopifyProduct.Options[0].Name != "Title" {
+			productOptions := []objects.ProductOptions{}
+			for _, option_value := range shopifyProduct.Options {
+				productOptions = append(productOptions, objects.ProductOptions{
+					Value:    option_value.Name,
+					Position: option_value.Position,
+				})
+			}
+			requestBody.ProductOptions = productOptions
+		}
+	}
+
+	// product variant
+	variant := objects.RequestBodyVariant{}
+	variant.Sku = shopifyVariant.Sku
+	variant.Option1 = ApplyFetchRestriction(restrictionMap, IgnoreDefaultOption(shopifyVariant.Option1), "options")
+	variant.Option2 = ApplyFetchRestriction(restrictionMap, IgnoreDefaultOption(shopifyVariant.Option2), "options")
+	variant.Option3 = ApplyFetchRestriction(restrictionMap, IgnoreDefaultOption(shopifyVariant.Option3), "options")
+	variant.Barcode = ApplyFetchRestriction(restrictionMap, shopifyVariant.Barcode, "barcode")
+
+	// product variant pricing
+	// -- Ignored
+
+	// product variant qty
+	// -- Ignored
+
+	requestBody.Variants = append(requestBody.Variants, variant)
+
+	return requestBody
+}
+
 // Compile Queue Filter Search into a single object (variable)
 func CompileRemoveQueueFilter(
 	dbconfig *DbConfig,
