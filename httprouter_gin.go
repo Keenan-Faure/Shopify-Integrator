@@ -15,7 +15,6 @@ import (
 	"os"
 	"shopify"
 	"strconv"
-	"time"
 	"utils"
 
 	"github.com/gin-gonic/gin"
@@ -29,13 +28,27 @@ Route: /api/shopify/webhook
 
 Authorization: Basic, QueryParams, Headers
 
+Header: Optional Mocker Header can be sent with request, used just for tests
+
 Response-Type: application/json
 
 Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) AddWebhookHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//request will take care of the post and put in a single request
+		mockRequest := c.Request.Header.Get("Mocker")
+		if mockRequest == "true" {
+			// if the request is a mock request
+			// then we will not update the database
+			// as this will overwrite
+			// the users data (if in production)
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		}
+		// request will take care of the post and put in a single request
+
 		ngrok_tunnels, err := ngrok.FetchNgrokTunnels()
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -126,12 +139,25 @@ Route: /api/shopify/webhook
 
 Authorization: Basic, QueryParams, Headers
 
+Header: Optional Mocker Header can be sent with request, used just for tests
+
 Response-Type: application/json
 
 Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) DeleteWebhookHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
+		if mockRequest == "true" {
+			// if the request is a mock request
+			// then we will not update the database
+			// as this will overwrite
+			// the users data (if in production)
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		}
 		// fetches data of internal shopify webhook and confirms if it's set
 		db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(c.Request.Context())
 		if err != nil {
@@ -191,16 +217,10 @@ func (dbconfig *DbConfig) PushRestrictionHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		for _, value := range restrictions {
-			err = dbconfig.DB.UpdatePushRestriction(c.Request.Context(), database.UpdatePushRestrictionParams{
-				Flag:      value.Flag,
-				UpdatedAt: time.Now().UTC(),
-				Field:     value.Field,
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
+		err = UpdatePushRestriction(dbconfig, restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
 		}
 		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
 			Message: "success",
@@ -224,7 +244,7 @@ func (dbconfig *DbConfig) GetPushRestrictionHandle() gin.HandlerFunc {
 		restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusInternalServerError, "no push restrictions found found")
+				RespondWithError(c, http.StatusInternalServerError, "no push restrictions found")
 				return
 			}
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -250,7 +270,7 @@ func (dbconfig *DbConfig) GetFetchRestrictionHandle() gin.HandlerFunc {
 		restrictions, err := dbconfig.DB.GetFetchRestriction(context.Background())
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusInternalServerError, "no fetch restrictions found found")
+				RespondWithError(c, http.StatusInternalServerError, "no fetch restrictions found")
 				return
 			}
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -283,16 +303,10 @@ func (dbconfig *DbConfig) FetchRestrictionHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		for _, value := range restrictions {
-			err = dbconfig.DB.UpdateFetchRestriction(c.Request.Context(), database.UpdateFetchRestrictionParams{
-				Flag:      value.Flag,
-				UpdatedAt: time.Now().UTC(),
-				Field:     value.Field,
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
+		err = UpdateFetchRestriction(dbconfig, restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
 		}
 		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
 			Message: "success",
@@ -448,7 +462,7 @@ func (dbconfig *DbConfig) GetInventoryWarehouse() gin.HandlerFunc {
 		}
 		warehouse_uuid, err := uuid.Parse(warehouse_id)
 		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, "could not decode order id: "+warehouse_id)
+			RespondWithError(c, http.StatusBadRequest, "could not decode warehouse id: "+warehouse_id)
 			return
 		}
 		warehouse, err := dbconfig.DB.GetWarehouseByID(c.Request.Context(), warehouse_uuid)
@@ -485,7 +499,7 @@ func (dbconfig *DbConfig) DeleteInventoryWarehouse() gin.HandlerFunc {
 		}
 		warehouse_uuid, err := uuid.Parse(warehouse_id)
 		if err != nil {
-			RespondWithError(c, http.StatusBadRequest, "could not decode order id: "+warehouse_id)
+			RespondWithError(c, http.StatusBadRequest, "could not decode warehouse id: "+warehouse_id)
 			return
 		}
 		err = dbconfig.DB.RemoveWarehouse(c.Request.Context(), warehouse_uuid)
@@ -871,6 +885,8 @@ Queues the respective order to be added to the application from Shopify
 Route: /api/orders?token={token}&api_key={api_key}
 
 Authorization: Basic, QueryParams, Headers
+
+Header: Optional Mocker Header can be sent with request, used just for tests
 
 Response-Type: application/json
 
@@ -1554,6 +1570,8 @@ Which is then used in the registration.
 Route: /api/preregister
 
 Authorization: None
+
+Header: Optional Mocker Header can be sent with request, used just for tests
 
 Response-Type: application/json
 
