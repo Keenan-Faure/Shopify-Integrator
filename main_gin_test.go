@@ -28,6 +28,651 @@ const WEB_CUSTOMER_CODE = "TestFirstName TestLastName"
 const ORDER_WEB_CODE = "#999999"
 const WAREHOUSE_NAME = "TestHouse"
 
+func TestAddAppSetting(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	appSettingsPayload := AppSettingsPayload("test-case-valid-request.json")
+	w := Init("/api/settings", http.MethodPut, map[string][]string{}, appSettingsPayload, &dbconfig, router)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test Case 2 - invalid request body | invalid fields */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	appSettingsPayload = AppSettingsPayload("test-case-invalid-request.json")
+	w = Init(
+		"/api/settings?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, appSettingsPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "setting 'app_queue_process_limiters' not allowed", response.Message)
+
+	/* Test Case 3 - invalid request body | blank fields */
+	appSettingsPayload = AppSettingsPayload("test-case-invalid-request-blank-field.json")
+	w = Init(
+		"/api/settings?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, appSettingsPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "settings key cannot be blank", response.Message)
+
+	/* Test Case 4 - valid request */
+	appSettingsPayload = AppSettingsPayload("test-case-valid-request.json")
+	w = Init(
+		"/api/settings?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, appSettingsPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestAddShopifySetting(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	shopifySettingsPayload := ShopifySettingsPayload("test-case-valid-request.json")
+	w := Init("/api/shopify/settings", http.MethodPut, map[string][]string{}, shopifySettingsPayload, &dbconfig, router)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test Case 2 - invalid request body | invalid fields */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	shopifySettingsPayload = ShopifySettingsPayload("test-case-invalid-request.json")
+	w = Init(
+		"/api/shopify/settings?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, shopifySettingsPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "setting 'abc123_test' not allowed", response.Message)
+
+	/* Test Case 3 - invalid request body | blank fields */
+	shopifySettingsPayload = ShopifySettingsPayload("test-case-invalid-request-blank-field.json")
+	w = Init(
+		"/api/shopify/settings?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, shopifySettingsPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "settings key cannot be blank", response.Message)
+
+	/* Test Case 4 - valid request */
+	shopifySettingsPayload = ShopifySettingsPayload("test-case-valid-request.json")
+	w = Init(
+		"/api/shopify/settings?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, shopifySettingsPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestGetAppSettingValue(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/settings",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - valid request */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	createDatabaseAppSettings(&dbconfig)
+	w = Init(
+		"/api/settings?api_key="+dbUser.ApiKey,
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseAppSettings := []database.GetAppSettingsRow{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseAppSettings)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+
+	assert.Equal(t, "app_enable_shopify_push", responseAppSettings[0].Key)
+	assert.Equal(t, "Enables products to be pushed to Shopify.", responseAppSettings[0].Description)
+	assert.Equal(t, "Enable Shopify Push", responseAppSettings[0].FieldName)
+	assert.Equal(t, "false", responseAppSettings[0].Value)
+
+	assert.Equal(t, "app_queue_cron_time", responseAppSettings[3].Key)
+	assert.Equal(t, "Interval between each run of the queue worker.", responseAppSettings[3].Description)
+	assert.Equal(t, "Queue Cron Time", responseAppSettings[3].FieldName)
+	assert.Equal(t, "5", responseAppSettings[3].Value)
+
+	assert.Equal(t, "app_fetch_sync_images", responseAppSettings[6].Key)
+	assert.Equal(t, "Enabled products to be pulled from Shopify when fetching data.", responseAppSettings[6].Description)
+	assert.Equal(t, "Add Shopify Images", responseAppSettings[6].FieldName)
+	assert.Equal(t, "false", responseAppSettings[6].Value)
+}
+
+func TestGetShopifySettingValue(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/shopify/settings",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - valid request */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	createDatabaseShopifySettings(&dbconfig)
+	w = Init(
+		"/api/shopify/settings?api_key="+dbUser.ApiKey,
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseShopifySettings := []database.GetShopifySettingsRow{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseShopifySettings)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "shopify_enable_dynamic_sku_search", responseShopifySettings[0].Key)
+	assert.Equal(t, "Enables the dynamic searching of SKUs on Shopify when adding new products. If disabled, only first product SKU will be considered.", responseShopifySettings[0].Description)
+	assert.Equal(t, "Dynamic SKU Search", responseShopifySettings[0].FieldName)
+	assert.Equal(t, "true", responseShopifySettings[0].Value)
+}
+
+func TestDeleteWebhookHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/shopify/webhook",
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - valid request | empty return results */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	requestHeaders := make(map[string][]string)
+	requestHeaders["Mocker"] = []string{"true"}
+	w = Init(
+		"/api/shopify/webhook?api_key="+dbUser.ApiKey,
+		http.MethodDelete, requestHeaders, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestAddWebhookHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/shopify/webhook",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - valid request | empty return results */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	requestHeaders := make(map[string][]string)
+	requestHeaders["Mocker"] = []string{"true"}
+	w = Init(
+		"/api/shopify/webhook?api_key="+dbUser.ApiKey,
+		http.MethodGet, requestHeaders, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestPushRestrictionHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	restrictionPayload := PushRestrictionPayload("test-case-valid-request.json")
+	w := Init("/api/push/restriction", http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test Case 2 - invalid request body | invalid fields */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	restrictionPayload = PushRestrictionPayload("test-case-invalid-request.json")
+	w = Init(
+		"/api/push/restriction?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "restriction 'titler' not allowed", response.Message)
+
+	/* Test Case 3 - invalid request body | blank fields */
+	restrictionPayload = PushRestrictionPayload("test-case-invalid-request-blank-field.json")
+	w = Init(
+		"/api/fetch/restriction?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "settings key cannot be blank", response.Message)
+
+	/* Test Case 4 - valid request */
+	restrictionPayload = PushRestrictionPayload("test-case-valid-request.json")
+	w = Init(
+		"/api/push/restriction?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestFetchRestrictionHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	restrictionPayload := FetchRestrictionPayload("test-case-valid-request.json")
+	w := Init("/api/fetch/restriction", http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test Case 2 - invalid request body | invalid fields */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	restrictionPayload = FetchRestrictionPayload("test-case-invalid-request.json")
+	w = Init(
+		"/api/fetch/restriction?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "restriction 'product_title' not allowed", response.Message)
+
+	/* Test Case 3 - invalid request body | blank fields */
+	restrictionPayload = FetchRestrictionPayload("test-case-invalid-request-blank-field.json")
+	w = Init(
+		"/api/fetch/restriction?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "settings key cannot be blank", response.Message)
+
+	/* Test Case 4 - valid request */
+	restrictionPayload = FetchRestrictionPayload("test-case-valid-request.json")
+	w = Init(
+		"/api/fetch/restriction?api_key="+dbUser.ApiKey,
+		http.MethodPut, map[string][]string{}, restrictionPayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestGetPushRestrictionHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/push/restriction",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - valid request */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	createDatabasePushRestriction(&dbconfig)
+	w = Init(
+		"/api/push/restriction?api_key="+dbUser.ApiKey,
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseRestrictions := []database.PushRestriction{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseRestrictions)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 9, len(responseRestrictions))
+	assert.Equal(t, "title", responseRestrictions[0].Field)
+	assert.Equal(t, "app", responseRestrictions[0].Flag)
+	assert.Equal(t, "category", responseRestrictions[2].Field)
+	assert.Equal(t, "app", responseRestrictions[2].Flag)
+	assert.Equal(t, "product_type", responseRestrictions[3].Field)
+	assert.Equal(t, "shopify", responseRestrictions[3].Flag)
+}
+
+func TestGetFetchRestrictionHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/fetch/restriction",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - valid request */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	createDatabaseFetchRestriction(&dbconfig)
+	w = Init(
+		"/api/fetch/restriction?api_key="+dbUser.ApiKey,
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseRestrictions := []database.FetchRestriction{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseRestrictions)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 9, len(responseRestrictions))
+	assert.Equal(t, "title", responseRestrictions[0].Field)
+	assert.Equal(t, "shopify", responseRestrictions[0].Flag)
+	assert.Equal(t, "category", responseRestrictions[2].Field)
+	assert.Equal(t, "shopify", responseRestrictions[2].Flag)
+	assert.Equal(t, "body_html", responseRestrictions[1].Field)
+	assert.Equal(t, "app", responseRestrictions[1].Flag)
+}
+
+// will not test this route
+func TestWorkerFetchProductsHandle(t *testing.T) {}
+
+func TestDeleteInventoryWarehouse(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/inventory/warehouse/id",
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid ID */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/inventory/warehouse/id?api_key="+dbUser.ApiKey,
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode warehouse id: id", response.Message)
+
+	/* Test 3 - valid UUID but do not exist */
+	w = Init(
+		"/api/inventory/warehouse/c2d29867-3d0b-d497-9191-18a9d8ee7830?api_key="+dbUser.ApiKey,
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+
+	/* Test 4 - valid request */
+	warehouseInventoryUUID := createDatabaseGlobalWarehouse(&dbconfig)
+	w = Init(
+		"/api/inventory/warehouse/"+warehouseInventoryUUID.String()+"?api_key="+dbUser.ApiKey,
+		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestAddInventoryWarehouseHandle(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	warehousePayload := WarehousePayload("test-case-valid-warehouse.json")
+	w := Init("/api/inventory/warehouse", http.MethodPost, map[string][]string{}, warehousePayload, &dbconfig, router)
+
+	assert.Equal(t, 401, w.Code)
+
+	/* Test Case 2 - invalid request body */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	warehousePayload = WarehousePayload("test-case-invalid-warehouse.json")
+	w = Init(
+		"/api/inventory/warehouse?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, warehousePayload, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "invalid warehouse name", response.Message)
+
+	/* Test Case 3 - valid request */
+	warehousePayload = WarehousePayload("test-case-valid-warehouse.json")
+	w = Init(
+		"/api/inventory/warehouse?api_key="+dbUser.ApiKey,
+		http.MethodPost, map[string][]string{}, warehousePayload, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+
+	assert.Equal(t, 201, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "success", response.Message)
+}
+
+func TestGetInventoryWarehouses(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/inventory/warehouse?page=1",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid page number */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/inventory/warehouse?page=-16&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseWarehouses := []database.GetWarehousesRow{}
+	err := json.Unmarshal(w.Body.Bytes(), &responseWarehouses)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseWarehouses))
+
+	/* Test 3 - valid request | no results */
+	w = Init(
+		"/api/inventory/warehouse?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 200, w.Code)
+	responseWarehouses = []database.GetWarehousesRow{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseWarehouses)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 0, len(responseWarehouses))
+
+	/* Test 4 - valid request | with results */
+	createDatabaseGlobalWarehouse(&dbconfig)
+	w = Init(
+		"/api/inventory/warehouse?page=1&api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseWarehouses = []database.GetWarehousesRow{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseWarehouses)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, 1, len(responseWarehouses))
+}
+
+func TestGetInventoryWarehouse(t *testing.T) {
+	/* Test 1 - invalid authentication */
+	dbconfig := setupDatabase("", "", "", false)
+	router := setUpAPI(&dbconfig)
+	w := Init(
+		"/api/inventory/warehouse/id",
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	assert.Equal(t, 401, w.Code)
+
+	/* Test 2 - invalid order ID */
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	w = Init(
+		"/api/inventory/warehouse/id?api_key="+dbUser.ApiKey,
+		http.MethodGet, make(map[string][]string), nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 400, w.Code)
+	response := objects.ResponseString{}
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "could not decode warehouse id: id", response.Message)
+
+	/* Test 3 - valid request | do not exist */
+	w = Init(
+		"/api/inventory/warehouse/c2d29867-3d0b-d497-9191-18a9d8ee7830?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+
+	assert.Equal(t, 404, w.Code)
+	response = objects.ResponseString{}
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, "not found", response.Message)
+
+	/* Test 4 - valid request | exists */
+	warehouseUUID := createDatabaseGlobalWarehouse(&dbconfig)
+	w = Init(
+		"/api/inventory/warehouse/"+warehouseUUID.String()+"?api_key="+dbUser.ApiKey,
+		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+	)
+	ClearWarehouseLocationData(&dbconfig)
+
+	assert.Equal(t, 200, w.Code)
+	responseWarehouse := database.Warehouse{}
+	err = json.Unmarshal(w.Body.Bytes(), &responseWarehouse)
+	if err != nil {
+		t.Errorf("expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, warehouseUUID, responseWarehouse.ID)
+}
+
 func TestGetFetchStats(t *testing.T) {
 	/* Test 1 - invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
@@ -1845,6 +2490,28 @@ func createQueueItem(queue_type string) objects.RequestQueueItem {
 }
 
 /* Returns a warehouse request body struct */
+func AppSettingsPayload(fileName string) []objects.RequestSettings {
+	fileBytes := payload("./test_payloads/tests/app-settings/" + fileName)
+	appSettings := []objects.RequestSettings{}
+	err := json.Unmarshal(fileBytes, &appSettings)
+	if err != nil {
+		log.Println(err)
+	}
+	return appSettings
+}
+
+/* Returns a warehouse request body struct */
+func ShopifySettingsPayload(fileName string) []objects.RequestSettings {
+	fileBytes := payload("./test_payloads/tests/shopify-settings/" + fileName)
+	shopifySettings := []objects.RequestSettings{}
+	err := json.Unmarshal(fileBytes, &shopifySettings)
+	if err != nil {
+		log.Println(err)
+	}
+	return shopifySettings
+}
+
+/* Returns a warehouse request body struct */
 func WarehousePayload(fileName string) objects.RequestGlobalWarehouse {
 	fileBytes := payload("./test_payloads/tests/warehouse/" + fileName)
 	warehouse := objects.RequestGlobalWarehouse{}
@@ -1853,6 +2520,28 @@ func WarehousePayload(fileName string) objects.RequestGlobalWarehouse {
 		log.Println(err)
 	}
 	return warehouse
+}
+
+/* Returns a warehouse request body struct */
+func FetchRestrictionPayload(fileName string) []objects.RestrictionRequest {
+	fileBytes := payload("./test_payloads/tests/fetch-restriction/" + fileName)
+	restrictions := []objects.RestrictionRequest{}
+	err := json.Unmarshal(fileBytes, &restrictions)
+	if err != nil {
+		log.Println(err)
+	}
+	return restrictions
+}
+
+/* Returns a warehouse request body struct */
+func PushRestrictionPayload(fileName string) []objects.RestrictionRequest {
+	fileBytes := payload("./test_payloads/tests/push-restriction/" + fileName)
+	restrictions := []objects.RestrictionRequest{}
+	err := json.Unmarshal(fileBytes, &restrictions)
+	if err != nil {
+		log.Println(err)
+	}
+	return restrictions
 }
 
 /* Returns a warehouse-location request body struct */
@@ -1975,24 +2664,76 @@ func payload(filePath string) []byte {
 /*
 Creates a global warehouse in the database
 */
-func createDatabaseGlobalWarehouse(dbconfig *DbConfig) string {
+func createDatabaseGlobalWarehouse(dbconfig *DbConfig) uuid.UUID {
 	warehouseName, err := dbconfig.DB.GetWarehouseByName(context.Background(), WAREHOUSE_NAME)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println(err)
-			return ""
+			return uuid.Nil
 		}
 	}
-	if warehouseName.Name == "" {
-		warehouse := WarehousePayload("test-case-valid-warehouse.json")
-		_, err = AddGlobalWarehouse(dbconfig, context.Background(), warehouse.Name, false)
+	if warehouseName.ID == uuid.Nil {
+		// warehouse := WarehousePayload("test-case-valid-warehouse.json")
+		_, err = AddGlobalWarehouse(dbconfig, context.Background(), WAREHOUSE_NAME, false)
 		if err != nil {
 			log.Println(err)
-			return ""
+			return uuid.Nil
 		}
-		return warehouse.Name
+		// warehouse.Name is the same as WAREHOUSE_NAME
+		dbWarehouse, err := dbconfig.DB.GetWarehouseByName(context.Background(), WAREHOUSE_NAME)
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				log.Println(err)
+				return uuid.Nil
+			}
+		}
+		return dbWarehouse.ID
 	}
-	return warehouseName.Name
+	return warehouseName.ID
+}
+
+/*
+Updates the database push restrictions
+*/
+func createDatabasePushRestriction(dbconfig *DbConfig) {
+	pushRestrictions := PushRestrictionPayload("test-case-valid-request.json")
+	err := UpdatePushRestriction(dbconfig, pushRestrictions)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+/*
+Updates the database app settings
+*/
+func createDatabaseAppSettings(dbconfig *DbConfig) {
+	appSettings := AppSettingsPayload("test-case-valid-request.json")
+	err := UpdateAppSettings(dbconfig, appSettings)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+/*
+Updates the database shopify settings
+*/
+func createDatabaseShopifySettings(dbconfig *DbConfig) {
+	shopifySettings := ShopifySettingsPayload("test-case-valid-request.json")
+	err := UpdateShopifySettings(dbconfig, shopifySettings)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+/*
+Updates the database fetch restrictions
+*/
+func createDatabaseFetchRestriction(dbconfig *DbConfig) {
+	fetchRestrictions := FetchRestrictionPayload("test-case-valid-request.json")
+	err := UpdateFetchRestriction(dbconfig, fetchRestrictions)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 /*
