@@ -39,7 +39,7 @@ func RestrictionValidation(
 			}
 		}
 		if !found {
-			return errors.New("restriction " + map_value.Field + " not allowed")
+			return errors.New("restriction '" + map_value.Field + "' not allowed")
 		}
 	}
 	return nil
@@ -199,7 +199,7 @@ func SettingsValidation(
 			}
 		}
 		if !found {
-			return errors.New("setting " + map_value.Key + " not allowed")
+			return errors.New("setting '" + map_value.Key + "' not allowed")
 		}
 	}
 	return nil
