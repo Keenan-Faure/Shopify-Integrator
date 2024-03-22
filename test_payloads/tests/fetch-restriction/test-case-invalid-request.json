@@ -1,0 +1,38 @@
+[
+    {
+        "field": "product_title",
+        "flag": "app"
+    },
+    {
+        "field": "long_description",
+        "flag": "app"
+    },
+    {
+        "field": "category",
+        "flag": "app"
+    },
+    {
+        "field": "product_type",
+        "flag": "app"
+    },
+    {
+        "field": "brand",
+        "flag": "app"
+    },
+    {
+        "field": "barcode",
+        "flag": "app"
+    },
+    {
+        "field": "options",
+        "flag": "app"
+    },
+    {
+        "field": "pricing",
+        "flag": "app"
+    },
+    {
+        "field": "warehousing",
+        "flag": "app"
+    }
+]

@@ -1,0 +1,38 @@
+[
+    {
+        "field": "",
+        "flag": "shopify"
+    },
+    {
+        "field": "body_html",
+        "flag": "app"
+    },
+    {
+        "field": "category",
+        "flag": "shopify"
+    },
+    {
+        "field": "product_type",
+        "flag": "shopify"
+    },
+    {
+        "field": "",
+        "flag": "shopify"
+    },
+    {
+        "field": "barcode",
+        "flag": "shopify"
+    },
+    {
+        "field": "options",
+        "flag": "shopify"
+    },
+    {
+        "field": "",
+        "flag": "shopify"
+    },
+    {
+        "field": "warehousing",
+        "flag": "shopify"
+    }
+]

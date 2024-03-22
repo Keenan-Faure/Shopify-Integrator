@@ -1,0 +1,34 @@
+[
+    {
+        "key": "app_queue_process_limiters",
+        "value": "20"
+    },
+    {
+        "key": "app_queue_cron_time",
+        "value": "5"
+    },
+    {
+        "key": "app_fetch_add_products",
+        "value": "false"
+    },
+    {
+        "key": "app_fetch_overwrite_products",
+        "value": "false"
+    },
+    {
+        "key": "app_fetch_sync_images",
+        "value": "false"
+    },
+    {
+        "key": "app_enable_shopify_fetch",
+        "value": "false"
+    },
+    {
+        "key": "app_enable_queue_worker",
+        "value": "false"
+    },
+    {
+        "key": "app_shopify_fetch_time",
+        "value": "false"
+    }
+]
