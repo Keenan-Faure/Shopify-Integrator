@@ -129,7 +129,7 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	auth.DELETE("/inventory/warehouse/:id", dbconfig.DeleteInventoryWarehouse())
 
 	/* Fetch Worker */
-	auth.POST("/worker/fetch", dbconfig.WorkerFetchProductsHandle())
+	auth.GET("/worker/fetch", dbconfig.WorkerFetchProductsHandle())
 
 	/* Restrictions */
 	auth.GET("/fetch/restriction", dbconfig.GetFetchRestrictionHandle())
@@ -139,7 +139,7 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	auth.PUT("/push/restriction", dbconfig.PushRestrictionHandle())
 
 	/* Webhooks */
-	auth.POST("/shopify/webhook", dbconfig.AddWebhookHandle())
+	auth.GET("/shopify/webhook", dbconfig.AddWebhookHandle())
 	auth.DELETE("/shopify/webhook", dbconfig.DeleteWebhookHandle())
 
 	/* Settings */
