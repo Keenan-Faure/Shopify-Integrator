@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"integrator/internal/database"
 	"net/http"
 	"objects"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -79,16 +77,10 @@ func (dbconfig *DbConfig) AddShopifySetting() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		for _, setting := range shopify_settings_map {
-			err = dbconfig.DB.UpdateShopifySetting(c.Request.Context(), database.UpdateShopifySettingParams{
-				Value:     setting.Value,
-				UpdatedAt: time.Now().UTC(),
-				Key:       setting.Key,
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
+		err = UpdateShopifySettings(dbconfig, shopify_settings_map)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
 		}
 		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
 			Message: "success",
@@ -97,9 +89,9 @@ func (dbconfig *DbConfig) AddShopifySetting() gin.HandlerFunc {
 }
 
 /*
-Updates an existing shopify setting inside the database.
+Updates an existing app setting inside the database.
 
-Route: /api/shopify/settings
+Route: /api/settings
 
 Authorization: Basic, QueryParams, Headers
 
@@ -124,16 +116,10 @@ func (dbconfig *DbConfig) AddAppSetting() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		for _, setting := range app_settings_map {
-			err = dbconfig.DB.UpdateAppSetting(c.Request.Context(), database.UpdateAppSettingParams{
-				Value:     setting.Value,
-				UpdatedAt: time.Now().UTC(),
-				Key:       setting.Key,
-			})
-			if err != nil {
-				RespondWithError(c, http.StatusInternalServerError, err.Error())
-				return
-			}
+		err = UpdateAppSettings(dbconfig, app_settings_map)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
 		}
 		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
 			Message: "success",
