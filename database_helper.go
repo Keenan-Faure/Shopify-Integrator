@@ -20,6 +20,78 @@ And keep the code used in the application
 Functions are mostly used to interact with the database.
 */
 
+/* Updates App Settings in the database */
+func UpdateAppSettings(
+	dbconfig *DbConfig,
+	appSettings []objects.RequestSettings,
+) error {
+	for _, setting := range appSettings {
+		err := dbconfig.DB.UpdateAppSetting(context.Background(), database.UpdateAppSettingParams{
+			Value:     setting.Value,
+			UpdatedAt: time.Now().UTC(),
+			Key:       setting.Key,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+/* Updates Shopify App Settings in the database */
+func UpdateShopifySettings(
+	dbconfig *DbConfig,
+	shopifySettings []objects.RequestSettings,
+) error {
+	for _, setting := range shopifySettings {
+		err := dbconfig.DB.UpdateShopifySetting(context.Background(), database.UpdateShopifySettingParams{
+			Value:     setting.Value,
+			UpdatedAt: time.Now().UTC(),
+			Key:       setting.Key,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+/* Updates Fetch Restrictions in the database */
+func UpdateFetchRestriction(
+	dbconfig *DbConfig,
+	restrictions []objects.RestrictionRequest,
+) error {
+	for _, value := range restrictions {
+		err := dbconfig.DB.UpdateFetchRestriction(context.Background(), database.UpdateFetchRestrictionParams{
+			Flag:      value.Flag,
+			UpdatedAt: time.Now().UTC(),
+			Field:     value.Field,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+/* Updates Push Restrictions in the database */
+func UpdatePushRestriction(
+	dbconfig *DbConfig,
+	restrictions []objects.RestrictionRequest,
+) error {
+	for _, value := range restrictions {
+		err := dbconfig.DB.UpdatePushRestriction(context.Background(), database.UpdatePushRestrictionParams{
+			Flag:      value.Flag,
+			UpdatedAt: time.Now().UTC(),
+			Field:     value.Field,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 /* Updates the fetch worker */
 func UpdateFetchWorker(
 	dbconfig *DbConfig,
@@ -863,10 +935,10 @@ func AddGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name 
 			return 500, err
 		}
 	}
-	if reindex {
-		return 200, nil
+	if !reindex {
+		return 201, nil
 	}
-	return 201, nil
+	return 200, nil
 }
 
 /* Updates or creates the specific price tier for a specific SKU */
