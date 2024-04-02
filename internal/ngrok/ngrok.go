@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-const host = "http://localhost:8888"
-const tunnel_name = "website"
+const NGROK_HOST = "http://localhost:8888"
+const NGROK_TUNNEL_NAME = "website"
 
 // GET /api/tunnels
 func FetchNgrokTunnels() (objects.NgrokTunnelResponse, error) {
@@ -40,7 +40,7 @@ func FetchNgrokTunnels() (objects.NgrokTunnelResponse, error) {
 // Returns the specific ngrok tunnel
 func FetchWebsiteTunnel(tunnels objects.NgrokTunnelResponse) string {
 	for _, tunnel := range tunnels.Tunnels {
-		if tunnel.Name == tunnel_name {
+		if tunnel.Name == NGROK_TUNNEL_NAME {
 			return tunnel.PublicURL
 		}
 	}
@@ -58,7 +58,7 @@ func fetchHelper(endpoint, method string, body io.Reader) (*http.Response, error
 	httpClient := http.Client{
 		Timeout: time.Second * 20,
 	}
-	req, err := http.NewRequest(method, host+"/"+endpoint, body)
+	req, err := http.NewRequest(method, NGROK_HOST+"/"+endpoint, body)
 	if err != nil {
 		return &http.Response{}, err
 	}
