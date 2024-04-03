@@ -16,6 +16,22 @@ import (
 
 const NGROK_URL = "http://ngrok.api.localhost:8888"
 
+func TestFetchWebsiteTunnel(t *testing.T) {
+	// Test Case 1 - valid tunnel name
+	ngrokTunnelResponse := CreateTestNgrokPayload("test-case-valid-data.json")
+	publicURL := FetchWebsiteTunnel(ngrokTunnelResponse)
+	if publicURL == "" {
+		t.Errorf("expected 'https://f5fa-102-135-246-72.ngrok-free.app' but found: " + publicURL)
+	}
+
+	// Test Case 2 - no valid tunnel name found
+	ngrokTunnelResponse = objects.NgrokTunnelResponse{}
+	publicURL = FetchWebsiteTunnel(ngrokTunnelResponse)
+	if publicURL != "" {
+		t.Errorf("expected '' but found: " + publicURL)
+	}
+}
+
 func TestFetchNgrokTunnels(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
