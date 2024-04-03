@@ -122,8 +122,8 @@ func CSVProductValuesByVariant(product objects.Product, variant objects.ProductV
 	}
 	headers = append(headers, CSVProductVariant(variant)...)
 	headers = append(headers, CSVVariantOptions(product, variant)...)
-	headers = append(headers, getVariantPricingCSV(variant, pricing_max, false)...)
-	headers = append(headers, getVariantQtyCSV(variant, qty_max, false)...)
+	headers = append(headers, getVariantPricingCSV(variant, pricing_max)...)
+	headers = append(headers, getVariantQtyCSV(variant, qty_max)...)
 	headers = append(headers, GetProductImagesCSV(product.ProductImages, images_max, false)...)
 	return headers
 }
@@ -167,7 +167,7 @@ func generateProductOptions() []string {
 }
 
 // Returns the name/qty of each warehouse depending on the key
-func getVariantQtyCSV(variant objects.ProductVariant, qty_max int, key bool) []string {
+func getVariantQtyCSV(variant objects.ProductVariant, qty_max int) []string {
 	qty_headers := []string{}
 	for _, qty := range variant.VariantQuantity {
 		if qty.Value == 0 {
@@ -187,7 +187,7 @@ func getVariantQtyCSV(variant objects.ProductVariant, qty_max int, key bool) []s
 }
 
 // Returns the name/value of each price tier depending on the key
-func getVariantPricingCSV(variant objects.ProductVariant, pricing_max int, key bool) []string {
+func getVariantPricingCSV(variant objects.ProductVariant, pricing_max int) []string {
 	pricing_headers := []string{}
 	for _, pricing := range variant.VariantPricing {
 		if pricing.Value == "" {
