@@ -16,6 +16,30 @@ import (
 
 const NGROK_URL = "http://ngrok.api.localhost:8888"
 
+func TestSetUpWebhookURL(t *testing.T) {
+	// Test Case 1 - valid parameters
+	ngrokTunnelResponse := CreateTestNgrokPayload("test-case-valid-data.json")
+	publicURL := FetchWebsiteTunnel(ngrokTunnelResponse)
+	webhookURL := SetUpWebhookURL(publicURL, "IASASLJHK817623LJKHASH612HJ", "2937RY9HEF9RFU23R7UWEKFM") // keys are invalid
+
+	if webhookURL == "" {
+		t.Errorf("expected 'https://f5fa-102-135-246-72.ngrok-free.app/api/orders?token=2937RY9HEF9RFU23R7UWEKFM&api_key=IASASLJHK817623LJKHASH612HJ' but found: " + webhookURL)
+	}
+	if webhookURL != "https://f5fa-102-135-246-72.ngrok-free.app/api/orders?token=2937RY9HEF9RFU23R7UWEKFM&api_key=IASASLJHK817623LJKHASH612HJ" {
+		t.Errorf("expected 'https://f5fa-102-135-246-72.ngrok-free.app/api/orders?token=2937RY9HEF9RFU23R7UWEKFM&api_key=IASASLJHK817623LJKHASH612HJ' but found: " + webhookURL)
+	}
+
+	// Test Case 2 - invalid parameters, invalid results (URL DNE)
+	publicURL = "http://localhost:7652"                                                                // domain DNE
+	webhookURL = SetUpWebhookURL(publicURL, "IASASLJHK817623LJKHASH612HJ", "2937RY9HEF9RFU23R7UWEKFM") // keys are invalid
+	if webhookURL == "" {
+		t.Errorf("expected 'http://localhost:7652/api/orders?token=2937RY9HEF9RFU23R7UWEKFM&api_key=IASASLJHK817623LJKHASH612HJ' but found: " + webhookURL)
+	}
+	if webhookURL != "http://localhost:7652/api/orders?token=2937RY9HEF9RFU23R7UWEKFM&api_key=IASASLJHK817623LJKHASH612HJ" {
+		t.Errorf("expected 'http://localhost:7652/api/orders?token=2937RY9HEF9RFU23R7UWEKFM&api_key=IASASLJHK817623LJKHASH612HJ' but found: " + webhookURL)
+	}
+}
+
 func TestFetchWebsiteTunnel(t *testing.T) {
 	// Test Case 1 - valid tunnel name
 	ngrokTunnelResponse := CreateTestNgrokPayload("test-case-valid-data.json")
