@@ -122,11 +122,35 @@ func TestCSVProductHeaders(t *testing.T) {
 }
 
 func TestCSVProductValuesByVariant(t *testing.T) {
+	// Test Case 1 - valid request parameters | no pricing | no qty | no images | empty product
+	product := objects.Product{}
+	result := CSVProductValuesByVariant(product, objects.ProductVariant{}, 0, 0, 0)
 
+	assert.Equal(t, result[1], "")
+	assert.Equal(t, result[3], "")
+	assert.Equal(t, len(result), 16)
+
+	// Test Case 2 - valid request parameters | varying maximums
+	product = ProductPayload("test-case-valid-product.json")
+
+	result = CSVProductValuesByVariant(product, product.Variants[0], 1, 0, 1)
+	assert.Equal(t, result[1], "product_code")
+	assert.Equal(t, result[3], "product_title")
+	assert.Equal(t, len(result), 19)
+
+	// Test Case 3 - valid request
+	product = ProductPayload("test-case-valid-product.json")
+	result = CSVProductValuesByVariant(product, product.Variants[0], 1, 1, 1)
+	assert.Equal(t, result[2], "1")
+	assert.Equal(t, result[4], "<p>I am a body_html</p>")
+	assert.Equal(t, result[6], "product_vendor")
+	assert.Equal(t, len(result), 19)
 }
 
 func TestCSVProductVariant(t *testing.T) {
+	// Test Case 1 - invalid variant data
 
+	// Test Case 2 - valid variant data
 }
 
 func TestCSVVariantOptions(t *testing.T) {
