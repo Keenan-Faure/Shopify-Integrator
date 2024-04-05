@@ -10,7 +10,7 @@
         {
             "sku": "product_sku",
             "option1": "option1",
-            "option2": "option1",
+            "option2": "option2",
             "option3": "option3",
             "barcode": "2347234-9824",
             "variant_price_tiers": [
@@ -36,7 +36,7 @@
             "position": 1
         },
         {
-            "value": "Size",
+            "value": "Colour",
             "position": 2
         },
         {
