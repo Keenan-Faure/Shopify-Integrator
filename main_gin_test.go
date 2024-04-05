@@ -2261,6 +2261,7 @@ func TestPreregisterRoute(t *testing.T) {
 		"/api/preregister",
 		http.MethodPost, map[string][]string{}, preregisterData, &dbconfig, router,
 	)
+	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregisterData.Email)
 
 	assert.Equal(t, 409, w.Code)
 	response := objects.ResponseString{}
@@ -2269,16 +2270,16 @@ func TestPreregisterRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, "email '"+preregisterData.Email+"' already exists", response.Message)
-	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregisterData.Email)
 
 	/* Test 3 - Valid request */
-	preregisterData = PreRegisterPayload("test-case-valid-preregister.json")
+	preregisterData = PreRegisterPayload("test-case-valid-preregister-different-email.json")
 	requestHeaders := make(map[string][]string)
 	requestHeaders["Mocker"] = []string{"true"}
 	w = Init(
 		"/api/preregister",
 		http.MethodPost, requestHeaders, preregisterData, &dbconfig, router,
 	)
+	dbconfig.DB.DeleteTokenByEmail(context.Background(), preregisterData.Email)
 
 	assert.Equal(t, 201, w.Code)
 	response = objects.ResponseString{}
@@ -2923,6 +2924,7 @@ func ClearOrderTestData(dbconfig *DbConfig) {
 func ClearProductTestData(dbconfig *DbConfig) {
 	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE_SIMPLE)
 	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
+	os.RemoveAll("./import")
 }
 
 func ClearCustomerTestData(dbconfig *DbConfig) {
