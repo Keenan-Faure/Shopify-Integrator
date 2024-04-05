@@ -61,7 +61,7 @@ func TestFetchNgrokTunnels(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 
 	response := CreateTestNgrokPayload("test-case-valid-data.json")
-	httpmock.RegisterResponder("GET", NGROK_URL+"/api/tunnels",
+	httpmock.RegisterResponder(http.MethodGet, NGROK_URL+"/api/tunnels",
 		func(req *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(200, response)
 			if err != nil {

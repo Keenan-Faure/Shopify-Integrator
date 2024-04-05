@@ -508,7 +508,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return errors.New("could not decode product_id '" + queue_object.SystemProductID + "'")
 		}
-		shopifyConfig := shopify.InitConfigShopify()
+		shopifyConfig := shopify.InitConfigShopify("")
 		product, err := CompileProduct(dbconfig, product_id, context.Background(), false)
 		if err != nil {
 			return err
@@ -521,7 +521,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			return errors.New("invalid product instruction")
 		}
 	} else if queue_item.QueueType == "product_variant" {
-		shopifyConfig := shopify.InitConfigShopify()
+		shopifyConfig := shopify.InitConfigShopify("")
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
 		if err != nil {
 			return err

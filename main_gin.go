@@ -33,7 +33,7 @@ func main() {
 		log.Fatalf("error occured when setting up database: %v", err.Error())
 	}
 
-	shopifyConfig := shopify.InitConfigShopify()
+	shopifyConfig := shopify.InitConfigShopify("")
 
 	if !*workers {
 		go iocsv.LoopRemoveCSV()

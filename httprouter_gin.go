@@ -67,7 +67,7 @@ func (dbconfig *DbConfig) AddWebhookHandle() gin.HandlerFunc {
 			return
 		}
 
-		shopifyConfig := shopify.InitConfigShopify()
+		shopifyConfig := shopify.InitConfigShopify("")
 		dbUser, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), c.GetString("api_key"))
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -167,7 +167,7 @@ func (dbconfig *DbConfig) DeleteWebhookHandle() gin.HandlerFunc {
 
 		// delete the webhook on Shopify
 		if db_shopify_webhook.ShopifyWebhookID != "" {
-			shopifyConfig := shopify.InitConfigShopify()
+			shopifyConfig := shopify.InitConfigShopify("")
 			_, err := shopifyConfig.DeleteShopifyWebhook(db_shopify_webhook.ShopifyWebhookID)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -328,7 +328,7 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 func (dbconfig *DbConfig) WorkerFetchProductsHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// create database table containing the status of this
-		shopifyConfig := shopify.InitConfigShopify()
+		shopifyConfig := shopify.InitConfigShopify("")
 		err := FetchShopifyProducts(dbconfig, shopifyConfig)
 		if err != nil {
 			if err.Error() == "worker is currently running" {
@@ -722,7 +722,7 @@ func (dbconfig *DbConfig) ConfigLocationWarehouseHandle() gin.HandlerFunc {
 		if err != nil || page < 0 {
 			page = 1
 		}
-		shopifyConfig := shopify.InitConfigShopify()
+		shopifyConfig := shopify.InitConfigShopify("")
 		if !shopifyConfig.Valid {
 			RespondWithError(c, http.StatusInternalServerError, "invalid shopify config")
 			return

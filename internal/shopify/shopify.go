@@ -27,7 +27,7 @@ type ConfigShopify struct {
 }
 
 // Deletes a webhook on Shopify
-func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id string) (any, error) {
+func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id string) (string, error) {
 	res, err := configShopify.FetchHelper(
 		"webhooks/"+shopify_webhook_id+".json",
 		http.MethodDelete,
@@ -653,7 +653,7 @@ func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.Respons
 }
 
 // Initiates the connection string for shopify
-func InitConfigShopify() ConfigShopify {
+func InitConfigShopify(apiURL string) ConfigShopify {
 	store_name := utils.LoadEnv("store_name")
 	api_key := utils.LoadEnv("api_key")
 	api_password := utils.LoadEnv("api_password")
@@ -662,11 +662,15 @@ func InitConfigShopify() ConfigShopify {
 	if !validation {
 		log.Println("Error setting up connection string for Shopify")
 	}
+	url := "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + version
+	if apiURL != "" {
+		url = apiURL
+	}
 	return ConfigShopify{
 		APIKey:      api_key,
 		APIPassword: api_password,
 		Version:     version,
-		Url:         "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + version,
+		Url:         url,
 		Valid:       validation,
 	}
 }
