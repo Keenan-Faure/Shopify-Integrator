@@ -123,15 +123,14 @@ func TestCSVProductHeaders(t *testing.T) {
 
 func TestCSVProductValuesByVariant(t *testing.T) {
 	// Test Case 1 - valid request parameters | no pricing | no qty | no images | empty product
-	product := objects.Product{}
-	result := CSVProductValuesByVariant(product, objects.ProductVariant{}, 0, 0, 0)
+	result := CSVProductValuesByVariant(objects.Product{}, objects.ProductVariant{}, 0, 0, 0)
 
 	assert.Equal(t, result[1], "")
 	assert.Equal(t, result[3], "")
 	assert.Equal(t, len(result), 16)
 
 	// Test Case 2 - valid request parameters | varying maximums
-	product = ProductPayload("test-case-valid-product.json")
+	product := ProductPayload("test-case-valid-product.json")
 
 	result = CSVProductValuesByVariant(product, product.Variants[0], 1, 0, 1)
 	assert.Equal(t, result[1], "product_code")
@@ -139,7 +138,6 @@ func TestCSVProductValuesByVariant(t *testing.T) {
 	assert.Equal(t, len(result), 19)
 
 	// Test Case 3 - valid request
-	product = ProductPayload("test-case-valid-product.json")
 	result = CSVProductValuesByVariant(product, product.Variants[0], 1, 1, 1)
 	assert.Equal(t, result[2], "1")
 	assert.Equal(t, result[4], "<p>I am a body_html</p>")
@@ -149,32 +147,141 @@ func TestCSVProductValuesByVariant(t *testing.T) {
 
 func TestCSVProductVariant(t *testing.T) {
 	// Test Case 1 - invalid variant data
+	productVariant := objects.ProductVariant{}
+	result := CSVProductVariant(productVariant)
+
+	assert.Equal(t, result[0], "")
+	assert.Equal(t, result[1], "")
+	assert.Equal(t, len(result), 2)
 
 	// Test Case 2 - valid variant data
+	result = CSVProductVariant(ProductPayload("test-case-valid-product.json").Variants[0])
+
+	assert.Equal(t, result[0], "product_sku")
+	assert.Equal(t, result[1], "2347234-9824")
+	assert.Equal(t, len(result), 2)
 }
 
 func TestCSVVariantOptions(t *testing.T) {
+	// Test Case 1 - invalid data | empty struct
+	result := CSVVariantOptions(objects.Product{}, objects.ProductVariant{})
 
+	assert.Equal(t, result[0], "")
+	assert.Equal(t, result[1], "")
+	assert.Equal(t, len(result), 6)
+
+	// Test Case 2 - valid data
+	product := ProductPayload("test-case-valid-product.json")
+	result = CSVVariantOptions(product, product.Variants[0])
+
+	assert.Equal(t, result[0], "Size")
+	assert.Equal(t, result[1], "option1")
+	assert.Equal(t, result[2], "Colour")
+	assert.Equal(t, result[3], "option2")
+	assert.Equal(t, result[4], "Fabric")
+	assert.Equal(t, result[5], "option3")
+	assert.Equal(t, len(result), 6)
 }
 
 func TestGenerateProductOptions(t *testing.T) {
-
+	// static function, nothing to test
+	// Test Case 1
+	result := generateProductOptions()
+	assert.Equal(t, result[0], "option1_name")
+	assert.Equal(t, result[1], "option1_value")
+	assert.Equal(t, result[2], "option2_name")
+	assert.Equal(t, result[3], "option2_value")
+	assert.Equal(t, result[4], "option3_name")
+	assert.Equal(t, result[5], "option3_value")
+	assert.Equal(t, len(result), 6)
 }
 
 func TestGetVariantQtyCSV(t *testing.T) {
+	// Test Case 1 - invalid data
+	result := getVariantQtyCSV(objects.ProductVariant{}, 0)
+	assert.Equal(t, len(result), 0)
 
+	// Test Case 2 - valid data | lower qty max
+	productVariant := ProductPayload("test-case-valid-product.json").Variants[0]
+	result = getVariantQtyCSV(productVariant, 1)
+	assert.Equal(t, result[0], "123")
+	assert.Equal(t, len(result), 1)
+
+	// Test Case 3  - valid data | higher qty max
+	result = getVariantQtyCSV(productVariant, 3)
+	assert.Equal(t, result[0], "123")
+	assert.Equal(t, result[1], "0")
+	assert.Equal(t, result[2], "0")
+	assert.Equal(t, len(result), 3)
 }
 
 func TestGetVariantPricingCSV(t *testing.T) {
+	// Test Case 1 - invalid data
+	result := getVariantPricingCSV(objects.ProductVariant{}, 0)
+	assert.Equal(t, len(result), 0)
 
+	// Test Case 2 - valid data | lower pricing max
+	productVariant := ProductPayload("test-case-valid-product.json").Variants[0]
+	result = getVariantPricingCSV(productVariant, 1)
+	assert.Equal(t, result[0], "1500.99")
+	assert.Equal(t, len(result), 1)
+
+	// Test Case 3  - valid data | higher pricing max
+	result = getVariantPricingCSV(productVariant, 3)
+	assert.Equal(t, result[0], "1500.99")
+	assert.Equal(t, result[1], "0.00")
+	assert.Equal(t, result[2], "0.00")
+	assert.Equal(t, len(result), 3)
 }
 
 func TestGetProductImagesCSV(t *testing.T) {
+	// Test Case 1 - invalid product images | no key
+	result := GetProductImagesCSV([]objects.ProductImages{}, 0, false)
+	assert.Equal(t, len(result), 0)
 
+	// Test Case 2 - invalid product images | key
+	result = GetProductImagesCSV([]objects.ProductImages{}, 0, true)
+	assert.Equal(t, len(result), 0)
+
+	// Test Case 3 - invalid product images | key | lower max
+	result = GetProductImagesCSV([]objects.ProductImages{}, 1, false)
+	assert.Equal(t, result[0], "")
+	assert.Equal(t, len(result), 1)
+
+	// Test Case 4 - invalid product images | key | higher max
+	result = GetProductImagesCSV([]objects.ProductImages{}, 3, true)
+	assert.Equal(t, result[0], "image_1")
+	assert.Equal(t, result[1], "image_2")
+	assert.Equal(t, result[2], "image_3")
+	assert.Equal(t, len(result), 3)
+
+	// Test Case 5 - valid product images | no key
+	productImages := ProductPayload("test-case-valid-product.json").ProductImages
+	result = GetProductImagesCSV(productImages, 0, false)
+	assert.Equal(t, result[0], "")
+	assert.Equal(t, len(result), 1)
+
+	// Test Case 6 - valid product images | key | zero max
+	result = GetProductImagesCSV(productImages, 0, true)
+	assert.Equal(t, len(result), 0)
+
+	// Test Case 7 - invalid product images | low max
+	result = GetProductImagesCSV(productImages, 1, true)
+	assert.Equal(t, result[0], "image_1")
+	assert.Equal(t, len(result), 1)
+
+	// Test Case 8 - invalid product images | high max
+	result = GetProductImagesCSV(productImages, 3, true)
+	assert.Equal(t, result[0], "image_1")
+	assert.Equal(t, result[1], "image_2")
+	assert.Equal(t, result[2], "image_3")
+	assert.Equal(t, len(result), 3)
 }
 
 func TestWriteFile(t *testing.T) {
+	// Test Case 1 - with empty data
 
+	// Test Case 2 - with valid data
 }
 
 func TestReadFile(t *testing.T) {
