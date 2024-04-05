@@ -18,6 +18,7 @@ import (
 const MOCK_REQUEST_URL = "http://mock.localhost:9876"
 const MOCK_REQUEST_METHOD = http.MethodPost
 const MOCK_REQUEST_FORM_KEY = "file"
+const MOCK_WRITE_FILE_NAME = "test_file_writer_name"
 
 func TestUploadFile(t *testing.T) {
 	// Test Case 1 - invalid content-type
@@ -280,20 +281,73 @@ func TestGetProductImagesCSV(t *testing.T) {
 
 func TestWriteFile(t *testing.T) {
 	// Test Case 1 - with empty data
-
-	// Test Case 2 - with valid data
+	fileData := [][]string{}
+	result, err := WriteFile(fileData, MOCK_WRITE_FILE_NAME)
+	assert.Equal(t, result, "")
+	assert.Equal(t, err, nil)
+	err = RemoveFile(MOCK_WRITE_FILE_NAME + ".csv")
+	assert.Equal(t, err, nil)
+	// Test Case 2 - with some data
+	fileData = [][]string{
+		{"header1", "header2", "header3", "header4"},
+		{"value1", "value2", "value3", "value4"},
+	}
+	result, err = WriteFile(fileData, MOCK_WRITE_FILE_NAME)
+	assert.Equal(t, result, "")
+	assert.Equal(t, err, nil)
+	err = RemoveFile(MOCK_WRITE_FILE_NAME + ".csv")
+	assert.Equal(t, err, nil)
 }
 
 func TestReadFile(t *testing.T) {
+	// Test Case 1 - read invalid file (empty string)
+	result, err := ReadFile("")
+	assert.Equal(t, len(result), 0)
+	assert.Equal(t, err.Error(), "invalid file")
 
+	// Test Case 2 - read valid file but empty
+	result, err = ReadFile("./test_payloads/readfile/test-case-empty-file.csv")
+	assert.Equal(t, len(result), 0)
+	assert.Equal(t, err.Error(), "empty csv file given")
+
+	// Test Case 3 - read valid file with invalid header data
+	result, err = ReadFile("./test_payloads/readfile/test-case-invalid-headers.csv")
+	assert.Equal(t, len(result), 1)
+	assert.Equal(t, result[0].Active, "")
+	assert.Equal(t, result[0].Barcode, "")
+	assert.Equal(t, result[0].ProductCode, "")
+	assert.Equal(t, err, nil)
+
+	// Test Case 3 - read valid file with product data
+	result, err = ReadFile("./test_payloads/readfile/test-case-valid-data.csv")
+	assert.Equal(t, len(result), 1)
+	assert.Equal(t, result[0].Title, "product_title")
+	assert.Equal(t, result[0].BodyHTML, "<p>I am a body_html</p>")
+	assert.Equal(t, result[0].Vendor, "product_vendor")
+	assert.Equal(t, err, nil)
 }
 
 func TestRemoveFile(t *testing.T) {
+	// Test Case 1 - file does not exist
+	result := RemoveFile("")
+	assert.Equal(t, "remove : no such file or directory", result.Error())
 
+	// Test Case 2 - valid string, but file does not exist
+	result = RemoveFile("test-abc-123-456.csf")
+	assert.Equal(t, "remove test-abc-123-456.csf: no such file or directory", result.Error())
+
+	// Test Case 2 - file exists
+	WriteFile([][]string{}, MOCK_WRITE_FILE_NAME)
+	result = RemoveFile(MOCK_WRITE_FILE_NAME + ".csv")
+	log.Println(result)
 }
 
 func TestGetKeysByMatcher(t *testing.T) {
+	// Test Case 1 - no matches
 
+	// Test Case 2 - empty array, empty key
+
+	// Test Case 3 - matches found
 }
 
 func TestLoopRemoveCSV(t *testing.T) {

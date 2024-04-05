@@ -1,0 +1,2 @@
+product_code_test,active_test,title_test,body_html_test,category_test,vendor_test,product_type_test,sku_test,barcode_test,option1_name_test,option1_value_test,option2_name_test,option2_value_test,option3_name_test,option3_value_test,price_Selling Price_test
+product_code,,product_title,<p>I am a body_html</p>,product_category,product_vendor,product_product_type,product_sku,2347234-9824,Size,option1,Colour,option2,Fabric,option3,1500.99
