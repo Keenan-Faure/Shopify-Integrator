@@ -344,14 +344,28 @@ func TestRemoveFile(t *testing.T) {
 
 func TestGetKeysByMatcher(t *testing.T) {
 	// Test Case 1 - no matches
+	headers := []string{"product_code", "active", "title", "body_html", "category",
+		"vendor", "product_type", "sku", "barcode", "option1_name", "option1_value",
+		"option2_name", "option2_value", "option3_name", "option3_value", "price_Selling Price"}
+	result := GetKeysByMatcher(headers, "")
+	assert.Equal(t, len(result), 16)
 
-	// Test Case 2 - empty array, empty key
+	// Test Case 2 - empty array | empty key
+	result = GetKeysByMatcher([]string{}, "")
+	assert.Equal(t, len(result), 0)
+
+	// Test Case 3 - empty array | valid key
+	result = GetKeysByMatcher([]string{}, "product_code")
+	assert.Equal(t, len(result), 0)
 
 	// Test Case 3 - matches found
+	result = GetKeysByMatcher(headers, "active")
+	assert.Equal(t, len(result), 1)
 }
 
 func TestLoopRemoveCSV(t *testing.T) {
-
+	// TODO
+	// not sure how to test a Goroutine yet
 }
 
 // Creates a mock HTTP request
