@@ -654,23 +654,28 @@ func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.Respons
 
 // Initiates the connection string for shopify
 func InitConfigShopify(apiURL string) ConfigShopify {
+	if apiURL != "" {
+		return ConfigShopify{
+			APIKey:      "",
+			APIPassword: "",
+			Version:     "",
+			Url:         apiURL,
+			Valid:       true,
+		}
+	}
 	store_name := utils.LoadEnv("store_name")
 	api_key := utils.LoadEnv("api_key")
 	api_password := utils.LoadEnv("api_password")
-	version := utils.LoadEnv("api_version")
+	api_version := utils.LoadEnv("api_version")
 	validation := ValidateConfigShopify(store_name, api_key, api_password)
 	if !validation {
 		log.Println("Error setting up connection string for Shopify")
 	}
-	url := "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + version
-	if apiURL != "" {
-		url = apiURL
-	}
 	return ConfigShopify{
 		APIKey:      api_key,
 		APIPassword: api_password,
-		Version:     version,
-		Url:         url,
+		Version:     api_version,
+		Url:         "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + api_version,
 		Valid:       validation,
 	}
 }
