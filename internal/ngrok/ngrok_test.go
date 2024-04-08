@@ -104,7 +104,7 @@ func TestFetchNgrokTunnels(t *testing.T) {
 	assert.Equal(t, "/api/tunnels", response.URI)
 }
 
-/* Returns a test user RequestBodyRegister struct */
+/* Returns test ngrok payload struct */
 func CreateTestNgrokPayload(fileName string) objects.NgrokTunnelResponse {
 	fileBytes := payload("./test_payloads/" + fileName)
 	ngrokTunnelResponse := objects.NgrokTunnelResponse{}

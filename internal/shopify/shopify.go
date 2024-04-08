@@ -47,7 +47,7 @@ func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id stri
 	return "", nil
 }
 
-// Deletes a webhook on Shopify
+// Updates a webhook on Shopify
 func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	shopify_webhook_id,
 	webhook_url string,
@@ -55,6 +55,9 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	int_webhook_id, err := strconv.Atoi(shopify_webhook_id)
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
+	}
+	if webhook_url == "" || len(webhook_url) == 0 {
+		return objects.ShopifyWebhookRequest{}, errors.New("invalid webhook url not allowed")
 	}
 	webhook := objects.ShopifyWebhookRequest{
 		ShopifyWebhook: objects.ShopifyWebhook{
@@ -70,7 +73,7 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	res, err := configShopify.FetchHelper(
 		"webhooks.json",
 		http.MethodPut,
-		nil,
+		&buffer,
 	)
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
@@ -80,7 +83,7 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
 	}
-	if res.StatusCode != 201 {
+	if res.StatusCode != 200 {
 		return objects.ShopifyWebhookRequest{}, errors.New(string(respBody))
 	}
 	response := objects.ShopifyWebhookRequest{}
@@ -94,6 +97,9 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 // Creates a webhook on Shopify
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/webhook#post-webhooks
 func (configShopify *ConfigShopify) CreateShopifyWebhook(webhook_url string) (objects.ShopifyWebhookRequest, error) {
+	if webhook_url == "" || len(webhook_url) == 0 {
+		return objects.ShopifyWebhookRequest{}, errors.New("invalid webhook url not allowed")
+	}
 	webhook := objects.ShopifyWebhookRequest{
 		ShopifyWebhook: objects.ShopifyWebhook{
 			Address: webhook_url,
@@ -132,27 +138,27 @@ func (configShopify *ConfigShopify) CreateShopifyWebhook(webhook_url string) (ob
 
 // Retrieves a list of webhooks on Shopify
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/webhook#get-webhooks
-func (configShopify *ConfigShopify) GetShopifyWebhooks() ([]objects.ShopifyWebhookResponse, error) {
+func (configShopify *ConfigShopify) GetShopifyWebhooks() (objects.ShopifyWebhookResponse, error) {
 	res, err := configShopify.FetchHelper(
 		"webhooks.json?topic=orders/updated",
 		http.MethodGet,
 		nil,
 	)
 	if err != nil {
-		return []objects.ShopifyWebhookResponse{}, err
+		return objects.ShopifyWebhookResponse{}, err
 	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return []objects.ShopifyWebhookResponse{}, err
+		return objects.ShopifyWebhookResponse{}, err
 	}
 	if res.StatusCode != 200 {
-		return []objects.ShopifyWebhookResponse{}, errors.New(string(respBody))
+		return objects.ShopifyWebhookResponse{}, errors.New(string(respBody))
 	}
-	response := []objects.ShopifyWebhookResponse{}
+	response := objects.ShopifyWebhookResponse{}
 	err = json.Unmarshal(respBody, &response)
 	if err != nil {
-		return []objects.ShopifyWebhookResponse{}, err
+		return objects.ShopifyWebhookResponse{}, err
 	}
 	return response, nil
 }
