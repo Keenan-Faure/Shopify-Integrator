@@ -1,0 +1,32 @@
+{
+    "inventory_levels": [
+        {
+            "inventory_item_id": 23087120381,
+            "location_id": 10293810823,
+            "available": 2,
+            "updated_at": "2024-04-01T13:24:55-04:00",
+            "admin_graphql_api_id": "gid://shopify/InventoryLevel/655441491?inventory_item_id=49148385"
+        },
+        {
+            "inventory_item_id": 808950810,
+            "location_id": 655441491,
+            "available": 1,
+            "updated_at": "2024-04-01T13:24:55-04:00",
+            "admin_graphql_api_id": "gid://shopify/InventoryLevel/655441491?inventory_item_id=808950810"
+        },
+        {
+            "inventory_item_id": 457924702,
+            "location_id": 655441491,
+            "available": 4,
+            "updated_at": "2024-04-01T13:24:55-04:00",
+            "admin_graphql_api_id": "gid://shopify/InventoryLevel/655441491?inventory_item_id=457924702"
+        },
+        {
+            "inventory_item_id": 39072856,
+            "location_id": 655441491,
+            "available": 3,
+            "updated_at": "2024-04-01T13:24:55-04:00",
+            "admin_graphql_api_id": "gid://shopify/InventoryLevel/655441491?inventory_item_id=39072856"
+        }
+    ]
+}
