@@ -191,7 +191,7 @@ func (configShopify *ConfigShopify) GetShopifyProductCount() (objects.ShopifyPro
 }
 
 // Retrieves a list of locations
-// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location#get-locations
 func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocations, error) {
 	res, err := configShopify.FetchHelper(
 		"locations.json",
@@ -222,6 +222,12 @@ func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocati
 func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevels, error) {
+	if location_id == "" {
+		return objects.GetShopifyInventoryLevels{}, errors.New("invalid location id not allowed")
+	}
+	if inventory_item_id == "" {
+		return objects.GetShopifyInventoryLevels{}, errors.New("invalid inventory item id not allowed")
+	}
 	res, err := configShopify.FetchHelper(
 		"inventory_levels.json?location_ids="+location_id+"&inventory_item_ids="+inventory_item_id,
 		http.MethodGet,
@@ -251,6 +257,12 @@ func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevelsList, error) {
+	if location_id == "" {
+		return objects.GetShopifyInventoryLevelsList{}, errors.New("invalid location id not allowed")
+	}
+	if inventory_item_id == "" {
+		return objects.GetShopifyInventoryLevelsList{}, errors.New("invalid inventory item id not allowed")
+	}
 	res, err := configShopify.FetchHelper(
 		"inventory_levels.json?location_ids="+location_id+"&inventory_item_ids="+inventory_item_id,
 		http.MethodGet,
@@ -275,29 +287,6 @@ func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
 	return response, nil
 }
 
-// Fetches all locations from Shopify:
-// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location#get-locations
-func (configShopify *ConfigShopify) GetLocationsShopify() (objects.ResponseShopifyGetLocations, error) {
-	res, err := configShopify.FetchHelper("locations.json", http.MethodGet, nil)
-	if err != nil {
-		return objects.ResponseShopifyGetLocations{}, err
-	}
-	defer res.Body.Close()
-	respBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return objects.ResponseShopifyGetLocations{}, err
-	}
-	if res.StatusCode != 200 {
-		return objects.ResponseShopifyGetLocations{}, errors.New(string(respBody))
-	}
-	locations := objects.ResponseShopifyGetLocations{}
-	err = json.Unmarshal(respBody, &locations)
-	if err != nil {
-		return objects.ResponseShopifyGetLocations{}, err
-	}
-	return locations, nil
-}
-
 // Adjusts the inventory level of an inventory item at a location
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#post-inventory-levels-adjust
 func (configShopify *ConfigShopify) AddLocationQtyShopify(
@@ -306,6 +295,12 @@ func (configShopify *ConfigShopify) AddLocationQtyShopify(
 		LocationID:          location_id,
 		InventoryItemID:     inventory_item_id,
 		AvailableAdjustment: qty,
+	}
+	if location_id == 0 {
+		return objects.ResponseAddInventoryItem{}, errors.New("invalid location id not allowed")
+	}
+	if inventory_item_id == 0 {
+		return objects.ResponseAddInventoryItem{}, errors.New("invalid inventory item id not allowed")
 	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(inventory_adjustment)
@@ -364,8 +359,6 @@ func (configShopify *ConfigShopify) AddInventoryItemToLocation(
 	}
 	return response, nil
 }
-
-// TODO log the fetch errors?
 
 // Adds a product to Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product#post-products
