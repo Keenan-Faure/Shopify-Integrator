@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"integrator/internal/database"
 	"io"
 	"log"
@@ -22,11 +21,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const PRODUCT_CODE = "product_code"
-const PRODUCT_CODE_SIMPLE = "product_code_simple"
-const WEB_CUSTOMER_CODE = "TestFirstName TestLastName"
-const ORDER_WEB_CODE = "#999999"
-const WAREHOUSE_NAME = "TestHouse"
+const MOCK_PRODUCT_CODE = "product_code"
+const MOCK_PRODUCT_CODE_SIMPLE = "product_code_simple"
+const MOCK_WEB_CUSTOMER_CODE = "TestFirstName TestLastName"
+const MOCK_ORDER_WEB_CODE = "#999999"
+const MOCK_WAREHOUSE_NAME = "TestHouse"
 
 func TestAddAppSetting(t *testing.T) {
 	/* Test 1 - invalid authentication */
@@ -1482,7 +1481,7 @@ func TestOrderSearchHandle(t *testing.T) {
 	/* Test 4 - valid request | results */
 	createDatabaseOrder(&dbconfig)
 	w = Init(
-		"/api/orders/search?q=%23"+ORDER_WEB_CODE[1:]+"&api_key="+dbUser.ApiKey,
+		"/api/orders/search?q=%23"+MOCK_ORDER_WEB_CODE[1:]+"&api_key="+dbUser.ApiKey,
 		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
 	)
 
@@ -2467,29 +2466,6 @@ func CreateMultiPartFormData(fileName, formKey string) (*multipart.Writer, bytes
 	return w, buf
 }
 
-/*
-Creates a queue item inside the queue of the respective queue_type
-
-Data is retrived from the project directory `test_payloads`
-*/
-func createQueueItem(queue_type string) objects.RequestQueueItem {
-	file, err := os.Open("./test_payloads/queue/queue_" + queue_type + ".json")
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer file.Close()
-	respBody, err := io.ReadAll(file)
-	if err != nil {
-		fmt.Println(err)
-	}
-	orderData := objects.RequestQueueItem{}
-	err = json.Unmarshal(respBody, &orderData)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return orderData
-}
-
 /* Returns a warehouse request body struct */
 func AppSettingsPayload(fileName string) []objects.RequestSettings {
 	fileBytes := payload("./test_payloads/tests/app-settings/" + fileName)
@@ -2666,7 +2642,7 @@ func payload(filePath string) []byte {
 Creates a global warehouse in the database
 */
 func createDatabaseGlobalWarehouse(dbconfig *DbConfig) uuid.UUID {
-	warehouseName, err := dbconfig.DB.GetWarehouseByName(context.Background(), WAREHOUSE_NAME)
+	warehouseName, err := dbconfig.DB.GetWarehouseByName(context.Background(), MOCK_WAREHOUSE_NAME)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println(err)
@@ -2675,13 +2651,13 @@ func createDatabaseGlobalWarehouse(dbconfig *DbConfig) uuid.UUID {
 	}
 	if warehouseName.ID == uuid.Nil {
 		// warehouse := WarehousePayload("test-case-valid-warehouse.json")
-		_, err = AddGlobalWarehouse(dbconfig, context.Background(), WAREHOUSE_NAME, false)
+		_, err = AddGlobalWarehouse(dbconfig, context.Background(), MOCK_WAREHOUSE_NAME, false)
 		if err != nil {
 			log.Println(err)
 			return uuid.Nil
 		}
 		// warehouse.Name is the same as WAREHOUSE_NAME
-		dbWarehouse, err := dbconfig.DB.GetWarehouseByName(context.Background(), WAREHOUSE_NAME)
+		dbWarehouse, err := dbconfig.DB.GetWarehouseByName(context.Background(), MOCK_WAREHOUSE_NAME)
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
 				log.Println(err)
@@ -2749,7 +2725,7 @@ func CreateFetchStat(dbconfig *DbConfig) {
 Creates a warehouse-location map in the database
 */
 func createDatabaseLocationWarehouse(dbconfig *DbConfig) uuid.UUID {
-	warehouseLocation, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), WAREHOUSE_NAME)
+	warehouseLocation, err := dbconfig.DB.GetShopifyLocationByWarehouse(context.Background(), MOCK_WAREHOUSE_NAME)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println(err)
@@ -2795,7 +2771,7 @@ func createDatabaseProduct(dbconfig *DbConfig) uuid.UUID {
 Creates a test user in the database
 */
 func createDatabaseCustomer(dbconfig *DbConfig) uuid.UUID {
-	customer, err := dbconfig.DB.GetCustomerByWebCode(context.Background(), WEB_CUSTOMER_CODE)
+	customer, err := dbconfig.DB.GetCustomerByWebCode(context.Background(), MOCK_WEB_CUSTOMER_CODE)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println(err)
@@ -2910,30 +2886,30 @@ func ClearFetchStatData(dbconfig *DbConfig) {
 }
 
 func ClearTestData(dbconfig *DbConfig) {
-	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE_SIMPLE)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
-	dbconfig.DB.RemoveOrderByWebCode(context.Background(), ORDER_WEB_CODE)
+	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), MOCK_WEB_CUSTOMER_CODE)
+	dbconfig.DB.RemoveProductByCode(context.Background(), MOCK_PRODUCT_CODE_SIMPLE)
+	dbconfig.DB.RemoveProductByCode(context.Background(), MOCK_PRODUCT_CODE)
+	dbconfig.DB.RemoveOrderByWebCode(context.Background(), MOCK_ORDER_WEB_CODE)
 }
 
 func ClearOrderTestData(dbconfig *DbConfig) {
-	dbconfig.DB.RemoveOrderByWebCode(context.Background(), ORDER_WEB_CODE)
-	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
+	dbconfig.DB.RemoveOrderByWebCode(context.Background(), MOCK_ORDER_WEB_CODE)
+	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), MOCK_WEB_CUSTOMER_CODE)
 }
 
 func ClearProductTestData(dbconfig *DbConfig) {
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE_SIMPLE)
-	dbconfig.DB.RemoveProductByCode(context.Background(), PRODUCT_CODE)
+	dbconfig.DB.RemoveProductByCode(context.Background(), MOCK_PRODUCT_CODE_SIMPLE)
+	dbconfig.DB.RemoveProductByCode(context.Background(), MOCK_PRODUCT_CODE)
 	os.RemoveAll("./import")
 }
 
 func ClearCustomerTestData(dbconfig *DbConfig) {
-	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), WEB_CUSTOMER_CODE)
+	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), MOCK_WEB_CUSTOMER_CODE)
 }
 
 func ClearWarehouseLocationData(dbconfig *DbConfig) {
-	dbconfig.DB.RemoveWarehouseByName(context.Background(), WAREHOUSE_NAME)
-	dbconfig.DB.RemoveShopifyLocationMapByWarehouse(context.Background(), WAREHOUSE_NAME)
+	dbconfig.DB.RemoveWarehouseByName(context.Background(), MOCK_WAREHOUSE_NAME)
+	dbconfig.DB.RemoveShopifyLocationMapByWarehouse(context.Background(), MOCK_WAREHOUSE_NAME)
 }
 
 func Init(

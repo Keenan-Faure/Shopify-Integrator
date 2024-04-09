@@ -1616,7 +1616,7 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			token_value = dbTokenDetails.Token
 		}
 		if mockRequest != "true" {
-			err = Email(token_value, request_body.Email, request_body.Name)
+			err = Email(token_value, true, request_body.Email, request_body.Name)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
