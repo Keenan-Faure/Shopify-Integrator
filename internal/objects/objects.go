@@ -249,6 +249,47 @@ type ResponseIDs struct {
 	VariantID string `json:"variant_id"`
 }
 
+type ResponseShopifyGraphQL struct {
+	ProductVariants struct {
+		Edges []struct {
+			Node struct {
+				Sku     string
+				Id      string
+				Product struct {
+					Id string
+				}
+			}
+		}
+	} `graphql:"productVariants(query: $sku, first: 1)"`
+}
+
+type JSONResponseShopifyGraphQL struct {
+	Data struct {
+		ProductVariants struct {
+			Edges []struct {
+				Node struct {
+					ID      string `json:"id"`
+					Sku     string `json:"sku"`
+					Product struct {
+						ID string `json:"id"`
+					} `json:"product"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"productVariants"`
+	} `json:"data"`
+	Extensions struct {
+		Cost struct {
+			RequestedQueryCost int `json:"requestedQueryCost"`
+			ActualQueryCost    int `json:"actualQueryCost"`
+			ThrottleStatus     struct {
+				MaximumAvailable   float64 `json:"maximumAvailable"`
+				CurrentlyAvailable int     `json:"currentlyAvailable"`
+				RestoreRate        float64 `json:"restoreRate"`
+			} `json:"throttleStatus"`
+		} `json:"cost"`
+	} `json:"extensions"`
+}
+
 type ResponseAddInventoryItem struct {
 	InventoryLevel struct {
 		InventoryItemID   int    `json:"inventory_item_id"`
