@@ -390,13 +390,16 @@ func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.Sho
 
 // Updates a product on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product#put-products-product-id
-func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.ShopifyProduct, id string) (objects.ShopifyProductResponse, error) {
+func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.ShopifyProduct, product_id string) (objects.ShopifyProductResponse, error) {
+	if product_id == "" || len(product_id) == 0 {
+		return objects.ShopifyProductResponse{}, errors.New("invalid product id not allowed")
+	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
 	if err != nil {
 		return objects.ShopifyProductResponse{}, err
 	}
-	res, err := configShopify.FetchHelper("products/"+id+".json", http.MethodPut, &buffer)
+	res, err := configShopify.FetchHelper("products/"+product_id+".json", http.MethodPut, &buffer)
 	if err != nil {
 		return objects.ShopifyProductResponse{}, err
 	}
@@ -423,6 +426,9 @@ func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.
 func (configShopify *ConfigShopify) AddVariantShopify(
 	variant objects.ShopifyVariant,
 	product_id string) (objects.ShopifyVariantResponse, error) {
+	if product_id == "" || len(product_id) == 0 {
+		return objects.ShopifyVariantResponse{}, errors.New("invalid product id not allowed")
+	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
 	if err != nil {
@@ -453,6 +459,9 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 func (configShopify *ConfigShopify) UpdateVariantShopify(
 	variant any,
 	variant_id string) (objects.ShopifyVariantResponse, error) {
+	if variant_id == "" || len(variant_id) == 0 {
+		return objects.ShopifyVariantResponse{}, errors.New("invalid variant id not allowed")
+	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
 	if err != nil {
@@ -484,6 +493,12 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(
 func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 	product_id,
 	collection_id int) (objects.ResponseAddProductToShopifyCollection, error) {
+	if product_id == 0 {
+		return objects.ResponseAddProductToShopifyCollection{}, errors.New("invalid product id not allowed")
+	}
+	if collection_id == 0 {
+		return objects.ResponseAddProductToShopifyCollection{}, errors.New("invalid collection id not allowed")
+	}
 	collection := objects.AddProducToShopifyCollection{
 		Collect: struct {
 			ProductID    int "json:\"product_id\""
@@ -522,6 +537,9 @@ func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 // Adds a custom collection to Shopify
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#post-custom-collections
 func (configShopify *ConfigShopify) AddCustomCollectionShopify(collection string) (int, error) {
+	if collection == "" || len(collection) == 0 {
+		return 0, errors.New("invalid collection id not allowed")
+	}
 	shopify_collection := objects.AddShopifyCustomCollection{
 		CustomCollection: struct {
 			Title string "json:\"title\""
@@ -585,6 +603,9 @@ func (configShopify *ConfigShopify) GetShopifyCategories() (objects.ResponseGetC
 // used for shopify_fetch.go
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#get-custom-collections
 func (configShopify *ConfigShopify) GetShopifyCategoryByProductID(product_id string) (objects.ResponseGetCustomCollections, error) {
+	if product_id == "" || len(product_id) == 0 {
+		return objects.ResponseGetCustomCollections{}, errors.New("invalid product id not allowed")
+	}
 	res, err := configShopify.FetchHelper("custom_collections.json?fields=title,id&product_id="+product_id, http.MethodGet, nil)
 	if err != nil {
 		return objects.ResponseGetCustomCollections{}, err
@@ -619,32 +640,23 @@ func (configShopify *ConfigShopify) CategoryExists(product objects.Product, cate
 
 // Checks if the product SKU exists on the website
 func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.ResponseIDs, error) {
+	if sku == "" || len(sku) == 0 {
+		return objects.ResponseIDs{}, errors.New("invalid sku not allowed")
+	}
 	client := graphql.NewClient(configShopify.Url+"/graphql.json", nil)
 	variables := map[string]any{
 		"sku": "sku:" + graphql.String(sku),
 	}
-	var respData struct {
-		ProductVariants struct {
-			Edges []struct {
-				Node struct {
-					Sku     string
-					Id      string
-					Product struct {
-						Id string
-					}
-				}
-			}
-		} `graphql:"productVariants(query: $sku, first: 1)"`
-	}
-	err := client.Query(context.Background(), &respData, variables)
+	graphQL := objects.ResponseShopifyGraphQL{}
+	err := client.Query(context.Background(), &graphQL, variables)
 	if err != nil {
 		return objects.ResponseIDs{}, err
 	}
-	for _, value := range respData.ProductVariants.Edges {
+	for _, value := range graphQL.ProductVariants.Edges {
 		if value.Node.Sku == sku {
 			return objects.ResponseIDs{
-				VariantID: utils.ExtractVID(respData.ProductVariants.Edges[0].Node.Id),
-				ProductID: utils.ExtractPID(respData.ProductVariants.Edges[0].Node.Product.Id),
+				VariantID: utils.ExtractVID(graphQL.ProductVariants.Edges[0].Node.Id),
+				ProductID: utils.ExtractPID(graphQL.ProductVariants.Edges[0].Node.Product.Id),
 			}, nil
 		}
 	}
