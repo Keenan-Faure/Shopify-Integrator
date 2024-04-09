@@ -1,0 +1,28 @@
+{
+    "data": {
+        "productVariants": {
+            "edges": [
+                {
+                    "node": {
+                        "id": "gid://shopify/ProductVariant/40733561880637",
+                        "sku": "MOCK_PRODUCT_SKU",
+                        "product": {
+                            "id": "gid://shopify/Product/7073518321725"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "extensions": {
+        "cost": {
+            "requestedQueryCost": 10,
+            "actualQueryCost": 4,
+            "throttleStatus": {
+                "maximumAvailable": 2000.0,
+                "currentlyAvailable": 1996,
+                "restoreRate": 100.0
+            }
+        }
+    }
+}
