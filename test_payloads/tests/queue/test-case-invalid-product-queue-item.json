@@ -1,0 +1,13 @@
+{
+    "id": "66608bb9-6bef-4424-b48f-59f487ec2933",
+    "queue_type": "product",
+    "instruction": "add_product",
+    "status": "in-queue",
+    "object": {
+        "name": "test",
+        "email": "test@test.com"
+    },
+    "created_at": "2006-01-02T15:04:05Z",
+    "updated_at": "2006-01-02T15:04:05Z",
+    "description": ""
+}

@@ -1,0 +1,34 @@
+{
+    "id": "66608bb9-6bef-4424-b48f-59f487ec2933",
+    "queue_type": "order",
+    "instruction": "add_order",
+    "status": "in-queue",
+    "object": {
+        "product_code": "product_code_simple",
+        "title": "product_title",
+        "body_html": "<p>I am a body_html</p>",
+        "category": "product_category",
+        "vendor": "product_vendor",
+        "product_type": "product_product_type",
+        "variants": [
+            {
+                "sku": "product_sku_simple",
+                "option1": "",
+                "option2": "",
+                "option3": "",
+                "barcode": "2347234-9824",
+                "variant_price_tiers": [
+                    {
+                        "name": "Selling Price",
+                        "value": "1500.99"
+                    }
+                ],
+                "variant_quantities": []
+            }
+        ],
+        "options": []
+    },
+    "created_at": "2006-01-02T15:04:05Z",
+    "updated_at": "2006-01-02T15:04:05Z",
+    "description": ""
+}
