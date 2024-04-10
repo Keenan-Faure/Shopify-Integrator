@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"objects"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -177,6 +178,72 @@ func TestDecodeQueueItemProduct(t *testing.T) {
 	assert.Equal(t, result.SystemVariantID, "8ca56b49-6655-4c98-9fa6-45804f61425d")
 	assert.Equal(t, result.Shopify.ProductID, "7127845371965")
 	assert.Equal(t, result.Shopify.VariantID, "40807533772861")
+}
+
+func TestQueueItemProductValidation(t *testing.T) {
+	// Test Case 1 - valid push restrictions
+	payload := QueueItemPayload("test-case-valid-product-queue-item.json").Object
+	productPayload, err := DecodeQueueItemProduct(payload)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: :" + err.Error())
+	}
+	valid := QueueItemProductValidation(productPayload)
+	assert.Equal(t, nil, valid)
+
+	// Test Case 2 - invalid push restrictions
+	payload = QueueItemPayload("test-case-invalid-product-queue-item.json").Object
+	productPayload, err = DecodeQueueItemProduct(payload)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: :" + err.Error())
+	}
+	valid = QueueItemProductValidation(productPayload)
+	assert.NotEqual(t, nil, valid)
+}
+
+func TestQueueItemValidation(t *testing.T) {
+	requestBody := QueuePayload("queue_add_product.json")
+	// Test 1 - empty request body
+	result := QueueItemValidation(objects.RequestQueueItem{})
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = QueueItemValidation(requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestDecodeQueueItem(t *testing.T) {
+	requestBody := QueuePayload("queue_add_product.json")
+	invalidRequestBody := AppSettingsPayload("test-case-valid-request.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodeQueueItem(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Instruction, "")
+	assert.Equal(t, result.Status, "")
+	assert.Equal(t, result.Type, "")
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodeQueueItem(request)
+	if err == nil {
+		t.Errorf("Expected 'json: cannot unmarshal array into Go value of type objects.RequestQueueItem' but found: 'nil'")
+	}
+	assert.Equal(t, result.Instruction, "")
+	assert.Equal(t, result.Status, "")
+	assert.Equal(t, result.Type, "")
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodeQueueItem(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Instruction, "add_product")
+	assert.Equal(t, result.Status, "in-queue")
+	assert.Equal(t, result.Type, "product")
 }
 
 func InitMockHttpRequest(requestBody interface{}, requestMethod, requestURL string) *http.Request {

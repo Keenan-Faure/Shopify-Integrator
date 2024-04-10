@@ -2610,6 +2610,17 @@ func UserPayload(fileName string) objects.RequestBodyRegister {
 }
 
 /* Returns a mock queue_item struct */
+func QueuePayload(fileName string) objects.RequestQueueItem {
+	fileBytes := payload("./test_payloads/queue/" + fileName)
+	queueItem := objects.RequestQueueItem{}
+	err := json.Unmarshal(fileBytes, &queueItem)
+	if err != nil {
+		log.Println(err)
+	}
+	return queueItem
+}
+
+/* Returns a mock queue_item struct */
 func QueueItemPayload(fileName string) objects.MockQueueItem {
 	fileBytes := payload("./test_payloads/tests/queue/" + fileName)
 	queueItem := objects.MockQueueItem{}
