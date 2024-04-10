@@ -386,11 +386,8 @@ func (dbconfig *DbConfig) ClearQueueByFilter() gin.HandlerFunc {
 It processes a queue item.
 
 1. First gets the next queue item to process
-
 2. Updates it status to `processing` - in a perfect world there should only be 1 of these in the queue
-
 3. Runs the function ProcessQueueItem
-
 4. If successful it marks the queue item as completed
 
 It used to be an endpoint.

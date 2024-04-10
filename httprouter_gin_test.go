@@ -2609,6 +2609,17 @@ func UserPayload(fileName string) objects.RequestBodyRegister {
 	return userRegistrationData
 }
 
+/* Returns a mock queue_item struct */
+func QueueItemPayload(fileName string) objects.MockQueueItem {
+	fileBytes := payload("./test_payloads/tests/queue/" + fileName)
+	queueItem := objects.MockQueueItem{}
+	err := json.Unmarshal(fileBytes, &queueItem)
+	if err != nil {
+		log.Println(err)
+	}
+	return queueItem
+}
+
 /* Returns a test user RequestBodyRegister struct */
 func CreateTokenPayload(fileName string) objects.RequestBodyPreRegister {
 	fileBytes := payload("./test_payloads/tests/preregister/" + fileName)

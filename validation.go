@@ -81,20 +81,6 @@ func DecodeGlobalWarehouse(dbconfig *DbConfig, r *http.Request) (objects.Request
 	return params, nil
 }
 
-// Decode: WebhookURL
-func DecodeWebhookURL(r *http.Request) (objects.RequestWebhookURL, error) {
-	decoder := json.NewDecoder(r.Body)
-	params := objects.RequestWebhookURL{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		if err.Error() == "" {
-			return params, errors.New("invalid request body")
-		}
-		return objects.RequestWebhookURL{}, err
-	}
-	return params, nil
-}
-
 // Decode: QueueItem - Order
 func DecodeQueueItemOrder(rawJSON json.RawMessage) (objects.RequestBodyOrder, error) {
 	var params objects.RequestBodyOrder
