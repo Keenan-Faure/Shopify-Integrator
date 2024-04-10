@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -244,6 +245,221 @@ func TestDecodeQueueItem(t *testing.T) {
 	assert.Equal(t, result.Instruction, "add_product")
 	assert.Equal(t, result.Status, "in-queue")
 	assert.Equal(t, result.Type, "product")
+}
+
+func TestSettingsValidation(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	requestBody := AppSettingsPayload("test-case-valid-request")
+	setting_keys, err := dbconfig.DB.GetAppSettingsList(context.Background())
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	// Test 1 - empty request body
+	result := SettingsValidation([]objects.RequestSettings{}, setting_keys)
+	assert.Equal(t, result, nil)
+
+	// Test 2 - invalid setting key
+	result = SettingsValidation([]objects.RequestSettings{
+		{
+			Key:   "mock_key",
+			Value: "mock_value",
+		},
+	}, setting_keys)
+	assert.NotEqual(t, result, nil)
+
+	// Test 3  - valid request body
+	result = SettingsValidation(requestBody, setting_keys)
+	assert.Equal(t, result, nil)
+}
+
+func TestSettingValidation(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	setting_keys, err := dbconfig.DB.GetAppSettingsList(context.Background())
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	// Test 1 - empty request body
+	result := SettingValidation(objects.RequestSettings{}, setting_keys)
+	assert.NotEqual(t, result, nil)
+
+	// Test 2 - invalid setting key
+	result = SettingValidation(objects.RequestSettings{
+		Key:   "mock_key",
+		Value: "mock_value",
+	},
+		setting_keys)
+	assert.NotEqual(t, result, nil)
+
+	// Test 3  - valid request body
+	result = SettingValidation(objects.RequestSettings{
+		Key:   "app_enable_shopify_push",
+		Value: "false",
+	}, setting_keys)
+	assert.Equal(t, result, nil)
+}
+
+func TestDecodeSettings(t *testing.T) {
+	requestBody := AppSettingsPayload("test-case-valid-request.json")
+	invalidRequestBody := ProductPayload("test-case-valid-product-simple.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodeSettings(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, len(result), 0)
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodeSettings(request)
+	if err == nil {
+		t.Errorf("Expected 'json: cannot unmarshal array into Go value of type objects.RequestBodyProduct' but found: 'nil'")
+	}
+	assert.Equal(t, len(result), 0)
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodeSettings(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, len(result), 8)
+}
+
+func TestDecodeSetting(t *testing.T) {
+	requestBody := AppSettingsPayload("test-case-valid-request.json")[0]
+	invalidRequestBody := ProductPayload("test-case-valid-product-simple.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodeSetting(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Key, "")
+	assert.Equal(t, result.Value, "")
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodeSetting(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: :" + err.Error())
+	}
+	assert.Equal(t, result.Key, "")
+	assert.Equal(t, result.Value, "")
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodeSetting(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Key, "app_queue_process_limit")
+	assert.Equal(t, result.Value, "20")
+}
+
+func TestInventoryMapValidation(t *testing.T) {
+	requestBody := WarehouseLocationPayload("test-case-valid-warehouse-location.json")
+
+	// Test 1 - empty request body
+	result := InventoryMapValidation(objects.RequestWarehouseLocation{})
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = InventoryMapValidation(requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestDecodeInventoryMap(t *testing.T) {
+	requestBody := WarehouseLocationPayload("test-case-valid-warehouse-location.json")
+	invalidRequestBody := AppSettingsPayload("test-case-valid-request.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodeInventoryMap(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.LocationID, "")
+	assert.Equal(t, result.ShopifyWarehouseName, "")
+	assert.Equal(t, result.WarehouseName, "")
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodeInventoryMap(request)
+	if err == nil {
+		t.Errorf("Expected 'json: cannot unmarshal array into Go value of type objects.RequestQueueItem' but found: 'nil'")
+	}
+	assert.Equal(t, result.LocationID, "")
+	assert.Equal(t, result.ShopifyWarehouseName, "")
+	assert.Equal(t, result.WarehouseName, "")
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodeInventoryMap(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.LocationID, "62274240573")
+	assert.Equal(t, result.ShopifyWarehouseName, "Cape Town warehouse")
+	assert.Equal(t, result.WarehouseName, "TestHouse")
+}
+
+func TestProductValidationDatabase(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	requestBody := objects.CSVProduct{
+		ProductCode:  "MOCK-PRODUCT-CODE",
+		Active:       "1",
+		Title:        "MOCK-TITLE",
+		BodyHTML:     "",
+		Category:     "MOCK-CATEGORY",
+		Vendor:       "MOCK-VENDOR",
+		ProductType:  "MOCK-PRODUCT-TYPE",
+		SKU:          "product_sku",
+		Option1Name:  "",
+		Option1Value: "",
+		Option2Name:  "",
+		Option2Value: "",
+		Option3Name:  "",
+		Option3Value: "",
+		Barcode:      "",
+		Image1:       "",
+		Image2:       "",
+		Image3:       "",
+		Warehouses:   []objects.CSVQuantity{},
+		Pricing:      []objects.CSVPricing{},
+	}
+	// Test 1 - empty request body
+	result := ProductValidationDatabase(objects.CSVProduct{}, &dbconfig)
+	assert.Equal(t, result, nil)
+
+	// Test 2  - valid request body | duplicate SKU
+	createDatabaseProduct(&dbconfig)
+	defer ClearProductTestData(&dbconfig)
+	result = ProductValidationDatabase(requestBody, &dbconfig)
+	assert.NotEqual(t, result, nil)
+
+	// this should never be a case because the struct only allows
+	// for three product options
+	// hence it is excluded from tests
+
+	// // Test 3  - valid request body | 3 product options
+	// result = ProductValidationDatabase(requestBody, &dbconfig)
+	// assert.Equal(t, result, nil)
+
+	// this will never be a case either
+	// unless an invalid product with 4 options
+	// is added directly to the database
+
+	// Test 4  - valid request body | invalid option position
+	// result = ProductValidationDatabase(requestBody, &dbconfig)
+	// assert.Equal(t, result, nil)
+
+	// Test 5  - valid request body | option name already exists
+	requestBody.SKU = "MOCK-PRODUCT-SKU"
+	result = ProductValidationDatabase(requestBody, &dbconfig)
+	assert.Equal(t, result, nil)
 }
 
 func InitMockHttpRequest(requestBody interface{}, requestMethod, requestURL string) *http.Request {
