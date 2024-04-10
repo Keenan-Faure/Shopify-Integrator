@@ -1,6 +1,7 @@
 package objects
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -153,6 +154,17 @@ type ResponseQueueCount struct {
 	UpdateOrder   int `json:"update_order"`
 	UpdateProduct int `json:"update_product"`
 	UpdateVariant int `json:"update_variant"`
+}
+
+type MockQueueItem struct {
+	ID          uuid.UUID       `json:"id"`
+	QueueType   string          `json:"queue_type"`
+	Instruction string          `json:"instruction"`
+	Status      string          `json:"status"`
+	Object      json.RawMessage `json:"object"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+	Description string          `json:"description"`
 }
 
 type ResponseQueueItemFilter struct {
