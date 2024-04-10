@@ -262,21 +262,21 @@ func DecodeInventoryMap(r *http.Request) (objects.RequestWarehouseLocation, erro
 }
 
 // Validation: Product Import
-func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig, r *http.Request) error {
-	err := ProductSKUValidation(csv_product.SKU, dbconfig, r)
+func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfig) error {
+	err := ProductSKUValidation(csv_product.SKU, dbconfig)
 	if err != nil {
 		return err
 	}
 	option_names := CreateOptionNamesMap(csv_product)
 	for _, option_name := range option_names {
-		err = ProductOptionNameValidation(csv_product.ProductCode, option_name, dbconfig, r)
+		err = ProductOptionNameValidation(csv_product.ProductCode, option_name, dbconfig)
 		if err != nil {
 			return err
 		}
 	}
 	option_values := CreateOptionValuesMap(csv_product)
 	for _, option_value := range option_values {
-		err = ProductOptionNameValidation(csv_product.ProductCode, option_value, dbconfig, r)
+		err = ProductOptionNameValidation(csv_product.ProductCode, option_value, dbconfig)
 		if err != nil {
 			return err
 		}
@@ -285,8 +285,8 @@ func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfi
 }
 
 // Validation: Product | SKU
-func ProductSKUValidation(sku string, dbconfig *DbConfig, r *http.Request) error {
-	db_sku, err := dbconfig.DB.GetVariantBySKU(r.Context(), sku)
+func ProductSKUValidation(sku string, dbconfig *DbConfig) error {
+	db_sku, err := dbconfig.DB.GetVariantBySKU(context.Background(), sku)
 	if err != nil {
 		if err.Error() == "record not found" {
 			return nil
@@ -349,11 +349,11 @@ func ProductOptionNameValidation(
 	product_code,
 	option_name string,
 	dbconfig *DbConfig,
-	r *http.Request) error {
+) error {
 	if option_name == "" {
 		return nil
 	}
-	option_names, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
+	option_names, err := dbconfig.DB.GetProductOptionsByCode(context.Background(), product_code)
 	if err != nil {
 		return err
 	}
