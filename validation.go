@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"objects"
 	"strings"
@@ -286,6 +285,9 @@ func ProductValidationDatabase(csv_product objects.CSVProduct, dbconfig *DbConfi
 
 // Validation: Product | SKU
 func ProductSKUValidation(sku string, dbconfig *DbConfig) error {
+	if sku == "" || len(sku) == 0 {
+		return errors.New("invalid sku not allowed")
+	}
 	db_sku, err := dbconfig.DB.GetVariantBySKU(context.Background(), sku)
 	if err != nil {
 		if err.Error() == "record not found" {
@@ -302,55 +304,16 @@ func ProductSKUValidation(sku string, dbconfig *DbConfig) error {
 	return nil
 }
 
-// Validation: Product | Option Values
-func ProductOptionValueValidation(
-	product_code,
-	option_value,
-	option_name string,
-	dbconfig *DbConfig,
-	r *http.Request) error {
-	if option_value == "" || option_name == "" {
-		return nil
-	}
-	option_names_db, err := dbconfig.DB.GetProductOptionsByCode(r.Context(), product_code)
-	if err != nil {
-		return err
-	}
-	option_names := []objects.ProductOptions{}
-	for _, option_name := range option_names_db {
-		option_names = append(option_names, objects.ProductOptions{
-			Value:    option_name.Name,
-			Position: int(option_name.Position),
-		})
-	}
-	variants_db, err := dbconfig.DB.GetVariantOptionsByProductCode(r.Context(), product_code)
-	if err != nil {
-		return err
-	}
-	variants := []objects.ProductVariant{}
-	for _, variant := range variants_db {
-		variants = append(variants, objects.ProductVariant{
-			Option1: variant.Option1.String,
-			Option2: variant.Option2.String,
-			Option3: variant.Option3.String,
-		})
-	}
-	mapp := CreateOptionMap(option_names, variants)
-	for _, value := range mapp[option_name] {
-		if value == option_value {
-			return errors.New("duplicate option values not allowed")
-		}
-	}
-	return nil
-}
-
 // Validation: Product | Option Names
 func ProductOptionNameValidation(
 	product_code,
 	option_name string,
 	dbconfig *DbConfig,
 ) error {
-	if option_name == "" {
+	if product_code == "" || len(product_code) == 0 {
+		return errors.New("invalid product code not allowed")
+	}
+	if option_name == "" || len(option_name) == 0 {
 		return nil
 	}
 	option_names, err := dbconfig.DB.GetProductOptionsByCode(context.Background(), product_code)
@@ -365,7 +328,7 @@ func ProductOptionNameValidation(
 			return errors.New("invalid option name position for product " + product_code)
 		}
 		if value.Name == option_name {
-			log.Println(errors.New("option name already exists, skipping"))
+			return errors.New("option name already exists")
 		}
 	}
 	return nil
@@ -443,6 +406,14 @@ func DecodeCustomerRequestBody(r *http.Request) (objects.RequestBodyCustomer, er
 	return params, nil
 }
 
+// Order: data validation
+func OrderValidation(order objects.RequestBodyOrder) error {
+	if order.Name == "" {
+		return errors.New("data validation error")
+	}
+	return nil
+}
+
 // Order: decodes the request body
 func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
 	decoder := json.NewDecoder(r.Body)
@@ -455,14 +426,6 @@ func DecodeOrderRequestBody(r *http.Request) (objects.RequestBodyOrder, error) {
 		return params, err
 	}
 	return params, nil
-}
-
-// Order: data validation
-func OrderValidation(order objects.RequestBodyOrder) error {
-	if order.Name == "" {
-		return errors.New("data validation error")
-	}
-	return nil
 }
 
 // User: data validation
