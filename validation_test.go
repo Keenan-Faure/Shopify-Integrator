@@ -462,6 +462,344 @@ func TestProductValidationDatabase(t *testing.T) {
 	assert.Equal(t, result, nil)
 }
 
+func TestProductSKUValidation(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+
+	// Test 1 - empty request body
+	result := ProductSKUValidation("", &dbconfig)
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request | duplicate SKU
+	createDatabaseProduct(&dbconfig)
+	defer ClearProductTestData(&dbconfig)
+	result = ProductSKUValidation("product_sku", &dbconfig)
+	assert.NotEqual(t, result, nil)
+
+	// Test 3  - valid request body | sku not found
+	result = ProductSKUValidation("mock-product-sku", &dbconfig)
+	assert.Equal(t, result, nil)
+}
+
+func TestProductOptionNameValidation(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+
+	// Test 1 - empty request body
+	result := ProductOptionNameValidation("", "", &dbconfig)
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request | duplicate option name
+	createDatabaseProduct(&dbconfig)
+	defer ClearProductTestData(&dbconfig)
+	result = ProductOptionNameValidation("product_code", "Size", &dbconfig)
+	assert.NotEqual(t, result, nil)
+}
+
+func TestValidateTokenValidation(t *testing.T) {
+	requestBody := UserPayload("test-case-valid-user.json")
+
+	// Test 1 - empty request body
+	result := ValidateTokenValidation(objects.RequestBodyRegister{})
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = ValidateTokenValidation(requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestDecodeValidateTokenRequestBody(t *testing.T) {
+	requestBody := UserPayload("test-case-valid-user.json")
+	invalidRequestBody := ProductPayload("test-case-valid-product-simple.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodeValidateTokenRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.Name, "")
+	assert.Equal(t, result.Password, "")
+	assert.Equal(t, result.Token, "")
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodeValidateTokenRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: :" + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.Name, "")
+	assert.Equal(t, result.Password, "")
+	assert.Equal(t, result.Token, "")
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodeValidateTokenRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "test@test.com")
+	assert.Equal(t, result.Name, "test")
+	assert.Equal(t, result.Password, "abc12345678910")
+	assert.Equal(t, result.Token, "c266e9f6-1ca6-4e27-8dd8-cce2bf5fdba5")
+}
+
+func TestPreRegisterValidation(t *testing.T) {
+	requestBody := CreateTokenPayload("test-case-valid-preregister.json")
+
+	// Test 1 - empty request body
+	result := PreRegisterValidation(objects.RequestBodyPreRegister{})
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = PreRegisterValidation(requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestDecodePreRegisterRequestBody(t *testing.T) {
+	requestBody := CreateTokenPayload("test-case-valid-preregister.json")
+	invalidRequestBody := ProductPayload("test-case-valid-product-simple.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodePreRegisterRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.Name, "")
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodePreRegisterRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: :" + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.Name, "")
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodePreRegisterRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "test@test.com")
+	assert.Equal(t, result.Name, "test")
+}
+
+func TestCustomerValidation(t *testing.T) {
+	requestBody := CustomerPayload("test-case-valid-customer.json")
+
+	// Test 1 - empty request body
+	result := CustomerValidation(objects.RequestBodyCustomer{})
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = CustomerValidation(requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestDecodeCustomerRequestBody(t *testing.T) {
+	requestBody := CustomerPayload("test-case-valid-customer.json")
+	invalidRequestBody := ProductPayload("test-case-valid-product-simple.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodeCustomerRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.FirstName, "")
+	assert.Equal(t, result.LastName, "")
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodeCustomerRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: :" + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.FirstName, "")
+	assert.Equal(t, result.LastName, "")
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodeCustomerRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "keenan@test.com")
+	assert.Equal(t, result.FirstName, "TestFirstName")
+	assert.Equal(t, result.LastName, "TestLastName")
+}
+
+func TestOrderValidation(t *testing.T) {
+	requestBody := OrderPayload("test-case-valid-order.json")
+
+	// Test 1 - empty request body
+	result := OrderValidation(objects.RequestBodyOrder{})
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = OrderValidation(requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestDecodeOrderRequestBody(t *testing.T) {
+	requestBody := OrderPayload("test-case-valid-order.json")
+	invalidRequestBody := ProductPayload("test-case-valid-product-simple.json")
+
+	// Test 1 - empty request body
+	request := InitMockHttpRequest(nil, "", "")
+	result, err := DecodeOrderRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.Name, "")
+	assert.Equal(t, result.Note, "")
+
+	// Test 2 - invalid request body
+	request = InitMockHttpRequest(invalidRequestBody, "", "")
+	result, err = DecodeOrderRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: :" + err.Error())
+	}
+	assert.Equal(t, result.Email, "")
+	assert.Equal(t, result.Name, "")
+	assert.Equal(t, result.Note, "")
+
+	// Test 3  - valid request body
+	request = InitMockHttpRequest(requestBody, "", "")
+	result, err = DecodeOrderRequestBody(request)
+	if err != nil {
+		t.Errorf("Expected 'nil' but found: " + err.Error())
+	}
+	assert.Equal(t, result.Email, "keenan@stock2shop.com")
+	assert.Equal(t, result.Name, "#999999")
+	assert.Equal(t, result.Note, "Notes not taken")
+}
+
+func TestTokenValidation(t *testing.T) {
+	// Test 1 - empty request body
+	result := TokenValidation("")
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = TokenValidation("c266e9f6-1ca6-4e27-8dd8-cce2bf5fdba5")
+	assert.Equal(t, result, nil)
+}
+
+func TestUserValidation(t *testing.T) {
+	// Test 1 - empty request body
+	result := UserValidation("", "")
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = UserValidation("mock-user-name", "mock-user-password")
+	assert.Equal(t, result, nil)
+}
+
+func TestIDValidation(t *testing.T) {
+	// Test 1 - empty request body
+	result := IDValidation("")
+	assert.NotEqual(t, result, nil)
+
+	// Test 2  - valid request body
+	result = IDValidation("c266e9f6-1ca6-4e27-8dd8-cce2bf5fdba5")
+	assert.Equal(t, result, nil)
+}
+
+func TestProductValidation(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	requestBody := ProductPayload("test-case-valid-product-variable.json")
+
+	// Test 1 - empty request body
+	result := ProductValidation(&dbconfig, objects.RequestBodyProduct{})
+	assert.NotEqual(t, result, nil)
+
+	// Test 2 - empty request body | empty title
+	requestBody.Title = ""
+	result = ProductValidation(&dbconfig, requestBody)
+	assert.NotEqual(t, result, nil)
+	requestBody.Title = "mock-title"
+
+	// Test 3 - empty request body | invalid SKU
+	requestBody.Variants[0].Sku = ""
+	result = ProductValidation(&dbconfig, requestBody)
+	assert.NotEqual(t, result, nil)
+	requestBody.Variants[0].Sku = "mock-variant-0-sku"
+
+	// Test 4 - empty request body | empty variants
+	requestBody.Variants = []objects.RequestBodyVariant{}
+	result = ProductValidation(&dbconfig, requestBody)
+	assert.NotEqual(t, result, nil)
+
+	// Test 5  - valid request body
+	requestBody = ProductPayload("test-case-valid-product-variable.json")
+	result = ProductValidation(&dbconfig, requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestValidateDuplicateOption(t *testing.T) {
+	requestBody := ProductPayload("test-case-valid-product-variable.json")
+	invalidRequestBody := ProductPayload("test-case-invalid-product-variable.json")
+
+	// Test 1 - empty request body
+	result := ValidateDuplicateOption(objects.RequestBodyProduct{})
+	assert.Equal(t, result, nil)
+
+	// Test 2 - invalid request body
+	result = ValidateDuplicateOption(invalidRequestBody)
+	assert.NotEqual(t, result, nil)
+
+	// Test 3  - valid request body
+	result = ValidateDuplicateOption(requestBody)
+	assert.Equal(t, result, nil)
+}
+
+func TestValidateDuplicateSKU(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	requestBody := ProductPayload("test-case-valid-product-variable.json")
+	invalidRequestBody := ProductPayload("test-case-invalid-product-variable.json")
+
+	// Test 1 - empty request body
+	result := ValidateDuplicateSKU(objects.RequestBodyProduct{}, &dbconfig)
+	assert.Equal(t, result, nil)
+
+	// Test 2 - invalid request body | duplicate SKU
+	createDatabaseProduct(&dbconfig)
+	result = ValidateDuplicateSKU(invalidRequestBody, &dbconfig)
+	assert.NotEqual(t, result, nil)
+	ClearProductTestData(&dbconfig)
+
+	// Test 3  - valid request body
+	result = ValidateDuplicateSKU(requestBody, &dbconfig)
+	assert.Equal(t, result, nil)
+}
+
+// func TestDuplicateOptionValues(t *testing.T) {
+// 	dbconfig := setupDatabase("", "", "", false)
+// 	requestBody := ProductPayload("test-case-valid-product-variable.json")
+// 	invalidRequestBody := ProductPayload("test-case-invalid-product-variable.json")
+
+// 	// Test 1 - empty request body
+// 	result := DuplicateOptionValues(&dbconfig, objects.RequestBodyVariant{}, uuid.Nil)
+// 	assert.Equal(t, result, nil)
+
+// 	// Test 2 - invalid request body | duplicate SKU
+// 	createDatabaseProduct(&dbconfig)
+// 	result = DuplicateOptionValues(&dbconfig, objects.RequestBodyVariant{}, uuid.Nil)
+// 	assert.NotEqual(t, result, nil)
+// 	ClearProductTestData(&dbconfig)
+
+// 	// Test 3  - valid request body
+// 	result = DuplicateOptionValues(&dbconfig, objects.RequestBodyVariant{}, uuid.Nil)
+// 	assert.Equal(t, result, nil)
+// }
+
 func InitMockHttpRequest(requestBody interface{}, requestMethod, requestURL string) *http.Request {
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(requestBody)
