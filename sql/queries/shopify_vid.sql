@@ -53,3 +53,7 @@ select
 from shopify_vid
 where sku = $1
 LIMIT 1;
+
+-- name: RemoveShopifyVIDBySKU :exec
+DELETE FROM shopify_vid
+WHERE sku = $1;
