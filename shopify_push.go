@@ -106,6 +106,9 @@ func (dbconfig *DbConfig) RemoveLocationMap(id string) error {
 func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShopify, variant objects.ProductVariant) error {
 	shopify_inventory, err := dbconfig.DB.GetInventoryIDBySKU(context.Background(), variant.Sku)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("InventoryID for SKU '" + variant.Sku + "' not found")
+		}
 		return err
 	}
 	if shopify_inventory.ShopifyInventoryID == "" || len(shopify_inventory.ShopifyInventoryID) == 0 {
