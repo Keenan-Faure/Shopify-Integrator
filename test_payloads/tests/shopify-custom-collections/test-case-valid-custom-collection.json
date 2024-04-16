@@ -1,0 +1,14 @@
+{
+    "custom_collection": {
+        "id": 1063001407,
+        "handle": "ipods-1",
+        "title": "IPods",
+        "updated_at": "2024-04-01T13:55:49-04:00",
+        "body_html": null,
+        "published_at": "2024-04-01T13:55:49-04:00",
+        "sort_order": "best-selling",
+        "template_suffix": null,
+        "published_scope": "web",
+        "admin_graphql_api_id": "gid://shopify/Collection/1063001407"
+    }
+}
