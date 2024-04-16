@@ -356,6 +356,10 @@ func TestPushVariant(t *testing.T) {
 }
 
 func TestCompileInstructionProduct(t *testing.T) {
+	httpmock.Activate()
+	InitMockQueue()
+	defer httpmock.DeactivateAndReset()
+
 	dbconfig := setupDatabase("", "", "", false)
 	productPayload := InitMockProduct("test-case-valid-product-variable.json")
 
@@ -635,11 +639,22 @@ func InitMockProduct(fileName string) objects.Product {
 	return productData
 }
 
+/* Returns a mock queue_item response */
+func QueueItemResponse(fileName string) objects.ResponseQueueItem {
+	fileBytes := payload("./test_payloads/tests/queue/" + fileName)
+	queueItem := objects.ResponseQueueItem{}
+	err := json.Unmarshal(fileBytes, &queueItem)
+	if err != nil {
+		log.Println(err)
+	}
+	return queueItem
+}
+
 /* Sets up a mock queue endpoint */
 func InitMockQueue() {
 	httpmock.RegisterResponder(http.MethodPost, MOCK_APP_API_URL+"/api/queue",
 		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifVariantResponse("test-case-valid-variant.json"))
+			resp, err := httpmock.NewJsonResponse(200, QueueItemResponse("test-case-valid-product.json"))
 			if err != nil {
 				return httpmock.NewStringResponse(500, ""), nil
 			}
