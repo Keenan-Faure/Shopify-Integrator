@@ -4,10 +4,10 @@
             "edges": [
                 {
                     "node": {
-                        "id": "gid://shopify/ProductVariant/40733561880637",
+                        "id": "gid://shopify/ProductVariant/1070325083",
                         "sku": "MOCK_PRODUCT_SKU",
                         "product": {
-                            "id": "gid://shopify/Product/7073518321725"
+                            "id": "gid://shopify/Product/1072481085"
                         }
                     }
                 }

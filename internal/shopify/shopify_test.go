@@ -300,11 +300,12 @@ func TestAddLocationQtyShopify(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	shopifyInventoryLevelResponse := CreateShopifyInventoryLevelResponse("test-case-valid-inventory-level.json")
-
 	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/inventory_levels/adjust.json",
 		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, shopifyInventoryLevelResponse)
+			resp, err := httpmock.NewJsonResponse(
+				200,
+				CreateShopifyInventoryLevelResponse("test-case-valid-inventory-level.json"),
+			)
 			if err != nil {
 				return httpmock.NewStringResponse(500, ""), nil
 			}
@@ -352,6 +353,7 @@ func TestAddProductShopify(t *testing.T) {
 			return resp, nil
 		},
 	)
+
 	// Test Case 1 - valid parameter
 	response, err := shopifyConfig.AddProductShopify(objects.ShopifyProduct{
 		ShopifyProd: objects.ShopifyProd{
@@ -510,7 +512,7 @@ func TestAddProductToCollectionShopify(t *testing.T) {
 
 	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/collects.json",
 		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(201, CreateShopifCollectionResponse("test-case-valid-collection.json"))
+			resp, err := httpmock.NewJsonResponse(201, CreateShopifyCollectionResponse("test-case-valid-collection.json"))
 			if err != nil {
 				return httpmock.NewStringResponse(500, ""), nil
 			}
@@ -706,8 +708,8 @@ func TestGetProductBySKU(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected 'nil' but found: :" + err.Error())
 	}
-	assert.Equal(t, response.ProductID, "7073518321725")
-	assert.Equal(t, response.VariantID, "40733561880637")
+	assert.Equal(t, response.ProductID, "1072481085")
+	assert.Equal(t, response.VariantID, "1070325083")
 }
 
 func TestValidateConfigShopify(t *testing.T) {
@@ -773,7 +775,7 @@ func CreateShopifCustomCollectionResponse(fileName string) objects.ResponseShopi
 }
 
 /* Returns a test shopify collection response struct */
-func CreateShopifCollectionResponse(fileName string) objects.ResponseAddProductToShopifyCollection {
+func CreateShopifyCollectionResponse(fileName string) objects.ResponseAddProductToShopifyCollection {
 	fileBytes := payload("./test_payloads/" + fileName)
 	shopifyCollection := objects.ResponseAddProductToShopifyCollection{}
 	err := json.Unmarshal(fileBytes, &shopifyCollection)
