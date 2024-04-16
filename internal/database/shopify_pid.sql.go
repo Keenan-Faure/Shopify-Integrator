@@ -94,6 +94,16 @@ func (q *Queries) GetPIDBySKU(ctx context.Context, sku string) (string, error) {
 	return shopify_product_id, err
 }
 
+const removePIDByProductCode = `-- name: RemovePIDByProductCode :exec
+DELETE FROM shopify_pid
+WHERE product_code = $1
+`
+
+func (q *Queries) RemovePIDByProductCode(ctx context.Context, productCode string) error {
+	_, err := q.db.ExecContext(ctx, removePIDByProductCode, productCode)
+	return err
+}
+
 const updatePID = `-- name: UpdatePID :exec
 UPDATE shopify_pid
 SET
