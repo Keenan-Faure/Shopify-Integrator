@@ -1,3 +1,6 @@
+// No tests for database_helper.go
+// https://stackoverflow.com/questions/1217736/how-to-write-unit-tests-for-database-calls
+
 package main
 
 import (
