@@ -362,6 +362,9 @@ func TestCompileInstructionProduct(t *testing.T) {
 
 	dbconfig := setupDatabase("", "", "", false)
 	productPayload := InitMockProduct("test-case-valid-product-variable.json")
+	productUUID := createDatabaseProduct(&dbconfig)
+	CreateDatabaseShopifyPID(&dbconfig, productUUID)
+	defer ClearShopifyInventoryData(&dbconfig)
 
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
@@ -372,13 +375,100 @@ func TestCompileInstructionProduct(t *testing.T) {
 
 	// Test 2 - valid params
 	err = CompileInstructionProduct(&dbconfig, productPayload, dbUser.ApiKey)
-	assert.NotEqual(t, nil, err)
+	assert.Equal(t, nil, err)
 }
 
 func TestCompileInstructionVariant(t *testing.T) {
+	httpmock.Activate()
+	InitMockQueue()
+	defer httpmock.DeactivateAndReset()
+
+	dbconfig := setupDatabase("", "", "", false)
+	productPayload := InitMockProduct("test-case-valid-product-variable.json")
+	productUUID := createDatabaseProduct(&dbconfig)
+	productPayload.ID = productUUID
+	variantUUID, _ := dbconfig.DB.GetVariantIDBySKU(context.Background(), MOCK_PRODUCT_SKU)
+	CreateDatabaseShopifyInventory(&dbconfig)
+	CreateDatabaseShopifyPID(&dbconfig, productUUID)
+	CreateDatabaseShopifyVID(&dbconfig, variantUUID)
+	defer ClearShopifyInventoryData(&dbconfig)
+
+	dbUser := createDatabaseUser(&dbconfig)
+	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+
 	// Test 1 - invalid params
+	err := CompileInstructionVariant(&dbconfig, objects.ProductVariant{}, objects.Product{}, "")
+	assert.NotEqual(t, nil, err)
 
 	// Test 2 - valid params
+	err = CompileInstructionVariant(&dbconfig, productPayload.Variants[0], productPayload, dbUser.ApiKey)
+	assert.Equal(t, nil, err)
+}
+
+func TestGetShopifyProductID(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	productPayload := InitMockProduct("test-case-valid-product-variable.json")
+	productUUID := createDatabaseProduct(&dbconfig)
+	productPayload.ID = productUUID
+	CreateDatabaseShopifyInventory(&dbconfig)
+	CreateDatabaseShopifyPID(&dbconfig, productUUID)
+	defer ClearShopifyInventoryData(&dbconfig)
+
+	// Test 1 - invalid param
+	result, err := GetShopifyProductID(&dbconfig, "")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "", result)
+
+	// Test 2 - valid params
+	result, err = GetShopifyProductID(&dbconfig, productPayload.ProductCode)
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, "", result)
+}
+
+func TestGetShopifyVariantID(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	productPayload := InitMockProduct("test-case-valid-product-variable.json")
+	productUUID := createDatabaseProduct(&dbconfig)
+	productPayload.ID = productUUID
+	variantUUID, _ := dbconfig.DB.GetVariantIDBySKU(context.Background(), MOCK_PRODUCT_SKU)
+	CreateDatabaseShopifyInventory(&dbconfig)
+	CreateDatabaseShopifyPID(&dbconfig, productUUID)
+	CreateDatabaseShopifyVID(&dbconfig, variantUUID)
+	defer ClearShopifyInventoryData(&dbconfig)
+
+	// Test 1 - invalid param
+	result, err := GetShopifyVariantID(&dbconfig, "")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "", result)
+
+	// Test 2 - valid params
+	result, err = GetShopifyVariantID(&dbconfig, productPayload.Variants[0].Sku)
+	assert.Equal(t, nil, err)
+	assert.NotEqual(t, "", result)
+}
+
+func TestSaveVariantIds(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+	productPayload := InitMockProduct("test-case-valid-product-variable.json")
+	productUUID := createDatabaseProduct(&dbconfig)
+	productPayload.ID = productUUID
+	variantUUID, _ := dbconfig.DB.GetVariantIDBySKU(context.Background(), MOCK_PRODUCT_SKU)
+	CreateDatabaseShopifyInventory(&dbconfig)
+	CreateDatabaseShopifyPID(&dbconfig, productUUID)
+	CreateDatabaseShopifyVID(&dbconfig, variantUUID)
+	defer ClearShopifyInventoryData(&dbconfig)
+
+	// Test 1 - invalid param
+	err := SaveVariantIds(&dbconfig, objects.ShopifyProductResponse{}, productPayload.Variants[0].Sku)
+	assert.Equal(t, nil, err)
+
+	// Test 2 - valid params
+	err = SaveVariantIds(
+		&dbconfig,
+		CreateShopifyProductResponse("test-case-valid-product.json"),
+		productPayload.Variants[0].Sku,
+	)
+	assert.Equal(t, nil, err)
 }
 
 /* Returns a test shopify collection response struct */
@@ -641,7 +731,7 @@ func InitMockProduct(fileName string) objects.Product {
 
 /* Returns a mock queue_item response */
 func QueueItemResponse(fileName string) objects.ResponseQueueItem {
-	fileBytes := payload("./test_payloads/tests/queue/" + fileName)
+	fileBytes := payload("./test_payloads/tests/queue-reply/" + fileName)
 	queueItem := objects.ResponseQueueItem{}
 	err := json.Unmarshal(fileBytes, &queueItem)
 	if err != nil {
@@ -654,7 +744,7 @@ func QueueItemResponse(fileName string) objects.ResponseQueueItem {
 func InitMockQueue() {
 	httpmock.RegisterResponder(http.MethodPost, MOCK_APP_API_URL+"/api/queue",
 		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, QueueItemResponse("test-case-valid-product.json"))
+			resp, err := httpmock.NewJsonResponse(201, QueueItemResponse("test-case-valid-product.json"))
 			if err != nil {
 				return httpmock.NewStringResponse(500, ""), nil
 			}
