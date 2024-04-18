@@ -2422,7 +2422,7 @@ func UserPayload(fileName string) objects.RequestBodyRegister {
 	return userRegistrationData
 }
 
-/* Returns a mock queue_item struct */
+/* Returns a request queue item struct */
 func QueuePayload(fileName string) objects.RequestQueueItem {
 	fileBytes := payload("./test_payloads/queue/" + fileName)
 	queueItem := objects.RequestQueueItem{}
@@ -2433,7 +2433,7 @@ func QueuePayload(fileName string) objects.RequestQueueItem {
 	return queueItem
 }
 
-/* Returns a mock queue_item struct */
+/* Returns a mock queue item struct */
 func QueueItemPayload(fileName string) objects.MockQueueItem {
 	fileBytes := payload("./test_payloads/tests/queue/" + fileName)
 	queueItem := objects.MockQueueItem{}
