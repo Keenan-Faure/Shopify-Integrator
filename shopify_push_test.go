@@ -41,6 +41,8 @@ const MOCK_SHOPIFY_WAREHOUSE_NAME = "MOCK-SHOPIFY-WAREHOUSE-NAME"
 
 const MOCK_APP_API_URL = "http://localhost:8080"
 
+const MOCK_QUEUE_ITEM_ID = "66608bb9-6bef-4424-b48f-59f487ec2933"
+
 func TestShopifyVariantPricing(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 
@@ -740,11 +742,111 @@ func QueueItemResponse(fileName string) objects.ResponseQueueItem {
 	return queueItem
 }
 
-/* Sets up a mock queue endpoint */
+/* Returns a mock queue_item response */
+func QueueItemFilterResponse(fileName string) []objects.ResponseQueueItemFilter {
+	fileBytes := payload("./test_payloads/tests/queue-filter/" + fileName)
+	queueItem := []objects.ResponseQueueItemFilter{}
+	err := json.Unmarshal(fileBytes, &queueItem)
+	if err != nil {
+		log.Println(err)
+	}
+	return queueItem
+}
+
+/* Sets up mock queue endpoints */
 func InitMockQueue() {
 	httpmock.RegisterResponder(http.MethodPost, MOCK_APP_API_URL+"/api/queue",
 		func(req *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(201, QueueItemResponse("test-case-valid-product.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost, MOCK_APP_API_URL+"/api/shopify/sync",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, objects.ResponseString{
+				Message: "synconizing started",
+			})
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/queue/"+MOCK_QUEUE_ITEM_ID,
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, QueueItemPayload("test-case-valid-product-queue-item.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/queue/filter",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, QueueItemFilterResponse("test-case-valid-queue-filter.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/queue/processing",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(
+				200,
+				QueueItemPayload("test-case-valid-product-queue-processing-item.json"),
+			)
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/queue",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, QueueItemPayload("test-case-valid-product-queue-items.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/queue/view",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, QueueItemPayload("test-case-valid-queue-count.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodDelete, MOCK_APP_API_URL+"/api/queue/"+MOCK_QUEUE_ITEM_ID,
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, objects.ResponseString{
+				Message: "success",
+			})
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodDelete, MOCK_APP_API_URL+"/api/queue/filter",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, objects.ResponseString{
+				Message: "success",
+			})
 			if err != nil {
 				return httpmock.NewStringResponse(500, ""), nil
 			}
