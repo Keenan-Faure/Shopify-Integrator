@@ -23,13 +23,16 @@
     ],
     "options": [
         {
-            "value": "Size"
+            "value": "Size",
+            "position": 1
         },
         {
-            "value": "Colour"
+            "value": "Colour",
+            "position": 2
         },
         {
-            "value": "Fabric"
+            "value": "Fabric",
+            "position": 3
         }
     ]
 }

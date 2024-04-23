@@ -336,7 +336,7 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID
 		dbOrder, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
 			ID:            uuid.New(),
 			Status:        orderBody.FinancialStatus,
-			Notes:         utils.ConvertStringToSQL(""),
+			Notes:         utils.ConvertStringToSQL(orderBody.Note),
 			WebCode:       orderBody.Name,
 			TaxTotal:      utils.ConvertStringToSQL(orderBody.TotalTax),
 			OrderTotal:    utils.ConvertStringToSQL(orderBody.TotalPrice),
