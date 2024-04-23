@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"objects"
+
+	"github.com/google/uuid"
 )
 
 func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
@@ -24,15 +27,14 @@ func (dbconfig *DbConfig) UpdateOrder(order_body objects.RequestBodyOrder) error
 	if err != nil {
 		return err
 	}
-	exists, err := CheckExistsOrder(dbconfig, context.Background(), order_body.Name)
-	if err != nil {
-		return err
-	}
 	orderID, err := dbconfig.DB.GetOrderIDByWebCode(context.Background(), order_body.Name)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("order '" + order_body.Name + "' do not exist")
+		}
 		return err
 	}
-	if exists {
+	if orderID != uuid.Nil {
 		err = UpdateOrder(dbconfig, orderID, order_body)
 		if err != nil {
 			return err
