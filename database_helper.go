@@ -333,9 +333,6 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID
 		return uuid.Nil, err
 	}
 	if !exists {
-		if err := OrderValidation(orderBody); err != nil {
-			return uuid.Nil, err
-		}
 		dbOrder, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
 			ID:            uuid.New(),
 			Status:        orderBody.FinancialStatus,
