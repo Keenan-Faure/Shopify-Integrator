@@ -2629,7 +2629,7 @@ func createDatabaseCustomer(dbconfig *DbConfig) uuid.UUID {
 Creates a test order in the database
 */
 func createDatabaseOrder(dbconfig *DbConfig) uuid.UUID {
-	order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), "1000")
+	order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), MOCK_ORDER_WEB_CODE)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			log.Println(err)
