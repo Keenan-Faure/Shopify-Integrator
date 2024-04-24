@@ -15,6 +15,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRemoveQueryKeywords(t *testing.T) {
+	// Test 1 - invalid function params
+	result := RemoveQueryKeywords("")
+	assert.Equal(t, "", result)
+
+	// Test 2 - valid function param | AND
+	result = RemoveQueryKeywords("DELETE FROM queue_items WHERE status = 'in-queue' AND ")
+	assert.Equal(t, "DELETE FROM queue_items WHERE status = 'in-queue'", result)
+
+	// Test 3 - valid function param | WHERE
+	result = RemoveQueryKeywords("DELETE FROM queue_items WHERE ")
+	assert.Equal(t, "DELETE FROM queue_items", result)
+
+	// Test 4 - valid function param | AND & WHERE
+	result = RemoveQueryKeywords("DELETE FROM queue_items WHERE status = 'in-queue' AND instruction = 'add_product' AND ")
+	assert.Equal(t, "DELETE FROM queue_items WHERE status = 'in-queue' AND instruction = 'add_product'", result)
+}
+
 func TestCompileShopifyToSystemProduct(t *testing.T) {
 	// Test 1 - invalid function params
 	result := CompileShopifyToSystemProduct(
@@ -47,12 +65,12 @@ func TestCompileRemoveQueueFilter(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 
 	// Test 1 - invalid function params
-	result, err := CompileRemoveQueueFilter(&dbconfig, context.Background(), "", "", "")
+	result, err := CompileRemoveQueueFilter(&dbconfig, true, "", "", "")
 	assert.Equal(t, result, "success")
 	assert.Equal(t, err, nil)
 
 	// Test 2 - valid function params
-	result, err = CompileRemoveQueueFilter(&dbconfig, context.Background(), "", "in-queue", "products")
+	result, err = CompileRemoveQueueFilter(&dbconfig, true, "products", "in-queue", "")
 	assert.Equal(t, result, "success")
 	assert.Equal(t, err, nil)
 }
@@ -95,13 +113,13 @@ func TestCompileQueueFilterSearch(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 
 	// Test 1 - invalid function params
-	result, err := CompileQueueFilterSearch(&dbconfig, context.Background(), 0, "", "", "")
+	result, err := CompileQueueFilterSearch(&dbconfig, true, 0, "", "", "")
 	assert.Equal(t, err, nil)
 	assert.Equal(t, len(result), 0)
 
 	// Test 2 - valid function params
 	CreateDatabaseQueueItem(&dbconfig, "in-queue")
-	result, err = CompileQueueFilterSearch(&dbconfig, context.Background(), 1, "", "in-queue", "")
+	result, err = CompileQueueFilterSearch(&dbconfig, true, 1, "", "in-queue", "")
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, len(result), 0)
 	ClearQueueMockData(&dbconfig)
@@ -187,20 +205,20 @@ func TestCompileCustomerData(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 
 	// Test 1 - invalid function params
-	result, err := CompileCustomerData(&dbconfig, uuid.Nil, context.Background(), true)
+	result, err := CompileCustomerData(&dbconfig, uuid.Nil, true)
 	assert.Equal(t, result.ID, uuid.Nil)
 	assert.NotEqual(t, err, nil)
 
 	// Test 2 - valid function params | ignore_address
 	customerUUID := createDatabaseCustomer(&dbconfig)
 	defer dbconfig.DB.RemoveCustomer(context.Background(), customerUUID)
-	result, err = CompileCustomerData(&dbconfig, customerUUID, context.Background(), true)
+	result, err = CompileCustomerData(&dbconfig, customerUUID, true)
 	assert.NotEqual(t, result.ID, uuid.Nil)
 	assert.Equal(t, result.FirstName, "TestFirstName")
 	assert.Equal(t, err, nil)
 
 	// Test 3 - valid function params
-	result, err = CompileCustomerData(&dbconfig, customerUUID, context.Background(), false)
+	result, err = CompileCustomerData(&dbconfig, customerUUID, false)
 	assert.NotEqual(t, result.ID, uuid.Nil)
 	assert.Equal(t, result.FirstName, "TestFirstName")
 	assert.NotEqual(t, len(result.Address), 0)
@@ -232,14 +250,14 @@ func TestCompileOrderSearchResult(t *testing.T) {
 func TestCompileOrderData(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	// Test 1 - invalid function params
-	result, err := CompileOrderData(&dbconfig, uuid.Nil, context.Background(), true)
+	result, err := CompileOrderData(&dbconfig, uuid.Nil, true)
 	assert.Equal(t, result.Notes, "")
 	assert.NotEqual(t, err, nil)
 
 	// Test 2 - valid function params
 	orderUUID := createDatabaseOrder(&dbconfig)
 	defer dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
-	result, err = CompileOrderData(&dbconfig, orderUUID, context.Background(), true)
+	result, err = CompileOrderData(&dbconfig, orderUUID, true)
 	assert.Equal(t, result.Notes, "Notes not taken")
 	assert.Equal(t, err, nil)
 }
@@ -248,14 +266,14 @@ func TestCompileFilterSearch(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 
 	// Test 1 - invalid function params
-	result, err := CompileFilterSearch(&dbconfig, context.Background(), 0, "", "", "")
+	result, err := CompileFilterSearch(&dbconfig, true, 0, "", "", "")
 	assert.Equal(t, len(result), 0)
-	assert.NotEqual(t, err, nil)
+	assert.Equal(t, err, nil)
 
 	// Test 2 - valid function params
 	createDatabaseProduct(&dbconfig)
 	defer ClearProductTestData(&dbconfig)
-	result, err = CompileFilterSearch(&dbconfig, context.Background(), 1, "", "", "product_vendor")
+	result, err = CompileFilterSearch(&dbconfig, true, 1, "", "product_category", "product_vendor")
 	assert.NotEqual(t, len(result), 0)
 	assert.Equal(t, err, nil)
 }
@@ -264,13 +282,13 @@ func TestCompileProductImages(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 
 	// Test 1 - invalid function params
-	result, err := CompileProductImages(uuid.Nil, context.Background(), &dbconfig)
+	result, err := CompileProductImages(uuid.Nil, &dbconfig)
 	assert.Equal(t, len(result), 0)
 	assert.Equal(t, err, nil)
 
 	// Test 2 - valid function params
 	productUUID := createDatabaseProduct(&dbconfig)
-	result, err = CompileProductImages(productUUID, context.Background(), &dbconfig)
+	result, err = CompileProductImages(productUUID, &dbconfig)
 	assert.Equal(t, len(result), 0)
 	assert.Equal(t, err, nil)
 }
@@ -279,13 +297,13 @@ func TestCompileSearchResult(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 
 	// Test 1 - invalid function params
-	result, err := CompileSearchResult(&dbconfig, context.Background(), []database.GetProductsSearchRow{})
+	result, err := CompileSearchResult(&dbconfig, []database.GetProductsSearchRow{})
 	assert.Equal(t, len(result), 0)
 	assert.Equal(t, err, nil)
 
 	// Test 2 - valid function params
 	productUUID := createDatabaseProduct(&dbconfig)
-	result, err = CompileSearchResult(&dbconfig, context.Background(), []database.GetProductsSearchRow{
+	result, err = CompileSearchResult(&dbconfig, []database.GetProductsSearchRow{
 		{
 			ID:          productUUID,
 			Active:      "",
@@ -314,29 +332,54 @@ func TestConvertProductToCSVProduct(t *testing.T) {
 
 func TestCompileProduct(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
+
 	// Test 1 - invalid function params
-	result, err := CompileProduct(&dbconfig, uuid.Nil, context.Background(), false)
+	result, err := CompileProduct(&dbconfig, uuid.Nil, false)
 	assert.Equal(t, result.Title, "")
 	assert.NotEqual(t, err, nil)
 
 	// Test 2 - valid function params
 	productUUID := createDatabaseProduct(&dbconfig)
 	defer ClearProductTestData(&dbconfig)
-	result, err = CompileProduct(&dbconfig, productUUID, context.Background(), false)
+	result, err = CompileProduct(&dbconfig, productUUID, false)
 	assert.Equal(t, result.Title, "product_title")
 	assert.Equal(t, err, nil)
 }
 
 func TestCompileVariants(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+
 	// Test 1 - invalid function params
+	result, err := CompileVariants(&dbconfig, uuid.Nil)
+	assert.Equal(t, len(result), 0)
+	assert.Equal(t, err, nil)
 
 	// Test 2 - valid function params
+	productUUID := createDatabaseProduct(&dbconfig)
+	defer ClearProductTestData(&dbconfig)
+	result, err = CompileVariants(&dbconfig, productUUID)
+	assert.NotEqual(t, len(result), 0)
+	assert.Equal(t, err, nil)
 }
 
 func TestCompileVariantByID(t *testing.T) {
+	dbconfig := setupDatabase("", "", "", false)
+
 	// Test 1 - invalid function params
+	result, err := CompileVariantByID(&dbconfig, uuid.Nil)
+	assert.Equal(t, result.Sku, "")
+	assert.NotEqual(t, err, nil)
 
 	// Test 2 - valid function params
+	createDatabaseProduct(&dbconfig)
+	defer ClearProductTestData(&dbconfig)
+	variantUUID, err := dbconfig.DB.GetVariantIDBySKU(context.Background(), MOCK_PRODUCT_SKU)
+	if err != nil {
+		t.Errorf("Expected nil but found: " + err.Error())
+	}
+	result, err = CompileVariantByID(&dbconfig, variantUUID)
+	assert.Equal(t, result.Sku, MOCK_PRODUCT_SKU)
+	assert.Equal(t, err, nil)
 }
 
 /* Returns a test shopify single product response struct */

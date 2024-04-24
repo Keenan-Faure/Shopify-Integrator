@@ -1364,7 +1364,7 @@ func TestProductVariantRemoveIDHandle(t *testing.T) {
 
 	/* Test 5 - valid request */
 	productUUID := createDatabaseProduct(&dbconfig)
-	dbProduct, _ := CompileProduct(&dbconfig, productUUID, context.Background(), false)
+	dbProduct, _ := CompileProduct(&dbconfig, productUUID, false)
 	w = Init(
 		"/api/products/"+productUUID.String()+"/variants/"+dbProduct.Variants[0].ID.String()+"?api_key="+dbUser.ApiKey,
 		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
