@@ -536,7 +536,7 @@ func ValidateDuplicateSKU(
 
 // Product: Duplicate Option value validation (variations)
 func DuplicateOptionValues(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
-	products, err := CompileProduct(dbconfig, productID, context.Background(), false)
+	products, err := CompileProduct(dbconfig, productID, false)
 	if err != nil {
 		if err.Error() != "sql: no rows in result set" {
 			return err

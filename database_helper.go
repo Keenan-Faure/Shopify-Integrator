@@ -693,7 +693,7 @@ func UpdateProduct(dbconfig *DbConfig, productData objects.RequestBodyProduct, p
 
 /* Pushes an update for a product and it's variants to Shopify if the product is Active */
 func UpdateShopifyProduct(dbconfig *DbConfig, productID uuid.UUID, apiKey string) error {
-	productData, err := CompileProduct(dbconfig, productID, context.Background(), false)
+	productData, err := CompileProduct(dbconfig, productID, false)
 	if err != nil {
 		return err
 	}

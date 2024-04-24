@@ -828,7 +828,7 @@ func (dbconfig *DbConfig) CustomerIDHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "could not decode customer id: "+customer_id)
 			return
 		}
-		customer, err := CompileCustomerData(dbconfig, customer_uuid, c.Request.Context(), false)
+		customer, err := CompileCustomerData(dbconfig, customer_uuid, false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
 				RespondWithError(c, http.StatusNotFound, "not found")
@@ -868,7 +868,7 @@ func (dbconfig *DbConfig) CustomersHandle() gin.HandlerFunc {
 		}
 		customers := []objects.Customer{}
 		for _, value := range dbCustomers {
-			cust, err := CompileCustomerData(dbconfig, value.ID, c.Request.Context(), true)
+			cust, err := CompileCustomerData(dbconfig, value.ID, true)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
@@ -1015,7 +1015,7 @@ func (dbconfig *DbConfig) OrderIDHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "could not decode order id: "+order_id)
 			return
 		}
-		order_data, err := CompileOrderData(dbconfig, order_uuid, c.Request.Context(), false)
+		order_data, err := CompileOrderData(dbconfig, order_uuid, false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
 				RespondWithError(c, http.StatusNotFound, "not found")
@@ -1055,7 +1055,7 @@ func (dbconfig *DbConfig) OrdersHandle() gin.HandlerFunc {
 		}
 		orders := []objects.Order{}
 		for _, value := range dbOrders {
-			ord, err := CompileOrderData(dbconfig, value.ID, c.Request.Context(), true)
+			ord, err := CompileOrderData(dbconfig, value.ID, true)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
@@ -1180,7 +1180,7 @@ func (dbconfig *DbConfig) ProductExportHandle() gin.HandlerFunc {
 		}
 		products := []objects.Product{}
 		for _, product_id := range product_ids {
-			product, err := CompileProduct(dbconfig, product_id, c.Request.Context(), false)
+			product, err := CompileProduct(dbconfig, product_id, false)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
@@ -1319,7 +1319,7 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 			RespondWithError(c, httpCode, err.Error())
 			return
 		}
-		product_added, err := CompileProduct(dbconfig, dbProductID, c.Request.Context(), false)
+		product_added, err := CompileProduct(dbconfig, dbProductID, false)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -1370,7 +1370,7 @@ func (dbconfig *DbConfig) ProductFilterHandle() gin.HandlerFunc {
 		query_param_vendor := utils.ConfirmFilters(c.Query("vendor"))
 		response, err := CompileFilterSearch(
 			dbconfig,
-			c.Request.Context(),
+			false,
 			page,
 			utils.ConvertStringToLike(query_param_type),
 			utils.ConvertStringToLike(query_param_category),
@@ -1407,7 +1407,7 @@ func (dbconfig *DbConfig) ProductSearchHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		compiled, err := CompileSearchResult(dbconfig, c.Request.Context(), search)
+		compiled, err := CompileSearchResult(dbconfig, search)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -1443,7 +1443,7 @@ func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
 		}
 		products := []objects.Product{}
 		for _, value := range dbProducts {
-			prod, err := CompileProduct(dbconfig, value.ID, c.Request.Context(), false)
+			prod, err := CompileProduct(dbconfig, value.ID, false)
 			if err != nil {
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
@@ -1478,7 +1478,7 @@ func (dbconfig *DbConfig) ProductIDHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, "could not decode product id '"+product_id+"'")
 			return
 		}
-		product_data, err := CompileProduct(dbconfig, product_uuid, c.Request.Context(), false)
+		product_data, err := CompileProduct(dbconfig, product_uuid, false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
 				RespondWithError(c, http.StatusNotFound, "not found")

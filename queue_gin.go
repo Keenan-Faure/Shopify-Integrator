@@ -75,7 +75,7 @@ func (dbconfig *DbConfig) Synchronize() gin.HandlerFunc {
 				break
 			}
 			for _, product := range products {
-				product_compiled, err := CompileProduct(dbconfig, product.ID, c.Request.Context(), false)
+				product_compiled, err := CompileProduct(dbconfig, product.ID, false)
 				if err != nil {
 					RespondWithError(c, http.StatusInternalServerError, err.Error())
 					return
@@ -235,7 +235,7 @@ func (dbconfig *DbConfig) FilterQueueItems() gin.HandlerFunc {
 		param_type := utils.ConfirmFilters(c.Query("type"))
 		param_instruction := utils.ConfirmFilters(c.Query("instruction"))
 		param_status := utils.ConfirmFilters(c.Query("status"))
-		result, err := CompileQueueFilterSearch(dbconfig, c.Request.Context(), page, param_type, param_status, param_instruction)
+		result, err := CompileQueueFilterSearch(dbconfig, false, page, param_type, param_status, param_instruction)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -371,7 +371,7 @@ func (dbconfig *DbConfig) ClearQueueByFilter() gin.HandlerFunc {
 		param_type := utils.ConfirmFilters(c.Query("type"))
 		param_instruction := utils.ConfirmFilters(c.Query("instruction"))
 		param_status := utils.ConfirmFilters(c.Query(("status")))
-		response, err := CompileRemoveQueueFilter(dbconfig, c.Request.Context(), param_type, param_status, param_instruction)
+		response, err := CompileRemoveQueueFilter(dbconfig, false, param_type, param_status, param_instruction)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
@@ -506,7 +506,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 			return errors.New("could not decode product_id '" + queue_object.SystemProductID + "'")
 		}
 		shopifyConfig := shopify.InitConfigShopify("")
-		product, err := CompileProduct(dbconfig, product_id, context.Background(), false)
+		product, err := CompileProduct(dbconfig, product_id, false)
 		if err != nil {
 			return err
 		}
@@ -527,7 +527,7 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		if err != nil {
 			return errors.New("could not decode variant_id '" + queue_object.SystemVariantID + "'")
 		}
-		variant, err := CompileVariantByID(dbconfig, variant_id, context.Background())
+		variant, err := CompileVariantByID(dbconfig, variant_id)
 		if err != nil {
 			return err
 		}
