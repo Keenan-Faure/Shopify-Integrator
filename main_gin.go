@@ -7,7 +7,6 @@ import (
 	"iocsv"
 	"log"
 	"shopify"
-	"utils"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -20,15 +19,8 @@ type DbConfig struct {
 
 func main() {
 	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
-	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
-	flag.Parse()
-
-	connection_string := "postgres://" + utils.LoadEnv("db_user") + ":" + utils.LoadEnv("db_psw")
-	host := "@localhost:5432/"
-	if !*use_localhost {
-		host = "@postgres:5432/"
-	}
-	dbCon, err := InitConn(connection_string + host + utils.LoadEnv("db_name") + "?sslmode=disable")
+	connectionString := InitConnectionString(false)
+	dbCon, err := InitConn(connectionString)
 	if err != nil {
 		log.Fatalf("error occured when setting up database: %v", err.Error())
 	}
