@@ -743,14 +743,15 @@ type SearchCustomer struct {
 	LastName  string `json:"last_name"`
 }
 type SearchProduct struct {
-	ID          uuid.UUID       `json:"id"`
-	Active      string          `json:"active"`
-	Title       string          `json:"title"`
-	Category    string          `json:"category"`
-	ProductType string          `json:"product_type"`
-	Vendor      string          `json:"vendor"`
-	Images      []ProductImages `json:"product_images"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID          uuid.UUID       `json:"id" db:"id"`
+	ProductCode string          `json:"product_code" db:"product_code"`
+	Active      string          `json:"active" db:"active"`
+	Title       string          `json:"title" db:"title"`
+	Category    string          `json:"category" db:"category"`
+	ProductType string          `json:"product_type" db:"product_type"`
+	Vendor      string          `json:"vendor" db:"vendor"`
+	Images      []ProductImages `json:"product_images" db:"-"`
+	UpdatedAt   time.Time       `json:"updated_at" db:"updated_at"`
 }
 type Product struct {
 	ID             uuid.UUID        `json:"id"`
