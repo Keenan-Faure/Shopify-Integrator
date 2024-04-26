@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"flag"
 	"integrator/internal/database"
 	"log"
 	"utils"
@@ -25,22 +24,19 @@ func InitConn(dbURL string) (DbConfig, error) {
 // Initiates a connection to the database
 // used only for custom queries that do not
 // exist inside the /internal/database
-func InitCustomConnection(dbURL string) *pgx.Conn {
+func InitCustomConnection(dbURL string) (*pgx.Conn, error) {
 	conn, err := pgx.Connect(context.Background(), dbURL)
 	if err != nil {
-		log.Fatal("Unable to connect to database: ", err)
+		return &pgx.Conn{}, err
 	}
-	return conn
+	return conn, err
 }
 
 // Creates a connection string
-func InitConnectionString(mock bool) string {
-	use_localhost := flag.Bool("localhost", false, "Enable localhost for tests only")
-	flag.Parse()
-
+func InitConnectionString(useLocalhost, mock bool) string {
 	connection_string := "postgres://" + utils.LoadEnv("db_user") + ":" + utils.LoadEnv("db_psw")
 	host := "@localhost:5432/"
-	if !*use_localhost {
+	if !useLocalhost {
 		host = "@postgres:5432/"
 	}
 	if mock {
