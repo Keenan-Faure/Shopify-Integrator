@@ -17,12 +17,27 @@ type DbConfig struct {
 	Valid bool
 }
 
+const WORKER_RUNTIME_FLAG_NAME = "workers"
+const HOST_RUNTIME_FLAG_NAME = "localhost"
+
 func main() {
-	workers := flag.Bool("workers", false, "Enable server and worker for tests only")
-	connectionString := InitConnectionString(false)
+	workers := flag.Bool(WORKER_RUNTIME_FLAG_NAME, false, "Enable server and worker for tests only")
+	use_localhost := flag.Bool(HOST_RUNTIME_FLAG_NAME, false, "Enable localhost for tests only")
+
+	flag.Parse()
+	connectionString := InitConnectionString(*use_localhost, false)
 	dbCon, err := InitConn(connectionString)
 	if err != nil {
 		log.Fatalf("error occured when setting up database: %v", err.Error())
+	}
+
+	err = dbCon.AddRuntimeFlags(WORKER_RUNTIME_FLAG_NAME, *workers)
+	if err != nil {
+		log.Fatal("error occured when setting runtime flag 'workers'")
+	}
+	err = dbCon.AddRuntimeFlags(HOST_RUNTIME_FLAG_NAME, *use_localhost)
+	if err != nil {
+		log.Fatal("error occured when setting runtime flags 'use_localhost'")
 	}
 
 	shopifyConfig := shopify.InitConfigShopify("")
