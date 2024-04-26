@@ -89,7 +89,8 @@ func CompileRemoveQueueFilter(
 	}
 	baseQuery += queryWhere
 	baseQuery = RemoveQueryKeywords(baseQuery)
-	customConnection := InitCustomConnection(InitConnectionString(mock))
+	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
+	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
 	_, err := customConnection.Exec(context.Background(), baseQuery)
 	if err != nil {
 		return "error", err
@@ -151,7 +152,8 @@ func CompileQueueFilterSearch(
 		return []objects.ResponseQueueItemFilter{}, nil
 	}
 	baseQuery = RemoveQueryKeywords(baseQuery)
-	customConnection := InitCustomConnection(InitConnectionString(mock))
+	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
+	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
 	rows, _ := customConnection.Query(context.Background(), baseQuery)
 	queueItems, err := pgx.CollectRows(rows, pgx.RowToStructByName[objects.ResponseQueueItemFilter])
 	if err != nil {
@@ -470,7 +472,8 @@ func CompileFilterSearch(dbconfig *DbConfig, mock bool, page int, product_type, 
 		return []objects.SearchProduct{}, nil
 	}
 	baseQuery = RemoveQueryKeywords(baseQuery)
-	customConnection := InitCustomConnection(InitConnectionString(mock))
+	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
+	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
 	rows, _ := customConnection.Query(context.Background(), baseQuery)
 	products, err := pgx.CollectRows(rows, pgx.RowToStructByName[objects.SearchProduct])
 	for _, product := range products {
