@@ -10,14 +10,16 @@ import (
 	"github.com/jarcoal/httpmock"
 )
 
+// TODO not sure how to properly test OAuth2, need to think about it
+
 func TestOAuthGoogleCallback(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/google/callback",
 		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(303, "")
+			resp, err := httpmock.NewJsonResponse(http.StatusSeeOther, "")
 			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
+				return httpmock.NewStringResponse(http.StatusInternalServerError, ""), nil
 			}
 			return resp, nil
 		},
@@ -29,15 +31,45 @@ func TestOAuthGoogleCallback(t *testing.T) {
 }
 
 func TestOAuthGoogleLogin(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/google/oauth2/login",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(http.StatusTemporaryRedirect, "")
+			if err != nil {
+				return httpmock.NewStringResponse(http.StatusInternalServerError, ""), nil
+			}
+			return resp, nil
+		},
+	)
 
+	/* Test 1 - invalid authentication */
+	res, _ := FetchHelper(MOCK_APP_API_URL, "api/google/oauth2/login", http.MethodGet, nil)
+	assert.Equal(t, http.StatusTemporaryRedirect, res.StatusCode)
 }
 
 func TestOAuthGoogleOAuthn(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder(http.MethodGet, MOCK_APP_API_URL+"/api/google/oauth2/login",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(http.StatusOK, "")
+			if err != nil {
+				return httpmock.NewStringResponse(http.StatusInternalServerError, ""), nil
+			}
+			return resp, nil
+		},
+	)
 
+	/* Test 1 - invalid authentication */
+	res, _ := FetchHelper(MOCK_APP_API_URL, "api/google/oauth2/login", http.MethodGet, nil)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestGenerateStateOauthCookie(t *testing.T) {
+	// Test 1 - invalid writer
 
+	// Test 2 - valid writer
 }
 
 func TestGetUserDataFromGoogle(t *testing.T) {
