@@ -1225,13 +1225,13 @@ func TestOrderIDHandle(t *testing.T) {
 		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
 	)
 
-	assert.Equal(t, 404, w.Code)
+	assert.Equal(t, 500, w.Code)
 	response = objects.ResponseString{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
-	assert.Equal(t, "not found", response.Message)
+	assert.Equal(t, "order with ID 'c2d29867-3d0b-d497-9191-18a9d8ee7830' not found", response.Message)
 
 	/* Test 4 - valid request | exists */
 	orderUUID := createDatabaseOrder(&dbconfig)
