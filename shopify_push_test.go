@@ -45,6 +45,8 @@ const MOCK_QUEUE_ITEM_ID = "66608bb9-6bef-4424-b48f-59f487ec2933"
 
 func TestShopifyVariantPricing(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
+	createDatabaseProduct(&dbconfig)
+	defer ClearProductTestData(&dbconfig)
 
 	// Test 1 - Invalid function params
 	result, err := dbconfig.ShopifyVariantPricing(objects.ProductVariant{}, "")
@@ -58,6 +60,8 @@ func TestShopifyVariantPricing(t *testing.T) {
 	assert.Equal(t, "0.00", result)
 
 	// Test 3 - Valid price returned
+	createDatabaseProduct(&dbconfig)
+	defer ClearProductTestData(&dbconfig)
 	result, err = dbconfig.ShopifyVariantPricing(productPayload.Variants[0], "Selling Price")
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "1500.99", result)

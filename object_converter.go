@@ -151,6 +151,7 @@ func CompileQueueFilterSearch(
 	if queryWhere == "" {
 		return []objects.ResponseQueueItemFilter{}, nil
 	}
+	baseQuery += queryWhere
 	baseQuery = RemoveQueryKeywords(baseQuery)
 	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
 	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
@@ -471,6 +472,7 @@ func CompileFilterSearch(dbconfig *DbConfig, mock bool, page int, product_type, 
 	if queryWhere == "" {
 		return []objects.SearchProduct{}, nil
 	}
+	baseQuery += queryWhere
 	baseQuery = RemoveQueryKeywords(baseQuery)
 	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
 	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))

@@ -433,7 +433,7 @@ func TestProductValidationDatabase(t *testing.T) {
 	}
 	// Test 1 - empty request body
 	result := ProductValidationDatabase(objects.CSVProduct{}, &dbconfig)
-	assert.Equal(t, result, nil)
+	assert.NotEqual(t, result, nil)
 
 	// Test 2  - valid request body | duplicate SKU
 	createDatabaseProduct(&dbconfig)
@@ -787,7 +787,8 @@ func TestDuplicateOptionValues(t *testing.T) {
 
 	// Test 1 - empty request body
 	result := DuplicateOptionValues(&dbconfig, objects.RequestBodyVariant{}, uuid.Nil)
-	assert.Equal(t, result, nil)
+	assert.NotEqual(t, result, nil)
+	assert.Equal(t, result.Error(), "product with ID '00000000-0000-0000-0000-000000000000' not found")
 
 	// Test 2 - invalid request body | duplicate SKU
 	productID := createDatabaseProduct(&dbconfig)
@@ -813,14 +814,14 @@ func TestDuplicateOptionValues(t *testing.T) {
 	requestBody.Variants[0].Option3 = ""
 	result = DuplicateOptionValues(&dbconfig, requestBody.Variants[0], productID)
 	assert.NotEqual(t, result, nil)
-	ClearProductTestData(&dbconfig)
 
 	// Test 5  - valid request body
 	requestBody.Variants[0].Sku = "product_sku1"
 	requestBody.Variants[0].Option1 = "option4"
 	requestBody.Variants[0].Option2 = "option5"
 	requestBody.Variants[0].Option3 = "option6"
-	result = DuplicateOptionValues(&dbconfig, requestBody.Variants[0], uuid.Nil)
+	result = DuplicateOptionValues(&dbconfig, requestBody.Variants[0], productID)
+	ClearProductTestData(&dbconfig)
 	assert.Equal(t, result, nil)
 }
 

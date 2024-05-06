@@ -73,7 +73,7 @@ func TestGenerateStateOauthCookie(t *testing.T) {
 }
 
 func TestGetUserDataFromGoogle(t *testing.T) {
-
+	// cant test this
 }
 
 func FetchHelper(host, endpoint, method string, body io.Reader) (*http.Response, error) {
