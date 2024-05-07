@@ -257,7 +257,6 @@ func TestCompileOrderData(t *testing.T) {
 	// Test 2 - valid function params
 	ClearOrderTestData(&dbconfig)
 	orderUUID := createDatabaseOrder(&dbconfig)
-	log.Println("orderUUID: " + orderUUID.String())
 	result, err = CompileOrderData(&dbconfig, orderUUID, true)
 
 	assert.Equal(t, "Notes not taken", result.Notes)

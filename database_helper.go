@@ -307,11 +307,11 @@ func UpsertVariant(
 
 /* Adds a link between a customer and an order */
 func AddCustomerOrder(dbconfig *DbConfig, orderID, customerID uuid.UUID) error {
-	exists, err := CheckExistsCustomerOrder(dbconfig, context.Background(), customerID, orderID)
+	orderCustomerUUID, err := CheckExistsCustomerOrder(dbconfig, context.Background(), customerID, orderID)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if orderCustomerUUID == uuid.Nil {
 		err = dbconfig.DB.CreateCustomerOrder(context.Background(), database.CreateCustomerOrderParams{
 			ID:         uuid.New(),
 			CustomerID: customerID,
@@ -328,11 +328,11 @@ func AddCustomerOrder(dbconfig *DbConfig, orderID, customerID uuid.UUID) error {
 
 /* Adds an order to the application */
 func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID, error) {
-	exists, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
+	orderID, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
 	if err != nil {
 		return uuid.Nil, err
 	}
-	if !exists {
+	if orderID == uuid.Nil {
 		dbOrder, err := dbconfig.DB.CreateOrder(context.Background(), database.CreateOrderParams{
 			ID:            uuid.New(),
 			Status:        orderBody.FinancialStatus,
@@ -366,16 +366,16 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID
 		}
 		return dbOrder.ID, nil
 	}
-	return uuid.Nil, nil
+	return orderID, nil
 }
 
 /* Updates an order that already exists inside the application */
 func UpdateOrder(dbconfig *DbConfig, orderID uuid.UUID, orderBody objects.RequestBodyOrder) error {
-	exists, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
+	orderID, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
 	if err != nil {
 		return err
 	}
-	if exists {
+	if orderID == uuid.Nil {
 		_, err = dbconfig.DB.UpdateOrder(context.Background(), database.UpdateOrderParams{
 			Notes:         utils.ConvertStringToSQL(orderBody.Note),
 			Status:        orderBody.FinancialStatus,
@@ -468,11 +468,11 @@ func AddCustomer(
 	customer objects.RequestBodyCustomer,
 	WebCustomerCode string,
 ) (uuid.UUID, error) {
-	exists, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
+	customerID, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
 	if err != nil {
 		return uuid.Nil, err
 	}
-	if !exists {
+	if customerID == uuid.Nil {
 		dbCustomer, err := dbconfig.DB.CreateCustomer(context.Background(), database.CreateCustomerParams{
 			ID:              uuid.New(),
 			WebCustomerCode: WebCustomerCode,
@@ -496,16 +496,16 @@ func AddCustomer(
 		}
 		return dbCustomer.ID, nil
 	}
-	return uuid.Nil, nil
+	return customerID, nil
 }
 
 /* Updates a customer inside the application */
 func UpdateCustomer(dbconfig *DbConfig, customer objects.RequestBodyCustomer, WebCustomerCode string) error {
-	exists, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
+	customerID, err := CheckExistsCustomer(dbconfig, context.Background(), WebCustomerCode)
 	if err != nil {
 		return err
 	}
-	if exists {
+	if customerID == uuid.Nil {
 		err := dbconfig.DB.UpdateCustomer(context.Background(), database.UpdateCustomerParams{
 			ID:        uuid.New(),
 			FirstName: customer.FirstName,
@@ -1165,63 +1165,63 @@ func CheckPID(dbconfig *DbConfig, product_code string, r *http.Request) (string,
 }
 
 /* Checks if an order already exists inside the database using it's web code */
-func CheckExistsOrder(dbconfig *DbConfig, ctx context.Context, order_web_code string) (bool, error) {
+func CheckExistsOrder(dbconfig *DbConfig, ctx context.Context, order_web_code string) (uuid.UUID, error) {
 	dbOrder, err := dbconfig.DB.GetOrderByWebCode(ctx, order_web_code)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return false, nil
+			return uuid.Nil, nil
 		}
-		return false, err
+		return uuid.Nil, err
 	}
 	if dbOrder.WebCode == order_web_code {
-		return true, nil
+		return dbOrder.ID, nil
 	}
-	return false, nil
+	return uuid.Nil, nil
 }
 
-/* Checks if an order already exists inside the database using it's web code */
-func CheckExistsOrderByID(dbconfig *DbConfig, ctx context.Context, orderID uuid.UUID) (bool, error) {
+/* Checks if an order already exists inside the database using it's order id */
+func CheckExistsOrderByID(dbconfig *DbConfig, ctx context.Context, orderID uuid.UUID) (uuid.UUID, error) {
 	dbOrder, err := dbconfig.DB.GetOrderByID(ctx, orderID)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return false, nil
+			return uuid.Nil, nil
 		}
-		return false, err
+		return uuid.Nil, err
 	}
 	if dbOrder.ID == orderID {
-		return true, nil
+		return dbOrder.ID, nil
 	}
-	return false, nil
+	return uuid.Nil, nil
 }
 
 /* Checks if a customer already exists inside the database using it's customer id on the order payload */
-func CheckExistsCustomer(dbconfig *DbConfig, ctx context.Context, customer_id string) (bool, error) {
+func CheckExistsCustomer(dbconfig *DbConfig, ctx context.Context, customer_id string) (uuid.UUID, error) {
 	dbCustomer, err := dbconfig.DB.GetCustomerByWebCode(ctx, customer_id)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return false, nil
+			return uuid.Nil, nil
 		}
-		return false, err
+		return uuid.Nil, err
 	}
 	if dbCustomer.WebCustomerCode == customer_id {
-		return true, nil
+		return dbCustomer.ID, nil
 	}
-	return false, nil
+	return uuid.Nil, nil
 }
 
 /* Checks if the customer-order link already exists inside the database */
-func CheckExistsCustomerOrder(dbconfig *DbConfig, ctx context.Context, customerID, orderID uuid.UUID) (bool, error) {
-	_, err := dbconfig.DB.GetOrderIDByCustomerID(ctx, database.GetOrderIDByCustomerIDParams{
+func CheckExistsCustomerOrder(dbconfig *DbConfig, ctx context.Context, customerID, orderID uuid.UUID) (uuid.UUID, error) {
+	orderCustomerUUID, err := dbconfig.DB.GetOrderIDByCustomerID(ctx, database.GetOrderIDByCustomerIDParams{
 		CustomerID: customerID,
 		OrderID:    orderID,
 	})
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return false, nil
+			return uuid.Nil, nil
 		}
-		return false, err
+		return uuid.Nil, err
 	}
-	return true, nil
+	return orderCustomerUUID, nil
 }
 
 /* Checks if a customer already exists inside the database using it's customer id on the order payload */

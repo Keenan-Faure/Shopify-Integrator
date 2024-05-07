@@ -16,11 +16,11 @@ This file contains various functions that act as utilities when adding, returnin
 
 /* Clears the order_lines table of any line items relating to a certain SKU */
 func QueryClearOrderLines(dbconfig *DbConfig, orderID uuid.UUID) error {
-	exists, err := CheckExistsOrderByID(dbconfig, context.Background(), orderID)
+	orderID, err := CheckExistsOrderByID(dbconfig, context.Background(), orderID)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if orderID == uuid.Nil {
 		// do nothing, because there is nothing to remove
 		return nil
 	}

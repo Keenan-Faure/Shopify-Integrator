@@ -933,7 +933,7 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		exists, err := CheckExistsOrder(dbconfig, c.Request.Context(), fmt.Sprint(order_body.Name))
+		orderID, err := CheckExistsOrder(dbconfig, c.Request.Context(), fmt.Sprint(order_body.Name))
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -948,7 +948,7 @@ func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
 			Object:      order_body,
 		}
 		status := http.StatusOK
-		if !exists {
+		if orderID == uuid.Nil {
 			queueRequest.Instruction = "add_order"
 			status = http.StatusCreated
 		}

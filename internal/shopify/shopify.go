@@ -723,7 +723,7 @@ func (configShopify *ConfigShopify) FetchProducts(fetch_url string) (objects.Sho
 	products := objects.ShopifyProducts{}
 	err = json.Unmarshal(respBody, &products)
 	if err != nil {
-		log.Println(err) // TODO Log these errors?
+		log.Println(err)
 		return objects.ShopifyProducts{}, "", err
 	}
 	return products, string(res.Header.Get("Link")), nil

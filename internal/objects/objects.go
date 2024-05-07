@@ -7,41 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// check exists func struct
-
-type CheckExistOrder struct {
-}
-
-type CheckExistCustomer struct {
-}
-
-type CheckExistCustomerOrder struct {
-}
-
-type CheckExistCustomerAddress struct {
-}
-
-type CheckExistPriceTier struct {
-}
-
-type CheckExistProductImage struct {
-}
-
-type CheckExistWarehouse struct {
-}
-
-type CheckExistUser struct {
-}
-
-type CheckExistUserCredentials struct {
-}
-
-type CheckExistToken struct {
-}
-
-type CheckExistEmailTypes struct {
-}
-
 // ngrok.go
 type NgrokTunnelResponse struct {
 	Tunnels []struct {
