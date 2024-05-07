@@ -13,6 +13,7 @@ func TestAddOrder(t *testing.T) {
 	// Test 1 - invalid order body
 	result := dbconfig.AddOrder(objects.RequestBodyOrder{})
 	assert.NotEqual(t, result, nil)
+	assert.Equal(t, "data validation error", result.Error())
 
 	// Test 2 - valid order request body
 	result = dbconfig.AddOrder(OrderPayload("test-case-valid-order.json"))

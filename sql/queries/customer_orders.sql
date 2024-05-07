@@ -26,3 +26,11 @@ SELECT
     order_id
 FROM customer_orders
 WHERE customer_id = $1 AND order_id = $2;
+
+-- name: RemoveCustomerOrdersByOrderID :exec
+DELETE FROM customer_orders
+WHERE order_id = (
+    SELECT id
+    FROM orders
+    WHERE web_code = $1
+);

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"integrator/internal/database"
+	"log"
 	"objects"
 	"strings"
 	"utils"
@@ -91,6 +92,7 @@ func CompileRemoveQueueFilter(
 	baseQuery = RemoveQueryKeywords(baseQuery)
 	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
 	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
+	log.Println(InitConnectionString(useLocalhost, mock))
 	_, err := customConnection.Exec(context.Background(), baseQuery)
 	if err != nil {
 		return "error", err
@@ -269,9 +271,6 @@ func CompileCustomerData(
 	ignore_address bool) (objects.Customer, error) {
 	customer, err := dbconfig.DB.GetCustomerByID(context.Background(), customer_id)
 	if err != nil {
-		if err.Error() == "sql: no rows found in result set" {
-			return objects.Customer{}, errors.New("customer with ID '" + customer_id.String() + "' not found")
-		}
 		return objects.Customer{}, err
 	}
 	if ignore_address {
@@ -351,9 +350,6 @@ func CompileOrderData(
 	ignore_ship_cust bool) (objects.Order, error) {
 	order, err := dbconfig.DB.GetOrderByID(context.Background(), order_id)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return objects.Order{}, errors.New("order with ID '" + order_id.String() + "' not found")
-		}
 		return objects.Order{}, err
 	}
 	customer_id, err := dbconfig.DB.GetCustomerByOrderID(context.Background(), order_id)
@@ -520,10 +516,6 @@ func CompileSearchResult(
 	for _, value := range search {
 		images, err := CompileProductImages(value.ID, dbconfig)
 		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				return []objects.SearchProduct{}, errors.New("product with ID '" + value.ID.String() + "' not found")
-
-			}
 			return response, err
 		}
 		response = append(response, objects.SearchProduct{
@@ -579,9 +571,6 @@ func CompileProduct(
 	ignore_variant bool) (objects.Product, error) {
 	product, err := dbconfig.DB.GetProductByID(context.Background(), product_id)
 	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			return objects.Product{}, errors.New("product with ID '" + product_id.String() + "' not found")
-		}
 		return objects.Product{}, err
 	}
 	product_options, err := dbconfig.DB.GetProductOptions(context.Background(), product_id)

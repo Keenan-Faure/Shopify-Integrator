@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"objects"
 
 	"github.com/google/uuid"
@@ -12,7 +11,6 @@ import (
 func (dbconfig *DbConfig) AddOrder(order_body objects.RequestBodyOrder) error {
 	err := OrderValidation(order_body)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	_, err = AddOrder(dbconfig, order_body)

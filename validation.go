@@ -538,8 +538,8 @@ func ValidateDuplicateSKU(
 func DuplicateOptionValues(dbconfig *DbConfig, variantData objects.RequestBodyVariant, productID uuid.UUID) error {
 	products, err := CompileProduct(dbconfig, productID, false)
 	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			return err
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("product with ID '" + productID.String() + "' not found")
 		}
 	}
 	for _, variant := range products.Variants {

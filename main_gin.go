@@ -56,7 +56,10 @@ func main() {
 		}
 	}
 	r := setUpAPI(&dbCon)
-	r.Run(":8080")
+	err = r.Run(":8080")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func setUpAPI(dbconfig *DbConfig) *gin.Engine {
@@ -68,7 +71,10 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	// query_params -> api_keys inside header -> Basic authentication
 
 	r.ForwardedByClientIP = true
-	r.SetTrustedProxies([]string{"127.0.0.1"})
+	err := r.SetTrustedProxies([]string{"127.0.0.1"})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	/* --------- N/A Auth routes --------- */
 

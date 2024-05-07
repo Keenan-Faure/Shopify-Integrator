@@ -1,7 +1,9 @@
 version: "2"
 services:
     server:
-        image: keenansame/shopify-integrator:latest
+        build:
+            context: ./
+            dockerfile: ./setup/server/Dockerfile
         ports:
             - "${PORT}:${PORT}"
         container_name: ${SERVER_CONTAINER_NAME}
@@ -60,6 +62,7 @@ services:
         container_name: ${DB_NAME}
         ports:
             - "5432:5432"
+        command: -c 'max_connections=200'
         restart: always
         environment:
             - POSTGRES_USER=${DB_USER}

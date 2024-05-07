@@ -105,3 +105,17 @@ func (q *Queries) GetOrdersByCustomerID(ctx context.Context, customerID uuid.UUI
 	}
 	return items, nil
 }
+
+const removeCustomerOrdersByOrderID = `-- name: RemoveCustomerOrdersByOrderID :exec
+DELETE FROM customer_orders
+WHERE order_id = (
+    SELECT id
+    FROM orders
+    WHERE web_code = $1
+)
+`
+
+func (q *Queries) RemoveCustomerOrdersByOrderID(ctx context.Context, webCode string) error {
+	_, err := q.db.ExecContext(ctx, removeCustomerOrdersByOrderID, webCode)
+	return err
+}

@@ -122,7 +122,7 @@ func TestCompileQueueFilterSearch(t *testing.T) {
 	result, err = CompileQueueFilterSearch(&dbconfig, true, 1, "", "in-queue", "")
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, len(result), 0)
-	ClearQueueMockData(&dbconfig)
+	defer ClearQueueMockData(&dbconfig)
 }
 
 func TestConvertProductToShopify(t *testing.T) {
@@ -211,7 +211,6 @@ func TestCompileCustomerData(t *testing.T) {
 
 	// Test 2 - valid function params | ignore_address
 	customerUUID := createDatabaseCustomer(&dbconfig)
-	defer dbconfig.DB.RemoveCustomer(context.Background(), customerUUID)
 	result, err = CompileCustomerData(&dbconfig, customerUUID, true)
 	assert.NotEqual(t, result.ID, uuid.Nil)
 	assert.Equal(t, result.FirstName, "TestFirstName")
@@ -223,6 +222,7 @@ func TestCompileCustomerData(t *testing.T) {
 	assert.Equal(t, result.FirstName, "TestFirstName")
 	assert.NotEqual(t, len(result.Address), 0)
 	assert.Equal(t, err, nil)
+	dbconfig.DB.RemoveCustomer(context.Background(), customerUUID)
 }
 
 func TestCompileOrderSearchResult(t *testing.T) {
@@ -251,15 +251,18 @@ func TestCompileOrderData(t *testing.T) {
 	dbconfig := setupDatabase("", "", "", false)
 	// Test 1 - invalid function params
 	result, err := CompileOrderData(&dbconfig, uuid.Nil, true)
-	assert.Equal(t, result.Notes, "")
-	assert.NotEqual(t, err, nil)
+	assert.Equal(t, "", result.Notes)
+	assert.NotEqual(t, nil, err)
 
 	// Test 2 - valid function params
+	ClearOrderTestData(&dbconfig)
 	orderUUID := createDatabaseOrder(&dbconfig)
-	defer dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
+	log.Println("orderUUID: " + orderUUID.String())
 	result, err = CompileOrderData(&dbconfig, orderUUID, true)
-	assert.Equal(t, result.Notes, "Notes not taken")
-	assert.Equal(t, err, nil)
+
+	assert.Equal(t, "Notes not taken", result.Notes)
+	assert.Equal(t, nil, err)
+	defer dbconfig.DB.RemoveOrder(context.Background(), orderUUID)
 }
 
 func TestCompileFilterSearch(t *testing.T) {

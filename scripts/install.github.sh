@@ -26,7 +26,7 @@ function install_app_gh() {
     docker-compose rm -f
     if ! docker compose up -d --force-recreate --no-deps postgres server; then
         exit
-    else 
+    else
         until
             docker exec $DB_NAME pg_isready
         do 
