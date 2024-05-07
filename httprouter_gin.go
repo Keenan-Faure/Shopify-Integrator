@@ -831,7 +831,7 @@ func (dbconfig *DbConfig) CustomerIDHandle() gin.HandlerFunc {
 		customer, err := CompileCustomerData(dbconfig, customer_uuid, false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusNotFound, "not found")
+				RespondWithError(c, http.StatusNotFound, "customer with ID '"+customer_id+"' not found")
 				return
 			}
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -870,6 +870,10 @@ func (dbconfig *DbConfig) CustomersHandle() gin.HandlerFunc {
 		for _, value := range dbCustomers {
 			cust, err := CompileCustomerData(dbconfig, value.ID, true)
 			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "customer with ID '"+value.ID.String()+"' not found")
+					return
+				}
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -1018,7 +1022,7 @@ func (dbconfig *DbConfig) OrderIDHandle() gin.HandlerFunc {
 		order_data, err := CompileOrderData(dbconfig, order_uuid, false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusNotFound, "not found")
+				RespondWithError(c, http.StatusNotFound, "order with ID '"+order_id+"' not found")
 				return
 			}
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -1057,6 +1061,10 @@ func (dbconfig *DbConfig) OrdersHandle() gin.HandlerFunc {
 		for _, value := range dbOrders {
 			ord, err := CompileOrderData(dbconfig, value.ID, true)
 			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "order with ID '"+value.ID.String()+"' not found")
+					return
+				}
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -1182,6 +1190,10 @@ func (dbconfig *DbConfig) ProductExportHandle() gin.HandlerFunc {
 		for _, product_id := range product_ids {
 			product, err := CompileProduct(dbconfig, product_id, false)
 			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "product with ID '"+product_id.String()+"' not found")
+					return
+				}
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -1321,6 +1333,10 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 		}
 		product_added, err := CompileProduct(dbconfig, dbProductID, false)
 		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "product with ID '"+dbProductID.String()+"' not found")
+				return
+			}
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -1331,12 +1347,20 @@ func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
 			api_key := c.GetString("api_key")
 			err = CompileInstructionProduct(dbconfig, product_added, api_key)
 			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "shopify product ID not found for: '"+product_added.ProductCode+"'")
+					return
+				}
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
 			for _, variant := range product_added.Variants {
 				err = CompileInstructionVariant(dbconfig, variant, product_added, api_key)
 				if err != nil {
+					if err.Error() == "sql: no rows in result set" {
+						RespondWithError(c, http.StatusNotFound, "shopify variant ID not found for: '"+variant.Sku+"'")
+						return
+					}
 					RespondWithError(c, http.StatusInternalServerError, err.Error())
 					return
 				}
@@ -1372,9 +1396,9 @@ func (dbconfig *DbConfig) ProductFilterHandle() gin.HandlerFunc {
 			dbconfig,
 			false,
 			page,
-			utils.ConvertStringToLike(query_param_type),
-			utils.ConvertStringToLike(query_param_category),
-			utils.ConvertStringToLike(query_param_vendor),
+			query_param_type,
+			query_param_category,
+			query_param_vendor,
 		)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -1409,6 +1433,9 @@ func (dbconfig *DbConfig) ProductSearchHandle() gin.HandlerFunc {
 		}
 		compiled, err := CompileSearchResult(dbconfig, search)
 		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "product ID not found")
+			}
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
@@ -1445,6 +1472,10 @@ func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
 		for _, value := range dbProducts {
 			prod, err := CompileProduct(dbconfig, value.ID, false)
 			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "product ID not found for: '"+value.ID.String()+"'")
+					return
+				}
 				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -1457,7 +1488,7 @@ func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
 /*
 Returns the product data having the specific id
 
-Route: /api/product/{id}
+Route: /api/products/{id}
 
 Authorization: Basic, QueryParams, Headers
 
@@ -1481,7 +1512,7 @@ func (dbconfig *DbConfig) ProductIDHandle() gin.HandlerFunc {
 		product_data, err := CompileProduct(dbconfig, product_uuid, false)
 		if err != nil {
 			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(c, http.StatusNotFound, "not found")
+				RespondWithError(c, http.StatusNotFound, "product with ID '"+product_id+"' not found")
 				return
 			}
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
@@ -1601,8 +1632,7 @@ func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusConflict, "email '"+request_body.Email+"' already exists")
 			return
 		}
-		token_value := uuid.UUID{}
-		token_value, exists, err = CheckExistsToken(dbconfig, email, c.Request)
+		token_value, exists, err := CheckExistsToken(dbconfig, email, c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
