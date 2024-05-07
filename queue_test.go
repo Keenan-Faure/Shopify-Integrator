@@ -129,7 +129,7 @@ func TestFilterQueueItems(t *testing.T) {
 	CreateDatabaseQueueItem(&dbconfig, "")
 	defer ClearQueueMockData(&dbconfig)
 	w = Init(
-		"/api/queue/filter?type=products&api_key="+dbUser.ApiKey,
+		"/api/queue/filter?type=product&api_key="+dbUser.ApiKey,
 		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
 	)
 	assert.Equal(t, 200, w.Code)
@@ -257,7 +257,7 @@ func TestClearQueueByFilter(t *testing.T) {
 	CreateDatabaseQueueItem(&dbconfig, "")
 	defer ClearQueueMockData(&dbconfig)
 	w = Init(
-		"/api/queue?type=products&api_key="+dbUser.ApiKey,
+		"/api/queue?type=product&api_key="+dbUser.ApiKey,
 		http.MethodDelete, map[string][]string{}, nil, &dbconfig, router,
 	)
 	assert.Equal(t, 200, w.Code)
