@@ -2730,6 +2730,7 @@ func ClearTestData(dbconfig *DbConfig) {
 func ClearOrderTestData(dbconfig *DbConfig) {
 	dbconfig.DB.RemoveOrderByWebCode(context.Background(), MOCK_ORDER_WEB_CODE)
 	dbconfig.DB.RemoveCustomerByWebCustomerCode(context.Background(), MOCK_WEB_CUSTOMER_CODE)
+	dbconfig.DB.RemoveCustomerOrdersByOrderID(context.Background(), MOCK_ORDER_WEB_CODE)
 }
 
 func ClearProductTestData(dbconfig *DbConfig) {
