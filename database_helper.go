@@ -371,12 +371,8 @@ func AddOrder(dbconfig *DbConfig, orderBody objects.RequestBodyOrder) (uuid.UUID
 
 /* Updates an order that already exists inside the application */
 func UpdateOrder(dbconfig *DbConfig, orderID uuid.UUID, orderBody objects.RequestBodyOrder) error {
-	orderID, err := CheckExistsOrder(dbconfig, context.Background(), orderBody.Name)
-	if err != nil {
-		return err
-	}
 	if orderID == uuid.Nil {
-		_, err = dbconfig.DB.UpdateOrder(context.Background(), database.UpdateOrderParams{
+		_, err := dbconfig.DB.UpdateOrder(context.Background(), database.UpdateOrderParams{
 			Notes:         utils.ConvertStringToSQL(orderBody.Note),
 			Status:        orderBody.FinancialStatus,
 			WebCode:       orderBody.Name,
