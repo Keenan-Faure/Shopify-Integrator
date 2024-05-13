@@ -758,12 +758,14 @@ func TestLocationWarehouseHandle(t *testing.T) {
 }
 
 func TestConfigLocationWarehouseHandle(t *testing.T) {
+	requestHeaders := make(map[string][]string)
+	requestHeaders["Mocker"] = []string{"true"}
 	/* Test 1 - invalid authentication */
 	dbconfig := setupDatabase("", "", "", false)
 	router := setUpAPI(&dbconfig)
 	w := Init(
 		"/api/inventory/config?page=1",
-		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+		http.MethodGet, requestHeaders, nil, &dbconfig, router,
 	)
 	assert.Equal(t, 401, w.Code)
 
@@ -772,7 +774,7 @@ func TestConfigLocationWarehouseHandle(t *testing.T) {
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
 	w = Init(
 		"/api/inventory/config?page=-16&api_key="+dbUser.ApiKey,
-		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+		http.MethodGet, requestHeaders, nil, &dbconfig, router,
 	)
 
 	assert.Equal(t, 200, w.Code)
@@ -785,7 +787,7 @@ func TestConfigLocationWarehouseHandle(t *testing.T) {
 	/* Test 3 - valid request | no results (none created) */
 	w = Init(
 		"/api/inventory/config?page=1&api_key="+dbUser.ApiKey,
-		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+		http.MethodGet, requestHeaders, nil, &dbconfig, router,
 	)
 
 	assert.Equal(t, 200, w.Code)
@@ -799,7 +801,7 @@ func TestConfigLocationWarehouseHandle(t *testing.T) {
 	createDatabaseGlobalWarehouse(&dbconfig)
 	w = Init(
 		"/api/inventory/config?page=1&api_key="+dbUser.ApiKey,
-		http.MethodGet, map[string][]string{}, nil, &dbconfig, router,
+		http.MethodGet, requestHeaders, nil, &dbconfig, router,
 	)
 	ClearWarehouseLocationData(&dbconfig)
 
