@@ -26,6 +26,7 @@ const MOCK_NGROK_WEBHOOK_URL = "https://f5fa-102-135-246-72.ngrok-free.app"
 
 const MOCK_SHOPIFY_LOCATION_ID = 10293810823
 const MOCK_SHOPIFY_INVENTORY_LEVEL_ID = 23087120381
+const MOCK_INVENTORY_ITEM_ID = 1023781023
 
 const MOCK_SHOPIFY_PRODUCT_ID = 1072481085
 const MOCK_SHOPIFY_VARIANT_ID = 1070325083
@@ -35,18 +36,11 @@ const MOCK_PRODUCT_SKU = "MOCK_PRODUCT_SKU"
 
 func TestDeleteShopifyWebhook(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodDelete, MOCK_SHOPIFY_API_URL+"/webhooks/"+MOCK_SHOPIFY_WEBHOOK_ID+".json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, "")
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - empty webhook ID
 	response, err := shopifyConfig.DeleteShopifyWebhook("")
 	if err == nil {
@@ -64,18 +58,11 @@ func TestDeleteShopifyWebhook(t *testing.T) {
 
 func TestUpdateShopifyWebhook(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPut, MOCK_SHOPIFY_API_URL+"/webhooks.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyWebhookResponse("test-case-valid-webhook.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - empty webhook ID
 	response, err := shopifyConfig.UpdateShopifyWebhook("", MOCK_NGROK_WEBHOOK_URL)
 	if err == nil {
@@ -109,18 +96,11 @@ func TestUpdateShopifyWebhook(t *testing.T) {
 
 func TestCreateShopifyWebhook(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/webhooks.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(201, CreateShopifyWebhookResponse("test-case-valid-webhook.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - empty NGROK webhook URL
 	response, err := shopifyConfig.CreateShopifyWebhook("")
 	if err == nil {
@@ -144,18 +124,11 @@ func TestCreateShopifyWebhook(t *testing.T) {
 
 func TestGetShopifyWebhooks(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/webhooks.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyWebhooksResponse("test-case-valid-webhooks.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - valid request
 	response, err := shopifyConfig.GetShopifyWebhooks()
 	if err != nil {
@@ -170,18 +143,11 @@ func TestGetShopifyWebhooks(t *testing.T) {
 
 func TestGetShopifyProductCount(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/products/count.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyProductCountResponse("test-case-valid-product-count.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - valid request
 	response, err := shopifyConfig.GetShopifyProductCount()
 	if err != nil {
@@ -192,18 +158,11 @@ func TestGetShopifyProductCount(t *testing.T) {
 
 func TestGetShopifyLocations(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/locations.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyLocationResponse("test-case-valid-locations.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - valid request
 	response, err := shopifyConfig.GetShopifyLocations()
 	if err != nil {
@@ -214,19 +173,11 @@ func TestGetShopifyLocations(t *testing.T) {
 
 func TestGetShopifyInventoryLevel(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/inventory_levels.json?location_ids="+
-		fmt.Sprint(MOCK_SHOPIFY_LOCATION_ID)+"&inventory_item_ids="+fmt.Sprint(MOCK_SHOPIFY_INVENTORY_LEVEL_ID),
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyInventoryLevelsResponse("test-case-valid-inventory-levels.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - empty parameters
 	response, err := shopifyConfig.GetShopifyInventoryLevel("", "")
 	if err == nil {
@@ -257,19 +208,11 @@ func TestGetShopifyInventoryLevel(t *testing.T) {
 
 func TestGetShopifyInventoryLevels(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/inventory_levels.json?location_ids="+
-		fmt.Sprint(MOCK_SHOPIFY_LOCATION_ID)+"&inventory_item_ids="+fmt.Sprint(MOCK_SHOPIFY_INVENTORY_LEVEL_ID),
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyInventoryLevelsResponse("test-case-valid-inventory-levels.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - empty parameters
 	response, err := shopifyConfig.GetShopifyInventoryLevels("", "")
 	if err == nil {
@@ -297,21 +240,11 @@ func TestGetShopifyInventoryLevels(t *testing.T) {
 
 func TestAddLocationQtyShopify(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
 	httpmock.Activate()
+	InitMockShopifyAPI()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/inventory_levels/adjust.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(
-				200,
-				CreateShopifyInventoryLevelResponse("test-case-valid-inventory-level.json"),
-			)
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
 	// Test Case 1 - empty parameters
 	response, err := shopifyConfig.AddLocationQtyShopify(0, 0, 0)
 	if err == nil {
@@ -341,18 +274,10 @@ func TestAddLocationQtyShopify(t *testing.T) {
 
 func TestAddProductShopify(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/products.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(201, CreateShopifyProductResponse("test-case-valid-product.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - valid parameter
 	response, err := shopifyConfig.AddProductShopify(objects.ShopifyProduct{
@@ -375,18 +300,10 @@ func TestAddProductShopify(t *testing.T) {
 
 func TestUpdateProductShopify(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPut, MOCK_SHOPIFY_API_URL+"/products/"+fmt.Sprint(MOCK_SHOPIFY_PRODUCT_ID)+".json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyProductResponse("test-case-valid-product.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - invalid parameter
 	response, err := shopifyConfig.UpdateProductShopify(objects.ShopifyProduct{}, "")
@@ -419,18 +336,10 @@ func TestUpdateProductShopify(t *testing.T) {
 
 func TestAddVariantShopify(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/products/"+fmt.Sprint(MOCK_SHOPIFY_PRODUCT_ID)+"/variants.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(201, CreateShopifVariantResponse("test-case-valid-variant.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - invalid parameter
 	response, err := shopifyConfig.AddVariantShopify(objects.ShopifyVariant{
@@ -462,18 +371,10 @@ func TestAddVariantShopify(t *testing.T) {
 
 func TestUpdateVariantShopify(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPut, MOCK_SHOPIFY_API_URL+"/variants/"+fmt.Sprint(MOCK_SHOPIFY_VARIANT_ID)+".json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifVariantResponse("test-case-valid-variant.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - invalid parameter
 	response, err := shopifyConfig.UpdateVariantShopify(objects.ShopifyVariant{
@@ -507,18 +408,10 @@ func TestUpdateVariantShopify(t *testing.T) {
 
 func TestAddProductToCollectionShopify(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/collects.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(201, CreateShopifyCollectionResponse("test-case-valid-collection.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - invalid parameter
 	response, err := shopifyConfig.AddProductToCollectionShopify(0, MOCK_SHOPIFY_COLLECTION_ID)
@@ -539,18 +432,10 @@ func TestAddProductToCollectionShopify(t *testing.T) {
 
 func TestAddCustomCollectionShopify(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/custom_collections.json",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(201, CreateShopifCustomCollectionResponse("test-case-valid-custom-collection.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - invalid parameter
 	response, err := shopifyConfig.AddCustomCollectionShopify("")
@@ -569,18 +454,10 @@ func TestAddCustomCollectionShopify(t *testing.T) {
 
 func TestGetShopifyCategories(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/custom_collections.json?fields=title,id",
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifCollectionsResponse("test-case-valid-custom-collections.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - valid request
 	response, err := shopifyConfig.GetShopifyCategories()
@@ -595,19 +472,10 @@ func TestGetShopifyCategories(t *testing.T) {
 
 func TestGetShopifyCategoryByProductID(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet,
-		MOCK_SHOPIFY_API_URL+"/custom_collections.json?fields=title,id&product_id="+fmt.Sprint(MOCK_SHOPIFY_PRODUCT_ID),
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifCollectionsResponse("test-case-valid-custom-collections.json"))
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - invalid parameter
 	response, err := shopifyConfig.GetShopifyCategoryByProductID("")
@@ -629,19 +497,10 @@ func TestGetShopifyCategoryByProductID(t *testing.T) {
 
 func TestFetchProducts(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/products.json?limit="+PRODUCT_FETCH_LIMIT,
-		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifProductsResponse("test-case-valid-products.json"))
-			resp.Header.Add("link", "<https://"+MOCK_SHOPIFY_STORE_NAME+".myshopify.com/admin/api/2023-10/products.json?limit=20&page_info=eyJsYXN0X2lkIjo3MDczNTE2ODc5OTMzLCJsYXN0X3ZhbHVlIjoiRW5pZ21hdGljIE1hY2hpbmlzdCAtIEZhcnV6YW4iLCJkASJDHLKDJFLJpiwjwsdsa>; rel='next'")
-			if err != nil {
-				return httpmock.NewStringResponse(500, ""), nil
-			}
-			return resp, nil
-		},
-	)
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - valid request
 	shopifyProducts, url, err := shopifyConfig.FetchProducts("")
@@ -730,6 +589,203 @@ func TestValidateConfigShopify(t *testing.T) {
 	assert.Equal(t, valid, true)
 }
 
+/* Sets up a mock shopify API */
+func InitMockShopifyAPI() {
+
+	httpmock.RegisterResponder(http.MethodPut, MOCK_SHOPIFY_API_URL+"/variants/"+fmt.Sprint(MOCK_SHOPIFY_VARIANT_ID)+".json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifVariantResponse("test-case-valid-variant.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/products/count.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyProductCountResponse("test-case-valid-product-count.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/webhooks.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyWebhookResponse("test-case-valid-webhooks.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/webhooks.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(201, CreateShopifyWebhookResponse("test-case-valid-webhook.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodDelete, MOCK_SHOPIFY_API_URL+"/webhooks/"+MOCK_SHOPIFY_WEBHOOK_ID+".json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, "")
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPut, MOCK_SHOPIFY_API_URL+"/webhooks.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyWebhookResponse("test-case-valid-webhook.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/collects.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(201, CreateShopifyCollectionResponse("test-case-valid-collection.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/custom_collections.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(201, CreateShopifCustomCollectionResponse("test-case-valid-custom-collection.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/custom_collections.json?fields=title,id",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifCollectionsResponse("test-case-valid-custom-collections.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet,
+		MOCK_SHOPIFY_API_URL+"/custom_collections.json?fields=title,id&product_id="+fmt.Sprint(MOCK_SHOPIFY_PRODUCT_ID),
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifCollectionsResponse("test-case-valid-custom-collections.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/products.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(201, CreateShopifyProductResponse("test-case-valid-product.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/locations.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyLocationResponse("test-case-valid-locations.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPut, MOCK_SHOPIFY_API_URL+"/products/"+fmt.Sprint(MOCK_SHOPIFY_PRODUCT_ID)+".json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyProductResponse("test-case-valid-product.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost,
+		MOCK_SHOPIFY_API_URL+"/graphql.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyGraphQLResponse("test-case-valid-graph-ql.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/inventory_levels.json?location_ids="+
+		fmt.Sprint(MOCK_SHOPIFY_LOCATION_ID)+"&inventory_item_ids="+fmt.Sprint(MOCK_INVENTORY_ITEM_ID),
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(
+				200,
+				CreateShopifyInventoryLevelsResponse("test-case-valid-shopify-inventory-levels.json"),
+			)
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/inventory_levels/connect.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(
+				201,
+				CreateShopifyInventoryItemConnectResponse("test-case-valid-inventory-item-connect.json"),
+			)
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodPost, MOCK_SHOPIFY_API_URL+"/inventory_levels/adjust.json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(
+				200,
+				CreateShopifyInventoryItemAdjustResponse("test-case-valid-level-item-adjust.json"),
+			)
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+}
+
+/* Returns a test shopify inventory item adjust response struct */
+func CreateShopifyInventoryItemAdjustResponse(fileName string) objects.ResponseAddInventoryItem {
+	fileBytes := payload("./test_payloads/tests/inventory-item-adjust/" + fileName)
+	shopifyInventoryLevel := objects.ResponseAddInventoryItem{}
+	err := json.Unmarshal(fileBytes, &shopifyInventoryLevel)
+	if err != nil {
+		log.Println(err)
+	}
+	return shopifyInventoryLevel
+}
+
 /* Returns a test shopify graph ql response response struct */
 func CreateShopifyGraphQLResponse(fileName string) objects.JSONResponseShopifyGraphQL {
 	fileBytes := payload("./test_payloads/" + fileName)
@@ -794,6 +850,17 @@ func CreateShopifVariantResponse(fileName string) objects.ShopifyVariantResponse
 		log.Println(err)
 	}
 	return shopifyVariant
+}
+
+/* Returns a test shopify inventory item connect response struct */
+func CreateShopifyInventoryItemConnectResponse(fileName string) objects.ResponseAddInventoryItemLocation {
+	fileBytes := payload("./test_payloads/tests/inventory-item-connect/" + fileName)
+	shopifyInventoryLevel := objects.ResponseAddInventoryItemLocation{}
+	err := json.Unmarshal(fileBytes, &shopifyInventoryLevel)
+	if err != nil {
+		log.Println(err)
+	}
+	return shopifyInventoryLevel
 }
 
 /* Returns a test shopify product response struct */
