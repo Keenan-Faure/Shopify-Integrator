@@ -1,9 +1,7 @@
 version: "2"
 services:
     server:
-        build:
-            context: ./
-            dockerfile: ./setup/server/Dockerfile
+        image: keenansame/shopify-integrator:latest
         ports:
             - "${PORT}:${PORT}"
         container_name: ${SERVER_CONTAINER_NAME}

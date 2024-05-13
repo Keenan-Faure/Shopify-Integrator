@@ -1467,7 +1467,7 @@ func TestProductExportRoute(t *testing.T) {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, true, strings.Contains(response.Message, "product_export-"))
-
+	log.Println("YES: " + response.Message)
 	file1, err := os.Stat("." + response.Message[21:])
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
