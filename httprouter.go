@@ -718,19 +718,27 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) ConfigLocationWarehouseHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		locations := objects.ShopifyLocations{}
+		mockRequest := c.Request.Header.Get("Mocker")
 		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil || page < 0 {
 			page = 1
 		}
-		shopifyConfig := shopify.InitConfigShopify("")
-		if !shopifyConfig.Valid {
-			RespondWithError(c, http.StatusInternalServerError, "invalid shopify config")
-			return
-		}
-		locations, err := shopifyConfig.GetShopifyLocations()
-		if err != nil {
-			RespondWithError(c, http.StatusInternalServerError, err.Error())
-			return
+		if mockRequest == "true" {
+			// if the request is a mock request
+			// then we will not actually fetch data from Shopify
+			locations = objects.ShopifyLocations{}
+		} else {
+			shopifyConfig := shopify.InitConfigShopify("")
+			if !shopifyConfig.Valid {
+				RespondWithError(c, http.StatusInternalServerError, "invalid shopify config")
+				return
+			}
+			locations, err = shopifyConfig.GetShopifyLocations()
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 		warehouses, err := dbconfig.DB.GetWarehouses(c.Request.Context(), database.GetWarehousesParams{
 			Limit:  10,
