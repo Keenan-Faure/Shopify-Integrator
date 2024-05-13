@@ -471,6 +471,7 @@ func CompileFilterSearch(dbconfig *DbConfig, mock bool, page int, product_type, 
 	baseQuery += queryWhere
 	baseQuery = RemoveQueryKeywords(baseQuery)
 	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
+	log.Println("BLABLA Localhost: " + fmt.Sprint(useLocalhost))
 	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
 	rows, _ := customConnection.Query(context.Background(), baseQuery)
 	products, err := pgx.CollectRows(rows, pgx.RowToStructByName[objects.SearchProduct])
