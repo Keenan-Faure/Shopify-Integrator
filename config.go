@@ -42,8 +42,6 @@ func InitConnectionString(useLocalhost, mock bool) string {
 	if mock {
 		host = "@localhost:5432/"
 	}
-	log.Println("USR: " + utils.LoadEnv("db_user"))
-	log.Println("PSS: " + utils.LoadEnv("db_psw"))
 	return connection_string + host + utils.LoadEnv("db_name") + "?sslmode=disable"
 }
 

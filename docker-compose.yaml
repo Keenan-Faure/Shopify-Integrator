@@ -3,7 +3,7 @@ services:
     server:
         build:
             context: ./
-            dockerfile: ./setup/server/Dockerfile
+            dockerfile: ./setup/server/${DOCKER_FILE}
         ports:
             - "${PORT}:${PORT}"
         container_name: ${SERVER_CONTAINER_NAME}
