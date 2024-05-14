@@ -134,6 +134,33 @@ func (q *Queries) GetAppSettings(ctx context.Context) ([]GetAppSettingsRow, erro
 	return items, nil
 }
 
+const getAppSettingsList = `-- name: GetAppSettingsList :many
+SELECT DISTINCT("key") FROM app_settings
+`
+
+func (q *Queries) GetAppSettingsList(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getAppSettingsList)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
+		}
+		items = append(items, key)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const removeAppSetting = `-- name: RemoveAppSetting :exec
 DELETE FROM app_settings WHERE key = $1
 `

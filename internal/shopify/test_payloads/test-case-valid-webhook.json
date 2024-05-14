@@ -1,0 +1,14 @@
+{
+    "webhook": {
+        "id": 4759306,
+        "address": "https://somewhere-else.com/",
+        "topic": "orders/create",
+        "created_at": "2024-04-03T14:54:41-04:00",
+        "updated_at": "2024-04-03T14:57:46-04:00",
+        "format": "json",
+        "fields": [],
+        "metafield_namespaces": [],
+        "api_version": "unstable",
+        "private_metafield_namespaces": []
+    }
+}

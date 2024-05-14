@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -110,21 +109,6 @@ func TestConvertIntToSQL(t *testing.T) {
 	}
 }
 
-func TestConfirmError(t *testing.T) {
-	fmt.Println("Test case 1 - Valid Duplicate Error")
-	err := errors.New("pq: duplicate key value violates unique constraint")
-	results := ConfirmError(err.Error())
-	if results != "duplicate fields not allowed - " {
-		t.Errorf("Unexpected results, expected 'duplicate fields not allowed' but found " + results)
-	}
-	fmt.Println("Test case 2 - None Duplicate Error")
-	err = errors.New("Invalid database credentials")
-	results = ConfirmError(err.Error())
-	if results == "duplicate fields not allowed" {
-		t.Errorf("Unexpected results, expected 'Invalid database credentials' but found " + results)
-	}
-}
-
 func TestExtractVID(t *testing.T) {
 	fmt.Println("Test Case 1 - Valid VID")
 	variable := ExtractVID("gid://shopify/ProductVariant/40466067357761")
@@ -162,22 +146,6 @@ func TestExtractPID(t *testing.T) {
 	variable = ExtractPID("")
 	if variable != "" {
 		t.Errorf("Expected '', but found " + variable)
-	}
-}
-
-func TestGetAppSettings(t *testing.T) {
-	fmt.Println("Test Case 1 - Returning All Keys for app settings")
-	settings_map := GetAppSettings("app")
-	if len(settings_map) == 0 {
-		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(settings_map)))
-	}
-	if settings_map["APP_ENABLE_SHOPIFY_FETCH"] != "" {
-		t.Errorf("Expected 'description' value but found " + settings_map["APP_ENABLE_SHOPIFY_FETCH"])
-	}
-	fmt.Println("Test Case 2 - Returning All Keys for shopify settings")
-	shopify_settings_map := GetAppSettings("shopify")
-	if len(shopify_settings_map) == 0 {
-		t.Errorf("Expected non-zero value but found " + fmt.Sprint(len(shopify_settings_map)))
 	}
 }
 
@@ -238,5 +206,38 @@ func TestGetNextURL(t *testing.T) {
 	}
 	if strings.Contains(result, ">") {
 		t.Errorf("Expected string '>' to be removed from result")
+	}
+}
+
+func TestCheckWorkerType(t *testing.T) {
+	fmt.Println("Test Case 1 - Invalid worker type")
+	worker_type := "script"
+	err := CheckWorkerType(worker_type)
+	if err == nil {
+		t.Errorf("Expected error but found nil")
+	}
+	fmt.Println("Test Case 2 - product worker type")
+	worker_type = "product"
+	err = CheckWorkerType(worker_type)
+	if err != nil {
+		t.Errorf("Expected nil but found error")
+	}
+	fmt.Println("Test Case 3 - product_variant worker type")
+	worker_type = "product_variant"
+	err = CheckWorkerType(worker_type)
+	if err != nil {
+		t.Errorf("Expected nil but found error")
+	}
+	fmt.Println("Test Case 4 - order worker type")
+	worker_type = "order"
+	err = CheckWorkerType(worker_type)
+	if err != nil {
+		t.Errorf("Expected nil but found error")
+	}
+	fmt.Println("Test Case 5 - Invalid worker type - CASE difference")
+	worker_type = "PrOdUcT_vArIant"
+	err = CheckWorkerType(worker_type)
+	if err == nil {
+		t.Errorf("Expected error but found nil")
 	}
 }

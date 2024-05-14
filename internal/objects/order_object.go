@@ -1,6 +1,8 @@
 package objects
 
-import "time"
+import (
+	"time"
+)
 
 type RequestBodyOrder struct {
 	ID                    int64  `json:"id"`
@@ -88,7 +90,7 @@ type RequestBodyOrder struct {
 	LocationID             any       `json:"location_id"`
 	MerchantOfRecordAppID  any       `json:"merchant_of_record_app_id"`
 	Name                   string    `json:"name"`
-	Note                   any       `json:"note"`
+	Note                   string    `json:"note"`
 	NoteAttributes         []any     `json:"note_attributes"`
 	Number                 int       `json:"number"`
 	OrderNumber            int       `json:"order_number"`
@@ -211,57 +213,7 @@ type RequestBodyOrder struct {
 		CountryCode  string  `json:"country_code"`
 		ProvinceCode string  `json:"province_code"`
 	} `json:"billing_address"`
-	Customer struct {
-		ID                    int64     `json:"id"`
-		Email                 string    `json:"email"`
-		AcceptsMarketing      bool      `json:"accepts_marketing"`
-		CreatedAt             time.Time `json:"created_at"`
-		UpdatedAt             time.Time `json:"updated_at"`
-		FirstName             string    `json:"first_name"`
-		LastName              string    `json:"last_name"`
-		State                 string    `json:"state"`
-		Note                  any       `json:"note"`
-		VerifiedEmail         bool      `json:"verified_email"`
-		MultipassIdentifier   any       `json:"multipass_identifier"`
-		TaxExempt             bool      `json:"tax_exempt"`
-		Phone                 string    `json:"phone"`
-		EmailMarketingConsent struct {
-			State            string `json:"state"`
-			OptInLevel       string `json:"opt_in_level"`
-			ConsentUpdatedAt any    `json:"consent_updated_at"`
-		} `json:"email_marketing_consent"`
-		SmsMarketingConsent struct {
-			State                string `json:"state"`
-			OptInLevel           string `json:"opt_in_level"`
-			ConsentUpdatedAt     any    `json:"consent_updated_at"`
-			ConsentCollectedFrom string `json:"consent_collected_from"`
-		} `json:"sms_marketing_consent"`
-		Tags                      string    `json:"tags"`
-		Currency                  string    `json:"currency"`
-		AcceptsMarketingUpdatedAt time.Time `json:"accepts_marketing_updated_at"`
-		MarketingOptInLevel       any       `json:"marketing_opt_in_level"`
-		TaxExemptions             []any     `json:"tax_exemptions"`
-		AdminGraphqlAPIID         string    `json:"admin_graphql_api_id"`
-		DefaultAddress            struct {
-			ID           int64  `json:"id"`
-			CustomerID   int64  `json:"customer_id"`
-			FirstName    string `json:"first_name"`
-			LastName     string `json:"last_name"`
-			Company      string `json:"company"`
-			Address1     string `json:"address1"`
-			Address2     string `json:"address2"`
-			City         string `json:"city"`
-			Province     string `json:"province"`
-			Country      string `json:"country"`
-			Zip          string `json:"zip"`
-			Phone        string `json:"phone"`
-			Name         string `json:"name"`
-			ProvinceCode string `json:"province_code"`
-			CountryCode  string `json:"country_code"`
-			CountryName  string `json:"country_name"`
-			Default      bool   `json:"default"`
-		} `json:"default_address"`
-	} `json:"customer"`
+	Customer             RequestBodyCustomer `json:"customer"`
 	DiscountApplications []struct {
 		TargetType       string `json:"target_type"`
 		Type             string `json:"type"`

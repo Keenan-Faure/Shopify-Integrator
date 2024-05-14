@@ -19,8 +19,8 @@ import (
 	"github.com/gocarina/gocsv"
 )
 
-const csv_remove_time = 5 * time.Minute // 5 minutes
-const import_directory = "import"
+const CSV_REMOVE_TIME = 5 * time.Minute // 5 minutes
+const IMPORT_DIRECTORY_NAME = "import"
 
 // Handles the import and upload of the file onto the server
 func UploadFile(r *http.Request) (string, error) {
@@ -32,7 +32,7 @@ func UploadFile(r *http.Request) (string, error) {
 		fmt.Println(err.Error())
 		return "", err
 	}
-	// FormFile returns the first file for the given key `_import`
+	// FormFile returns the first file for the given key `file`
 	// it also returns the FileHeader so we can get the Filename,
 	// the Header and the size of the file
 	file, handler, err := r.FormFile("file")
@@ -47,12 +47,18 @@ func UploadFile(r *http.Request) (string, error) {
 	fmt.Printf("File Size: %+v\n", handler.Size)
 
 	// Only accept text/csv file types
-	if handler.Header.Get("Content-Type") != "text/csv" {
+	validCsvRequst := false
+	for _, value := range r.Header.Values("Content-Type") {
+		if value == "text/csv" {
+			validCsvRequst = true
+		}
+	}
+	if !validCsvRequst {
 		return "", errors.New("only CSV extensions are supported")
 	}
 
 	// Make new directory for all imports
-	err = os.Mkdir(import_directory, os.FileMode(int(0777)))
+	err = os.Mkdir(IMPORT_DIRECTORY_NAME, os.FileMode(int(0777)))
 	if err != nil {
 		if err.Error()[len(err.Error())-11:] != "file exists" {
 			return "", err
@@ -61,7 +67,7 @@ func UploadFile(r *http.Request) (string, error) {
 
 	// Create a temporary file within our temp-images directory that follows
 	// a particular naming pattern
-	tempFile, err := os.CreateTemp(import_directory, "upload-*.csv")
+	tempFile, err := os.CreateTemp(IMPORT_DIRECTORY_NAME, "upload-*.csv")
 	if err != nil {
 		return "", err
 	}
@@ -116,8 +122,8 @@ func CSVProductValuesByVariant(product objects.Product, variant objects.ProductV
 	}
 	headers = append(headers, CSVProductVariant(variant)...)
 	headers = append(headers, CSVVariantOptions(product, variant)...)
-	headers = append(headers, getVariantPricingCSV(variant, pricing_max, false)...)
-	headers = append(headers, getVariantQtyCSV(variant, qty_max, false)...)
+	headers = append(headers, getVariantPricingCSV(variant, pricing_max)...)
+	headers = append(headers, getVariantQtyCSV(variant, qty_max)...)
 	headers = append(headers, GetProductImagesCSV(product.ProductImages, images_max, false)...)
 	return headers
 }
@@ -161,7 +167,7 @@ func generateProductOptions() []string {
 }
 
 // Returns the name/qty of each warehouse depending on the key
-func getVariantQtyCSV(variant objects.ProductVariant, qty_max int, key bool) []string {
+func getVariantQtyCSV(variant objects.ProductVariant, qty_max int) []string {
 	qty_headers := []string{}
 	for _, qty := range variant.VariantQuantity {
 		if qty.Value == 0 {
@@ -181,7 +187,7 @@ func getVariantQtyCSV(variant objects.ProductVariant, qty_max int, key bool) []s
 }
 
 // Returns the name/value of each price tier depending on the key
-func getVariantPricingCSV(variant objects.ProductVariant, pricing_max int, key bool) []string {
+func getVariantPricingCSV(variant objects.ProductVariant, pricing_max int) []string {
 	pricing_headers := []string{}
 	for _, pricing := range variant.VariantPricing {
 		if pricing.Value == "" {
@@ -217,10 +223,6 @@ func GetProductImagesCSV(images []objects.ProductImages, max int, key bool) []st
 		for _, image := range images {
 			image_headers = append(image_headers, fmt.Sprintf("%v", image.Src))
 		}
-		fmt.Println("----")
-		fmt.Println(len(images))
-		fmt.Println(max)
-		fmt.Println("----")
 		for i := 1; i <= (max - len(images)); i++ {
 			image_headers = append(image_headers, fmt.Sprintf("%v", ""))
 		}
@@ -372,7 +374,7 @@ func GetKeysByMatcher(headers []string, match string) map[int]string {
 // loop function that uses Goroutine to run
 // a function each interval
 func LoopRemoveCSV() {
-	ticker := time.NewTicker(csv_remove_time)
+	ticker := time.NewTicker(CSV_REMOVE_TIME)
 	for ; ; <-ticker.C {
 		path, err := os.Getwd()
 		if err != nil {

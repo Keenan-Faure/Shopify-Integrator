@@ -168,6 +168,26 @@ func (q *Queries) RemoveShopifyLocationMap(ctx context.Context, id uuid.UUID) er
 	return err
 }
 
+const removeShopifyLocationMapByLocationID = `-- name: RemoveShopifyLocationMapByLocationID :exec
+DELETE FROM shopify_location
+WHERE shopify_location_id = $1
+`
+
+func (q *Queries) RemoveShopifyLocationMapByLocationID(ctx context.Context, shopifyLocationID string) error {
+	_, err := q.db.ExecContext(ctx, removeShopifyLocationMapByLocationID, shopifyLocationID)
+	return err
+}
+
+const removeShopifyLocationMapByWarehouse = `-- name: RemoveShopifyLocationMapByWarehouse :exec
+DELETE FROM shopify_location
+WHERE warehouse_name = $1
+`
+
+func (q *Queries) RemoveShopifyLocationMapByWarehouse(ctx context.Context, warehouseName string) error {
+	_, err := q.db.ExecContext(ctx, removeShopifyLocationMapByWarehouse, warehouseName)
+	return err
+}
+
 const updateShopifyLocation = `-- name: UpdateShopifyLocation :exec
 UPDATE shopify_location
 SET

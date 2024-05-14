@@ -14,15 +14,12 @@ import (
 	"time"
 	"utils"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/securecookie"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
-
-// Hash keys should be at least 32 bytes long.
-// Hash key is a constant
-var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAvlGYpmv")
 
 /*
 General name of the cookie of the application for google accounts.
@@ -37,6 +34,10 @@ var s = securecookie.New(hashKey, nil)
 
 const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
 
+// // Hash keys should be at least 32 bytes long.
+// // Hash key is a constant
+var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAvlGYpmv")
+
 var googleOauthConfig = &oauth2.Config{
 	RedirectURL:  "http://localhost:8080/api/google/callback",
 	ClientID:     utils.LoadEnv("OAUTH_CLIENT_ID"),
@@ -50,157 +51,178 @@ var googleOauthConfig = &oauth2.Config{
 	Endpoint: google.Endpoint,
 }
 
-// GET /api/google/oauth2/login
-func (dbconfig *DbConfig) OAuthGoogleOAuth(w http.ResponseWriter, r *http.Request) {
-	// cookies should be sent with the ajax request
-	if cookie, err := r.Cookie(cookie_name); err == nil {
-		value := make(map[string]string)
-		if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
-			// retrieve the cookie value from the map and search it's value inside the DB
-			// to confirm if the value is correct.
-			cookie_secret := value[cookie_name]
-			user, err := dbconfig.DB.GetApiKeyByCookieSecret(r.Context(), cookie_secret)
-			if err != nil {
-				if err.Error() != "sql: no rows in result set" {
-					RespondWithError(w, http.StatusUnauthorized, err.Error())
-					return
-				}
-				RespondWithError(w, http.StatusUnauthorized, err.Error())
+/*
+Callback endpoint for the OAuth2
+
+Route: /api/google/callback
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 303, 307, 400, 404
+*/
+func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Read oauthState from Cookie
+		oauthState, _ := c.Cookie("oauthstate")
+		if c.Request.FormValue("state") != oauthState {
+			log.Println("invalid oauth google state")
+			c.Redirect(http.StatusTemporaryRedirect, "/")
+			return
+		}
+		data, err := getUserDataFromGoogle(c.Request.FormValue("code"))
+		if err != nil {
+			log.Println(err.Error())
+			c.Redirect(http.StatusTemporaryRedirect, "/")
+			return
+		}
+		// convert to struct
+		oauth_data := objects.ResponseOAuthGoogle{}
+		err = json.Unmarshal(data, &oauth_data)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// creates the oauth record inside the database
+		db_oauth_record, err := dbconfig.DB.GetUserByGoogleID(c.Request.Context(), oauth_data.ID)
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-			// returns the API Key
-			RespondWithJSON(w, http.StatusOK, objects.ResponseLogin{
-				Username: user.Name,
-				ApiKey:   user.ApiKey,
-			})
-			return
-		} else {
-			RespondWithError(w, http.StatusUnauthorized, err.Error())
+		}
+		if db_oauth_record.GoogleID == oauth_data.ID {
+			// If the user already registers, we create a new cookie
+			// and then redirect to the dashboard
+			value := map[string]string{
+				cookie_name: db_oauth_record.CookieSecret,
+			}
+			if encoded, err := s.Encode(cookie_name, value); err == nil {
+				c.SetCookie(cookie_name, encoded, 0, "/", "", false, false)
+			}
+			c.Redirect(http.StatusSeeOther, "http://localhost:3000/")
 			return
 		}
-	} else {
-		RespondWithError(w, http.StatusUnauthorized, err.Error())
-		return
-	}
-}
-
-// GET /api/google/login
-func (dbconfig *DbConfig) OAuthGoogleLogin(w http.ResponseWriter, r *http.Request) {
-	// Create oauthState cookie
-	oauthState := generateStateOauthCookie(w)
-	/*
-		AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
-		validate that it matches the the state query parameter on your redirect callback.
-	*/
-	u := googleOauthConfig.AuthCodeURL(oauthState)
-	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
-}
-
-// GET /api/google/callback
-func (dbconfig *DbConfig) OAuthGoogleCallback(w http.ResponseWriter, r *http.Request) {
-	// Read oauthState from Cookie
-
-	oauthState, _ := r.Cookie("oauthstate")
-	if r.FormValue("state") != oauthState.Value {
-		log.Println("invalid oauth google state")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-	data, err := getUserDataFromGoogle(r.FormValue("code"))
-	if err != nil {
-		log.Println(err.Error())
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	// convert to struct
-	oauth_data := objects.ResponseOAuthGoogle{}
-	err = json.Unmarshal(data, &oauth_data)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	// creates the oauth record inside the database
-	db_oauth_record, err := dbconfig.DB.GetUserByGoogleID(r.Context(), oauth_data.ID)
-	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		// user validation
+		exists, err := CheckUserEmailType(dbconfig, oauth_data.Email, "google")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-	}
-	if db_oauth_record.GoogleID == oauth_data.ID {
-		// If the user already registers, we create a new cookie
-		// and then redirect to the dashboard
+		if exists {
+			RespondWithError(c, http.StatusConflict, "email '"+oauth_data.Email+"' already exists")
+			return
+		}
+		// creates db user
+		db_user, err := dbconfig.DB.CreateUser(c.Request.Context(), database.CreateUserParams{
+			ID:        uuid.New(),
+			Name:      oauth_data.GivenName + " " + oauth_data.FamilyName,
+			UserType:  "google",
+			Email:     oauth_data.Email,
+			Password:  utils.RandStringBytes(20),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		oauth_record, err := dbconfig.DB.CreateOAuthRecord(c.Request.Context(), database.CreateOAuthRecordParams{
+			ID:        uuid.New(),
+			UserID:    db_user.ID,
+			GoogleID:  oauth_data.ID,
+			Email:     oauth_data.Email,
+			Picture:   utils.ConvertStringToSQL(oauth_data.Picture),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// create cookie containing the cookie_secret
 		value := map[string]string{
-			cookie_name: db_oauth_record.CookieSecret,
+			cookie_name: oauth_record.CookieSecret,
 		}
 		if encoded, err := s.Encode(cookie_name, value); err == nil {
-			cookie := &http.Cookie{
-				Name:   cookie_name,
-				Value:  encoded,
-				Secure: false,
-				Path:   "/",
-			}
-			http.SetCookie(w, cookie)
+			c.SetCookie(cookie_name, encoded, 0, "/", "", false, false)
 		}
-		http.Redirect(w, r, "http://localhost:3000/", http.StatusSeeOther)
-		return
+		// redirect back to the application login screen where the user logins in automatically
+		// using the new credentials
+		c.Redirect(http.StatusSeeOther, "http://localhost:3000/")
 	}
-	// user validation
-	exists, err := dbconfig.CheckUserEmailType(oauth_data.Email, "google")
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if exists {
-		RespondWithError(w, http.StatusConflict, "email '"+oauth_data.Email+"' already exists")
-		return
-	}
-	// creates db user
-	db_user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
-		ID:        uuid.New(),
-		Name:      oauth_data.GivenName + " " + oauth_data.FamilyName,
-		UserType:  "google",
-		Email:     oauth_data.Email,
-		Password:  utils.RandStringBytes(20),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	oauth_record, err := dbconfig.DB.CreateOAuthRecord(r.Context(), database.CreateOAuthRecordParams{
-		ID:        uuid.New(),
-		UserID:    db_user.ID,
-		GoogleID:  oauth_data.ID,
-		Email:     oauth_data.Email,
-		Picture:   utils.ConvertStringToSQL(oauth_data.Picture),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	// create cookie containing the cookie_secret
-	value := map[string]string{
-		cookie_name: oauth_record.CookieSecret,
-	}
-	if encoded, err := s.Encode(cookie_name, value); err == nil {
-		cookie := &http.Cookie{
-			Name:   cookie_name,
-			Value:  encoded,
-			Secure: false,
-			Path:   "/",
-		}
-		http.SetCookie(w, cookie)
-	}
-	// redirect back to the application login screen where the user logins in automatically
-	// using the new credentials
-	http.Redirect(w, r, "http://localhost:3000/", http.StatusSeeOther)
 }
 
+/*
+Logs into Google and redirects the user thereafter.
+
+Route: /api/google/oauth2/login
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 307, 400, 404
+*/
+func (dbconfig *DbConfig) OAuthGoogleLogin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Create oauthState cookie
+		oauthState := generateStateOauthCookie(c.Writer)
+		/*
+			AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
+			validate that it matches the the state query parameter on your redirect callback.
+		*/
+		u := googleOauthConfig.AuthCodeURL(oauthState)
+		c.Redirect(http.StatusTemporaryRedirect, u)
+	}
+}
+
+/*
+Initiates the OAuth2 login authorization with google
+
+Route: /api/google/oauth2/login
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) OAuthGoogleOAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if cookie, err := c.Cookie(cookie_name); err == nil {
+			value := make(map[string]string)
+			if err = s.Decode(cookie_name, cookie, &value); err == nil {
+				cookie_secret := value[cookie_name]
+				user, err := dbconfig.DB.GetApiKeyByCookieSecret(c.Request.Context(), cookie_secret)
+				if err != nil {
+					if err.Error() != "sql: no rows in result set" {
+						RespondWithError(c, http.StatusUnauthorized, err.Error())
+						return
+					}
+					RespondWithError(c, http.StatusUnauthorized, err.Error())
+					return
+				}
+				RespondWithJSON(c, http.StatusOK, objects.ResponseLogin{
+					Username: user.Name,
+					ApiKey:   user.ApiKey,
+				})
+				return
+			} else {
+				RespondWithError(c, http.StatusUnauthorized, err.Error())
+				return
+			}
+		} else {
+			RespondWithError(c, http.StatusUnauthorized, err.Error())
+			return
+		}
+	}
+}
+
+/*
+Generates a random state token to be used with the cookie to prevent CSRF attacks
+*/
 func generateStateOauthCookie(w http.ResponseWriter) string {
 	var expiration = time.Now().Add(365 * 24 * time.Hour)
 
@@ -216,6 +238,9 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	return state
 }
 
+/*
+Retrieves the data from google using the code
+*/
 func getUserDataFromGoogle(code string) ([]byte, error) {
 	// Use code to get token and get user info from Google.
 	token, err := googleOauthConfig.Exchange(context.Background(), code)

@@ -74,14 +74,6 @@ func ConvertIntToSQL(value int) sql.NullInt32 {
 	}
 }
 
-// Checks if the error is a duplicated error
-func ConfirmError(err_message string) string {
-	if err_message == "pq: duplicate key value violates unique constraint" {
-		return "duplicate fields not allowed - " + err_message[50:]
-	}
-	return err_message
-}
-
 // Checks if a variable is set (string)
 func IssetString(variable string) string {
 	if variable != "" || len(variable) != 0 {
@@ -124,25 +116,6 @@ func ExtractVID(id string) string {
 	return ""
 }
 
-// Gets all the available settings and returns them as a map[string]string
-func GetAppSettings(key string) map[string]string {
-	result := make(map[string]string)
-	app_keys := []string{"APP_ENABLE_SHOPIFY_FETCH", "APP_ENABLE_QUEUE_WORKER", "APP_SHOPIFY_FETCH_TIME",
-		"APP_ENABLE_SHOPIFY_PUSH", "APP_QUEUE_SIZE", "APP_QUEUE_PROCESS_LIMIT", "APP_QUEUE_CRON_TIME",
-		"APP_FETCH_ADD_PRODUCTS", "APP_FETCH_OVERWRITE_PRODUCTS", "APP_FETCH_SYNC_IMAGES"}
-	shopify_keys := []string{"SHOPIFY_ENABLE_DYNAMIC_SKU_SEARCH"}
-	if key == "app" {
-		for iterator, value := range app_keys {
-			result[app_keys[iterator]] = LoadEnv(value)
-		}
-	} else if key == "shopify" {
-		for iterator, value := range shopify_keys {
-			result[shopify_keys[iterator]] = LoadEnv(value)
-		}
-	}
-	return result
-}
-
 // Returns the next URL in the Shopify Response header
 func GetNextURL(next string) string {
 	result := strings.Split(next, ", ")
@@ -178,4 +151,15 @@ func RandStringBytes(n int) string {
 		panic(err)
 	}
 	return base64.StdEncoding.EncodeToString(b)
+}
+
+// Helper function: Checks if the worker type is valid
+func CheckWorkerType(worker_type string) error {
+	worker_types := []string{"product", "product_variant", "order"}
+	for _, value := range worker_types {
+		if value == worker_type {
+			return nil
+		}
+	}
+	return errors.New("invalid worker type")
 }

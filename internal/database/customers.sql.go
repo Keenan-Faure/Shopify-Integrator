@@ -16,6 +16,7 @@ import (
 const createCustomer = `-- name: CreateCustomer :one
 INSERT INTO customers(
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,
@@ -23,24 +24,26 @@ INSERT INTO customers(
     created_at,
     updated_at
 ) VALUES(
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8
 )
-RETURNING id, first_name, last_name, email, phone, created_at, updated_at
+RETURNING id, web_customer_code, first_name, last_name, email, phone, created_at, updated_at
 `
 
 type CreateCustomerParams struct {
-	ID        uuid.UUID      `json:"id"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     sql.NullString `json:"email"`
-	Phone     sql.NullString `json:"phone"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error) {
 	row := q.db.QueryRowContext(ctx, createCustomer,
 		arg.ID,
+		arg.WebCustomerCode,
 		arg.FirstName,
 		arg.LastName,
 		arg.Email,
@@ -51,6 +54,7 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 	var i Customer
 	err := row.Scan(
 		&i.ID,
+		&i.WebCustomerCode,
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
@@ -64,6 +68,7 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 const getCustomerByID = `-- name: GetCustomerByID :one
 SELECT
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,
@@ -74,12 +79,13 @@ WHERE id = $1
 `
 
 type GetCustomerByIDRow struct {
-	ID        uuid.UUID      `json:"id"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     sql.NullString `json:"email"`
-	Phone     sql.NullString `json:"phone"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetCustomerByID(ctx context.Context, id uuid.UUID) (GetCustomerByIDRow, error) {
@@ -87,6 +93,45 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id uuid.UUID) (GetCustome
 	var i GetCustomerByIDRow
 	err := row.Scan(
 		&i.ID,
+		&i.WebCustomerCode,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Phone,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCustomerByWebCode = `-- name: GetCustomerByWebCode :one
+SELECT
+    id,
+    web_customer_code,
+    first_name,
+    last_name,
+    email,
+    phone,
+    updated_at
+FROM customers
+WHERE web_customer_code = $1
+`
+
+type GetCustomerByWebCodeRow struct {
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+}
+
+func (q *Queries) GetCustomerByWebCode(ctx context.Context, webCustomerCode string) (GetCustomerByWebCodeRow, error) {
+	row := q.db.QueryRowContext(ctx, getCustomerByWebCode, webCustomerCode)
+	var i GetCustomerByWebCodeRow
+	err := row.Scan(
+		&i.ID,
+		&i.WebCustomerCode,
 		&i.FirstName,
 		&i.LastName,
 		&i.Email,
@@ -99,6 +144,7 @@ func (q *Queries) GetCustomerByID(ctx context.Context, id uuid.UUID) (GetCustome
 const getCustomers = `-- name: GetCustomers :many
 SELECT
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,
@@ -115,12 +161,13 @@ type GetCustomersParams struct {
 }
 
 type GetCustomersRow struct {
-	ID        uuid.UUID      `json:"id"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     sql.NullString `json:"email"`
-	Phone     sql.NullString `json:"phone"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetCustomers(ctx context.Context, arg GetCustomersParams) ([]GetCustomersRow, error) {
@@ -134,6 +181,7 @@ func (q *Queries) GetCustomers(ctx context.Context, arg GetCustomersParams) ([]G
 		var i GetCustomersRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.WebCustomerCode,
 			&i.FirstName,
 			&i.LastName,
 			&i.Email,
@@ -156,6 +204,7 @@ func (q *Queries) GetCustomers(ctx context.Context, arg GetCustomersParams) ([]G
 const getCustomersByName = `-- name: GetCustomersByName :many
 SELECT
     id,
+    web_customer_code,
     first_name,
     last_name,
     email,
@@ -169,12 +218,13 @@ LIMIT 10
 `
 
 type GetCustomersByNameRow struct {
-	ID        uuid.UUID      `json:"id"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     sql.NullString `json:"email"`
-	Phone     sql.NullString `json:"phone"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
 func (q *Queries) GetCustomersByName(ctx context.Context, similarToEscape string) ([]GetCustomersByNameRow, error) {
@@ -188,6 +238,7 @@ func (q *Queries) GetCustomersByName(ctx context.Context, similarToEscape string
 		var i GetCustomersByNameRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.WebCustomerCode,
 			&i.FirstName,
 			&i.LastName,
 			&i.Email,
@@ -214,6 +265,16 @@ WHERE id = $1
 
 func (q *Queries) RemoveCustomer(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, removeCustomer, id)
+	return err
+}
+
+const removeCustomerByWebCustomerCode = `-- name: RemoveCustomerByWebCustomerCode :exec
+DELETE FROM customers
+WHERE web_customer_code = $1
+`
+
+func (q *Queries) RemoveCustomerByWebCustomerCode(ctx context.Context, webCustomerCode string) error {
+	_, err := q.db.ExecContext(ctx, removeCustomerByWebCustomerCode, webCustomerCode)
 	return err
 }
 
@@ -247,4 +308,107 @@ func (q *Queries) UpdateCustomer(ctx context.Context, arg UpdateCustomerParams) 
 		arg.ID,
 	)
 	return err
+}
+
+const updateCustomerByWebCode = `-- name: UpdateCustomerByWebCode :exec
+UPDATE customers
+SET
+    first_name = $1,
+    last_name = $2,
+    email = $3,
+    phone = $4,
+    updated_at = $5
+WHERE web_customer_code = $6
+`
+
+type UpdateCustomerByWebCodeParams struct {
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	WebCustomerCode string         `json:"web_customer_code"`
+}
+
+func (q *Queries) UpdateCustomerByWebCode(ctx context.Context, arg UpdateCustomerByWebCodeParams) error {
+	_, err := q.db.ExecContext(ctx, updateCustomerByWebCode,
+		arg.FirstName,
+		arg.LastName,
+		arg.Email,
+		arg.Phone,
+		arg.UpdatedAt,
+		arg.WebCustomerCode,
+	)
+	return err
+}
+
+const upsertCustomer = `-- name: UpsertCustomer :one
+INSERT INTO customers(
+    id,
+    web_customer_code,
+    first_name,
+    last_name,
+    email,
+    phone,
+    created_at,
+    updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT(web_customer_code)
+DO UPDATE 
+SET
+    first_name = COALESCE($3, customers.first_name),
+    last_name = COALESCE($4, customers.last_name),
+    email = COALESCE($5, customers.email),
+    phone = COALESCE($6, customers.phone),
+    updated_at = $8
+RETURNING id, web_customer_code, first_name, last_name, email, phone, created_at, updated_at, (xmax = 0) AS inserted
+`
+
+type UpsertCustomerParams struct {
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+}
+
+type UpsertCustomerRow struct {
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	Inserted        bool           `json:"inserted"`
+}
+
+func (q *Queries) UpsertCustomer(ctx context.Context, arg UpsertCustomerParams) (UpsertCustomerRow, error) {
+	row := q.db.QueryRowContext(ctx, upsertCustomer,
+		arg.ID,
+		arg.WebCustomerCode,
+		arg.FirstName,
+		arg.LastName,
+		arg.Email,
+		arg.Phone,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	var i UpsertCustomerRow
+	err := row.Scan(
+		&i.ID,
+		&i.WebCustomerCode,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.Phone,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Inserted,
+	)
+	return i, err
 }

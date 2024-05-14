@@ -3,42 +3,16 @@
     "last_name": "Faure_Test",
     "email": "keenan@test.com",
     "phone": "0987654321",
-    "address": [
-        {
-            "address_type": "default",
-            "first_name": "Keenan_Test",
-            "last_name": "Faure_test",
-            "address1": "14 Tract Failure",
-            "address2": "Montrose Failure",
-            "suburb": "Mitchells Failure",
-            "city": "Cape Town Failure",
-            "province": "Western Failure",
-            "postal_code": "7785",
-            "company": "Failure"
-        },
-        {
-            "address_type": "shipping",
-            "first_name": "",
-            "last_name": "",
-            "address1": "",
-            "address2": "",
-            "suburb": "",
-            "city": "",
-            "province": "",
-            "postal_code": "",
-            "company": ""
-        },
-        {
-            "address_type": "billing",
-            "first_name": "",
-            "last_name": "",
-            "address1": "",
-            "address2": "",
-            "suburb": "",
-            "city": "",
-            "province": "",
-            "postal_code": "",
-            "company": ""
-        }
-    ]
+    "default_address": {
+        "address_type": "default",
+        "first_name": "Keenan_Test",
+        "last_name": "Faure_test",
+        "address1": "14 Tract Failure",
+        "address2": "Montrose Failure",
+        "suburb": "Mitchells Failure",
+        "city": "Cape Town Failure",
+        "province": "Western Failure",
+        "postal_code": "7785",
+        "company": "Failure"
+    }
 }

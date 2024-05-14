@@ -106,6 +106,9 @@ func (dbconfig *DbConfig) RemoveLocationMap(id string) error {
 func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShopify, variant objects.ProductVariant) error {
 	shopify_inventory, err := dbconfig.DB.GetInventoryIDBySKU(context.Background(), variant.Sku)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("InventoryID for SKU '" + variant.Sku + "' not found")
+		}
 		return err
 	}
 	if shopify_inventory.ShopifyInventoryID == "" || len(shopify_inventory.ShopifyInventoryID) == 0 {
@@ -180,8 +183,11 @@ func (dbconfig *DbConfig) PushProductInventory(configShopify *shopify.ConfigShop
 
 // Pushes a product to Shopify
 func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, product objects.Product) error {
-	product_id, err := GetProductID(dbconfig, product.ProductCode)
+	product_id, err := GetShopifyProductID(dbconfig, product.ProductCode)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("no product ID found for product with code '" + product.ProductCode + "'")
+		}
 		return err
 	}
 	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
@@ -222,7 +228,7 @@ func (dbconfig *DbConfig) PushProduct(configShopify *shopify.ConfigShopify, prod
 		return nil
 	} else {
 		ids := objects.ResponseIDs{}
-		// searches if the product variants exists on shpify already
+		// searches if the product variants exists on shopify already
 		for _, variant := range product.Variants {
 			ids_search, err := configShopify.GetProductBySKU(variant.Sku)
 			if err != nil {
@@ -278,11 +284,11 @@ func PushAddShopify(
 			CreatedAt:        time.Now().UTC(),
 			UpdatedAt:        time.Now().UTC(),
 		})
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	} else {
+		if product.ID == uuid.Nil {
+			return errors.New("invalid product ID 'uuid.Nil' not allowed")
+		}
 		// add new product to website
 		product_data, err := configShopify.AddProductShopify(shopifyProduct)
 		if err != nil {
@@ -322,6 +328,9 @@ func (dbconfig *DbConfig) CollectionShopfy(
 	configShopify *shopify.ConfigShopify,
 	product objects.Product,
 	shopify_product_id int) error {
+	if shopify_product_id == 0 {
+		return errors.New("invalid shopify product id not allowed")
+	}
 	// check if the product has the associated category linked to it already...
 	categories, err := configShopify.GetShopifyCategoryByProductID(fmt.Sprint(shopify_product_id))
 	if err != nil {
@@ -382,6 +391,7 @@ func (dbconfig *DbConfig) CollectionShopfy(
 		if err != nil {
 			return err
 		}
+		return nil
 	}
 
 	// if the database does contain the links then we should update it on shopify
@@ -405,6 +415,12 @@ func (dbconfig *DbConfig) PushVariant(
 	shopify_product_id string,
 	shopify_variant_id string,
 ) error {
+	if shopify_product_id == "" || shopify_product_id == "0" {
+		return errors.New("invalid shopify product id not allowed")
+	}
+	if shopify_variant_id == "" || shopify_variant_id == "0" {
+		return errors.New("invalid shopify variant id not allowed")
+	}
 	product_variant_adding := ConvertVariantToShopify(variant)
 	price, err := dbconfig.ShopifyVariantPricing(variant, "Selling Price")
 	if err != nil {
@@ -493,21 +509,19 @@ func (dbconfig *DbConfig) PushVariant(
 	return nil
 }
 
-func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUser database.User) error {
+func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, api_key string) error {
 	queue_item := objects.RequestQueueHelper{
 		Type:        "product",
 		Status:      "in-queue",
 		Instruction: "add_product",
 		Endpoint:    "queue",
-		ApiKey:      dbUser.ApiKey,
+		ApiKey:      api_key,
 		Method:      http.MethodPost,
 		Object:      nil,
 	}
 	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product.ProductCode)
 	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			return err
-		}
+		return err
 	}
 	queue_item_object := objects.RequestQueueItemProducts{
 		SystemProductID: product.ID.String(),
@@ -538,27 +552,26 @@ func CompileInstructionProduct(dbconfig *DbConfig, product objects.Product, dbUs
 	return nil
 }
 
-func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVariant, product objects.Product, dbUser database.User) error {
+func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVariant, product objects.Product, api_key string) error {
 	queue_item := objects.RequestQueueHelper{
 		Type:        "product_variant",
 		Status:      "in-queue",
 		Instruction: "add_variant",
 		Endpoint:    "queue",
-		ApiKey:      dbUser.ApiKey,
+		ApiKey:      api_key,
 		Method:      http.MethodPost,
 		Object:      nil,
 	}
 	variant_id, err := dbconfig.DB.GetVIDBySKU(context.Background(), variant.Sku)
 	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			return err
-		}
+		return err
 	}
 	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product.ProductCode)
 	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			return err
+		if err.Error() == "sql: no rows in result set" {
+			return errors.New("shopify product id not found for: '" + product.ProductCode + "'")
 		}
+		return err
 	}
 	queue_item_object := objects.RequestQueueItemProducts{
 		SystemProductID: product.ID.String(),
@@ -592,7 +605,7 @@ func CompileInstructionVariant(dbconfig *DbConfig, variant objects.ProductVarian
 
 // Returns a product id if found in the database
 // otherwise an empty string
-func GetProductID(dbconfig *DbConfig, product_code string) (string, error) {
+func GetShopifyProductID(dbconfig *DbConfig, product_code string) (string, error) {
 	product_id, err := dbconfig.DB.GetPIDByProductCode(context.Background(), product_code)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -610,7 +623,7 @@ func GetProductID(dbconfig *DbConfig, product_code string) (string, error) {
 
 // Returns a variant id if found in the database
 // otherwise an empty string
-func GetVariantID(dbconfig *DbConfig, sku string) (string, error) {
+func GetShopifyVariantID(dbconfig *DbConfig, sku string) (string, error) {
 	variant_id, err := dbconfig.DB.GetVIDBySKU(context.Background(), sku)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {

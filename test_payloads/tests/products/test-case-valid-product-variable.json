@@ -1,0 +1,38 @@
+{
+    "product_code": "product_code",
+    "title": "product_title",
+    "body_html": "<p>I am a body_html</p>",
+    "category": "product_category",
+    "vendor": "product_vendor",
+    "product_type": "product_product_type",
+    "variants": [
+        {
+            "sku": "product_sku",
+            "option1": "option1",
+            "option2": "option2",
+            "option3": "option3",
+            "barcode": "2347234-9824",
+            "variant_price_tiers": [
+                {
+                    "name": "Selling Price",
+                    "value": "1500.99"
+                }
+            ],
+            "variant_quantities": []
+        }
+    ],
+    "options": [
+        {
+            "value": "Size",
+            "position": 1
+        },
+        {
+            "value": "Colour",
+            "position": 2
+        },
+        {
+            "value": "Fabric",
+            "position": 3
+        }
+    ]
+}

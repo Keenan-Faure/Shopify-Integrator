@@ -2,180 +2,167 @@ package main
 
 import (
 	"context"
-	"integrator/internal/database"
 	"net/http"
 	"objects"
 	"strings"
-	"time"
-	"utils"
+
+	"github.com/gin-gonic/gin"
 )
 
-// GET /api/settings
-func (dbconfig *DbConfig) GetAppSettingValue(
-	w http.ResponseWriter,
-	r *http.Request,
-	user database.User) {
-	key := strings.ToLower(r.URL.Query().Get("key"))
-	if key != "" {
-		setting_value, err := dbconfig.DB.GetAppSettingByKey(context.Background(), key)
-		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "no setting value found for "+key)
+/*
+Returns a list of the internal shopify settings. If the key query param is used, it returns the data for the specific setting.
+
+Route: /api/shopify/settings
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetShopifySettingValue() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := c.Query("key")
+		if key != "" {
+			setting_value, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), key)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusInternalServerError, "no setting value found for "+key)
+					return
+				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, setting_value)
-	} else {
-		setting_value, err := dbconfig.DB.GetAppSettings(context.Background())
-		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "no setting value found for "+key)
+			RespondWithJSON(c, http.StatusOK, setting_value)
+		} else {
+			setting_value, err := dbconfig.DB.GetShopifySettings(context.Background())
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusInternalServerError, "no setting value found for "+key)
+					return
+				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
+			RespondWithJSON(c, http.StatusOK, setting_value)
 		}
-		RespondWithJSON(w, http.StatusOK, setting_value)
 	}
 }
 
-// PUT /api/settings
-func (dbconfig *DbConfig) AddAppSetting(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	setting_keys := utils.GetAppSettings("app")
-	app_settings_map, err := DecodeSettings(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = SettingsValidation(app_settings_map, setting_keys)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	for _, setting := range app_settings_map {
-		err = dbconfig.DB.UpdateAppSetting(r.Context(), database.UpdateAppSettingParams{
-			Value:     setting.Value,
-			UpdatedAt: time.Now().UTC(),
-			Key:       setting.Key,
+/*
+Updates an existing shopify setting inside the database.
+
+Route: /api/shopify/settings
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) AddShopifySetting() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		setting_keys, err := dbconfig.DB.GetShopifySettingsList(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		shopify_settings_map, err := DecodeSettings(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = SettingsValidation(shopify_settings_map, setting_keys)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = UpdateShopifySettings(dbconfig, shopify_settings_map)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
 		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// DELETE /api/settings
-func (dbconfig *DbConfig) RemoveAppSettings(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	setting_keys := utils.GetAppSettings("app")
-	key := r.URL.Query().Get("key")
-	err := SettingValidation(
-		objects.RequestSettings{
-			Key:   key,
-			Value: "",
-		},
-		setting_keys,
-	)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = dbconfig.DB.RemoveAppSetting(r.Context(), key)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// GET /api/shopify/settings
-func (dbconfig *DbConfig) GetShopifySettingValue(
-	w http.ResponseWriter,
-	r *http.Request,
-	user database.User) {
-	key := r.URL.Query().Get("key")
-	if key != "" {
-		setting_value, err := dbconfig.DB.GetShopifySettingByKey(context.Background(), key)
-		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "no setting value found for "+key)
-				return
-			}
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, setting_value)
-	} else {
-		setting_value, err := dbconfig.DB.GetShopifySettings(context.Background())
-		if err != nil {
-			if err.Error() == "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, "no setting value found for "+key)
-				return
-			}
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, setting_value)
 	}
 }
 
-// PUT /api/shopify/settings
-func (dbconfig *DbConfig) AddShopifySetting(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	setting_keys := utils.GetAppSettings("shopify")
-	shopify_settings_map, err := DecodeSettings(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = SettingsValidation(shopify_settings_map, setting_keys)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	for _, setting := range shopify_settings_map {
-		err = dbconfig.DB.UpdateShopifySetting(r.Context(), database.UpdateShopifySettingParams{
-			Value:     setting.Value,
-			UpdatedAt: time.Now().UTC(),
-			Key:       setting.Key,
+/*
+Updates an existing app setting inside the database.
+
+Route: /api/settings
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) AddAppSetting() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		setting_keys, err := dbconfig.DB.GetAppSettingsList(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		app_settings_map, err := DecodeSettings(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = SettingsValidation(app_settings_map, setting_keys)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = UpdateAppSettings(dbconfig, app_settings_map)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
 		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
 	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
 }
 
-// DELETE /api/shopify/settings
-func (dbconfig *DbConfig) RemoveShopifySettings(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	setting_keys := utils.GetAppSettings("shopify")
-	key := r.URL.Query().Get("key")
-	err := SettingValidation(
-		objects.RequestSettings{
-			Key:   key,
-			Value: "",
-		},
-		setting_keys,
-	)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
+/*
+Returns a list of the internal app settings. If the key query param is used, it returns the data for the specific setting.
+
+Route: /api/settings
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetAppSettingValue() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := strings.ToLower(c.Query("key"))
+		if key != "" {
+			setting_value, err := dbconfig.DB.GetAppSettingByKey(context.Background(), key)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusInternalServerError, "no setting value found for "+key)
+					return
+				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusOK, setting_value)
+		} else {
+			setting_value, err := dbconfig.DB.GetAppSettings(context.Background())
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusInternalServerError, "no setting value found for "+key)
+					return
+				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusOK, setting_value)
+		}
 	}
-	err = dbconfig.DB.RemoveShopifySetting(r.Context(), key)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
 }

@@ -2,14 +2,103 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"integrator/internal/database"
+	"log"
 	"objects"
 	"strings"
 	"utils"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
+
+/*
+Converts a Shopify Product (from fetch) into a requestBodyProductStruct
+*/
+func CompileShopifyToSystemProduct(
+	shopifyProduct objects.ShopifySingleProduct,
+	shopifyVariant objects.ShopifyProductVariant,
+	restrictionMap map[string]string,
+) objects.RequestBodyProduct {
+	// general product values
+	requestBody := objects.RequestBodyProduct{}
+	requestBody.Title = ApplyFetchRestriction(restrictionMap, shopifyProduct.Title, "title")
+	requestBody.BodyHTML = ApplyFetchRestriction(restrictionMap, shopifyProduct.BodyHTML, "body_html")
+	requestBody.ProductType = ApplyFetchRestriction(restrictionMap, shopifyProduct.ProductType, "product_type")
+	requestBody.Vendor = ApplyFetchRestriction(restrictionMap, shopifyProduct.Vendor, "vendor")
+
+	// product options
+	if DeterFetchRestriction(restrictionMap, "options") {
+		if len(shopifyProduct.Options) > 0 {
+			if shopifyProduct.Options[0].Name != "Title" {
+				productOptions := []objects.ProductOptions{}
+				for _, option_value := range shopifyProduct.Options {
+					productOptions = append(productOptions, objects.ProductOptions{
+						Value:    option_value.Name,
+						Position: option_value.Position,
+					})
+				}
+				requestBody.ProductOptions = productOptions
+			}
+		}
+	}
+
+	// product variant
+	variant := objects.RequestBodyVariant{}
+	variant.Sku = shopifyVariant.Sku
+	variant.Option1 = ApplyFetchRestriction(restrictionMap, IgnoreDefaultOption(shopifyVariant.Option1), "options")
+	variant.Option2 = ApplyFetchRestriction(restrictionMap, IgnoreDefaultOption(shopifyVariant.Option2), "options")
+	variant.Option3 = ApplyFetchRestriction(restrictionMap, IgnoreDefaultOption(shopifyVariant.Option3), "options")
+	variant.Barcode = ApplyFetchRestriction(restrictionMap, shopifyVariant.Barcode, "barcode")
+
+	// product variant pricing
+	// -- Ignored
+
+	// product variant qty
+	// -- Ignored
+
+	requestBody.Variants = append(requestBody.Variants, variant)
+
+	return requestBody
+}
+
+// Compile Queue Filter Search into a single object (variable)
+func CompileRemoveQueueFilter(
+	dbconfig *DbConfig,
+	mock bool,
+	queue_type,
+	status,
+	instruction string) (string, error) {
+	if queue_type == "" && status == "" && instruction == "" {
+		return "success", nil
+	}
+	baseQuery := `DELETE FROM queue_items WHERE `
+	queryWhere := ""
+	if queue_type != "" {
+		queryWhere += "queue_type = '" + queue_type + "' AND "
+	}
+	if status != "" {
+		queryWhere += "status = '" + status + "' AND "
+	}
+	if instruction != "" {
+		queryWhere += "instruction = '" + instruction + "'"
+	}
+	if queryWhere == "" {
+		return "success", nil
+	}
+	baseQuery += queryWhere
+	baseQuery = RemoveQueryKeywords(baseQuery)
+	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
+	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
+	log.Println(InitConnectionString(useLocalhost, mock))
+	_, err := customConnection.Exec(context.Background(), baseQuery)
+	if err != nil {
+		return "error", err
+	}
+	return "success", nil
+}
 
 // Convert Database.User to objects.ResponseRegister
 func ConvertDatabaseToRegister(user database.User) objects.ResponseRegister {
@@ -36,185 +125,44 @@ func ConvertDatabaseToWarehouse(warehouses []database.GetWarehousesRow) []object
 // Compile Queue Filter Search into a single object (variable)
 func CompileQueueFilterSearch(
 	dbconfig *DbConfig,
-	ctx context.Context,
+	mock bool,
 	page int,
 	queue_type,
 	status,
 	instruction string) ([]objects.ResponseQueueItemFilter, error) {
-	response := []objects.ResponseQueueItemFilter{}
-	if queue_type == "" {
-		if status == "" {
-			// Instruction
-			queue_items, err := dbconfig.DB.GetQueueItemsByInstruction(
-				ctx,
-				database.GetQueueItemsByInstructionParams{
-					Instruction: instruction,
-					Limit:       10,
-					Offset:      int32((page - 1) * 10),
-				})
-			if err != nil {
-				return []objects.ResponseQueueItemFilter{}, err
-			}
-			for _, value := range queue_items {
-				response = append(response, objects.ResponseQueueItemFilter{
-					ID:          value.ID,
-					QueueType:   value.QueueType,
-					Status:      value.Status,
-					Instruction: value.Instruction,
-					Object:      value.Object,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		} else {
-			// Status and Instruction
-			queue_items, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(
-				ctx,
-				database.GetQueueItemsByInstructionAndStatusParams{
-					Instruction: instruction,
-					Status:      status,
-					Limit:       10,
-					Offset:      int32((page - 1) * 10),
-				})
-			if err != nil {
-				return []objects.ResponseQueueItemFilter{}, err
-			}
-			for _, value := range queue_items {
-				response = append(response, objects.ResponseQueueItemFilter{
-					ID:          value.ID,
-					QueueType:   value.QueueType,
-					Status:      value.Status,
-					Instruction: value.Instruction,
-					Object:      value.Object,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
+	if status == "" && instruction == "" && queue_type == "" {
+		return []objects.ResponseQueueItemFilter{}, nil
 	}
-	if status == "" {
-		if instruction == "" {
-			// Type
-			queue_items, err := dbconfig.DB.GetQueueItemsByType(
-				ctx,
-				database.GetQueueItemsByTypeParams{
-					QueueType: queue_type,
-					Limit:     10,
-					Offset:    int32((page - 1) * 10),
-				})
-			if err != nil {
-				return []objects.ResponseQueueItemFilter{}, err
-			}
-			for _, value := range queue_items {
-				response = append(response, objects.ResponseQueueItemFilter{
-					ID:          value.ID,
-					QueueType:   value.QueueType,
-					Status:      value.Status,
-					Instruction: value.Instruction,
-					Object:      value.Object,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		} else {
-			// Instruction and Type
-			queue_items, err := dbconfig.DB.GetQueueItemsByInstructionAndType(
-				ctx,
-				database.GetQueueItemsByInstructionAndTypeParams{
-					Instruction: instruction,
-					QueueType:   queue_type,
-					Limit:       10,
-					Offset:      int32((page - 1) * 10),
-				})
-			if err != nil {
-				return []objects.ResponseQueueItemFilter{}, err
-			}
-			for _, value := range queue_items {
-				response = append(response, objects.ResponseQueueItemFilter{
-					ID:          value.ID,
-					QueueType:   value.QueueType,
-					Status:      value.Status,
-					Instruction: value.Instruction,
-					Object:      value.Object,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
+	if page == 0 {
+		page = 1
 	}
-	if instruction == "" {
-		if queue_type == "" {
-			// Status
-			queue_items, err := dbconfig.DB.GetQueueItemsByStatus(
-				ctx,
-				database.GetQueueItemsByStatusParams{
-					Status: status,
-					Limit:  10,
-					Offset: int32((page - 1) * 10),
-				})
-			if err != nil {
-				return []objects.ResponseQueueItemFilter{}, err
-			}
-			for _, value := range queue_items {
-				response = append(response, objects.ResponseQueueItemFilter{
-					ID:          value.ID,
-					QueueType:   value.QueueType,
-					Status:      value.Status,
-					Instruction: value.Instruction,
-					Object:      value.Object,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		} else {
-			// Queue type and status
-			queue_items, err := dbconfig.DB.GetQueueItemsByStatusAndType(
-				ctx,
-				database.GetQueueItemsByStatusAndTypeParams{
-					Status:    status,
-					QueueType: queue_type,
-					Limit:     10,
-					Offset:    int32((page - 1) * 10),
-				})
-			if err != nil {
-				return []objects.ResponseQueueItemFilter{}, err
-			}
-			for _, value := range queue_items {
-				response = append(response, objects.ResponseQueueItemFilter{
-					ID:          value.ID,
-					QueueType:   value.QueueType,
-					Status:      value.Status,
-					Instruction: value.Instruction,
-					Object:      value.Object,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
+	baseQuery := `SELECT id, queue_type, status, instruction, object, updated_at FROM queue_items WHERE `
+	queryWhere := ""
+	if page == 0 {
+		page = 1
 	}
-	queue_items, err := dbconfig.DB.GetQueueItemsByFilter(
-		ctx,
-		database.GetQueueItemsByFilterParams{
-			Status:      status,
-			QueueType:   queue_type,
-			Instruction: instruction,
-			Limit:       10,
-			Offset:      int32((page - 1) * 10),
-		})
+	if queue_type != "" {
+		queryWhere += "queue_type = '" + queue_type + "' AND "
+	}
+	if status != "" {
+		queryWhere += "status = '" + status + "' AND "
+	}
+	if instruction != "" {
+		queryWhere += "instruction = '" + instruction + "'"
+	}
+	if queryWhere == "" {
+		return []objects.ResponseQueueItemFilter{}, nil
+	}
+	baseQuery += queryWhere
+	baseQuery = RemoveQueryKeywords(baseQuery)
+	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
+	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
+	rows, _ := customConnection.Query(context.Background(), baseQuery)
+	queueItems, err := pgx.CollectRows(rows, pgx.RowToStructByName[objects.ResponseQueueItemFilter])
 	if err != nil {
 		return []objects.ResponseQueueItemFilter{}, err
 	}
-	for _, value := range queue_items {
-		response = append(response, objects.ResponseQueueItemFilter{
-			ID:          value.ID,
-			QueueType:   value.QueueType,
-			Status:      value.Status,
-			Instruction: value.Instruction,
-			Object:      value.Object,
-			UpdatedAt:   value.UpdatedAt,
-		})
-	}
-	return response, nil
+	return queueItems, nil
 }
 
 // Convert objects.Product into objects.ShopifyProduct
@@ -316,33 +264,12 @@ func CompileShopifyOptions(product objects.Product) []objects.ShopifyOptions {
 	return shopify_options
 }
 
-// Compile the customer search results
-func CompileCustomerSearchData(
-	customers_name []database.GetCustomersByNameRow,
-	customer_by_id []database.GetCustomersByNameRow) []objects.SearchCustomer {
-	customer := []objects.SearchCustomer{}
-	for _, value := range customers_name {
-		customer = append(customer, objects.SearchCustomer{
-			FirstName: value.FirstName,
-			LastName:  value.LastName,
-		})
-	}
-	for _, value := range customer_by_id {
-		customer = append(customer, objects.SearchCustomer{
-			FirstName: value.FirstName,
-			LastName:  value.LastName,
-		})
-	}
-	return customer
-}
-
 // Compiles the customer data
 func CompileCustomerData(
 	dbconfig *DbConfig,
 	customer_id uuid.UUID,
-	ctx context.Context,
 	ignore_address bool) (objects.Customer, error) {
-	customer, err := dbconfig.DB.GetCustomerByID(ctx, customer_id)
+	customer, err := dbconfig.DB.GetCustomerByID(context.Background(), customer_id)
 	if err != nil {
 		return objects.Customer{}, err
 	}
@@ -357,23 +284,22 @@ func CompileCustomerData(
 			UpdatedAt: customer.UpdatedAt,
 		}, nil
 	}
-	customer_address, err := dbconfig.DB.GetAddressByCustomer(ctx, customer_id)
+	customer_address, err := dbconfig.DB.GetAddressByCustomer(context.Background(), customer_id)
 	if err != nil {
 		return objects.Customer{}, err
 	}
 	CustomerAddress := []objects.CustomerAddress{}
 	for _, value := range customer_address {
 		CustomerAddress = append(CustomerAddress, objects.CustomerAddress{
-			Type:       value.Type.String,
-			FirstName:  value.FirstName,
-			LastName:   value.LastName,
-			Address1:   value.Address1.String,
-			Address2:   value.Address2.String,
-			Suburb:     value.Suburb.String,
-			City:       value.City.String,
-			Province:   value.Province.String,
-			PostalCode: value.PostalCode.String,
-			Company:    value.Company.String,
+			Type:         value.Type,
+			FirstName:    value.FirstName,
+			LastName:     value.LastName,
+			Address1:     value.Address1.String,
+			Address2:     value.Address2.String,
+			City:         value.City.String,
+			Province:     value.Province.String,
+			ProvinceCode: value.ProvinceCode.String,
+			Company:      value.Company.String,
 		})
 	}
 	return objects.Customer{
@@ -395,7 +321,7 @@ func CompileOrderSearchResult(
 	for _, value := range customer_fl {
 		response = append(response, objects.SearchOrder{
 			Notes:         value.Notes.String,
-			WebCode:       value.WebCode.String,
+			WebCode:       value.WebCode,
 			TaxTotal:      value.TaxTotal.String,
 			OrderTotal:    value.OrderTotal.String,
 			ShippingTotal: value.ShippingTotal.String,
@@ -406,7 +332,7 @@ func CompileOrderSearchResult(
 	for _, value := range webcode {
 		response = append(response, objects.SearchOrder{
 			Notes:         value.Notes.String,
-			WebCode:       value.WebCode.String,
+			WebCode:       value.WebCode,
 			TaxTotal:      value.TaxTotal.String,
 			OrderTotal:    value.OrderTotal.String,
 			ShippingTotal: value.ShippingTotal.String,
@@ -421,17 +347,16 @@ func CompileOrderSearchResult(
 func CompileOrderData(
 	dbconfig *DbConfig,
 	order_id uuid.UUID,
-	ctx context.Context,
 	ignore_ship_cust bool) (objects.Order, error) {
-	order, err := dbconfig.DB.GetOrderByID(ctx, order_id)
+	order, err := dbconfig.DB.GetOrderByID(context.Background(), order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	customer_id, err := dbconfig.DB.GetCustomerByOrderID(ctx, order_id)
+	customer_id, err := dbconfig.DB.GetCustomerByOrderID(context.Background(), order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_customer, err := dbconfig.DB.GetCustomerByID(ctx, customer_id)
+	order_customer, err := dbconfig.DB.GetCustomerByID(context.Background(), customer_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
@@ -446,7 +371,7 @@ func CompileOrderData(
 			ID:                order.ID,
 			Notes:             order.Notes.String,
 			Status:            order.Status,
-			WebCode:           order.WebCode.String,
+			WebCode:           order.WebCode,
 			TaxTotal:          order.TaxTotal.String,
 			OrderTotal:        order.OrderTotal.String,
 			ShippingTotal:     order.ShippingTotal.String,
@@ -459,11 +384,11 @@ func CompileOrderData(
 		}
 		return Order, nil
 	}
-	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(ctx, customer_id)
+	order_customer_address, err := dbconfig.DB.GetAddressByCustomer(context.Background(), customer_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
-	order_line_items, err := dbconfig.DB.GetOrderLinesByOrder(ctx, order_id)
+	order_line_items, err := dbconfig.DB.GetOrderLinesByOrder(context.Background(), order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
@@ -472,13 +397,12 @@ func CompileOrderData(
 		LineItems = append(LineItems, objects.OrderLines{
 			SKU:      value.Sku,
 			Price:    value.Price.String,
-			Barcode:  int(value.Barcode.Int32),
 			Qty:      int(value.Qty.Int32),
 			TaxRate:  value.TaxRate.String,
 			TaxTotal: value.TaxTotal.String,
 		})
 	}
-	order_shipping_lines, err := dbconfig.DB.GetShippingLinesByOrder(ctx, order_id)
+	order_shipping_lines, err := dbconfig.DB.GetShippingLinesByOrder(context.Background(), order_id)
 	if err != nil {
 		return objects.Order{}, err
 	}
@@ -487,7 +411,6 @@ func CompileOrderData(
 		ShippingLineItems = append(ShippingLineItems, objects.OrderLines{
 			SKU:      value.Sku,
 			Price:    value.Price.String,
-			Barcode:  int(value.Barcode.Int32),
 			Qty:      int(value.Qty.Int32),
 			TaxRate:  value.TaxRate.String,
 			TaxTotal: value.TaxTotal.String,
@@ -496,16 +419,15 @@ func CompileOrderData(
 	OrderCustomerAddress := []objects.CustomerAddress{}
 	for _, value := range order_customer_address {
 		OrderCustomerAddress = append(OrderCustomerAddress, objects.CustomerAddress{
-			Type:       value.Type.String,
-			FirstName:  value.FirstName,
-			LastName:   value.LastName,
-			Address1:   value.Address1.String,
-			Address2:   value.Address2.String,
-			Suburb:     value.Suburb.String,
-			City:       value.City.String,
-			Province:   value.Province.String,
-			PostalCode: value.PostalCode.String,
-			Company:    value.Company.String,
+			Type:         value.Type,
+			FirstName:    value.FirstName,
+			LastName:     value.LastName,
+			Address1:     value.Address1.String,
+			Address2:     value.Address2.String,
+			City:         value.City.String,
+			Province:     value.Province.String,
+			ProvinceCode: value.ProvinceCode.String,
+			Company:      value.Company.String,
 		})
 	}
 	OrderCustomer.Address = OrderCustomerAddress
@@ -513,7 +435,7 @@ func CompileOrderData(
 		ID:                order_id,
 		Notes:             order.Notes.String,
 		Status:            order.Status,
-		WebCode:           order.WebCode.String,
+		WebCode:           order.WebCode,
 		TaxTotal:          order.TaxTotal.String,
 		OrderTotal:        order.OrderTotal.String,
 		ShippingTotal:     order.ShippingTotal.String,
@@ -528,221 +450,52 @@ func CompileOrderData(
 }
 
 // Compiles the filter results into one object
-func CompileFilterSearch(
-	dbconfig *DbConfig,
-	ctx context.Context,
-	page int,
-	product_type,
-	category,
-	vendor string) ([]objects.SearchProduct, error) {
-	response := []objects.SearchProduct{}
+func CompileFilterSearch(dbconfig *DbConfig, mock bool, page int, product_type, category, vendor string) ([]objects.SearchProduct, error) {
+	baseQuery := `SELECT id, active, product_code, title, category, vendor, product_type, updated_at FROM products WHERE `
+	queryWhere := ""
+	if page == 0 {
+		page = 1
+	}
 	if product_type != "" {
-		if category == "" {
-			// vendor
-			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
-				Vendor: utils.ConvertStringToSQL(vendor),
-				Limit:  10,
-				Offset: int32((page - 1) * 10),
-			})
-			if err != nil {
-				return response, err
-			}
-			for _, value := range results {
-				images, err := CompileProductImages(value.ID, ctx, dbconfig)
-				if err != nil {
-					return response, err
-				}
-				response = append(response, objects.SearchProduct{
-					ID:          value.ID,
-					Active:      value.Active,
-					Images:      images,
-					Title:       value.Title.String,
-					Category:    value.Category.String,
-					ProductType: value.ProductType.String,
-					Vendor:      value.Vendor.String,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
-		// category & vendor
-		results, err := dbconfig.DB.GetProductsByTypeAndCategory(ctx, database.GetProductsByTypeAndCategoryParams{
-			ProductType: utils.ConvertStringToSQL(product_type),
-			Category:    utils.ConvertStringToSQL(category),
-			Limit:       10,
-			Offset:      int32((page - 1) * 10),
-		})
-		if err != nil {
-			return response, err
-		}
-		for _, value := range results {
-			images, err := CompileProductImages(value.ID, ctx, dbconfig)
-			if err != nil {
-				return response, err
-			}
-			response = append(response, objects.SearchProduct{
-				ID:          value.ID,
-				Active:      value.Active,
-				Images:      images,
-				Title:       value.Title.String,
-				Category:    value.Category.String,
-				ProductType: value.ProductType.String,
-				Vendor:      value.Vendor.String,
-				UpdatedAt:   value.UpdatedAt,
-			})
-		}
-		return response, nil
+		queryWhere += "product_type = '" + product_type + "' AND "
 	}
 	if category != "" {
-		if vendor != "" {
-			// product_type
-			results, err := dbconfig.DB.GetProductsByVendor(ctx, database.GetProductsByVendorParams{
-				Vendor: utils.ConvertStringToSQL(vendor),
-				Limit:  10,
-				Offset: int32((page - 1) * 10),
-			})
-			if err != nil {
-				return response, err
-			}
-			for _, value := range results {
-				images, err := CompileProductImages(value.ID, ctx, dbconfig)
-				if err != nil {
-					return response, err
-				}
-				response = append(response, objects.SearchProduct{
-					ID:          value.ID,
-					Active:      value.Active,
-					Images:      images,
-					Title:       value.Title.String,
-					Category:    value.Category.String,
-					ProductType: value.ProductType.String,
-					Vendor:      value.Vendor.String,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
-		// category & vendor
-		results, err := dbconfig.DB.GetProductsByVendorAndCategory(ctx, database.GetProductsByVendorAndCategoryParams{
-			Category: utils.ConvertStringToSQL(category),
-			Vendor:   utils.ConvertStringToSQL(vendor),
-			Limit:    10,
-			Offset:   int32((page - 1) * 10),
-		})
-		if err != nil {
-			return response, err
-		}
-		for _, value := range results {
-			images, err := CompileProductImages(value.ID, ctx, dbconfig)
-			if err != nil {
-				return response, err
-			}
-			response = append(response, objects.SearchProduct{
-				ID:          value.ID,
-				Active:      value.Active,
-				Images:      images,
-				Title:       value.Title.String,
-				Category:    value.Category.String,
-				ProductType: value.ProductType.String,
-				Vendor:      value.Vendor.String,
-				UpdatedAt:   value.UpdatedAt,
-			})
-		}
-		return response, nil
+		queryWhere += "category = '" + category + "' AND "
 	}
 	if vendor != "" {
-		if product_type == "" {
-			// category
-			results, err := dbconfig.DB.GetProductsByCategory(ctx, database.GetProductsByCategoryParams{
-				Category: utils.ConvertStringToSQL(category),
-				Limit:    10,
-				Offset:   int32((page - 1) * 10),
-			})
-			if err != nil {
-				return response, err
-			}
-			for _, value := range results {
-				images, err := CompileProductImages(value.ID, ctx, dbconfig)
-				if err != nil {
-					return response, err
-				}
-				response = append(response, objects.SearchProduct{
-					ID:          value.ID,
-					Active:      value.Active,
-					Images:      images,
-					Title:       value.Title.String,
-					Category:    value.Category.String,
-					ProductType: value.ProductType.String,
-					Vendor:      value.Vendor.String,
-					UpdatedAt:   value.UpdatedAt,
-				})
-			}
-			return response, nil
-		}
-		// vendor & product_type
-		results, err := dbconfig.DB.GetProductsByTypeAndVendor(ctx, database.GetProductsByTypeAndVendorParams{
-			ProductType: utils.ConvertStringToSQL(product_type),
-			Vendor:      utils.ConvertStringToSQL(vendor),
-			Limit:       10,
-			Offset:      int32((page - 1) * 10),
-		})
-		if err != nil {
-			return response, err
-		}
-		for _, value := range results {
-			images, err := CompileProductImages(value.ID, ctx, dbconfig)
-			if err != nil {
-				return response, err
-			}
-			response = append(response, objects.SearchProduct{
-				ID:          value.ID,
-				Active:      value.Active,
-				Images:      images,
-				Title:       value.Title.String,
-				Category:    value.Category.String,
-				ProductType: value.ProductType.String,
-				Vendor:      value.Vendor.String,
-				UpdatedAt:   value.UpdatedAt,
-			})
-		}
-		return response, nil
+		queryWhere += "vendor = '" + vendor + "'"
 	}
-	results, err := dbconfig.DB.GetProductsFilter(ctx, database.GetProductsFilterParams{
-		Category:    utils.ConvertStringToSQL(category),
-		ProductType: utils.ConvertStringToSQL(product_type),
-		Vendor:      utils.ConvertStringToSQL(vendor),
-		Limit:       10,
-		Offset:      int32((page - 1) * 10),
-	})
+	if queryWhere == "" {
+		return []objects.SearchProduct{}, nil
+	}
+	baseQuery += queryWhere
+	baseQuery = RemoveQueryKeywords(baseQuery)
+	useLocalhost, _ := dbconfig.GetFlagValue(HOST_RUNTIME_FLAG_NAME)
+	customConnection, _ := InitCustomConnection(InitConnectionString(useLocalhost, mock))
+	rows, _ := customConnection.Query(context.Background(), baseQuery)
+	products, err := pgx.CollectRows(rows, pgx.RowToStructByName[objects.SearchProduct])
+	for _, product := range products {
+		images, err := CompileProductImages(product.ID, dbconfig)
+		if err != nil {
+			return []objects.SearchProduct{}, err
+		}
+		product.Images = images
+	}
 	if err != nil {
-		return response, err
+		return []objects.SearchProduct{}, err
 	}
-	for _, value := range results {
-		images, err := CompileProductImages(value.ID, ctx, dbconfig)
-		if err != nil {
-			return response, err
-		}
-		response = append(response, objects.SearchProduct{
-			ID:          value.ID,
-			Active:      value.Active,
-			Images:      images,
-			Title:       value.Title.String,
-			Category:    value.Category.String,
-			ProductType: value.ProductType.String,
-			Vendor:      value.Vendor.String,
-			UpdatedAt:   value.UpdatedAt,
-		})
-	}
-	return response, nil
+	return products, nil
 }
 
 func CompileProductImages(
 	product_id uuid.UUID,
-	ctx context.Context,
 	dbconfig *DbConfig) ([]objects.ProductImages, error) {
 	response := []objects.ProductImages{}
-	images, err := dbconfig.DB.GetProductImageByProductID(ctx, product_id)
+	images, err := dbconfig.DB.GetProductImageByProductID(context.Background(), product_id)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return []objects.ProductImages{}, errors.New("product with ID '" + product_id.String() + "' not found")
+		}
 		return response, err
 	}
 	for _, image := range images {
@@ -758,11 +511,10 @@ func CompileProductImages(
 // Comples the search results into one object
 func CompileSearchResult(
 	dbconfig *DbConfig,
-	ctx context.Context,
 	search []database.GetProductsSearchRow) ([]objects.SearchProduct, error) {
 	response := []objects.SearchProduct{}
 	for _, value := range search {
-		images, err := CompileProductImages(value.ID, ctx, dbconfig)
+		images, err := CompileProductImages(value.ID, dbconfig)
 		if err != nil {
 			return response, err
 		}
@@ -780,17 +532,48 @@ func CompileSearchResult(
 	return response, nil
 }
 
+// Convert Product (POST) into CSVProduct
+func ConvertProductToCSVProduct(products objects.RequestBodyProduct) []objects.CSVProduct {
+	csv_products := []objects.CSVProduct{}
+	for _, variant := range products.Variants {
+		csv_product := objects.CSVProduct{
+			ProductCode:  products.ProductCode,
+			Active:       "1",
+			Title:        products.Title,
+			BodyHTML:     products.BodyHTML,
+			Category:     products.Category,
+			Vendor:       products.Vendor,
+			ProductType:  products.ProductType,
+			SKU:          variant.Sku,
+			Option1Value: variant.Option1,
+			Option2Value: variant.Option2,
+			Option3Value: variant.Option3,
+			Barcode:      variant.Barcode,
+		}
+		if len(products.ProductOptions) == 1 {
+			csv_product.Option1Name = utils.IssetString(products.ProductOptions[0].Value)
+			if len(products.ProductOptions) == 2 {
+				csv_product.Option2Name = utils.IssetString(products.ProductOptions[1].Value)
+				if len(products.ProductOptions) == 3 {
+					csv_product.Option3Name = utils.IssetString(products.ProductOptions[2].Value)
+				}
+			}
+		}
+		csv_products = append(csv_products, csv_product)
+	}
+	return csv_products
+}
+
 // Compiles the product data
-func CompileProductData(
+func CompileProduct(
 	dbconfig *DbConfig,
 	product_id uuid.UUID,
-	ctx context.Context,
 	ignore_variant bool) (objects.Product, error) {
-	product, err := dbconfig.DB.GetProductByID(ctx, product_id)
+	product, err := dbconfig.DB.GetProductByID(context.Background(), product_id)
 	if err != nil {
 		return objects.Product{}, err
 	}
-	product_options, err := dbconfig.DB.GetProductOptions(ctx, product_id)
+	product_options, err := dbconfig.DB.GetProductOptions(context.Background(), product_id)
 	if err != nil {
 		return objects.Product{}, err
 	}
@@ -801,7 +584,7 @@ func CompileProductData(
 			Position: int(value.Position),
 		})
 	}
-	images, err := CompileProductImages(product_id, ctx, dbconfig)
+	images, err := CompileProductImages(product_id, dbconfig)
 	if err != nil {
 		return objects.Product{}, err
 	}
@@ -822,7 +605,7 @@ func CompileProductData(
 		}
 		return product_data, nil
 	}
-	variant_data, err := CompileVariantsData(dbconfig, product_id, ctx)
+	variant_data, err := CompileVariants(dbconfig, product_id)
 	if err != nil {
 		return objects.Product{}, err
 	}
@@ -844,17 +627,17 @@ func CompileProductData(
 }
 
 // Compiles all variant data for a product
-func CompileVariantsData(
+func CompileVariants(
 	dbconfig *DbConfig,
 	product_id uuid.UUID,
-	ctx context.Context) ([]objects.ProductVariant, error) {
-	variants, err := dbconfig.DB.GetProductVariants(ctx, product_id)
+) ([]objects.ProductVariant, error) {
+	variants, err := dbconfig.DB.GetProductVariants(context.Background(), product_id)
 	if err != nil {
 		return []objects.ProductVariant{}, err
 	}
 	variantsArray := []objects.ProductVariant{}
 	for _, value := range variants {
-		qty, err := dbconfig.DB.GetVariantQty(ctx, value.ID)
+		qty, err := dbconfig.DB.GetVariantQty(context.Background(), value.ID)
 		if err != nil {
 			return variantsArray, err
 		}
@@ -866,7 +649,7 @@ func CompileVariantsData(
 				Value:     int(sub_value_qty.Value.Int32),
 			})
 		}
-		pricing, err := dbconfig.DB.GetVariantPricing(ctx, value.ID)
+		pricing, err := dbconfig.DB.GetVariantPricing(context.Background(), value.ID)
 		if err != nil {
 			return variantsArray, err
 		}
@@ -893,17 +676,20 @@ func CompileVariantsData(
 	return variantsArray, nil
 }
 
-// Compiles a variant data of a single product
-func CompileVariantData(
+// Compiles a variant data of a single variant
+func CompileVariantByID(
 	dbconfig *DbConfig,
 	variant_id uuid.UUID,
-	ctx context.Context) (objects.ProductVariant, error) {
-	variant, err := dbconfig.DB.GetVariantByVariantID(ctx, variant_id)
+) (objects.ProductVariant, error) {
+	variant, err := dbconfig.DB.GetVariantByVariantID(context.Background(), variant_id)
 	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return objects.ProductVariant{}, errors.New("variant with ID '" + variant_id.String() + "' not found")
+		}
 		return objects.ProductVariant{}, err
 	}
 	variant_data := objects.ProductVariant{}
-	qty, err := dbconfig.DB.GetVariantQty(ctx, variant.ID)
+	qty, err := dbconfig.DB.GetVariantQty(context.Background(), variant.ID)
 	if err != nil {
 		return variant_data, err
 	}
@@ -915,7 +701,7 @@ func CompileVariantData(
 			Value:     int(sub_value_qty.Value.Int32),
 		})
 	}
-	pricing, err := dbconfig.DB.GetVariantPricing(ctx, variant.ID)
+	pricing, err := dbconfig.DB.GetVariantPricing(context.Background(), variant.ID)
 	if err != nil {
 		return variant_data, err
 	}
@@ -939,4 +725,18 @@ func CompileVariantData(
 		UpdatedAt:       variant.UpdatedAt,
 	}
 	return variant_data, nil
+}
+
+// Removes WHERE and AND keywords from baseQuery
+func RemoveQueryKeywords(baseQuery string) string {
+	if baseQuery == "" {
+		return ""
+	}
+	if baseQuery[len(baseQuery)-5:] == " AND " {
+		baseQuery = baseQuery[:len(baseQuery)-5]
+	}
+	if baseQuery[len(baseQuery)-7:] == " WHERE " {
+		baseQuery = baseQuery[:len(baseQuery)-7]
+	}
+	return baseQuery
 }

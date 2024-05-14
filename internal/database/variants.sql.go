@@ -219,15 +219,15 @@ func (q *Queries) GetVariantByVariantID(ctx context.Context, id uuid.UUID) (Vari
 	return i, err
 }
 
-const getVariantIDByCode = `-- name: GetVariantIDByCode :one
+const getVariantIDBySKU = `-- name: GetVariantIDBySKU :one
 SELECT
     id
 FROM variants
 WHERE sku = $1
 `
 
-func (q *Queries) GetVariantIDByCode(ctx context.Context, sku string) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getVariantIDByCode, sku)
+func (q *Queries) GetVariantIDBySKU(ctx context.Context, sku string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getVariantIDBySKU, sku)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
@@ -262,11 +262,16 @@ func (q *Queries) GetVariants(ctx context.Context) ([]uuid.UUID, error) {
 
 const removeVariant = `-- name: RemoveVariant :exec
 DELETE FROM variants
-WHERE id = $1
+WHERE id = $1 AND product_id = $2
 `
 
-func (q *Queries) RemoveVariant(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, removeVariant, id)
+type RemoveVariantParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProductID uuid.UUID `json:"product_id"`
+}
+
+func (q *Queries) RemoveVariant(ctx context.Context, arg RemoveVariantParams) error {
+	_, err := q.db.ExecContext(ctx, removeVariant, arg.ID, arg.ProductID)
 	return err
 }
 

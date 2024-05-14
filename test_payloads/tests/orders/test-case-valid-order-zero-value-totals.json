@@ -1,0 +1,449 @@
+{
+    "id": 5010223726653,
+    "admin_graphql_api_id": "gid://shopify/Order/5010223726653",
+    "app_id": 1354745,
+    "browser_ip": "102.135.246.72",
+    "buyer_accepts_marketing": false,
+    "cancel_reason": null,
+    "cancelled_at": null,
+    "cart_token": null,
+    "checkout_id": 31740260155453,
+    "checkout_token": "9471eb4e4aad1c5c2ae5381d4fea4f72",
+    "client_details": {
+        "accept_language": null,
+        "browser_height": null,
+        "browser_ip": "102.135.246.72",
+        "browser_width": null,
+        "session_hash": null,
+        "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0"
+    },
+    "closed_at": null,
+    "company": null,
+    "confirmed": true,
+    "contact_email": "keenan@stock2shop.com",
+    "created_at": "2023-02-01T08:55:27+02:00",
+    "currency": "ZAR",
+    "current_subtotal_price": "0.00",
+    "current_subtotal_price_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "current_total_discounts": "0.00",
+    "current_total_discounts_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "current_total_duties_set": null,
+    "current_total_price": "0.00",
+    "current_total_price_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "current_total_tax": "0.00",
+    "current_total_tax_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "customer_locale": "en",
+    "device_id": null,
+    "discount_codes": [],
+    "email": "keenan@stock2shop.com",
+    "estimated_taxes": false,
+    "financial_status": "paid",
+    "fulfillment_status": null,
+    "gateway": "manual",
+    "landing_site": null,
+    "landing_site_ref": null,
+    "location_id": 63480856641,
+    "merchant_of_record_app_id": null,
+    "name": "#999999",
+    "note": "Notes not taken",
+    "note_attributes": [],
+    "number": 999999,
+    "order_number": 999999,
+    "order_status_url": "https://keenan-faure.myshopify.com/56527355965/orders/da4d09a024207bbbf612092c68395110/authenticate?key=832b048bd3568b5a53d3342938d0407f",
+    "original_total_duties_set": null,
+    "payment_gateway_names": [
+        "manual"
+    ],
+    "phone": "+27123456789",
+    "presentment_currency": "ZAR",
+    "processed_at": "2023-02-01T08:55:26+02:00",
+    "processing_method": "manual",
+    "reference": "3bfd89198864988bead96b07ca014098",
+    "referring_site": null,
+    "source_identifier": "3bfd89198864988bead96b07ca014098",
+    "source_name": "shopify_draft_order",
+    "source_url": null,
+    "subtotal_price": "0.00",
+    "subtotal_price_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "tags": "",
+    "tax_lines": [
+        {
+            "price": "0.00",
+            "rate": 0.15,
+            "title": "VAT",
+            "price_set": {
+                "shop_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                },
+                "presentment_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                }
+            },
+            "channel_liable": false
+        }
+    ],
+    "taxes_included": false,
+    "test": false,
+    "token": "da4d09a024207bbbf612092c68395110",
+    "total_discounts": "0.00",
+    "total_discounts_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "total_line_items_price": "0.00",
+    "total_line_items_price_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "total_outstanding": "0.00",
+    "total_price": "0.00",
+    "total_price_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "total_shipping_price_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "total_tax": "0.00",
+    "total_tax_set": {
+        "shop_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        },
+        "presentment_money": {
+            "amount": "0.00",
+            "currency_code": "ZAR"
+        }
+    },
+    "total_tip_received": "0.00",
+    "total_weight": 0,
+    "updated_at": "2023-02-01T08:55:28+02:00",
+    "user_id": 73572122685,
+    "billing_address": {
+        "first_name": "Keenan",
+        "address1": "14 Tracy Crescent",
+        "phone": null,
+        "city": "Cape Town",
+        "zip": "7786",
+        "province": "Western Cape",
+        "country": "South Africa",
+        "last_name": "Faure",
+        "address2": "Mitchells Plain",
+        "company": "Stock2ShopLOL",
+        "latitude": null,
+        "longitude": null,
+        "name": "Keenan Faure",
+        "country_code": "ZA",
+        "province_code": "WC"
+    },
+    "customer": {
+        "id": 9999999999999,
+        "email": "keenan@stock2shop.com",
+        "accepts_marketing": false,
+        "created_at": "2022-03-16T14:20:11+02:00",
+        "updated_at": "2023-02-01T08:55:27+02:00",
+        "first_name": "TestFirstName",
+        "last_name": "TestLastName",
+        "state": "disabled",
+        "note": null,
+        "verified_email": true,
+        "multipass_identifier": null,
+        "tax_exempt": false,
+        "tags": "",
+        "currency": "ZAR",
+        "phone": "+27123456789",
+        "accepts_marketing_updated_at": "2022-03-16T14:20:11+02:00",
+        "marketing_opt_in_level": null,
+        "tax_exemptions": [],
+        "email_marketing_consent": {
+            "state": "not_subscribed",
+            "opt_in_level": "single_opt_in",
+            "consent_updated_at": null
+        },
+        "sms_marketing_consent": {
+            "state": "not_subscribed",
+            "opt_in_level": "single_opt_in",
+            "consent_updated_at": null,
+            "consent_collected_from": "SHOPIFY"
+        },
+        "admin_graphql_api_id": "gid://shopify/Customer/5514981867581",
+        "default_address": {
+            "id": 6723049816125,
+            "customer_id": 5514981867581,
+            "first_name": "Keenan",
+            "last_name": "Faure",
+            "company": "Stock2ShopLOL",
+            "address1": "14 Tracy Crescent",
+            "address2": "Mitchells Plain",
+            "city": "Cape Town",
+            "province": "Western Cape",
+            "country": "South Africa",
+            "zip": "7786",
+            "phone": "",
+            "name": "Keenan Faure",
+            "province_code": "WC",
+            "country_code": "ZA",
+            "country_name": "South Africa",
+            "default": true
+        }
+    },
+    "discount_applications": [],
+    "fulfillments": [],
+    "line_items": [
+        {
+            "id": 11989124120637,
+            "admin_graphql_api_id": "gid://shopify/LineItem/11989124120637",
+            "fulfillable_quantity": 1,
+            "fulfillment_service": "manual",
+            "fulfillment_status": null,
+            "gift_card": false,
+            "grams": 0,
+            "name": "Queen Cakes 10 Pack",
+            "price": "1530.00",
+            "price_set": {
+                "shop_money": {
+                    "amount": "1530.00",
+                    "currency_code": "ZAR"
+                },
+                "presentment_money": {
+                    "amount": "1530.00",
+                    "currency_code": "ZAR"
+                }
+            },
+            "product_exists": true,
+            "product_id": 7021642055738,
+            "properties": [],
+            "quantity": 1,
+            "requires_shipping": true,
+            "sku": "Queen-C-10-P",
+            "taxable": true,
+            "title": "Queen Cakes 10 Pack",
+            "total_discount": "0.00",
+            "total_discount_set": {
+                "shop_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                },
+                "presentment_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                }
+            },
+            "variant_id": 39851748655162,
+            "variant_inventory_management": "shopify",
+            "variant_title": "Queen Cakes 10 Pack",
+            "vendor": "Mihoyo",
+            "tax_lines": [
+                {
+                    "channel_liable": false,
+                    "price": "229.50",
+                    "price_set": {
+                        "shop_money": {
+                            "amount": "229.50",
+                            "currency_code": "ZAR"
+                        },
+                        "presentment_money": {
+                            "amount": "229.50",
+                            "currency_code": "ZAR"
+                        }
+                    },
+                    "rate": 0.15,
+                    "title": "VAT"
+                }
+            ],
+            "duties": [],
+            "discount_allocations": []
+        },
+        {
+            "id": 11989124153405,
+            "admin_graphql_api_id": "gid://shopify/LineItem/11989124153405",
+            "fulfillable_quantity": 1,
+            "fulfillment_service": "manual",
+            "fulfillment_status": null,
+            "gift_card": false,
+            "grams": 0,
+            "name": "Database Software V10 - N/A",
+            "price": "1035.00",
+            "price_set": {
+                "shop_money": {
+                    "amount": "1035.00",
+                    "currency_code": "ZAR"
+                },
+                "presentment_money": {
+                    "amount": "1035.00",
+                    "currency_code": "ZAR"
+                }
+            },
+            "product_exists": true,
+            "product_id": 7021641629754,
+            "properties": [],
+            "quantity": 1,
+            "requires_shipping": true,
+            "sku": "HP-P-BF-1000-PP",
+            "taxable": true,
+            "title": "Harry Potter Puzzle Brief Case 1000 Pieces Puzzle",
+            "total_discount": "0.00",
+            "total_discount_set": {
+                "shop_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                },
+                "presentment_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                }
+            },
+            "variant_id": 39851748229178,
+            "variant_inventory_management": "shopify",
+            "variant_title": "N/A",
+            "vendor": "Keenan-faure",
+            "tax_lines": [
+                {
+                    "channel_liable": false,
+                    "price": "155.25",
+                    "price_set": {
+                        "shop_money": {
+                            "amount": "155.25",
+                            "currency_code": "ZAR"
+                        },
+                        "presentment_money": {
+                            "amount": "155.25",
+                            "currency_code": "ZAR"
+                        }
+                    },
+                    "rate": 0.15,
+                    "title": "VAT"
+                }
+            ],
+            "duties": [],
+            "discount_allocations": []
+        }
+    ],
+    "payment_terms": null,
+    "refunds": [],
+    "shipping_address": {
+        "first_name": "Keenan",
+        "address1": "14 Tracy Crescent",
+        "phone": null,
+        "city": "Cape Town",
+        "zip": "7786",
+        "province": "Western Cape",
+        "country": "South Africa",
+        "last_name": "Faure",
+        "address2": "Mitchells Plain",
+        "company": "Stock2ShopLOL",
+        "latitude": -34.02977,
+        "longitude": 18.63063,
+        "name": "Keenan Faure",
+        "country_code": "ZA",
+        "province_code": "WC"
+    },
+    "shipping_lines": [
+        {
+            "id": 4153358319809,
+            "carrier_identifier": "650f1a14fa979ec5c74d063e968411d4",
+            "code": "Free Shipping (2-3 Days)",
+            "delivery_category": null,
+            "discounted_price": "0.00",
+            "discounted_price_set": {
+                "shop_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                },
+                "presentment_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                }
+            },
+            "phone": null,
+            "price": "0.00",
+            "price_set": {
+                "shop_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                },
+                "presentment_money": {
+                    "amount": "0.00",
+                    "currency_code": "ZAR"
+                }
+            },
+            "requested_fulfillment_service_id": null,
+            "source": "shopify",
+            "title": "Free Shipping (2-3 Days)",
+            "tax_lines": [],
+            "discount_allocations": []
+        }
+    ]
+}

@@ -27,7 +27,7 @@ type ConfigShopify struct {
 }
 
 // Deletes a webhook on Shopify
-func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id string) (any, error) {
+func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id string) (string, error) {
 	res, err := configShopify.FetchHelper(
 		"webhooks/"+shopify_webhook_id+".json",
 		http.MethodDelete,
@@ -47,7 +47,7 @@ func (configShopify *ConfigShopify) DeleteShopifyWebhook(shopify_webhook_id stri
 	return "", nil
 }
 
-// Deletes a webhook on Shopify
+// Updates a webhook on Shopify
 func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	shopify_webhook_id,
 	webhook_url string,
@@ -55,6 +55,9 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	int_webhook_id, err := strconv.Atoi(shopify_webhook_id)
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
+	}
+	if webhook_url == "" || len(webhook_url) == 0 {
+		return objects.ShopifyWebhookRequest{}, errors.New("invalid webhook url not allowed")
 	}
 	webhook := objects.ShopifyWebhookRequest{
 		ShopifyWebhook: objects.ShopifyWebhook{
@@ -70,7 +73,7 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	res, err := configShopify.FetchHelper(
 		"webhooks.json",
 		http.MethodPut,
-		nil,
+		&buffer,
 	)
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
@@ -80,7 +83,7 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 	if err != nil {
 		return objects.ShopifyWebhookRequest{}, err
 	}
-	if res.StatusCode != 201 {
+	if res.StatusCode != 200 {
 		return objects.ShopifyWebhookRequest{}, errors.New(string(respBody))
 	}
 	response := objects.ShopifyWebhookRequest{}
@@ -94,6 +97,9 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 // Creates a webhook on Shopify
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/webhook#post-webhooks
 func (configShopify *ConfigShopify) CreateShopifyWebhook(webhook_url string) (objects.ShopifyWebhookRequest, error) {
+	if webhook_url == "" || len(webhook_url) == 0 {
+		return objects.ShopifyWebhookRequest{}, errors.New("invalid webhook url not allowed")
+	}
 	webhook := objects.ShopifyWebhookRequest{
 		ShopifyWebhook: objects.ShopifyWebhook{
 			Address: webhook_url,
@@ -132,27 +138,27 @@ func (configShopify *ConfigShopify) CreateShopifyWebhook(webhook_url string) (ob
 
 // Retrieves a list of webhooks on Shopify
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/webhook#get-webhooks
-func (configShopify *ConfigShopify) GetShopifyWebhooks() ([]objects.ShopifyWebhookResponse, error) {
+func (configShopify *ConfigShopify) GetShopifyWebhooks() (objects.ShopifyWebhookResponse, error) {
 	res, err := configShopify.FetchHelper(
 		"webhooks.json?topic=orders/updated",
 		http.MethodGet,
 		nil,
 	)
 	if err != nil {
-		return []objects.ShopifyWebhookResponse{}, err
+		return objects.ShopifyWebhookResponse{}, err
 	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return []objects.ShopifyWebhookResponse{}, err
+		return objects.ShopifyWebhookResponse{}, err
 	}
 	if res.StatusCode != 200 {
-		return []objects.ShopifyWebhookResponse{}, errors.New(string(respBody))
+		return objects.ShopifyWebhookResponse{}, errors.New(string(respBody))
 	}
-	response := []objects.ShopifyWebhookResponse{}
+	response := objects.ShopifyWebhookResponse{}
 	err = json.Unmarshal(respBody, &response)
 	if err != nil {
-		return []objects.ShopifyWebhookResponse{}, err
+		return objects.ShopifyWebhookResponse{}, err
 	}
 	return response, nil
 }
@@ -185,7 +191,7 @@ func (configShopify *ConfigShopify) GetShopifyProductCount() (objects.ShopifyPro
 }
 
 // Retrieves a list of locations
-// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location
+// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location#get-locations
 func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocations, error) {
 	res, err := configShopify.FetchHelper(
 		"locations.json",
@@ -216,6 +222,12 @@ func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocati
 func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevels, error) {
+	if location_id == "" {
+		return objects.GetShopifyInventoryLevels{}, errors.New("invalid location id not allowed")
+	}
+	if inventory_item_id == "" {
+		return objects.GetShopifyInventoryLevels{}, errors.New("invalid inventory item id not allowed")
+	}
 	res, err := configShopify.FetchHelper(
 		"inventory_levels.json?location_ids="+location_id+"&inventory_item_ids="+inventory_item_id,
 		http.MethodGet,
@@ -245,6 +257,12 @@ func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevelsList, error) {
+	if location_id == "" {
+		return objects.GetShopifyInventoryLevelsList{}, errors.New("invalid location id not allowed")
+	}
+	if inventory_item_id == "" {
+		return objects.GetShopifyInventoryLevelsList{}, errors.New("invalid inventory item id not allowed")
+	}
 	res, err := configShopify.FetchHelper(
 		"inventory_levels.json?location_ids="+location_id+"&inventory_item_ids="+inventory_item_id,
 		http.MethodGet,
@@ -269,29 +287,6 @@ func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
 	return response, nil
 }
 
-// Fetches all locations from Shopify:
-// https://shopify.dev/docs/api/admin-rest/2023-04/resources/location#get-locations
-func (configShopify *ConfigShopify) GetLocationsShopify() (objects.ResponseShopifyGetLocations, error) {
-	res, err := configShopify.FetchHelper("locations.json", http.MethodGet, nil)
-	if err != nil {
-		return objects.ResponseShopifyGetLocations{}, err
-	}
-	defer res.Body.Close()
-	respBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return objects.ResponseShopifyGetLocations{}, err
-	}
-	if res.StatusCode != 200 {
-		return objects.ResponseShopifyGetLocations{}, errors.New(string(respBody))
-	}
-	locations := objects.ResponseShopifyGetLocations{}
-	err = json.Unmarshal(respBody, &locations)
-	if err != nil {
-		return objects.ResponseShopifyGetLocations{}, err
-	}
-	return locations, nil
-}
-
 // Adjusts the inventory level of an inventory item at a location
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/inventorylevel#post-inventory-levels-adjust
 func (configShopify *ConfigShopify) AddLocationQtyShopify(
@@ -300,6 +295,12 @@ func (configShopify *ConfigShopify) AddLocationQtyShopify(
 		LocationID:          location_id,
 		InventoryItemID:     inventory_item_id,
 		AvailableAdjustment: qty,
+	}
+	if location_id == 0 {
+		return objects.ResponseAddInventoryItem{}, errors.New("invalid location id not allowed")
+	}
+	if inventory_item_id == 0 {
+		return objects.ResponseAddInventoryItem{}, errors.New("invalid inventory item id not allowed")
 	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(inventory_adjustment)
@@ -359,8 +360,6 @@ func (configShopify *ConfigShopify) AddInventoryItemToLocation(
 	return response, nil
 }
 
-// TODO log the fetch errors?
-
 // Adds a product to Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product#post-products
 func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.ShopifyProduct) (objects.ShopifyProductResponse, error) {
@@ -391,13 +390,16 @@ func (configShopify *ConfigShopify) AddProductShopify(shopifyProduct objects.Sho
 
 // Updates a product on Shopify:
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/product#put-products-product-id
-func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.ShopifyProduct, id string) (objects.ShopifyProductResponse, error) {
+func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.ShopifyProduct, product_id string) (objects.ShopifyProductResponse, error) {
+	if product_id == "" || len(product_id) == 0 {
+		return objects.ShopifyProductResponse{}, errors.New("invalid product id not allowed")
+	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(shopifyProduct)
 	if err != nil {
 		return objects.ShopifyProductResponse{}, err
 	}
-	res, err := configShopify.FetchHelper("products/"+id+".json", http.MethodPut, &buffer)
+	res, err := configShopify.FetchHelper("products/"+product_id+".json", http.MethodPut, &buffer)
 	if err != nil {
 		return objects.ShopifyProductResponse{}, err
 	}
@@ -424,6 +426,9 @@ func (configShopify *ConfigShopify) UpdateProductShopify(shopifyProduct objects.
 func (configShopify *ConfigShopify) AddVariantShopify(
 	variant objects.ShopifyVariant,
 	product_id string) (objects.ShopifyVariantResponse, error) {
+	if product_id == "" || len(product_id) == 0 {
+		return objects.ShopifyVariantResponse{}, errors.New("invalid product id not allowed")
+	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
 	if err != nil {
@@ -454,6 +459,9 @@ func (configShopify *ConfigShopify) AddVariantShopify(
 func (configShopify *ConfigShopify) UpdateVariantShopify(
 	variant any,
 	variant_id string) (objects.ShopifyVariantResponse, error) {
+	if variant_id == "" || len(variant_id) == 0 {
+		return objects.ShopifyVariantResponse{}, errors.New("invalid variant id not allowed")
+	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(variant)
 	if err != nil {
@@ -485,6 +493,12 @@ func (configShopify *ConfigShopify) UpdateVariantShopify(
 func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 	product_id,
 	collection_id int) (objects.ResponseAddProductToShopifyCollection, error) {
+	if product_id == 0 {
+		return objects.ResponseAddProductToShopifyCollection{}, errors.New("invalid product id not allowed")
+	}
+	if collection_id == 0 {
+		return objects.ResponseAddProductToShopifyCollection{}, errors.New("invalid collection id not allowed")
+	}
 	collection := objects.AddProducToShopifyCollection{
 		Collect: struct {
 			ProductID    int "json:\"product_id\""
@@ -523,6 +537,9 @@ func (configShopify *ConfigShopify) AddProductToCollectionShopify(
 // Adds a custom collection to Shopify
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#post-custom-collections
 func (configShopify *ConfigShopify) AddCustomCollectionShopify(collection string) (int, error) {
+	if collection == "" || len(collection) == 0 {
+		return 0, errors.New("invalid collection id not allowed")
+	}
 	shopify_collection := objects.AddShopifyCustomCollection{
 		CustomCollection: struct {
 			Title string "json:\"title\""
@@ -586,6 +603,9 @@ func (configShopify *ConfigShopify) GetShopifyCategories() (objects.ResponseGetC
 // used for shopify_fetch.go
 // https://shopify.dev/docs/api/admin-rest/2023-10/resources/customcollection#get-custom-collections
 func (configShopify *ConfigShopify) GetShopifyCategoryByProductID(product_id string) (objects.ResponseGetCustomCollections, error) {
+	if product_id == "" || len(product_id) == 0 {
+		return objects.ResponseGetCustomCollections{}, errors.New("invalid product id not allowed")
+	}
 	res, err := configShopify.FetchHelper("custom_collections.json?fields=title,id&product_id="+product_id, http.MethodGet, nil)
 	if err != nil {
 		return objects.ResponseGetCustomCollections{}, err
@@ -620,32 +640,23 @@ func (configShopify *ConfigShopify) CategoryExists(product objects.Product, cate
 
 // Checks if the product SKU exists on the website
 func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.ResponseIDs, error) {
+	if sku == "" || len(sku) == 0 {
+		return objects.ResponseIDs{}, errors.New("invalid sku not allowed")
+	}
 	client := graphql.NewClient(configShopify.Url+"/graphql.json", nil)
 	variables := map[string]any{
 		"sku": "sku:" + graphql.String(sku),
 	}
-	var respData struct {
-		ProductVariants struct {
-			Edges []struct {
-				Node struct {
-					Sku     string
-					Id      string
-					Product struct {
-						Id string
-					}
-				}
-			}
-		} `graphql:"productVariants(query: $sku, first: 1)"`
-	}
-	err := client.Query(context.Background(), &respData, variables)
+	graphQL := objects.ResponseShopifyGraphQL{}
+	err := client.Query(context.Background(), &graphQL, variables)
 	if err != nil {
 		return objects.ResponseIDs{}, err
 	}
-	for _, value := range respData.ProductVariants.Edges {
+	for _, value := range graphQL.ProductVariants.Edges {
 		if value.Node.Sku == sku {
 			return objects.ResponseIDs{
-				VariantID: utils.ExtractVID(respData.ProductVariants.Edges[0].Node.Id),
-				ProductID: utils.ExtractPID(respData.ProductVariants.Edges[0].Node.Product.Id),
+				VariantID: utils.ExtractVID(graphQL.ProductVariants.Edges[0].Node.Id),
+				ProductID: utils.ExtractPID(graphQL.ProductVariants.Edges[0].Node.Product.Id),
 			}, nil
 		}
 	}
@@ -653,11 +664,20 @@ func (configShopify *ConfigShopify) GetProductBySKU(sku string) (objects.Respons
 }
 
 // Initiates the connection string for shopify
-func InitConfigShopify() ConfigShopify {
+func InitConfigShopify(apiURL string) ConfigShopify {
+	if apiURL != "" {
+		return ConfigShopify{
+			APIKey:      "",
+			APIPassword: "",
+			Version:     "",
+			Url:         apiURL,
+			Valid:       true,
+		}
+	}
 	store_name := utils.LoadEnv("store_name")
 	api_key := utils.LoadEnv("api_key")
 	api_password := utils.LoadEnv("api_password")
-	version := utils.LoadEnv("api_version")
+	api_version := utils.LoadEnv("api_version")
 	validation := ValidateConfigShopify(store_name, api_key, api_password)
 	if !validation {
 		log.Println("Error setting up connection string for Shopify")
@@ -665,8 +685,8 @@ func InitConfigShopify() ConfigShopify {
 	return ConfigShopify{
 		APIKey:      api_key,
 		APIPassword: api_password,
-		Version:     version,
-		Url:         "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + version,
+		Version:     api_version,
+		Url:         "https://" + api_key + ":" + api_password + "@" + store_name + ".myshopify.com/admin/api/" + api_version,
 		Valid:       validation,
 	}
 }
@@ -703,7 +723,7 @@ func (configShopify *ConfigShopify) FetchProducts(fetch_url string) (objects.Sho
 	products := objects.ShopifyProducts{}
 	err = json.Unmarshal(respBody, &products)
 	if err != nil {
-		log.Println(err) // TODO Log these errors?
+		log.Println(err)
 		return objects.ShopifyProducts{}, "", err
 	}
 	return products, string(res.Header.Get("Link")), nil

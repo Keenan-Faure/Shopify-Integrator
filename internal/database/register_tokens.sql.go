@@ -73,6 +73,17 @@ func (q *Queries) DeleteToken(ctx context.Context, arg DeleteTokenParams) error 
 	return err
 }
 
+const deleteTokenByEmail = `-- name: DeleteTokenByEmail :exec
+DELETE FROM register_tokens
+WHERE
+email = $1
+`
+
+func (q *Queries) DeleteTokenByEmail(ctx context.Context, email string) error {
+	_, err := q.db.ExecContext(ctx, deleteTokenByEmail, email)
+	return err
+}
+
 const getToken = `-- name: GetToken :one
 SELECT
     name,

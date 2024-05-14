@@ -1,37 +1,24 @@
 {
-    "product_code": "ABC123",
-    "title": "test_product",
+    "product_code": "product_code",
+    "title": "product_title",
     "body_html": "<p>I am a body_html</p>",
-    "category": "test_category",
-    "vendor": "test_vendor",
-    "product_type": "test_product_type",
+    "category": "product_category",
+    "vendor": "product_vendor",
+    "product_type": "product_product_type",
     "variants": [
         {
-            "sku": "testabc",
-            "option1": "blue",
-            "option2": "small",
-            "option3": "",
+            "sku": "product_sku",
+            "option1": "option1",
+            "option2": "option2",
+            "option3": "option3",
             "barcode": "2347234-9824",
             "variant_price_tiers": [
                 {
                     "name": "Selling Price",
-                    "value": "1400.00"
-                },
-                {
-                    "name": "Wholesale Price",
-                    "value": "1300.00"
+                    "value": "1500.99"
                 }
             ],
-            "variant_quantities": [
-                {
-                    "name": "CapeTown",
-                    "value": 22
-                },
-                {
-                    "name": "Nippon",
-                    "value": 1
-                }
-            ]
+            "variant_quantities": []
         }
     ],
     "options": [
@@ -40,6 +27,9 @@
         },
         {
             "value": "Colour"
+        },
+        {
+            "value": "Fabric"
         }
     ]
 }

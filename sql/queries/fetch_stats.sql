@@ -25,3 +25,6 @@ FROM fetch_stats
 WHERE created_at > current_date at time zone 'UTC'
 GROUP BY "hour"
 ORDER BY "hour" ASC;
+
+-- name: RemoveFetchStats :exec
+DELETE FROM fetch_stats;

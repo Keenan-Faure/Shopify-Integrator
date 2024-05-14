@@ -125,14 +125,13 @@ func (q *Queries) GetProductOptionsByCode(ctx context.Context, productCode strin
 	return items, nil
 }
 
-const updateProductOption = `-- name: UpdateProductOption :one
+const updateProductOption = `-- name: UpdateProductOption :exec
 UPDATE product_options
 SET
     "name" = COALESCE($1, "name"),
     position = COALESCE($2, position)
 WHERE product_id = $3
 and position = $4
-RETURNING id, product_id, name, position
 `
 
 type UpdateProductOptionParams struct {
@@ -142,19 +141,36 @@ type UpdateProductOptionParams struct {
 	Position_2 int32     `json:"position_2"`
 }
 
-func (q *Queries) UpdateProductOption(ctx context.Context, arg UpdateProductOptionParams) (ProductOption, error) {
-	row := q.db.QueryRowContext(ctx, updateProductOption,
+func (q *Queries) UpdateProductOption(ctx context.Context, arg UpdateProductOptionParams) error {
+	_, err := q.db.ExecContext(ctx, updateProductOption,
 		arg.Name,
 		arg.Position,
 		arg.ProductID,
 		arg.Position_2,
 	)
-	var i ProductOption
-	err := row.Scan(
-		&i.ID,
-		&i.ProductID,
-		&i.Name,
-		&i.Position,
-	)
-	return i, err
+	return err
+}
+
+const updateProductOptionBySKU = `-- name: UpdateProductOptionBySKU :exec
+UPDATE product_options
+SET
+    "name" = COALESCE($1, "name"),
+    position = COALESCE($2, position)
+WHERE id = (
+    SELECT
+        product_id
+    FROM variants
+    WHERE sku = $3
+)
+`
+
+type UpdateProductOptionBySKUParams struct {
+	Name     string `json:"name"`
+	Position int32  `json:"position"`
+	Sku      string `json:"sku"`
+}
+
+func (q *Queries) UpdateProductOptionBySKU(ctx context.Context, arg UpdateProductOptionBySKUParams) error {
+	_, err := q.db.ExecContext(ctx, updateProductOptionBySKU, arg.Name, arg.Position, arg.Sku)
+	return err
 }

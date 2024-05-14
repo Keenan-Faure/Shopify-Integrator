@@ -57,7 +57,7 @@ SELECT
     o.updated_at
 FROM orders o 
 WHERE orders.id in (
-    SELECT order_id FROM customerorders
+    SELECT order_id FROM customer_orders
     WHERE customer_id = $1
 );
 
@@ -118,13 +118,23 @@ SELECT
     o.updated_at
 FROM orders o
 WHERE o.id in (
-    SELECT order_id FROM customerorders co
+    SELECT order_id FROM customer_orders co
     INNER JOIN customers c
     ON co.customer_id = c.id
     WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
     OR c.first_name LIKE $1
     OR c.last_name LIKE $1
 );
+
+-- name: RemoveOrderByWebCode :exec
+DELETE FROM orders
+WHERE web_code = $1;
+
+-- name: GetOrderIDByWebCode :one
+SELECT
+    id
+FROM orders
+WHERE web_code = $1;
 
 -- name: FetchOrderStatsPaid :many
 SELECT

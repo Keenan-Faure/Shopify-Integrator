@@ -1,0 +1,55 @@
+{
+    "product_code": "product_code",
+    "active": "1",
+    "title": "product_title",
+    "body_html": "<p>I am a body_html</p>",
+    "category": "product_category",
+    "vendor": "product_vendor",
+    "product_type": "product_product_type",
+    "variants": [
+        {
+            "sku": "product_sku",
+            "option1": "option1",
+            "option2": "option2",
+            "option3": "option3",
+            "barcode": "2347234-9824",
+            "variant_price_tiers": [
+                {
+                    "name": "Selling Price",
+                    "value": "1500.99",
+                    "is_default": false
+                }
+            ],
+            "variant_quantities": [
+                {
+                    "name": "Cape Town",
+                    "value": 123,
+                    "is_default": false
+                }
+            ],
+            "updated_at": "2006-01-02T15:04:05Z"
+        }
+    ],
+    "options": [
+        {
+            "value": "Size",
+            "position": 1
+        },
+        {
+            "value": "Colour",
+            "position": 2
+        },
+        {
+            "value": "Fabric",
+            "position": 3
+        }
+    ],
+    "product_images": [
+        {
+            "src": "",
+            "position": 1,
+            "updated_at": "2006-01-02T15:04:05Z"
+        }
+    ],
+    "updated_at": "2006-01-02T15:04:05Z"
+}

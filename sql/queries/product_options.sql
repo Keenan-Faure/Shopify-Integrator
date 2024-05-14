@@ -9,14 +9,25 @@ INSERT INTO product_options(
 )
 RETURNING *;
 
--- name: UpdateProductOption :one
+-- name: UpdateProductOption :exec
 UPDATE product_options
 SET
     "name" = COALESCE($1, "name"),
     position = COALESCE($2, position)
 WHERE product_id = $3
-and position = $4
-RETURNING *;
+and position = $4;
+
+-- name: UpdateProductOptionBySKU :exec
+UPDATE product_options
+SET
+    "name" = COALESCE($1, "name"),
+    position = COALESCE($2, position)
+WHERE id = (
+    SELECT
+        product_id
+    FROM variants
+    WHERE sku = $3
+);
 
 -- name: GetProductOptions :many
 SELECT

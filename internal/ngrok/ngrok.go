@@ -10,12 +10,12 @@ import (
 	"time"
 )
 
-const host = "http://localhost:8888"
-const tunnel_name = "website"
+const NGROK_HOST = "http://localhost:8888"
+const NGROK_TUNNEL_NAME = "website"
 
 // GET /api/tunnels
 func FetchNgrokTunnels() (objects.NgrokTunnelResponse, error) {
-	res, err := fetchHelper("api/tunnels", http.MethodGet, nil)
+	res, err := fetchHelper(NGROK_HOST, "api/tunnels", http.MethodGet, nil)
 	if err != nil {
 		return objects.NgrokTunnelResponse{}, err
 	}
@@ -40,7 +40,7 @@ func FetchNgrokTunnels() (objects.NgrokTunnelResponse, error) {
 // Returns the specific ngrok tunnel
 func FetchWebsiteTunnel(tunnels objects.NgrokTunnelResponse) string {
 	for _, tunnel := range tunnels.Tunnels {
-		if tunnel.Name == tunnel_name {
+		if tunnel.Name == NGROK_TUNNEL_NAME {
 			return tunnel.PublicURL
 		}
 	}
@@ -54,7 +54,7 @@ func SetUpWebhookURL(domain, api_key, token string) string {
 }
 
 // Util fetch helper
-func fetchHelper(endpoint, method string, body io.Reader) (*http.Response, error) {
+func fetchHelper(host, endpoint, method string, body io.Reader) (*http.Response, error) {
 	httpClient := http.Client{
 		Timeout: time.Second * 20,
 	}

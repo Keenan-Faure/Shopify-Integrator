@@ -39,5 +39,8 @@ SELECT
     updated_at
 FROM app_settings;
 
+-- name: GetAppSettingsList :many
+SELECT DISTINCT("key") FROM app_settings;
+
 -- name: RemoveAppSetting :exec
 DELETE FROM app_settings WHERE key = $1;

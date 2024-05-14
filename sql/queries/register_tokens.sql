@@ -24,6 +24,11 @@ WHERE
 token = $1 AND
 email = $2;
 
+-- name: DeleteTokenByEmail :exec
+DELETE FROM register_tokens
+WHERE
+email = $1;
+
 -- name: GetToken :one
 SELECT
     name,

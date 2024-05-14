@@ -95,6 +95,16 @@ func (q *Queries) GetVIDBySKU(ctx context.Context, sku string) (GetVIDBySKURow, 
 	return i, err
 }
 
+const removeShopifyVIDBySKU = `-- name: RemoveShopifyVIDBySKU :exec
+DELETE FROM shopify_vid
+WHERE sku = $1
+`
+
+func (q *Queries) RemoveShopifyVIDBySKU(ctx context.Context, sku string) error {
+	_, err := q.db.ExecContext(ctx, removeShopifyVIDBySKU, sku)
+	return err
+}
+
 const updateVID = `-- name: UpdateVID :exec
 UPDATE shopify_vid
 SET

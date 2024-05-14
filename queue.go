@@ -16,236 +16,382 @@ import (
 	"time"
 	"utils"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func QueueWorker(dbconfig *DbConfig) {
-	go LoopQueueWorker(dbconfig)
-}
+/*
+Initiates the sync to Shopify.
 
-func LoopQueueWorker(dbconfig *DbConfig) {
-	interval := 5
-	db_interval, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_cron_time")
-	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			log.Println(err)
-			return
-		}
-		interval = 5
-	}
-	interval, err = strconv.Atoi(db_interval.Value)
-	if err != nil {
-		interval = 5
-	}
-	timer := time.Duration(interval * int(time.Second))
-	ticker := time.NewTicker(timer)
-	for ; ; <-ticker.C {
-		queue_enabled := false
-		queue_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_queue_worker")
-		if err != nil {
-			if err.Error() != "sql: no rows in result set" {
-				log.Println(err)
-				return
-			}
-			queue_enabled = false
-		}
-		queue_enabled, err = strconv.ParseBool(queue_enabled_db.Value)
-		if err != nil {
-			queue_enabled = false
-		}
-		if queue_enabled {
-			QueueWaitGroup(dbconfig)
-		}
-	}
-}
+1. Transverses all products/variants internally and creates the respective queue items for them
+ 1. If the product/variant contains internal IDs to Shopify, the instruction will be `update_`
+ 2. Otherwise it will be an `add_` instruction, as it has to fetch Shopify IDs
 
-func QueueWaitGroup(dbconfig *DbConfig) {
-	waitgroup := &sync.WaitGroup{}
-	process_limit := int64(0)
-	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")
-	if err != nil {
-		process_limit = 20
-	}
-	process_limit, err = strconv.ParseInt(process_limit_db.Value, 10, 32)
-	if err != nil {
-		process_limit = 20
-	}
-	queue_items, err := dbconfig.DB.GetQueueItemsByDate(context.Background(), database.GetQueueItemsByDateParams{
-		Status: "in-queue",
-		Limit:  int32(process_limit),
-		Offset: 0,
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	for _, queue_item := range queue_items {
-		waitgroup.Add(1)
-		dbconfig.QueuePopAndProcess(queue_item.QueueType, waitgroup)
-	}
-	waitgroup.Wait()
-}
+2. Creates a `zsync_channel` instruction to not allow multiple syncs at the same time, which is added last.
 
-// POST /api/shopify/sync
-func (dbconfig *DbConfig) Synchronize(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// check if the syncro queue item exists in the queue already
-	// if it does then it should throw an error
-	item, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(r.Context(), database.GetQueueItemsByInstructionAndStatusParams{
-		Instruction: "zsync_channel",
-		Status:      "in-queue",
-		Limit:       1,
-		Offset:      0,
-	})
-	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	if len(item) != 0 {
-		RespondWithError(w, http.StatusInternalServerError, "sync in progress")
-		return
-	}
-	page := 0
-	for {
-		// fetch all products paginated
-		products, err := dbconfig.DB.GetActiveProducts(context.Background(), database.GetActiveProductsParams{
-			Limit:  50,
-			Offset: (int32(page) * 50),
+Route: /api/shopify/sync
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) Synchronize() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// check if the syncro queue item exists in the queue already
+		// if it does then it should throw an error
+		item, err := dbconfig.DB.GetQueueItemsByInstructionAndStatus(c.Request.Context(), database.GetQueueItemsByInstructionAndStatusParams{
+			Instruction: "zsync_channel",
+			Status:      "in-queue",
+			Limit:       1,
+			Offset:      0,
 		})
 		if err != nil {
 			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
 		}
-		if len(products) == 0 {
-			break
+		if len(item) != 0 {
+			RespondWithError(c, http.StatusInternalServerError, "sync in progress")
+			return
 		}
-		for _, product := range products {
-			product_compiled, err := CompileProductData(dbconfig, product.ID, r.Context(), false)
+		api_key := c.GetString("api_key")
+		page := 0
+		for {
+			// fetch all products paginated
+			products, err := dbconfig.DB.GetActiveProducts(context.Background(), database.GetActiveProductsParams{
+				Limit:  50,
+				Offset: (int32(page) * 50),
+			})
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			// add product queue_items to the queue
-			err = CompileInstructionProduct(dbconfig, product_compiled, dbUser)
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
-				return
-			}
-			for _, variant := range product_compiled.Variants {
-				// add variant queue_items to queue
-				err = CompileInstructionVariant(dbconfig, variant, product_compiled, dbUser)
-				if err != nil {
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
+				if err.Error() != "sql: no rows in result set" {
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
 					return
 				}
 			}
+			if len(products) == 0 {
+				break
+			}
+			for _, product := range products {
+				product_compiled, err := CompileProduct(dbconfig, product.ID, false)
+				if err != nil {
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
+					return
+				}
+				// add product queue_items to the queue
+				err = CompileInstructionProduct(dbconfig, product_compiled, api_key)
+				if err != nil {
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
+					return
+				}
+				for _, variant := range product_compiled.Variants {
+					// add variant queue_items to queue
+					err = CompileInstructionVariant(dbconfig, variant, product_compiled, api_key)
+					if err != nil {
+						RespondWithError(c, http.StatusInternalServerError, err.Error())
+						return
+					}
+				}
+			}
+			page += 1
 		}
-		page += 1
-	}
-	_, err = dbconfig.QueueHelper(objects.RequestQueueHelper{
-		Type:        "product",
-		Status:      "in-queue",
-		Instruction: "zsync_channel",
-		Endpoint:    "queue",
-		ApiKey:      dbUser.ApiKey,
-		Method:      http.MethodPost,
-		Object:      nil,
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "synconizing started",
-	})
-}
-
-// GET /api/queue/{id}
-func (dbconfig *DbConfig) GetQueueItemByID(
-	w http.ResponseWriter,
-	r *http.Request,
-	user database.User) {
-	id := chi.URLParam(r, "id")
-	id_uuid, err := uuid.Parse(id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	queue_item, err := dbconfig.DB.GetQueueItemByID(r.Context(), id_uuid)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, queue_item)
-}
-
-// POST /api/queue
-func (dbconfig *DbConfig) QueuePush(w http.ResponseWriter, r *http.Request, user database.User) {
-	queue_size_int := 500
-	queue_size_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_size")
-	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+		_, err = dbconfig.QueueHelper(objects.RequestQueueHelper{
+			Type:        "product",
+			Status:      "in-queue",
+			Instruction: "zsync_channel",
+			Endpoint:    "queue",
+			ApiKey:      api_key,
+			Method:      http.MethodPost,
+			Object:      nil,
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		queue_size_int = 500
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "synconizing started",
+		})
 	}
-	queue_size_int, err = strconv.Atoi(queue_size_db.Value)
-	if err != nil {
-		queue_size_int = 500
-	}
-	size, err := dbconfig.DB.GetQueueSize(context.Background())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if size >= int64(queue_size_int) {
-		RespondWithError(w, http.StatusBadRequest, "queue is full, please wait")
-		return
-	}
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "error checking queue size")
-		return
-	}
-	body, err := DecodeQueueItem(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = QueueItemValidation(body)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	raw, err := json.Marshal(&body.Object)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	queue_id, err := dbconfig.DB.CreateQueueItem(r.Context(), database.CreateQueueItemParams{
-		ID:          uuid.New(),
-		Object:      raw,
-		QueueType:   body.Type,
-		Instruction: body.Instruction,
-		Status:      body.Status,
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusCreated, objects.ResponseQueueItem{
-		ID:     queue_id,
-		Object: body,
-	})
 }
 
-// Not an endpoint anymore, it's processes automatically in the background
+/*
+Returns a queue item by a specific ID
+
+Route: /api/queue/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetQueueItemByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		id_uuid, err := uuid.Parse(id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		queue_item, err := dbconfig.DB.GetQueueItemByID(c.Request.Context(), id_uuid)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, queue_item)
+	}
+}
+
+/*
+Pushes a queue item to the queue and creates a queue item internally.
+This item is inserted to the back of the current queue.
+
+Route: /api/queue
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) QueuePush() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		queue_size_int := 500
+		queue_size_db, err := dbconfig.DB.GetAppSettingByKey(c.Request.Context(), "app_queue_size")
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			queue_size_int = 500
+		}
+		queue_size_int, err = strconv.Atoi(queue_size_db.Value)
+		if err != nil {
+			queue_size_int = 500
+		}
+		size, err := dbconfig.DB.GetQueueSize(context.Background())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if size >= int64(queue_size_int) {
+			RespondWithError(c, http.StatusBadRequest, "queue is full, please wait")
+			return
+		}
+		body, err := DecodeQueueItem(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = QueueItemValidation(body)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		raw, err := json.Marshal(&body.Object)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		queue_id, err := dbconfig.DB.CreateQueueItem(c.Request.Context(), database.CreateQueueItemParams{
+			ID:          uuid.New(),
+			Object:      raw,
+			QueueType:   body.Type,
+			Instruction: body.Instruction,
+			Status:      body.Status,
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusCreated, objects.ResponseQueueItem{
+			ID:     queue_id,
+			Object: body,
+		})
+	}
+}
+
+/*
+Returns the respective page of queue items
+
+Route: /api/queue/filter?key=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) FilterQueueItems() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		param_type := utils.ConfirmFilters(c.Query("type"))
+		param_instruction := utils.ConfirmFilters(c.Query("instruction"))
+		param_status := utils.ConfirmFilters(c.Query("status"))
+		result, err := CompileQueueFilterSearch(dbconfig, false, page, param_type, param_status, param_instruction)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, result)
+	}
+}
+
+/*
+Returns the respective page of queue items
+
+Route: /api/queue/processing
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) QueueViewCurrentItem() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		queue_items, err := dbconfig.DB.GetQueueItemsByDate(c.Request.Context(), database.GetQueueItemsByDateParams{
+			Status: "processing",
+			Limit:  1, // there should onlt be one item
+			Offset: 0,
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		RespondWithJSON(c, http.StatusOK, queue_items)
+	}
+}
+
+/*
+Returns the respective page of queue items
+
+Route: /api/queue?page=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) QueueViewNextItems() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		queue_items, err := dbconfig.DB.GetQueueItemsByDate(c.Request.Context(), database.GetQueueItemsByDateParams{
+			Status: "in-queue",
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		if queue_items == nil {
+			RespondWithJSON(c, http.StatusOK, []string{})
+			return
+		} else {
+			RespondWithJSON(c, http.StatusOK, queue_items)
+		}
+	}
+}
+
+/*
+Displays the current count of instructions in the queue
+
+Route: /api/queue/view
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) QueueView() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		response, err := dbconfig.DisplayQueueCount()
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, response)
+	}
+}
+
+/*
+Removes a certain queue item by it's ID from the queue
+
+Route: /api/queue/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ClearQueueByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		id_uuid, err := uuid.Parse(id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = dbconfig.DB.RemoveQueueItemByID(c.Request.Context(), id_uuid)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Clears the queue by certain filters
+
+Route: /api/queue?key=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ClearQueueByFilter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		param_type := utils.ConfirmFilters(c.Query("type"))
+		param_instruction := utils.ConfirmFilters(c.Query("instruction"))
+		param_status := utils.ConfirmFilters(c.Query(("status")))
+		response, err := CompileRemoveQueueFilter(dbconfig, false, param_type, param_status, param_instruction)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: response,
+		})
+	}
+}
+
+/*
+It processes a queue item.
+
+1. First gets the next queue item to process
+2. Updates it status to `processing` - in a perfect world there should only be 1 of these in the queue
+3. Runs the function ProcessQueueItem
+4. If successful it marks the queue item as completed
+
+It used to be an endpoint.
+*/
 func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *sync.WaitGroup) {
 	defer wait_group.Done()
 	queue_item, err := dbconfig.DB.GetNextQueueItem(context.Background())
@@ -253,7 +399,7 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 		FailedQueueItem(dbconfig, queue_item, err)
 		return
 	}
-	err = CheckWorkerType(worker_type)
+	err = utils.CheckWorkerType(worker_type)
 	if err != nil {
 		FailedQueueItem(dbconfig, queue_item, err)
 		return
@@ -340,123 +486,15 @@ func (dbconfig *DbConfig) QueuePopAndProcess(worker_type string, wait_group *syn
 	}
 }
 
-// field can be:
-// - status: processing, completed, in-queue, failed
-// - instruction: add_order, update_order, add_product, update_product, add_variant, update_variant
-// - type: product, order
+/*
+Process a queue item inside the queue depending on it's instruction
 
-// GET /api/queue/filter?key=value
-func (dbconfig *DbConfig) FilterQueueItems(w http.ResponseWriter, r *http.Request, user database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
-	param_instruction := utils.ConfirmFilters(r.URL.Query().Get("instruction"))
-	param_status := utils.ConfirmFilters(r.URL.Query().Get("status"))
-	result, err := CompileQueueFilterSearch(dbconfig, r.Context(), page, param_type, param_status, param_instruction)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, result)
-}
-
-// GET /api/queue/processing
-func (dbconfig *DbConfig) QueueViewCurrentItem(w http.ResponseWriter, r *http.Request, user database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	queue_items, err := dbconfig.DB.GetQueueItemsByDate(r.Context(), database.GetQueueItemsByDateParams{
-		Status: "in-queue",
-		Limit:  10,
-		Offset: int32((page - 1) * 10),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	RespondWithJSON(w, http.StatusOK, queue_items)
-}
-
-// GET /api/queue?page=1
-func (dbconfig *DbConfig) QueueViewNextItems(w http.ResponseWriter, r *http.Request, user database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	queue_items, err := dbconfig.DB.GetQueueItemsByDate(r.Context(), database.GetQueueItemsByDateParams{
-		Status: "in-queue",
-		Limit:  10,
-		Offset: int32((page - 1) * 10),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	if queue_items == nil {
-		RespondWithJSON(w, http.StatusOK, []string{})
-		return
-	} else {
-		RespondWithJSON(w, http.StatusOK, queue_items)
-	}
-}
-
-// GET /api/queue/view
-func (dbconfig *DbConfig) QueueView(
-	w http.ResponseWriter,
-	r *http.Request,
-	user database.User) {
-	response, err := dbconfig.DisplayQueueCount()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, response)
-}
-
-// DELETE /api/queue/{id}
-func (dbconfig *DbConfig) ClearQueueByID(
-	w http.ResponseWriter,
-	r *http.Request,
-	user database.User) {
-	id := chi.URLParam(r, "id")
-	id_uuid, err := uuid.Parse(id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = dbconfig.DB.RemoveQueueItemByID(r.Context(), id_uuid)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// DELETE /api/queue?key=value
-func (dbconfig *DbConfig) ClearQueueByFilter(
-	w http.ResponseWriter,
-	r *http.Request,
-	user database.User) {
-	param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
-	param_instruction := utils.ConfirmFilters(r.URL.Query().Get("instruction"))
-	param_status := utils.ConfirmFilters(r.URL.Query().Get("status"))
-	response, err := CompileRemoveQueueFilter(dbconfig, r.Context(), param_type, param_status, param_instruction)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: response,
-	})
-}
-
-// Process a queue item
+Note that zsync_channel is not a processable queue instruction
+*/
 func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 	if queue_item.QueueType == "product" {
 		if queue_item.Instruction == "zsync_channel" {
+			// do not process this instruction, just return nil
 			return nil
 		}
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
@@ -465,10 +503,10 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		}
 		product_id, err := uuid.Parse(queue_object.SystemProductID)
 		if err != nil {
-			return errors.New("could not decode product_id: " + queue_object.SystemProductID)
+			return errors.New("could not decode product_id '" + queue_object.SystemProductID + "'")
 		}
-		shopifyConfig := shopify.InitConfigShopify()
-		product, err := CompileProductData(dbconfig, product_id, context.Background(), false)
+		shopifyConfig := shopify.InitConfigShopify("")
+		product, err := CompileProduct(dbconfig, product_id, false)
 		if err != nil {
 			return err
 		}
@@ -479,33 +517,17 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		} else {
 			return errors.New("invalid product instruction")
 		}
-	} else if queue_item.QueueType == "order" {
-		if queue_item.Instruction == "add_order" {
-			queue_object, err := DecodeQueueItemOrder(queue_item.Object)
-			if err != nil {
-				return err
-			}
-			return dbconfig.AddOrder(queue_object)
-		} else if queue_item.Instruction == "update_order" {
-			queue_object, err := DecodeQueueItemOrder(queue_item.Object)
-			if err != nil {
-				return err
-			}
-			return dbconfig.UpdateOrder(queue_object)
-		} else {
-			return errors.New("invalid order instruction")
-		}
 	} else if queue_item.QueueType == "product_variant" {
-		shopifyConfig := shopify.InitConfigShopify()
+		shopifyConfig := shopify.InitConfigShopify("")
 		queue_object, err := DecodeQueueItemProduct(queue_item.Object)
 		if err != nil {
 			return err
 		}
 		variant_id, err := uuid.Parse(queue_object.SystemVariantID)
 		if err != nil {
-			return errors.New("could not decode variant_id: " + queue_object.SystemVariantID)
+			return errors.New("could not decode variant_id '" + queue_object.SystemVariantID + "'")
 		}
-		variant, err := CompileVariantData(dbconfig, variant_id, context.Background())
+		variant, err := CompileVariantByID(dbconfig, variant_id)
 		if err != nil {
 			return err
 		}
@@ -530,11 +552,90 @@ func ProcessQueueItem(dbconfig *DbConfig, queue_item database.QueueItem) error {
 		} else {
 			return errors.New("invalid product_variant instruction")
 		}
+	} else if queue_item.QueueType == "order" {
+		queue_object, err := DecodeQueueItemOrder(queue_item.Object)
+		if err != nil {
+			return err
+		}
+		if queue_item.Instruction == "add_order" {
+			return dbconfig.AddOrder(queue_object)
+		} else if queue_item.Instruction == "update_order" {
+			return dbconfig.UpdateOrder(queue_object)
+		} else {
+			return errors.New("invalid order instruction")
+		}
 	}
 	return errors.New("invalid queue item type")
 }
 
-// helper function: Displays count of different instructions
+func QueueWorker(dbconfig *DbConfig) {
+	go LoopQueueWorker(dbconfig)
+}
+
+func LoopQueueWorker(dbconfig *DbConfig) {
+	interval := 5
+	db_interval, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_cron_time")
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			log.Println(err)
+			return
+		}
+		interval = 5
+	}
+	interval, err = strconv.Atoi(db_interval.Value)
+	if err != nil {
+		interval = 5
+	}
+	timer := time.Duration(interval * int(time.Second))
+	ticker := time.NewTicker(timer)
+	for ; ; <-ticker.C {
+		queue_enabled := false
+		queue_enabled_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_enable_queue_worker")
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				log.Println(err)
+				return
+			}
+			queue_enabled = false
+		}
+		queue_enabled, err = strconv.ParseBool(queue_enabled_db.Value)
+		if err != nil {
+			queue_enabled = false
+		}
+		if queue_enabled {
+			QueueWaitGroup(dbconfig)
+		}
+	}
+}
+
+func QueueWaitGroup(dbconfig *DbConfig) {
+	waitgroup := &sync.WaitGroup{}
+	process_limit := int64(0)
+	process_limit_db, err := dbconfig.DB.GetAppSettingByKey(context.Background(), "app_queue_process_limit")
+	if err != nil {
+		process_limit = 20
+	}
+	process_limit, err = strconv.ParseInt(process_limit_db.Value, 10, 32)
+	if err != nil {
+		process_limit = 20
+	}
+	queue_items, err := dbconfig.DB.GetQueueItemsByDate(context.Background(), database.GetQueueItemsByDateParams{
+		Status: "in-queue",
+		Limit:  int32(process_limit),
+		Offset: 0,
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	for _, queue_item := range queue_items {
+		waitgroup.Add(1)
+		dbconfig.QueuePopAndProcess(queue_item.QueueType, waitgroup)
+	}
+	waitgroup.Wait()
+}
+
+// Helper function that displays count of different instructions
 func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error) {
 	add_order, err := dbconfig.DB.GetQueueItemsCount(context.Background(), "add_order")
 	if err != nil {
@@ -570,119 +671,7 @@ func (dbconfig *DbConfig) DisplayQueueCount() (objects.ResponseQueueCount, error
 	}, nil
 }
 
-// Compile Queue Filter Search into a single object (variable)
-func CompileRemoveQueueFilter(
-	dbconfig *DbConfig,
-	ctx context.Context,
-	queue_type,
-	status,
-	instruction string) (string, error) {
-	if queue_type == "" {
-		if status == "" {
-			err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
-			if err != nil {
-				return "error", err
-			}
-			return "success", nil
-		} else {
-			if instruction == "" {
-				err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
-				if err != nil {
-					return "error", err
-				}
-				return "success", nil
-			}
-			err := dbconfig.DB.RemoveQueueItemsByStatusAndInstruction(
-				ctx,
-				database.RemoveQueueItemsByStatusAndInstructionParams{
-					Instruction: instruction,
-					Status:      status,
-				})
-			if err != nil {
-				return "error", err
-			}
-			return "success", nil
-		}
-	}
-	if status == "" {
-		if instruction == "" {
-			err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
-			if err != nil {
-				return "error", err
-			}
-			return "success", nil
-		} else {
-			if queue_type == "" {
-				err := dbconfig.DB.RemoveQueueItemsByInstruction(ctx, instruction)
-				if err != nil {
-					return "error", err
-				}
-				return "success", nil
-			}
-			err := dbconfig.DB.RemoveQueueItemsByTypeAndInstruction(
-				ctx,
-				database.RemoveQueueItemsByTypeAndInstructionParams{
-					Instruction: instruction,
-					QueueType:   queue_type,
-				})
-			if err != nil {
-				return "error", err
-			}
-			return "success", nil
-		}
-	}
-	if instruction == "" {
-		if queue_type == "" {
-			err := dbconfig.DB.RemoveQueueItemsByStatus(ctx, status)
-			if err != nil {
-				return "error", err
-			}
-			return "success", nil
-		} else {
-			if status == "" {
-				err := dbconfig.DB.RemoveQueueItemsByType(ctx, queue_type)
-				if err != nil {
-					return "error", err
-				}
-				return "success", nil
-			}
-			err := dbconfig.DB.RemoveQueueItemsByStatusAndType(
-				ctx,
-				database.RemoveQueueItemsByStatusAndTypeParams{
-					Status:    status,
-					QueueType: queue_type,
-				})
-			if err != nil {
-				return "error", err
-			}
-			return "success", nil
-		}
-	}
-	err := dbconfig.DB.RemoveQueueItemsFilter(
-		ctx,
-		database.RemoveQueueItemsFilterParams{
-			Status:      status,
-			QueueType:   queue_type,
-			Instruction: instruction,
-		})
-	if err != nil {
-		return "error", err
-	}
-	return "success", nil
-}
-
-// Helper function: Checks if the worker type is valid
-func CheckWorkerType(worker_type string) error {
-	worker_types := []string{"product", "product_variant", "order"}
-	for _, value := range worker_types {
-		if value == worker_type {
-			return nil
-		}
-	}
-	return errors.New("invalid worker type")
-}
-
-// Updates the queue item if there is an error
+// Helper function that updates the queue item if there is an error
 func FailedQueueItem(dbconfig *DbConfig, queue_item database.QueueItem, err_r error) {
 	_, err := dbconfig.DB.UpdateQueueItem(context.Background(), database.UpdateQueueItemParams{
 		Status:      "failed",
@@ -696,7 +685,7 @@ func FailedQueueItem(dbconfig *DbConfig, queue_item database.QueueItem, err_r er
 	}
 }
 
-// Helper function: Posts internal requests to the queue endpoint
+// Helper function used to post internal requests to the queue endpoint
 func (dbconfig *DbConfig) QueueHelper(request_data objects.RequestQueueHelper) (objects.ResponseQueueItem, error) {
 	httpClient := http.Client{
 		Timeout: time.Second * 10,

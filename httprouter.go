@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"integrator/internal/database"
 	"iocsv"
@@ -14,1007 +15,938 @@ import (
 	"os"
 	"shopify"
 	"strconv"
-	"time"
 	"utils"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-// POST /api/shopify/webhook
-func (dbconfig *DbConfig) PostWebhookHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// request will take care of the post and put in a single request
-	ngrok_tunnels, err := ngrok.FetchNgrokTunnels()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	domain_url := ngrok.FetchWebsiteTunnel(ngrok_tunnels)
-	if domain_url == "" {
-		RespondWithError(w, http.StatusInternalServerError, "could not locate ngrok tunnel")
-		return
-	}
-	// checks if there is an internal record of a webhook URL inside the database
-	// by default there should always only be one
-	db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+/*
+Creates a new webhook on Shopify
 
-	shopifyConfig := shopify.InitConfigShopify()
+Route: /api/shopify/webhook
 
-	// create new webhook on Shopify
-	if db_shopify_webhook.ShopifyWebhookID == "" {
-		webhook_response, err := shopifyConfig.CreateShopifyWebhook(
-			ngrok.SetUpWebhookURL(
-				domain_url,
-				dbUser.ApiKey,
-				dbUser.WebhookToken,
-			),
-		)
+Authorization: Basic, QueryParams, Headers
+
+Header: Optional Mocker Header can be sent with request, used just for tests
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) AddWebhookHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
+		if mockRequest == "true" {
+			// if the request is a mock request
+			// then we will not update the database
+			// as this will overwrite
+			// the users data (if in production)
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		}
+		// request will take care of the post and put in a single request
+
+		ngrok_tunnels, err := ngrok.FetchNgrokTunnels()
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		err = dbconfig.DB.UpdateShopifyWebhook(r.Context(), database.UpdateShopifyWebhookParams{
-			ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
-			WebhookUrl:       webhook_response.Address,
-			Topic:            webhook_response.Topic,
-			ID:               db_shopify_webhook.ID,
-		})
+		domain_url := ngrok.FetchWebsiteTunnel(ngrok_tunnels)
+		if domain_url == "" {
+			RespondWithError(c, http.StatusInternalServerError, "could not locate ngrok tunnel")
+			return
+		}
+		// checks if there is an internal record of a webhook URL inside the database
+		// by default there should always only be one
+		db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(c.Request.Context())
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-			Message: "success",
-		})
-		return
-	} else {
-		// update existing webhook on Shopify
-		webhook_response, err := shopifyConfig.UpdateShopifyWebhook(
-			db_shopify_webhook.ShopifyWebhookID,
-			ngrok.SetUpWebhookURL(
-				domain_url,
-				dbUser.ApiKey,
-				dbUser.WebhookToken,
-			),
-		)
+
+		shopifyConfig := shopify.InitConfigShopify("")
+		dbUser, err := dbconfig.DB.GetUserByApiKey(c.Request.Context(), c.GetString("api_key"))
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		err = dbconfig.DB.UpdateShopifyWebhook(r.Context(), database.UpdateShopifyWebhookParams{
-			ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
-			WebhookUrl:       webhook_response.Address,
-			Topic:            webhook_response.Topic,
-			ID:               db_shopify_webhook.ID,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-			Message: "success",
-		})
-	}
-}
 
-// DELETE /api/shopify/webhook
-func (dbconfig *DbConfig) DeleteWebhookHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// fetches data of internal shopify webhook and confirms if it's set
-	db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	// delete the webhook on Shopify
-	if db_shopify_webhook.ShopifyWebhookID != "" {
-		shopifyConfig := shopify.InitConfigShopify()
-		_, err := shopifyConfig.DeleteShopifyWebhook(db_shopify_webhook.ShopifyWebhookID)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		err = dbconfig.DB.UpdateShopifyWebhook(r.Context(), database.UpdateShopifyWebhookParams{
-			ShopifyWebhookID: "",
-			WebhookUrl:       "",
-			Topic:            "",
-			ID:               db_shopify_webhook.ID,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-			Message: "success",
-		})
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// PUT /api/push/restriction
-func (dbconfig *DbConfig) PushRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	restrictions, err := DecodeRestriction(dbconfig, r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = RestrictionValidation(restrictions)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	for _, value := range restrictions {
-		err = dbconfig.DB.UpdatePushRestriction(r.Context(), database.UpdatePushRestrictionParams{
-			Flag:      value.Flag,
-			UpdatedAt: time.Now().UTC(),
-			Field:     value.Field,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// GET /api/push/restriction
-func (dbconfig *DbConfig) GetPushRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, "no push restrictions found found")
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, restrictions)
-}
-
-// GET /api/fetch/restriction
-func (dbconfig *DbConfig) GetFetchRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	restrictions, err := dbconfig.DB.GetFetchRestriction(context.Background())
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, "no fetch restrictions found found")
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, restrictions)
-}
-
-// PUT /api/fetch/restriction
-func (dbconfig *DbConfig) FetchRestrictionHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	restrictions, err := DecodeRestriction(dbconfig, r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = RestrictionValidation(restrictions)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	for _, value := range restrictions {
-		err = dbconfig.DB.UpdateFetchRestriction(r.Context(), database.UpdateFetchRestrictionParams{
-			Flag:      value.Flag,
-			UpdatedAt: time.Now().UTC(),
-			Field:     value.Field,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// POST /api/worker/fetch
-func (dbconfig *DbConfig) WorkerFetchProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// create database table containing the status of this
-	shopifyConfig := shopify.InitConfigShopify()
-	err := FetchShopifyProducts(dbconfig, shopifyConfig)
-	if err != nil {
-		if err.Error() == "worker is currently running" {
-			RespondWithError(w, http.StatusConflict, err.Error())
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// should never be used in production
-
-// PUT /api/shopify/reset_fetch
-func (dbconfig *DbConfig) ResetShopifyFetchHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	err := dbconfig.DB.ResetFetchWorker(context.Background(), "0")
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// POST /api/inventory/warehouse?reindex=false
-func (dbconfig *DbConfig) AddInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	reindex := r.URL.Query().Get("reindex")
-	warehouse, err := DecodeGlobalWarehouse(dbconfig, r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = GlobalWarehouseValidation(warehouse)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if reindex == "true" {
-		// check if the warehouse exists internally
-		warehouse_db, err := dbconfig.DB.GetWarehouseByName(r.Context(), warehouse.Name)
-		if err != nil {
-			if err.Error() != "sql: no rows in result set" {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
-				return
-			} else {
-				RespondWithError(w, http.StatusInternalServerError, "cannot reindex an invalid warehouse")
+		// create new webhook on Shopify
+		if db_shopify_webhook.ShopifyWebhookID == "" {
+			webhook_response, err := shopifyConfig.CreateShopifyWebhook(
+				ngrok.SetUpWebhookURL(
+					domain_url,
+					dbUser.ApiKey,
+					dbUser.WebhookToken,
+				),
+			)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-		}
-		// reindex warehouse that was found
-		err = InsertGlobalWarehouse(dbconfig, r.Context(), warehouse_db.Name, true)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-			Message: "success",
-		})
-		return
-	}
-	// check if a warehouse already exists
-	warehouses_db, err := dbconfig.DB.GetWarehouses(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	for _, warehouse_db := range warehouses_db {
-		if warehouse_db.Name == warehouse.Name {
-			RespondWithError(w, http.StatusBadRequest, "warehouse already exists")
-			return
-		}
-	}
-	err = dbconfig.DB.CreateWarehouse(r.Context(), database.CreateWarehouseParams{
-		ID:        uuid.New(),
-		Name:      warehouse.Name,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	err = InsertGlobalWarehouse(dbconfig, r.Context(), warehouse.Name, false)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// GET /api/inventory/warehouse
-func (dbconfig *DbConfig) GetInventoryWarehouses(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	warehouses, err := dbconfig.DB.GetWarehouses(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if len(warehouses) == 0 {
-		warehouses = []database.GetWarehousesRow{}
-	}
-	RespondWithJSON(w, http.StatusOK, warehouses)
-}
-
-// GET /api/inventory/warehouse/{id}
-func (dbconfig *DbConfig) GetInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	warehouse_id := chi.URLParam(r, "id")
-	err := IDValidation(warehouse_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	warehouse_uuid, err := uuid.Parse(warehouse_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode order id: "+warehouse_id)
-		return
-	}
-	warehouse, err := dbconfig.DB.GetWarehouseByID(r.Context(), warehouse_uuid)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusNotFound, "not found")
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, warehouse)
-}
-
-// DELETE /api/inventory/warehouse/{id}
-func (dbconfig *DbConfig) DeleteInventoryWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	warehouse_id := chi.URLParam(r, "id")
-	err := IDValidation(warehouse_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	warehouse_uuid, err := uuid.Parse(warehouse_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode order id: "+warehouse_id)
-		return
-	}
-	err = dbconfig.DB.RemoveWarehouse(r.Context(), warehouse_uuid)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusNotFound, "not found")
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	// remove all variant warehouses
-
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// PUT /api/products/{id}
-func (dbconfig *DbConfig) UpdateProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	product_id := chi.URLParam(r, "id")
-	err := IDValidation(product_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	product_uuid, err := uuid.Parse(product_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode product id: "+product_id)
-		return
-	}
-	found := false
-	_, err = dbconfig.DB.GetProductByID(r.Context(), product_uuid)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			found = false
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	} else {
-		found = true
-	}
-
-	if !found {
-		RespondWithError(w, http.StatusNotFound, "could not find product id: "+product_id)
-		return
-	}
-
-	params, err := DecodeProductRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	validation := ProductValidation(dbconfig, params)
-	if validation != nil {
-		RespondWithError(w, http.StatusBadRequest, validation.Error())
-		return
-	}
-	err = ValidateDuplicateOption(params)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = DuplicateOptionValues(params)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// update product
-	err = dbconfig.DB.UpdateProductByID(r.Context(), database.UpdateProductByIDParams{
-		Active:      params.Active,
-		Title:       utils.ConvertStringToSQL(params.Title),
-		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
-		Category:    utils.ConvertStringToSQL(params.Category),
-		Vendor:      utils.ConvertStringToSQL(params.Vendor),
-		ProductType: utils.ConvertStringToSQL(params.ProductType),
-		UpdatedAt:   time.Now().UTC(),
-		ID:          product_uuid,
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	for key := range params.ProductOptions {
-		// TODO Should we use the position in the POST Body or the key that is it inside the array?
-		_, err = dbconfig.DB.UpdateProductOption(r.Context(), database.UpdateProductOptionParams{
-			Name:       params.ProductOptions[key].Value,
-			Position:   int32(key + 1),
-			ProductID:  product_uuid,
-			Position_2: int32(key + 1),
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	for _, variant := range params.Variants {
-		err = dbconfig.DB.UpdateVariant(r.Context(), database.UpdateVariantParams{
-			Option1:   utils.ConvertStringToSQL(variant.Option1),
-			Option2:   utils.ConvertStringToSQL(variant.Option2),
-			Option3:   utils.ConvertStringToSQL(variant.Option3),
-			Barcode:   utils.ConvertStringToSQL(variant.Barcode),
-			UpdatedAt: time.Now().UTC(),
-			Sku:       variant.Sku,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		// update variant pricing and qty here
-		for _, price_lists := range variant.VariantPricing {
-			// check if the pricing is acceptable
-			if price_lists.Name == "Selling Price" || price_lists.Name == "Compare At Price" {
-				err = dbconfig.DB.UpdateVariantPricing(r.Context(), database.UpdateVariantPricingParams{
-					Name:      price_lists.Name,
-					Value:     utils.ConvertStringToSQL(price_lists.Value),
-					Isdefault: price_lists.IsDefault,
-					UpdatedAt: time.Now().UTC(),
-					Sku:       variant.Sku,
-					Name_2:    price_lists.Name,
-				})
-				if err != nil {
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
-					return
-				}
-			} else {
-				RespondWithError(w, http.StatusInternalServerError, "invalid price tier "+price_lists.Name)
-				return
-			}
-		}
-		for _, warehouses := range variant.VariantQuantity {
-			err = dbconfig.DB.UpdateVariantQty(r.Context(), database.UpdateVariantQtyParams{
-				Name:      warehouses.Name,
-				Value:     utils.ConvertIntToSQL(warehouses.Value),
-				Isdefault: warehouses.IsDefault,
-				Sku:       variant.Sku,
-				Name_2:    warehouses.Name,
+			err = dbconfig.DB.UpdateShopifyWebhook(c.Request.Context(), database.UpdateShopifyWebhookParams{
+				ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
+				WebhookUrl:       webhook_response.Address,
+				Topic:            webhook_response.Topic,
+				ID:               db_shopify_webhook.ID,
 			})
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-		}
-	}
-	updated_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	// only update if the active = 1
-	if updated_data.Active == "1" {
-		err = CompileInstructionProduct(dbconfig, updated_data, dbUser)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+				Message: "success",
+			})
 			return
-		}
-		for _, variant := range updated_data.Variants {
-			err = CompileInstructionVariant(dbconfig, variant, updated_data, dbUser)
+		} else {
+			// update existing webhook on Shopify
+			webhook_response, err := shopifyConfig.UpdateShopifyWebhook(
+				db_shopify_webhook.ShopifyWebhookID,
+				ngrok.SetUpWebhookURL(
+					domain_url,
+					dbUser.ApiKey,
+					dbUser.WebhookToken,
+				),
+			)
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			err = dbconfig.DB.UpdateShopifyWebhook(c.Request.Context(), database.UpdateShopifyWebhookParams{
+				ShopifyWebhookID: fmt.Sprint(webhook_response.ID),
+				WebhookUrl:       webhook_response.Address,
+				Topic:            webhook_response.Topic,
+				ID:               db_shopify_webhook.ID,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+		}
+	}
+}
+
+/*
+Deletes the webhook on Shopify
+
+Route: /api/shopify/webhook
+
+Authorization: Basic, QueryParams, Headers
+
+Header: Optional Mocker Header can be sent with request, used just for tests
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) DeleteWebhookHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
+		if mockRequest == "true" {
+			// if the request is a mock request
+			// then we will not update the database
+			// as this will overwrite
+			// the users data (if in production)
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		}
+		// fetches data of internal shopify webhook and confirms if it's set
+		db_shopify_webhook, err := dbconfig.DB.GetShopifyWebhooks(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// delete the webhook on Shopify
+		if db_shopify_webhook.ShopifyWebhookID != "" {
+			shopifyConfig := shopify.InitConfigShopify("")
+			_, err := shopifyConfig.DeleteShopifyWebhook(db_shopify_webhook.ShopifyWebhookID)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			err = dbconfig.DB.UpdateShopifyWebhook(c.Request.Context(), database.UpdateShopifyWebhookParams{
+				ShopifyWebhookID: "",
+				WebhookUrl:       "",
+				Topic:            "",
+				ID:               db_shopify_webhook.ID,
+			})
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
+			})
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Updates the push restriction.
+
+Route: /api/push/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PushRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := DecodeRestriction(dbconfig, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = RestrictionValidation(restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = UpdatePushRestriction(dbconfig, restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Returns all push restriction values
+
+Route: /api/push/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetPushRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := dbconfig.DB.GetPushRestriction(context.Background())
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, "no push restrictions found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, restrictions)
+	}
+}
+
+/*
+Returns all fetch restriction values
+
+Route: /api/fetch/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetFetchRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := dbconfig.DB.GetFetchRestriction(context.Background())
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusInternalServerError, "no fetch restrictions found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, restrictions)
+	}
+}
+
+/*
+Updates the fetch restriction.
+
+Route: /api/fetch/restriction
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) FetchRestrictionHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		restrictions, err := DecodeRestriction(dbconfig, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = RestrictionValidation(restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = UpdateFetchRestriction(dbconfig, restrictions)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Runs the worker that fetch products from shopify.
+
+Route: /api/worker/fetch
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) WorkerFetchProductsHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// create database table containing the status of this
+		shopifyConfig := shopify.InitConfigShopify("")
+		err := FetchShopifyProducts(dbconfig, shopifyConfig)
+		if err != nil {
+			if err.Error() == "worker is currently running" {
+				RespondWithError(c, http.StatusConflict, err.Error())
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Resets the fetch worker of the application.
+
+Route: /api/shopify/reset_fetch
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ResetShopifyFetchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := dbconfig.DB.ResetFetchWorker(context.Background(), "0")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Adds a new internal Warehouse to the application. Comes with an additional reindex param
+that will set missing warehouses for older products.
+
+Route: /api/inventory/warehouse?reindex=false
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reindex := c.Query("reindex")
+		warehouse, err := DecodeGlobalWarehouse(dbconfig, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = GlobalWarehouseValidation(warehouse)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = nil
+		httpStatus := 200
+		if reindex == "true" {
+			httpStatus, err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, true)
+		} else {
+			httpStatus, err = AddGlobalWarehouse(dbconfig, c.Request.Context(), warehouse.Name, false)
+		}
+		if err != nil {
+			RespondWithError(c, httpStatus, err.Error())
+		}
+		RespondWithJSON(c, httpStatus, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Gets the paginated list of warehouse from the application
+
+Route: /api/inventory/warehouse?page=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetInventoryWarehouses() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		warehouses, err := dbconfig.DB.GetWarehouses(c.Request.Context(), database.GetWarehousesParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if len(warehouses) == 0 {
+			warehouses = []database.GetWarehousesRow{}
+		}
+		RespondWithJSON(c, http.StatusOK, warehouses)
+	}
+}
+
+/*
+Gets the specific warehouse from the application
+
+Route: /api/inventory/warehouse/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetInventoryWarehouse() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		warehouse_id := c.Param("id")
+		err := IDValidation(warehouse_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		warehouse_uuid, err := uuid.Parse(warehouse_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode warehouse id: "+warehouse_id)
+			return
+		}
+		warehouse, err := dbconfig.DB.GetWarehouseByID(c.Request.Context(), warehouse_uuid)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, warehouse)
+	}
+}
+
+/*
+Removes the specific warehouse from the application
+
+Route: /api/inventory/warehouse/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) DeleteInventoryWarehouse() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		warehouse_id := c.Param("id")
+		err := IDValidation(warehouse_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		warehouse_uuid, err := uuid.Parse(warehouse_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode warehouse id: "+warehouse_id)
+			return
+		}
+		err = dbconfig.DB.RemoveWarehouse(c.Request.Context(), warehouse_uuid)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		// remove all variant warehouses
+
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Updates a product by its ID
+
+Route: /api/products/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) UpdateProductHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		productID := c.Param("id")
+		requestData, err := DecodeProductRequestBody(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = UpdateProduct(dbconfig, requestData, productID, c.GetString("api_key"))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, requestData)
+	}
+}
+
+/*
+Returns the shopify fetch stats that are recorded internally.
+
+Route: /api/stats/fetch
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetFetchStats() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		data, err := dbconfig.DB.GetFetchStats(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, ParseFetchStats(data))
+	}
+}
+
+/*
+Returns the internal stats of orders; either "paid" or "not_paid"
+
+Route: /api/stats/orders?status=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) GetOrderStats() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		status := c.Query("status")
+		if status == "paid" {
+			data, err := dbconfig.DB.FetchOrderStatsPaid(c.Request.Context())
+			if err != nil {
+				RespondWithError(c, http.StatusBadRequest, err.Error())
+				return
+			}
+			// convert data to include missing dates, and convert dates to appropriate values
+			RespondWithJSON(c, http.StatusOK, ParseOrderStatsPaid(data))
+		} else if status == "not_paid" {
+			data, err := dbconfig.DB.FetchOrderStatsNotPaid(c.Request.Context())
+			if err != nil {
+				RespondWithError(c, http.StatusBadRequest, err.Error())
+				return
+			}
+			// convert data to include missing dates, and convert dates to appropriate values
+			RespondWithJSON(c, http.StatusOK, ParseOrderStatsNotPaid(data))
+		} else {
+			RespondWithError(c, http.StatusBadRequest, "invalid status type")
+			return
+		}
+	}
+}
+
+/*
+Returns the location-warehouse map currently set internally
+
+Route: /api/inventory/map
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) LocationWarehouseHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		shopify_locations, err := dbconfig.DB.GetShopifyLocations(c.Request.Context(), database.GetShopifyLocationsParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		locations := []database.ShopifyLocation{}
+		if len(shopify_locations) > 0 {
+			locations = append(locations, shopify_locations...)
+		}
+		RespondWithJSON(c, http.StatusOK, locations)
+	}
+}
+
+/*
+Adds a specific warehouse-location map internally
+
+Route: /api/inventory/map
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 201, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		location_map, err := DecodeInventoryMap(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err := InventoryMapValidation(location_map); err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		result, err := AddWarehouseLocation(dbconfig, location_map)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusCreated, result)
+	}
+}
+
+/*
+Removes the specific warehouse-location map internally
+
+Route: /api/inventory/map/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) RemoveWarehouseLocation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		err := IDValidation(id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		delete_id, err := uuid.Parse(id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode id: "+id)
+			return
+		}
+		err = dbconfig.DB.RemoveShopifyLocationMap(c.Request.Context(), delete_id)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Returns an object specifying the shopify locations and internal warehouses
+
+Route: /api/inventory/config
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ConfigLocationWarehouseHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		locations := objects.ShopifyLocations{}
+		mockRequest := c.Request.Header.Get("Mocker")
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		if mockRequest == "true" {
+			// if the request is a mock request
+			// then we will not actually fetch data from Shopify
+			locations = objects.ShopifyLocations{}
+		} else {
+			shopifyConfig := shopify.InitConfigShopify("")
+			if !shopifyConfig.Valid {
+				RespondWithError(c, http.StatusInternalServerError, "invalid shopify config")
+				return
+			}
+			locations, err = shopifyConfig.GetShopifyLocations()
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
 		}
-	}
-	RespondWithJSON(w, http.StatusOK, updated_data)
-}
-
-// GET /api/stats/fetch
-func (dbconfig *DbConfig) GetFetchStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	data, err := dbconfig.DB.GetFetchStats(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	// convert data to include missing dates, and convert dates to appropriate values
-	RespondWithJSON(w, http.StatusOK, ParseFetchStats(data))
-}
-
-// GET /api/stats/orders?status=paid
-func (dbconfig *DbConfig) GetOrderStats(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	status := r.URL.Query().Get("status")
-	if status == "paid" {
-		data, err := dbconfig.DB.FetchOrderStatsPaid(r.Context())
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		// convert data to include missing dates, and convert dates to appropriate values
-		RespondWithJSON(w, http.StatusOK, ParseOrderStatsPaid(data))
-	} else if status == "not_paid" {
-		data, err := dbconfig.DB.FetchOrderStatsNotPaid(r.Context())
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		// convert data to include missing dates, and convert dates to appropriate values
-		RespondWithJSON(w, http.StatusOK, ParseOrderStatsNotPaid(data))
-	} else {
-		RespondWithError(w, http.StatusBadRequest, "invalid status type")
-		return
-	}
-}
-
-// Legacy function
-// // POST /api/settings/webhook
-// func (dbconfig *DbConfig) GetWebhookURL(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-// 	body, err := DecodeWebhookURL(r)
-// 	if err != nil {
-// 		RespondWithError(w, http.StatusBadRequest, err.Error())
-// 		return
-// 	}
-// 	// create webhook url
-// 	webhook_url := body.Domain + "/api/orders?token=" + dbUser.WebhookToken + "&api_key=" + dbUser.ApiKey
-// 	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-// 		Message: webhook_url,
-// 	})
-// }
-
-// GET /api/inventory/config
-func (dbconfig *DbConfig) GetWarehouseLocations(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	shopify_locations, err := dbconfig.DB.GetShopifyLocations(r.Context(), database.GetShopifyLocationsParams{
-		Limit:  10,
-		Offset: int32((page - 1) * 10),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	locations := []database.ShopifyLocation{}
-	if len(shopify_locations) > 0 {
-		locations = append(locations, shopify_locations...)
-	}
-	RespondWithJSON(w, http.StatusOK, locations)
-}
-
-// DELETE /api/inventory/config
-func (dbconfig *DbConfig) RemoveWarehouseLocation(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	id := chi.URLParam(r, "id")
-	err := IDValidation(id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	delete_id, err := uuid.Parse(id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode id: "+id)
-		return
-	}
-	err = dbconfig.DB.RemoveShopifyLocationMap(r.Context(), delete_id)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "Deleted",
-	})
-}
-
-// Returns all locations on Shopify and all warehouses in the app
-
-// GET /api/inventory/map
-func (dbconfig *DbConfig) ConfigLocationWarehouse(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	shopifyConfig := shopify.InitConfigShopify()
-	if !shopifyConfig.Valid {
-		RespondWithError(w, http.StatusInternalServerError, "invalid shopify config")
-		return
-	}
-	locations, err := shopifyConfig.GetShopifyLocations()
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	warehouses, err := dbconfig.DB.GetWarehouses(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseWarehouseLocation{
-		Warehouses:       ConvertDatabaseToWarehouse(warehouses),
-		ShopifyLocations: locations,
-	})
-}
-
-// POST /api/inventory/config
-func (dbconfig *DbConfig) AddWarehouseLocationMap(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	location_map, err := DecodeInventoryMap(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if InventoryMapValidation(location_map) != nil {
-		RespondWithError(w, http.StatusBadRequest, "data validation error")
-		return
-	}
-	result, err := dbconfig.DB.CreateShopifyLocation(r.Context(), database.CreateShopifyLocationParams{
-		ID:                   uuid.New(),
-		ShopifyWarehouseName: location_map.ShopifyWarehouseName,
-		ShopifyLocationID:    location_map.LocationID,
-		WarehouseName:        location_map.WarehouseName,
-		CreatedAt:            time.Now().UTC(),
-		UpdatedAt:            time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusCreated, result)
-}
-
-// GET /api/products/export?test=true
-func (dbconfig *DbConfig) ExportProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	test := r.URL.Query().Get("test")
-	product_ids, err := dbconfig.DB.GetProductIDs(r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	products := []objects.Product{}
-	for _, product_id := range product_ids {
-		product, err := CompileProductData(dbconfig, product_id, r.Context(), false)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		products = append(products, product)
-	}
-	csv_data := [][]string{}
-	headers := []string{}
-	if len(products) > 0 {
-		headers = iocsv.CSVProductHeaders(products[0])
-	}
-	// Adds (distinct) pricing and warehouses headers
-	price_tiers, err := AddPricingHeaders(dbconfig, r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	headers = append(headers, price_tiers...)
-	qty_warehouses, err := AddQtyHeaders(dbconfig, r.Context())
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	headers = append(headers, qty_warehouses...)
-
-	images_max, err := IOGetMax(dbconfig, r.Context(), "image")
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	pricing_max, err := IOGetMax(dbconfig, r.Context(), "price")
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	qty_max, err := IOGetMax(dbconfig, r.Context(), "qty")
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if len(products) > 0 {
-		image_headers := iocsv.GetProductImagesCSV(products[0].ProductImages, int(images_max), true)
-		headers = append(headers, image_headers...)
-	}
-	csv_data = append(csv_data, headers)
-	for _, product := range products {
-		for _, variant := range product.Variants {
-			row := iocsv.CSVProductValuesByVariant(product, variant, int(images_max), pricing_max, qty_max)
-			csv_data = append(csv_data, row)
-		}
-	}
-	file_name, err := iocsv.WriteFile(csv_data, "")
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	// removes the product from the server if there are tests
-	if test == "true" {
-		defer os.Remove(file_name)
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: file_name,
-	})
-}
-
-// POST /api/products/import
-func (dbconfig *DbConfig) ProductImportHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	test := r.URL.Query().Get("test")
-	file_name_global := "test_import.csv"
-	if test == "true" {
-		// generate the file for the test and ignore upload form
-		data := [][]string{
-			{"type", "active", "product_code", "title", "body_html", "category", "vendor", "product_type", "sku", "option1_name", "option1_value", "option2_name", "option2_value", "option3_name", "option3_value", "barcode", "price_Selling Price"},
-			{"product", "1", "grouper", "test_title", "<p>I am a paragraph</p>", "test_category", "test_vendor", "test_product_type", "skubca", "size", "medium", "color", "blue", "", "", "", "1500.00"},
-		}
-		_, err := iocsv.WriteFile(data, "test_import")
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	} else {
-		// if in production then expect form data &&
-		// file to exist in import
-		file_name, err := iocsv.UploadFile(r)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		file_name_global = file_name
-	}
-	wd, err := os.Getwd()
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	csv_products, err := iocsv.ReadFile(wd + "/" + file_name_global)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	processed_counter := 0
-	failure_counter := 0
-	products_added := 0
-	products_updated := 0
-	variants_updated := 0
-	variants_added := 0
-	for _, csv_product := range csv_products {
-		product, err := dbconfig.DB.UpsertProduct(r.Context(), database.UpsertProductParams{
-			ID:          uuid.New(),
-			ProductCode: csv_product.ProductCode,
-			Active:      csv_product.Active,
-			Title:       utils.ConvertStringToSQL(csv_product.Title),
-			BodyHtml:    utils.ConvertStringToSQL(csv_product.BodyHTML),
-			Category:    utils.ConvertStringToSQL(csv_product.Category),
-			Vendor:      utils.ConvertStringToSQL(csv_product.Vendor),
-			ProductType: utils.ConvertStringToSQL(csv_product.ProductType),
-			CreatedAt:   time.Now().UTC(),
-			UpdatedAt:   time.Now().UTC(),
+		warehouses, err := dbconfig.DB.GetWarehouses(c.Request.Context(), database.GetWarehousesParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
 		})
 		if err != nil {
-			log.Println(err)
-			failure_counter++
-			continue
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
-		if product.Inserted {
-			products_added++
-		} else {
-			products_updated++
-		}
-		option_names := CreateOptionNamesMap(csv_product)
-		err = AddProductOptions(dbconfig, product.ID, product.ProductCode, option_names)
-		if err != nil {
-			log.Println(err)
-			failure_counter++
-			continue
-		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseWarehouseLocation{
+			Warehouses:       ConvertDatabaseToWarehouse(warehouses),
+			ShopifyLocations: locations,
+		})
+	}
+}
 
-		// add images to product
-		// overwrite ones with the same position
-		images := CreateImageMap(csv_product)
-		for key := range images {
-			if images[key] != "" {
-				err = AddImagery(dbconfig, product.ID, images[key], key+1)
-				if err != nil {
-					log.Println(err)
-					failure_counter++
-					continue
-				}
+/*
+Creates and adds a new customer to the application
+
+Route: /api/customers
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 201, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PostCustomerHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customer_body, err := DecodeCustomerRequestBody(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if CustomerValidation(customer_body) != nil {
+			RespondWithError(c, http.StatusBadRequest, "invalid customer first name")
+			return
+		}
+		dbCustomer, err := AddCustomer(dbconfig, customer_body, customer_body.FirstName+" "+customer_body.LastName)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusCreated, dbCustomer)
+	}
+}
+
+/*
+Returns the results of a search query by the customer name and web code of the order
+
+Route: /api/customers/search?q=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) CustomerSearchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search_query := c.Query("q")
+		if search_query != "" || len(search_query) == 0 {
+			RespondWithError(c, http.StatusBadRequest, "Invalid search param")
+			return
+		}
+		customers_by_name, err := dbconfig.DB.GetCustomersByName(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		RespondWithJSON(c, http.StatusOK, customers_by_name)
+	}
+}
+
+/*
+Returns the customer data having the specific id
+
+Route: /api/customers/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) CustomerIDHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customer_id := c.Param("id")
+		err := IDValidation(customer_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		customer_uuid, err := uuid.Parse(customer_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode customer id: "+customer_id)
+			return
+		}
+		customer, err := CompileCustomerData(dbconfig, customer_uuid, false)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "customer with ID '"+customer_id+"' not found")
+				return
 			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
-		// create variant
-		variant, err := dbconfig.DB.UpsertVariant(r.Context(), database.UpsertVariantParams{
-			ID:        uuid.New(),
-			ProductID: product.ID,
-			Sku:       csv_product.SKU,
-			Option1:   utils.ConvertStringToSQL(csv_product.Option1Value),
-			Option2:   utils.ConvertStringToSQL(csv_product.Option2Value),
-			Option3:   utils.ConvertStringToSQL(csv_product.Option3Value),
-			Barcode:   utils.ConvertStringToSQL(csv_product.Barcode),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
+		RespondWithJSON(c, http.StatusOK, customer)
+	}
+}
+
+/*
+Returns the respective page of customer data from the database
+
+Route: /api/customers?page=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) CustomersHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		dbCustomers, err := dbconfig.DB.GetCustomers(c.Request.Context(), database.GetCustomersParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
 		})
-		if err == nil {
-			variants_added++
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
 		}
-		if variant.Inserted {
-			variants_added++
-		} else {
-			variants_updated++
-		}
-		for _, pricing_value := range csv_product.Pricing {
-			// check if the price is acceptable
-			if pricing_value.Name == "Selling Price" || pricing_value.Name == "Compare At Price" {
-				err = AddPricing(dbconfig, csv_product.SKU, variant.ID, pricing_value.Name, pricing_value.Value)
-				if err != nil {
-					log.Println(err)
-					failure_counter++
-					continue
+		customers := []objects.Customer{}
+		for _, value := range dbCustomers {
+			cust, err := CompileCustomerData(dbconfig, value.ID, true)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "customer with ID '"+value.ID.String()+"' not found")
+					return
 				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			customers = append(customers, cust)
+		}
+		RespondWithJSON(c, http.StatusOK, customers)
+	}
+}
+
+/*
+Queues the respective order to be added to the application from Shopify
+
+Route: /api/orders?token={token}&api_key={api_key}
+
+Authorization: Basic, QueryParams, Headers
+
+Header: Optional Mocker Header can be sent with request, used just for tests
+
+Response-Type: application/json
+
+Possible HTTP Codes: 201, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PostOrderHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
+		web_token := c.Query("token")
+		if TokenValidation(web_token) != nil {
+			RespondWithError(c, http.StatusBadRequest, "invalid token")
+			return
+		}
+		api_key := c.Query("api_key")
+		if TokenValidation(api_key) != nil {
+			RespondWithError(c, http.StatusBadRequest, "invalid api_key")
+			return
+		}
+		_, err := dbconfig.DB.ValidateWebhookByUser(c.Request.Context(), database.ValidateWebhookByUserParams{
+			WebhookToken: web_token,
+			ApiKey:       api_key,
+		})
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "invalid token for user")
+				return
 			} else {
-				log.Println("invalid price tier " + pricing_value.Name)
-				failure_counter++
-				continue
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
 			}
 		}
-		for _, qty_value := range csv_product.Warehouses {
-			err = AddWarehouse(dbconfig, variant.Sku, variant.ID, qty_value.Name, qty_value.Value)
-			if err != nil {
-				log.Println(err)
-				failure_counter++
-				continue
-			}
-		}
+		order_body, err := DecodeOrderRequestBody(c.Request)
 		if err != nil {
-			log.Println(err)
-			failure_counter++
-			continue
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
 		}
-		processed_counter++
-	}
-	err = iocsv.RemoveFile(file_name_global)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ImportResponse{
-		ProcessedCounter: processed_counter,
-		FailCounter:      failure_counter,
-		ProductsAdded:    products_added,
-		ProductsUpdated:  products_updated,
-		VariantsAdded:    variants_added,
-		VariantsUpdated:  variants_updated,
-	})
-}
-
-// POST /api/customers/
-func (dbconfig *DbConfig) PostCustomerHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	customer_body, err := DecodeCustomerRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if CustomerValidation(customer_body) != nil {
-		RespondWithError(w, http.StatusBadRequest, "data validation error")
-		return
-	}
-	customer, err := dbconfig.DB.CreateCustomer(r.Context(), database.CreateCustomerParams{
-		ID:        uuid.New(),
-		FirstName: customer_body.FirstName,
-		LastName:  customer_body.LastName,
-		Email:     utils.ConvertStringToSQL(customer_body.Email),
-		Phone:     utils.ConvertStringToSQL(customer_body.Phone),
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	for key := range customer_body.Address {
-		_, err := dbconfig.DB.CreateAddress(r.Context(), database.CreateAddressParams{
-			ID:         uuid.New(),
-			CustomerID: customer.ID,
-			Type:       utils.ConvertStringToSQL(customer_body.Address[key].Type),
-			FirstName:  customer_body.Address[key].FirstName,
-			LastName:   customer_body.Address[key].LastName,
-			Address1:   utils.ConvertStringToSQL(customer_body.Address[key].Address1),
-			Address2:   utils.ConvertStringToSQL(customer_body.Address[key].Address2),
-			Suburb:     utils.ConvertStringToSQL(""),
-			City:       utils.ConvertStringToSQL(customer_body.Address[key].City),
-			Province:   utils.ConvertStringToSQL(customer_body.Address[key].Province),
-			PostalCode: utils.ConvertStringToSQL(customer_body.Address[key].PostalCode),
-			Company:    utils.ConvertStringToSQL(customer_body.Address[key].Company),
-			CreatedAt:  time.Now().UTC(),
-			UpdatedAt:  time.Now().UTC(),
-		})
+		var buffer bytes.Buffer
+		err = json.NewEncoder(&buffer).Encode(order_body)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-	}
-	customer_data, err := CompileCustomerData(dbconfig, customer.ID, r.Context(), false)
-	if err != nil {
+		orderID, err := CheckExistsOrder(dbconfig, c.Request.Context(), fmt.Sprint(order_body.Name))
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-	}
-	RespondWithJSON(w, http.StatusCreated, customer_data)
-}
-
-// POST /api/orders?token={{token}}&api_key={{key}}
-// ngrok exposed url
-func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request) {
-	web_token := r.URL.Query().Get("token")
-	if TokenValidation(web_token) != nil {
-		RespondWithError(w, http.StatusBadRequest, "invalid token")
-		return
-	}
-	api_key := r.URL.Query().Get("api_key")
-	if TokenValidation(api_key) != nil {
-		RespondWithError(w, http.StatusBadRequest, "invalid api_key")
-		return
-	}
-	_, err := dbconfig.DB.ValidateWebhookByUser(r.Context(), database.ValidateWebhookByUserParams{
-		WebhookToken: web_token,
-		ApiKey:       api_key,
-	})
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, "invalid token for user")
-			return
-		} else {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	order_body, err := DecodeOrderRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	var buffer bytes.Buffer
-	err = json.NewEncoder(&buffer).Encode(order_body)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	db_order, err := dbconfig.DB.GetOrderByWebCode(context.Background(), utils.ConvertStringToSQL(fmt.Sprint(order_body.Name)))
-	if err != nil {
-		if err.Error() != "sql: no rows in result set" {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	if db_order.WebCode.String == fmt.Sprint(order_body.Name) {
-		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
+		queueRequest := objects.RequestQueueHelper{
 			Type:        "order",
 			Status:      "in-queue",
 			Instruction: "update_order",
@@ -1022,691 +954,841 @@ func (dbconfig *DbConfig) PostOrderHandle(w http.ResponseWriter, r *http.Request
 			ApiKey:      api_key,
 			Method:      http.MethodPost,
 			Object:      order_body,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
 		}
-		RespondWithJSON(w, http.StatusOK, response_payload)
-	} else {
-		response_payload, err := dbconfig.QueueHelper(objects.RequestQueueHelper{
-			Type:        "order",
-			Status:      "in-queue",
-			Instruction: "add_order",
-			Endpoint:    "queue",
-			ApiKey:      api_key,
-			Method:      http.MethodPost,
-			Object:      order_body,
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
+		status := http.StatusOK
+		if orderID == uuid.Nil {
+			queueRequest.Instruction = "add_order"
+			status = http.StatusCreated
 		}
-		RespondWithJSON(w, http.StatusCreated, response_payload)
-	}
-}
-
-// DELETE /api/products/{id}
-func (dbconfig *DbConfig) RemoveProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	product_id := chi.URLParam(r, "id")
-	err := IDValidation(product_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	product_uuid, err := uuid.Parse(product_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode product id: "+product_id)
-		return
-	}
-	err = dbconfig.DB.RemoveProduct(r.Context(), product_uuid)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// DELETE /api/products?variant_id={{variant_id}}
-func (dbconfig *DbConfig) RemoveProductVariantHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	variant_id := chi.URLParam(r, "variant_id")
-	err := IDValidation(variant_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	variant_uuid, err := uuid.Parse(variant_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode variant id: "+variant_id)
-		return
-	}
-	err = dbconfig.DB.RemoveVariant(r.Context(), variant_uuid)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// POST /api/products
-func (dbconfig *DbConfig) PostProductHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	params, err := DecodeProductRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	validation := ProductValidation(dbconfig, params)
-	if validation != nil {
-		RespondWithError(w, http.StatusBadRequest, validation.Error())
-		return
-	}
-	err = ValidateDuplicateOption(params)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = ValidateDuplicateSKU(params, dbconfig, r)
-	if err != nil {
-		RespondWithError(w, http.StatusConflict, err.Error())
-		return
-	}
-	err = DuplicateOptionValues(params)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	csv_products := ConvertProductToCSV(params)
-	for _, csv_product := range csv_products {
-		err = ProductValidationDatabase(csv_product, dbconfig, r)
-		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-	}
-	// add product to database
-	product, err := dbconfig.DB.CreateProduct(r.Context(), database.CreateProductParams{
-		ID:          uuid.New(),
-		Active:      "1",
-		ProductCode: params.ProductCode,
-		Title:       utils.ConvertStringToSQL(params.Title),
-		BodyHtml:    utils.ConvertStringToSQL(params.BodyHTML),
-		Category:    utils.ConvertStringToSQL(params.Category),
-		Vendor:      utils.ConvertStringToSQL(params.Vendor),
-		ProductType: utils.ConvertStringToSQL(params.ProductType),
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	for key := range params.ProductOptions {
-		_, err := dbconfig.DB.CreateProductOption(r.Context(), database.CreateProductOptionParams{
-			ID:        uuid.New(),
-			ProductID: product.ID,
-			Name:      params.ProductOptions[key].Value,
-			Position:  int32(key + 1),
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-	}
-	// add variants
-	for key := range params.Variants {
-		variant, err := dbconfig.DB.CreateVariant(r.Context(), database.CreateVariantParams{
-			ID:        uuid.New(),
-			ProductID: product.ID,
-			Sku:       params.Variants[key].Sku,
-			Option1:   utils.ConvertStringToSQL(params.Variants[key].Option1),
-			Option2:   utils.ConvertStringToSQL(params.Variants[key].Option2),
-			Option3:   utils.ConvertStringToSQL(params.Variants[key].Option3),
-			Barcode:   utils.ConvertStringToSQL(params.Variants[key].Barcode),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		// variant pricing & variant qty
-		for key_pricing := range params.Variants[key].VariantPricing {
-			// check if the price tier name is acceptable
-			if params.Variants[key].VariantPricing[key_pricing].Name == "Selling Price" ||
-				params.Variants[key].VariantPricing[key_pricing].Name == "Compare At Price" {
-				_, err := dbconfig.DB.CreateVariantPricing(r.Context(), database.CreateVariantPricingParams{
-					ID:        uuid.New(),
-					VariantID: variant.ID,
-					Name:      params.Variants[key].VariantPricing[key_pricing].Name,
-					Value:     utils.ConvertStringToSQL(params.Variants[key].VariantPricing[key_pricing].Value),
-					Isdefault: params.Variants[key].VariantPricing[key_pricing].IsDefault,
-					CreatedAt: time.Now().UTC(),
-					UpdatedAt: time.Now().UTC(),
-				})
-				if err != nil {
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
-					return
-				}
-			} else {
-				RespondWithError(w, http.StatusInternalServerError, "invalid price tier"+
-					params.Variants[key].VariantPricing[key_pricing].Name)
+		if mockRequest != "true" {
+			response_payload, err := dbconfig.QueueHelper(queueRequest)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
+			RespondWithJSON(c, status, response_payload)
 		}
-		for key_qty := range params.Variants[key].VariantQuantity {
-			// check if the warehouse exists, then we update the quantity
-			warehouse_name := params.Variants[key].VariantQuantity[key_qty].Name
-			warehouse_qty := params.Variants[key].VariantQuantity[key_qty].Value
-			_, err = dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
+		queueRequest.ApiKey = "***"
+		RespondWithJSON(c, status, queueRequest)
+	}
+}
+
+/*
+Returns the results of a search query by the customer name and web code of the order
+
+Route: /api/orders/search?q=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) OrderSearchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search_query := c.Query("q")
+		if search_query == "" || len(search_query) == 0 {
+			RespondWithError(c, http.StatusBadRequest, "invalid search param")
+			return
+		}
+		customer_orders, err := dbconfig.DB.GetOrdersSearchByCustomer(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+		}
+		RespondWithJSON(c, http.StatusOK, CompileOrderSearchResult(customer_orders, webcode_orders))
+	}
+}
+
+/*
+Returns the order data having the specific id
+
+Route: /api/orders/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) OrderIDHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		order_id := c.Param("id")
+		err := IDValidation(order_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		order_uuid, err := uuid.Parse(order_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode order id: "+order_id)
+			return
+		}
+		order_data, err := CompileOrderData(dbconfig, order_uuid, false)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "order with ID '"+order_id+"' not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, order_data)
+	}
+}
+
+/*
+Returns the respective page of order data from the database
+
+Route: /api/orders?page=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) OrdersHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		dbOrders, err := dbconfig.DB.GetOrders(c.Request.Context(), database.GetOrdersParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		orders := []objects.Order{}
+		for _, value := range dbOrders {
+			ord, err := CompileOrderData(dbconfig, value.ID, true)
 			if err != nil {
 				if err.Error() == "sql: no rows in result set" {
-					RespondWithError(w, http.StatusInternalServerError, "warehouse "+warehouse_name+" not found")
+					RespondWithError(c, http.StatusNotFound, "order with ID '"+value.ID.String()+"' not found")
 					return
 				}
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-			// if warehouse is found, we update the qty, we cannot create a new one
-			err = dbconfig.DB.UpdateVariantQty(context.Background(), database.UpdateVariantQtyParams{
-				Name:      warehouse_name,
-				Value:     utils.ConvertIntToSQL(warehouse_qty),
-				Isdefault: false,
-				UpdatedAt: time.Now().UTC(),
-				Sku:       variant.Sku,
-				Name_2:    warehouse_name,
+			orders = append(orders, ord)
+		}
+		RespondWithJSON(c, http.StatusOK, orders)
+	}
+}
+
+/*
+Removes the specific product from the application
+
+Route: /api/products/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) RemoveProductHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		product_id := c.Param("id")
+		err := IDValidation(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		product_uuid, err := uuid.Parse(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode product id: "+product_id)
+			return
+		}
+		err = dbconfig.DB.RemoveProduct(c.Request.Context(), product_uuid)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusBadRequest, "not found")
+				return
+			}
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Removes the specific variant from a product
+
+Route: /api/products/{id}/variants/{variant_id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) RemoveProductVariantHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		product_id := c.Param("id")
+		err := IDValidation(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		product_uuid, err := uuid.Parse(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode variant id: "+product_id)
+			return
+		}
+		variant_id := c.Param("variant_id")
+		err = IDValidation(variant_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		variant_uuid, err := uuid.Parse(variant_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode variant id: "+variant_id)
+			return
+		}
+		err = dbconfig.DB.RemoveVariant(c.Request.Context(), database.RemoveVariantParams{
+			ID:        variant_uuid,
+			ProductID: product_uuid,
+		})
+		if err != nil {
+			// TODO whether it exists or not is something that the query can decide
+			// or should we do a prior check to avoid unnecessary code from running?
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "not found")
+				return
+			}
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Exports product data to a .CSV file.
+
+Route: /api/products/export
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ProductExportHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
+		if mockRequest == "true" {
+			// if the request is a mock request
+			// then we will not get the file as it
+			// might be that we trying to open the file
+			// on github servers which gives us the permission error
+			RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+				Message: "success",
 			})
+			return
+		}
+		product_ids, err := dbconfig.DB.GetProductIDs(c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		products := []objects.Product{}
+		for _, product_id := range product_ids {
+			product, err := CompileProduct(dbconfig, product_id, false)
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, err.Error())
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "product with ID '"+product_id.String()+"' not found")
+					return
+				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			products = append(products, product)
+		}
+		csv_data := [][]string{}
+		headers := []string{}
+		if len(products) > 0 {
+			headers = iocsv.CSVProductHeaders(products[0])
+		}
+		// Adds (distinct) pricing and warehouses headers
+		price_tiers, err := AddPricingHeaders(dbconfig, c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		headers = append(headers, price_tiers...)
+		qty_warehouses, err := AddQtyHeaders(dbconfig, c.Request.Context())
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		headers = append(headers, qty_warehouses...)
+
+		images_max, err := IOGetMax(dbconfig, c.Request.Context(), "image")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		pricing_max, err := IOGetMax(dbconfig, c.Request.Context(), "price")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		qty_max, err := IOGetMax(dbconfig, c.Request.Context(), "qty")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if len(products) > 0 {
+			image_headers := iocsv.GetProductImagesCSV(products[0].ProductImages, int(images_max), true)
+			headers = append(headers, image_headers...)
+		}
+		csv_data = append(csv_data, headers)
+		for _, product := range products {
+			for _, variant := range product.Variants {
+				row := iocsv.CSVProductValuesByVariant(product, variant, int(images_max), pricing_max, qty_max)
+				csv_data = append(csv_data, row)
+			}
+		}
+		file_name, err := iocsv.WriteFile(csv_data, "")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: file_name,
+		})
+	}
+}
+
+/*
+Uses a .CSV file to bulk import products into the application. The file must be sent with the request.
+
+Route: /api/products/import
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ProductImportHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 10*1024*1024) // 10 Mb
+		file_name, err := iocsv.UploadFile(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		wd, err := os.Getwd()
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		CSVProducts, err := iocsv.ReadFile(wd + "/" + file_name)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		importingRecord := objects.ImportResponse{
+			ProcessedCounter: 0,
+			FailCounter:      0,
+			ProductsAdded:    0,
+			ProductsUpdated:  0,
+			VariantsAdded:    0,
+			VariantsUpdated:  0,
+		}
+		for _, CSVProduct := range CSVProducts {
+			importingRecord = UpsertProduct(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertImages(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertVariant(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertPrice(dbconfig, importingRecord, CSVProduct)
+			importingRecord = UpsertWarehouse(dbconfig, importingRecord, CSVProduct)
+			importingRecord.ProcessedCounter++
+		}
+		RespondWithJSON(c, http.StatusOK, importingRecord)
+	}
+}
+
+/*
+Creates and adds a new product to the application
+
+Route: /api/products
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 201, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) PostProductHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var requestProduct objects.RequestBodyProduct
+		err := c.Bind(&requestProduct)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		if requestProduct.Active == "" || len(requestProduct.Active) == 0 {
+			requestProduct.Active = "0"
+		}
+		dbProductID, httpCode, err := AddProduct(dbconfig, requestProduct)
+		if err != nil {
+			RespondWithError(c, httpCode, err.Error())
+			return
+		}
+		product_added, err := CompileProduct(dbconfig, dbProductID, false)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "product with ID '"+dbProductID.String()+"' not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// Only products that are active
+		// should be pushed (automatically) to Shopify
+		if product_added.Active == "1" {
+			api_key := c.GetString("api_key")
+			err = CompileInstructionProduct(dbconfig, product_added, api_key)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "shopify product ID not found for: '"+product_added.ProductCode+"'")
+					return
+				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			for _, variant := range product_added.Variants {
+				err = CompileInstructionVariant(dbconfig, variant, product_added, api_key)
+				if err != nil {
+					if err.Error() == "sql: no rows in result set" {
+						RespondWithError(c, http.StatusNotFound, "shopify variant ID not found for: '"+variant.Sku+"'")
+						return
+					}
+					RespondWithError(c, http.StatusInternalServerError, err.Error())
+					return
+				}
+			}
+		}
+		RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Filter Searches for certain products based on their vendor, product type and collection
+
+Route: /api/products/filter?page=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ProductFilterHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		query_param_type := utils.ConfirmFilters(c.Query("type"))
+		query_param_category := utils.ConfirmFilters(c.Query("category"))
+		query_param_vendor := utils.ConfirmFilters(c.Query("vendor"))
+		response, err := CompileFilterSearch(
+			dbconfig,
+			false,
+			page,
+			query_param_type,
+			query_param_category,
+			query_param_vendor,
+		)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, response)
+	}
+}
+
+/*
+Returns the results of a search query by a product Title and SKU
+
+Route: /api/products/search?q=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) ProductSearchHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		search_query := c.Query("q")
+		if search_query == "" || len(search_query) == 0 {
+			RespondWithError(c, http.StatusBadRequest, "Invalid search param")
+			return
+		}
+		search, err := dbconfig.DB.GetProductsSearch(c.Request.Context(), utils.ConvertStringToLike(search_query))
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		compiled, err := CompileSearchResult(dbconfig, search)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "product ID not found")
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, compiled)
+	}
+}
+
+/*
+Returns the respective page of product data from the database
+
+Route: /api/products?page=
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 404, 401, 500
+*/
+func (dbconfig *DbConfig) ProductsHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		page, err := strconv.Atoi(c.Query("page"))
+		if err != nil || page < 0 {
+			page = 1
+		}
+		dbProducts, err := dbconfig.DB.GetProducts(c.Request.Context(), database.GetProductsParams{
+			Limit:  10,
+			Offset: int32((page - 1) * 10),
+		})
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		products := []objects.Product{}
+		for _, value := range dbProducts {
+			prod, err := CompileProduct(dbconfig, value.ID, false)
+			if err != nil {
+				if err.Error() == "sql: no rows in result set" {
+					RespondWithError(c, http.StatusNotFound, "product ID not found for: '"+value.ID.String()+"'")
+					return
+				}
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			products = append(products, prod)
+		}
+		RespondWithJSON(c, http.StatusOK, products)
+	}
+}
+
+/*
+Returns the product data having the specific id
+
+Route: /api/products/{id}
+
+Authorization: Basic, QueryParams, Headers
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 404, 401, 500
+*/
+func (dbconfig *DbConfig) ProductIDHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		product_id := c.Param("id")
+		err := IDValidation(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		product_uuid, err := uuid.Parse(product_id)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode product id '"+product_id+"'")
+			return
+		}
+		product_data, err := CompileProduct(dbconfig, product_uuid, false)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "product with ID '"+product_id+"' not found")
+				return
+			}
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, product_data)
+	}
+}
+
+/*
+Logs a user into the application. This does not set any cookies
+
+Route: /api/login
+
+Authorization: None
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) LoginHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		body, err := DecodeLoginRequestBody(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = UserValidation(body.Username, body.Password)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		db_user, exists, err := CheckUserCredentials(dbconfig, body, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if !exists {
+			RespondWithError(c, http.StatusNotFound, "invalid username and password combination")
+			return
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseLogin{
+			Username: db_user.Name,
+			ApiKey:   db_user.ApiKey,
+		})
+	}
+}
+
+/*
+Logs a user out of the application. If cookies are set, they will be set to be expired
+
+Route: /api/logout
+
+Authorization: Required
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 500
+*/
+func (dbconfig *DbConfig) LogoutHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if cookie, err := c.Request.Cookie(cookie_name); err == nil {
+			value := make(map[string]string)
+			if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
+				// removes the cookie
+				cookie := &http.Cookie{
+					Name:   cookie_name,
+					Value:  "",
+					Secure: false,
+					Path:   "/",
+					MaxAge: -1,
+				}
+				http.SetCookie(c.Writer, cookie)
+			}
+		}
+		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
+			Message: "success",
+		})
+	}
+}
+
+/*
+Preregisters a new user. A token is sent to the email that the user provides
+Which is then used in the registration.
+
+Route: /api/preregister
+
+Authorization: None
+
+Header: Optional Mocker Header can be sent with request, used just for tests
+
+Response-Type: application/json
+
+Possible HTTP Codes:  200, 400, 401, 409, 500
+*/
+func (dbconfig *DbConfig) PreRegisterHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
+		email := utils.LoadEnv("email")
+		request_body, err := DecodePreRegisterRequestBody(c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		err = PreRegisterValidation(request_body)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		// user validation
+		exists, err := CheckUserEmailType(dbconfig, request_body.Email, "app")
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if exists {
+			RespondWithError(c, http.StatusConflict, "email '"+request_body.Email+"' already exists")
+			return
+		}
+		token_value, exists, err := CheckExistsToken(dbconfig, email, c.Request)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		if !exists {
+			dbTokenDetails, err := AddUserRegistration(dbconfig, request_body)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
+				return
+			}
+			token_value = dbTokenDetails.Token
+		}
+		if mockRequest != "true" {
+			err = Email(token_value, true, request_body.Email, request_body.Name)
+			if err != nil {
+				RespondWithError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
 		}
+		RespondWithJSON(c, http.StatusCreated, objects.ResponseString{
+			Message: "email sent",
+		})
+
+	}
+}
+
+/*
+Registers a new user. It expects an email and a token to be passed
+into the body of the request. The token will be verified to confirm if it exists internally
+
+Route: /api/register
+
+Authorization: None
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 400, 401, 404, 409, 500
+*/
+func (dbconfig *DbConfig) RegisterHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		requestUserData, err := DecodeUserRequestBody(c.Request)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-	}
-	product_added, err := CompileProductData(dbconfig, product.ID, r.Context(), false)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	// queue new products to be added to shopify
-	err = CompileInstructionProduct(dbconfig, product_added, dbUser)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	for _, variant := range product_added.Variants {
-		err = CompileInstructionVariant(dbconfig, variant, product_added, dbUser)
+		exists, err := CheckUExistsUser(dbconfig, requestUserData.Name, c.Request)
+		if exists {
+			RespondWithError(c, http.StatusConflict, err.Error())
+			return
+		}
+		err = ValidateTokenValidation(requestUserData)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-	}
-	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-		Message: "success",
-	})
-}
-
-// GET /api/customers/search?q=value
-func (dbconfig *DbConfig) CustomerSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	search_query := r.URL.Query().Get("q")
-	if search_query != "" || len(search_query) == 0 {
-		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
-		return
-	}
-	customers_by_name, err := dbconfig.DB.GetCustomersByName(r.Context(), utils.ConvertStringToLike(search_query))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	RespondWithJSON(w, http.StatusOK, customers_by_name)
-}
-
-// GET /api/customers/{id}
-func (dbconfig *DbConfig) CustomerHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	customer_id := chi.URLParam(r, "id")
-	err := IDValidation(customer_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	customer_uuid, err := uuid.Parse(customer_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode customer id: "+customer_id)
-		return
-	}
-	customer, err := CompileCustomerData(dbconfig, customer_uuid, r.Context(), false)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusNotFound, "not found")
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, customer)
-}
-
-// GET /api/customers?page=1
-func (dbconfig *DbConfig) CustomersHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	dbCustomers, err := dbconfig.DB.GetCustomers(r.Context(), database.GetCustomersParams{
-		Limit:  10,
-		Offset: int32((page - 1) * 10),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	customers := []objects.Customer{}
-	for _, value := range dbCustomers {
-		cust, err := CompileCustomerData(dbconfig, value.ID, r.Context(), true)
+		token, err := dbconfig.DB.GetTokenValidation(c.Request.Context(), requestUserData.Email)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		customers = append(customers, cust)
-	}
-	RespondWithJSON(w, http.StatusOK, customers)
-}
-
-// GET /api/orders/search?q=value
-func (dbconfig *DbConfig) OrderSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	search_query := r.URL.Query().Get("q")
-	if search_query != "" || len(search_query) == 0 {
-		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
-		return
-	}
-	customer_orders, err := dbconfig.DB.GetOrdersSearchByCustomer(r.Context(), utils.ConvertStringToLike(search_query))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	webcode_orders, err := dbconfig.DB.GetOrdersSearchWebCode(r.Context(), utils.ConvertStringToLike(search_query))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	RespondWithJSON(w, http.StatusOK, CompileOrderSearchResult(customer_orders, webcode_orders))
-}
-
-// GET /api/orders/{id}
-func (dbconfig *DbConfig) OrderHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	order_id := chi.URLParam(r, "id")
-	err := IDValidation(order_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	order_uuid, err := uuid.Parse(order_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode order id: "+order_id)
-		return
-	}
-	order_data, err := CompileOrderData(dbconfig, order_uuid, r.Context(), false)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusNotFound, "not found")
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, order_data)
-}
-
-// GET /api/orders?page=1
-func (dbconfig *DbConfig) OrdersHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	dbOrders, err := dbconfig.DB.GetOrders(r.Context(), database.GetOrdersParams{
-		Limit:  10,
-		Offset: int32((page - 1) * 10),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	orders := []objects.Order{}
-	for _, value := range dbOrders {
-		ord, err := CompileOrderData(dbconfig, value.ID, r.Context(), true)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		orders = append(orders, ord)
-	}
-	RespondWithJSON(w, http.StatusOK, orders)
-}
-
-// GET /api/products/filter?key=value&page=1
-func (dbconfig *DbConfig) ProductFilterHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	query_param_type := utils.ConfirmFilters(r.URL.Query().Get("type"))
-	query_param_category := utils.ConfirmFilters(r.URL.Query().Get("category"))
-	query_param_vendor := utils.ConfirmFilters(r.URL.Query().Get("vendor"))
-	response, err := CompileFilterSearch(
-		dbconfig,
-		r.Context(),
-		page,
-		utils.ConvertStringToLike(query_param_type),
-		utils.ConvertStringToLike(query_param_category),
-		utils.ConvertStringToLike(query_param_vendor),
-	)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, response)
-}
-
-// GET /api/products/search?q=value
-func (dbconfig *DbConfig) ProductSearchHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	search_query := r.URL.Query().Get("q")
-	if search_query == "" || len(search_query) == 0 {
-		RespondWithError(w, http.StatusBadRequest, "Invalid search param")
-		return
-	}
-	search, err := dbconfig.DB.GetProductsSearch(r.Context(), utils.ConvertStringToLike(search_query))
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	compiled, err := CompileSearchResult(dbconfig, r.Context(), search)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, compiled)
-}
-
-// GET /api/products/{id}
-func (dbconfig *DbConfig) ProductHandle(w http.ResponseWriter, r *http.Request, dbuser database.User) {
-	product_id := chi.URLParam(r, "id")
-	err := IDValidation(product_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	product_uuid, err := uuid.Parse(product_id)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode product id: "+product_id)
-		return
-	}
-	product_data, err := CompileProductData(dbconfig, product_uuid, r.Context(), false)
-	if err != nil {
-		if err.Error() == "sql: no rows in result set" {
-			RespondWithError(w, http.StatusNotFound, "not found")
-			return
-		}
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, product_data)
-}
-
-// GET /api/products?page=1
-func (dbconfig *DbConfig) ProductsHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		page = 1
-	}
-	dbProducts, err := dbconfig.DB.GetProducts(r.Context(), database.GetProductsParams{
-		Limit:  10,
-		Offset: int32((page - 1) * 10),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	products := []objects.Product{}
-	for _, value := range dbProducts {
-		prod, err := CompileProductData(dbconfig, value.ID, r.Context(), false)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		products = append(products, prod)
-	}
-	RespondWithJSON(w, http.StatusOK, products)
-}
-
-// POST /api/login
-func (dbconfig *DbConfig) LoginHandle(w http.ResponseWriter, r *http.Request) {
-	body, err := DecodeLoginRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = UserValidation(body.Username, body.Password)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	db_user, exists, err := dbconfig.CheckUserCredentials(body, r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if !exists {
-		RespondWithError(w, http.StatusNotFound, "invalid username and password combination")
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseLogin{
-		Username: db_user.Name,
-		ApiKey:   db_user.ApiKey,
-	})
-}
-
-// POST /api/logout
-func (dbconfig *DbConfig) LogoutHandle(w http.ResponseWriter, r *http.Request, dbUser database.User) {
-	// cookies should be sent with the ajax request
-	if cookie, err := r.Cookie(cookie_name); err == nil {
-		value := make(map[string]string)
-		if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
-			// removes the cookie
-			cookie := &http.Cookie{
-				Name:   cookie_name,
-				Value:  "",
-				Secure: false,
-				Path:   "/",
-				MaxAge: -1,
+			if err.Error() == "sql: no rows in result set" {
+				RespondWithError(c, http.StatusNotFound, "not found")
+				return
 			}
-			http.SetCookie(w, cookie)
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		request_token, err := uuid.Parse(requestUserData.Token)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, "could not decode token: "+requestUserData.Token)
+			return
+		}
+		if token.Token != request_token {
+			RespondWithError(c, http.StatusNotFound, "invalid token for user")
+			return
+		}
+		err = UserValidation(requestUserData.Name, requestUserData.Password)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		dbUser, err := AddUser(dbconfig, requestUserData)
+		if err != nil {
+			RespondWithError(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+		RespondWithJSON(c, http.StatusCreated, ConvertDatabaseToRegister(dbUser))
+	}
+}
+
+/*
+Confirms if the API is ready to start accepting requests.
+
+Route: /api/ready
+
+Authorization: None
+
+Response-Type: application/json
+
+Possible HTTP Codes: 200, 503
+*/
+func (dbconfig *DbConfig) ReadyHandle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if dbconfig.Valid {
+			RespondWithJSON(c, http.StatusOK, gin.H{"message": "OK"})
+		} else {
+			RespondWithError(c, http.StatusServiceUnavailable, "Unavailable")
 		}
 	}
-	RespondWithJSON(w, http.StatusOK, objects.ResponseString{
-		Message: "success",
+}
+
+// Helper function
+// logs all error messages in current context to stdout
+// the error message in the parameters is returned over the API
+// after the chain has been aborted.
+func RespondWithError(c *gin.Context, http_code int, err_message string) {
+	for _, err := range c.Errors {
+		// TODO log previous errors from the authentication middlewares inside database table
+		log.Println(err.Err.Error())
+		break
+	}
+	c.AbortWithStatusJSON(http_code, gin.H{
+		"message": err_message,
 	})
 }
 
-// POST /api/preregister
-func (dbconfig *DbConfig) PreRegisterHandle(w http.ResponseWriter, r *http.Request) {
-	email := utils.LoadEnv("email")
-	email_psw := utils.LoadEnv("email_psw")
-	if email == "" || email_psw == "" {
-		RespondWithError(w, http.StatusInternalServerError, "invalid email or email password")
-		return
-	}
-	request_body, err := DecodePreRegisterRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = PreRegisterValidation(request_body)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	// user validation
-	exists, err := dbconfig.CheckUserEmailType(email, "app")
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if exists {
-		RespondWithError(w, http.StatusConflict, "email '"+email+"' already exists")
-		return
-	}
-	token_value := uuid.UUID{}
-	token_value, exists, err = dbconfig.CheckTokenExists(email, r)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if !exists {
-		token, err := dbconfig.DB.CreateToken(r.Context(), database.CreateTokenParams{
-			ID:        uuid.New(),
-			Name:      request_body.Name,
-			Email:     request_body.Email,
-			Token:     uuid.New(),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-		})
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-		token_value = token.Token
-	}
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	err = SendEmail(token_value, request_body.Email, request_body.Name)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusCreated, objects.ResponseString{
-		Message: "email sent",
-	})
+// Helper function
+// responds with a payload and http code over the API
+// after sucessfully processing the request.
+func RespondWithJSON(c *gin.Context, http_code int, payload any) {
+	c.JSON(http_code, payload)
 }
 
-// POST /api/register
-func (dbconfig *DbConfig) RegisterHandle(w http.ResponseWriter, r *http.Request) {
-	body, err := DecodeUserRequestBody(r)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	err = ValidateTokenValidation(body)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	token, err := dbconfig.DB.GetTokenValidation(r.Context(), body.Email)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	request_token, err := uuid.Parse(body.Token)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "could not decode token: "+body.Token)
-		return
-	}
-	if token.Token != request_token {
-		RespondWithError(w, http.StatusNotFound, "invalid token for user")
-		return
-	}
-	err = UserValidation(body.Name, body.Password)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	exists, err := dbconfig.CheckUserExist(body.Name, r)
-	if exists {
-		RespondWithError(w, http.StatusConflict, err.Error())
-		return
-	}
-	user, err := dbconfig.DB.CreateUser(r.Context(), database.CreateUserParams{
-		ID:        uuid.New(),
-		Name:      body.Name,
-		UserType:  "app",
-		Email:     body.Email,
-		Password:  body.Password,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	RespondWithJSON(w, http.StatusCreated, ConvertDatabaseToRegister(user))
-}
-
-// GET /api/ready
-func (dbconfig *DbConfig) ReadyHandle(w http.ResponseWriter, r *http.Request) {
-	if dbconfig.Valid {
-		RespondWithJSON(w, 200, objects.ResponseString{
-			Message: "OK",
-		})
-	} else {
-		RespondWithJSON(w, 503, objects.ResponseString{
-			Message: "Error",
-		})
-	}
-}
-
-// JSON helper functions
-func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	if payload == nil {
-		response, err := json.Marshal(payload)
-		if err != nil {
-			log.Printf("Error marshalling JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		w.WriteHeader(code)
-		_, err = w.Write(response)
-		if err != nil {
-			log.Printf("Error writing JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-	} else {
-		response, err := json.Marshal(payload)
-		if err != nil {
-			log.Printf("Error writing JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		w.WriteHeader(code)
-		_, err = w.Write(response)
-		if err != nil {
-			log.Printf("Error writing JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-	}
-}
-
-func RespondWithError(w http.ResponseWriter, code int, msg string) {
-	RespondWithJSON(w, code, map[string]string{"error": utils.ConfirmError(msg)})
-}
-
-// Middleware that determines which headers, http methods and orgins are allowed
-func MiddleWare() cors.Options {
-	return cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"*"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}
+// Helper function
+// appends the error to the current context and passes on to the next Middleware
+// only used in the Authentication phase when one middleware auth is not met
+// it uses another in the format below
+// query_param -> api_key as header -> basic
+// in the case that the last auth fails, it raises and error with RespondWithError
+func AppendErrorNext(c *gin.Context, http_code int, err_message string) {
+	c.Error(errors.New(err_message))
+	c.Next()
 }

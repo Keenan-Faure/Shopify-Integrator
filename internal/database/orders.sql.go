@@ -35,7 +35,7 @@ type CreateOrderParams struct {
 	ID            uuid.UUID      `json:"id"`
 	Status        string         `json:"status"`
 	Notes         sql.NullString `json:"notes"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -166,7 +166,7 @@ SELECT
     o.updated_at
 FROM orders o 
 WHERE orders.id in (
-    SELECT order_id FROM customerorders
+    SELECT order_id FROM customer_orders
     WHERE customer_id = $1
 )
 `
@@ -175,7 +175,7 @@ type GetOrderByCustomerRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
 	Status        string         `json:"status"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -236,7 +236,7 @@ type GetOrderByIDRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
 	Status        string         `json:"status"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -282,7 +282,7 @@ type GetOrderByWebCodeRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
 	Status        string         `json:"status"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -290,7 +290,7 @@ type GetOrderByWebCodeRow struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode sql.NullString) (GetOrderByWebCodeRow, error) {
+func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode string) (GetOrderByWebCodeRow, error) {
 	row := q.db.QueryRowContext(ctx, getOrderByWebCode, webCode)
 	var i GetOrderByWebCodeRow
 	err := row.Scan(
@@ -305,6 +305,20 @@ func (q *Queries) GetOrderByWebCode(ctx context.Context, webCode sql.NullString)
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getOrderIDByWebCode = `-- name: GetOrderIDByWebCode :one
+SELECT
+    id
+FROM orders
+WHERE web_code = $1
+`
+
+func (q *Queries) GetOrderIDByWebCode(ctx context.Context, webCode string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getOrderIDByWebCode, webCode)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const getOrders = `-- name: GetOrders :many
@@ -332,7 +346,7 @@ type GetOrdersRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
 	Status        string         `json:"status"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -386,7 +400,7 @@ SELECT
     o.updated_at
 FROM orders o
 WHERE o.id in (
-    SELECT order_id FROM customerorders co
+    SELECT order_id FROM customer_orders co
     INNER JOIN customers c
     ON co.customer_id = c.id
     WHERE CONCAT(c.first_name, ' ', c.last_name) SIMILAR TO $1
@@ -399,7 +413,7 @@ type GetOrdersSearchByCustomerRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
 	Status        string         `json:"status"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -460,7 +474,7 @@ type GetOrdersSearchWebCodeRow struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
 	Status        string         `json:"status"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -511,6 +525,16 @@ func (q *Queries) RemoveOrder(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const removeOrderByWebCode = `-- name: RemoveOrderByWebCode :exec
+DELETE FROM orders
+WHERE web_code = $1
+`
+
+func (q *Queries) RemoveOrderByWebCode(ctx context.Context, webCode string) error {
+	_, err := q.db.ExecContext(ctx, removeOrderByWebCode, webCode)
+	return err
+}
+
 const updateOrder = `-- name: UpdateOrder :one
 UPDATE orders
 SET
@@ -529,7 +553,7 @@ RETURNING id, notes, web_code, tax_total, order_total, shipping_total, discount_
 type UpdateOrderParams struct {
 	Notes         sql.NullString `json:"notes"`
 	Status        string         `json:"status"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`

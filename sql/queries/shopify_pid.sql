@@ -58,3 +58,7 @@ WHERE product_code IN (
     )
 )
 LIMIT 1;
+
+-- name: RemovePIDByProductCode :exec
+DELETE FROM shopify_pid
+WHERE product_code = $1;

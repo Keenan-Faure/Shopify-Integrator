@@ -1,6 +1,7 @@
 -- +goose Up
 CREATE TABLE customers(
     id UUID UNIQUE PRIMARY KEY,
+    web_customer_code VARCHAR(64) UNIQUE NOT NULL,
     first_name VARCHAR(32) NOT NULL,
     last_name VARCHAR(32) NOT NULL,
     email VARCHAR(32),

@@ -13,20 +13,19 @@ import (
 )
 
 type Address struct {
-	ID         uuid.UUID      `json:"id"`
-	CustomerID uuid.UUID      `json:"customer_id"`
-	Type       sql.NullString `json:"type"`
-	FirstName  string         `json:"first_name"`
-	LastName   string         `json:"last_name"`
-	Address1   sql.NullString `json:"address1"`
-	Address2   sql.NullString `json:"address2"`
-	Suburb     sql.NullString `json:"suburb"`
-	City       sql.NullString `json:"city"`
-	Province   sql.NullString `json:"province"`
-	PostalCode sql.NullString `json:"postal_code"`
-	Company    sql.NullString `json:"company"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
+	ID           uuid.UUID      `json:"id"`
+	CustomerID   uuid.UUID      `json:"customer_id"`
+	Type         string         `json:"type"`
+	FirstName    string         `json:"first_name"`
+	LastName     string         `json:"last_name"`
+	Address1     sql.NullString `json:"address1"`
+	Address2     sql.NullString `json:"address2"`
+	City         sql.NullString `json:"city"`
+	Province     sql.NullString `json:"province"`
+	ProvinceCode sql.NullString `json:"province_code"`
+	Company      sql.NullString `json:"company"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 type AppSetting struct {
@@ -40,16 +39,26 @@ type AppSetting struct {
 }
 
 type Customer struct {
-	ID        uuid.UUID      `json:"id"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     sql.NullString `json:"email"`
-	Phone     sql.NullString `json:"phone"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID              uuid.UUID      `json:"id"`
+	WebCustomerCode string         `json:"web_customer_code"`
+	FirstName       string         `json:"first_name"`
+	LastName        string         `json:"last_name"`
+	Email           sql.NullString `json:"email"`
+	Phone           sql.NullString `json:"phone"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
 }
 
-type Customerorder struct {
+type CustomerAddress struct {
+	ID          uuid.UUID `json:"id"`
+	CustomerID  uuid.UUID `json:"customer_id"`
+	AddressType string    `json:"address_type"`
+	AddressID   uuid.UUID `json:"address_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type CustomerOrder struct {
 	ID         uuid.UUID `json:"id"`
 	CustomerID uuid.UUID `json:"customer_id"`
 	OrderID    uuid.UUID `json:"order_id"`
@@ -105,7 +114,7 @@ type InventoryLocation struct {
 type Order struct {
 	ID            uuid.UUID      `json:"id"`
 	Notes         sql.NullString `json:"notes"`
-	WebCode       sql.NullString `json:"web_code"`
+	WebCode       string         `json:"web_code"`
 	TaxTotal      sql.NullString `json:"tax_total"`
 	OrderTotal    sql.NullString `json:"order_total"`
 	ShippingTotal sql.NullString `json:"shipping_total"`
@@ -121,7 +130,6 @@ type OrderLine struct {
 	LineType  sql.NullString `json:"line_type"`
 	Sku       string         `json:"sku"`
 	Price     sql.NullString `json:"price"`
-	Barcode   sql.NullInt32  `json:"barcode"`
 	Qty       sql.NullInt32  `json:"qty"`
 	TaxTotal  sql.NullString `json:"tax_total"`
 	TaxRate   sql.NullString `json:"tax_rate"`
@@ -189,6 +197,14 @@ type RegisterToken struct {
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Token     uuid.UUID `json:"token"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type RuntimeFlag struct {
+	ID        uuid.UUID `json:"id"`
+	FlagName  string    `json:"flag_name"`
+	FlagValue bool      `json:"flag_value"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

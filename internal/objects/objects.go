@@ -1,6 +1,7 @@
 package objects
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -125,8 +126,8 @@ type RequestWebhookURL struct {
 }
 
 type ResponseWarehouseLocation struct {
-	Warehouses       []Warehouse `json:"warehouses"`
-	ShopifyLocations any         `json:"shopify_locations"`
+	Warehouses       []Warehouse      `json:"warehouses"`
+	ShopifyLocations ShopifyLocations `json:"shopify_locations"`
 }
 
 type Warehouse struct {
@@ -153,6 +154,17 @@ type ResponseQueueCount struct {
 	UpdateOrder   int `json:"update_order"`
 	UpdateProduct int `json:"update_product"`
 	UpdateVariant int `json:"update_variant"`
+}
+
+type MockQueueItem struct {
+	ID          uuid.UUID       `json:"id"`
+	QueueType   string          `json:"queue_type"`
+	Instruction string          `json:"instruction"`
+	Status      string          `json:"status"`
+	Object      json.RawMessage `json:"object"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+	Description string          `json:"description"`
 }
 
 type ResponseQueueItemFilter struct {
@@ -247,6 +259,47 @@ type ResponseShopifyWarehouseLocation struct {
 type ResponseIDs struct {
 	ProductID string `json:"id"`
 	VariantID string `json:"variant_id"`
+}
+
+type ResponseShopifyGraphQL struct {
+	ProductVariants struct {
+		Edges []struct {
+			Node struct {
+				Sku     string
+				Id      string
+				Product struct {
+					Id string
+				}
+			}
+		}
+	} `graphql:"productVariants(query: $sku, first: 1)"`
+}
+
+type JSONResponseShopifyGraphQL struct {
+	Data struct {
+		ProductVariants struct {
+			Edges []struct {
+				Node struct {
+					ID      string `json:"id"`
+					Sku     string `json:"sku"`
+					Product struct {
+						ID string `json:"id"`
+					} `json:"product"`
+				} `json:"node"`
+			} `json:"edges"`
+		} `json:"productVariants"`
+	} `json:"data"`
+	Extensions struct {
+		Cost struct {
+			RequestedQueryCost int `json:"requestedQueryCost"`
+			ActualQueryCost    int `json:"actualQueryCost"`
+			ThrottleStatus     struct {
+				MaximumAvailable   float64 `json:"maximumAvailable"`
+				CurrentlyAvailable int     `json:"currentlyAvailable"`
+				RestoreRate        float64 `json:"restoreRate"`
+			} `json:"throttleStatus"`
+		} `json:"cost"`
+	} `json:"extensions"`
 }
 
 type ResponseAddInventoryItem struct {
@@ -563,7 +616,7 @@ type RequestWarehouseLocation struct {
 	WarehouseName        string `json:"warehouse_name"`
 	ShopifyWarehouseName string `json:"shopify_warehouse_name"`
 }
-type RequestBodyUser struct {
+type RequestBodyRegister struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -597,11 +650,11 @@ type RequestBodyVariant struct {
 }
 
 type RequestBodyCustomer struct {
-	FirstName string            `json:"first_name"`
-	LastName  string            `json:"last_name"`
-	Email     string            `json:"email"`
-	Phone     string            `json:"phone"`
-	Address   []CustomerAddress `json:"address"`
+	FirstName string          `json:"first_name"`
+	LastName  string          `json:"last_name"`
+	Email     string          `json:"email"`
+	Phone     string          `json:"phone"`
+	Address   CustomerAddress `json:"default_address"`
 }
 
 type RequestBodyPreRegister struct {
@@ -668,21 +721,19 @@ type Customer struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 type CustomerAddress struct {
-	Type       string `json:"address_type"`
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
-	Address1   string `json:"address_1"`
-	Address2   string `json:"address_2"`
-	Suburb     string `json:"suburb"`
-	City       string `json:"city"`
-	Province   string `json:"province"`
-	PostalCode string `json:"postal_code"`
-	Company    string `json:"company"`
+	Type         string `json:"address_type"`
+	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
+	Address1     string `json:"address_1"`
+	Address2     string `json:"address_2"`
+	City         string `json:"city"`
+	Province     string `json:"province"`
+	ProvinceCode string `json:"province_code"`
+	Company      string `json:"company"`
 }
 type OrderLines struct {
 	SKU      string `json:"sku"`
 	Price    string `json:"price"`
-	Barcode  int    `json:"barcode"`
 	Qty      int    `json:"qty"`
 	TaxRate  string `json:"tax_rate"`
 	TaxTotal string `json:"tax_total"`
@@ -692,14 +743,15 @@ type SearchCustomer struct {
 	LastName  string `json:"last_name"`
 }
 type SearchProduct struct {
-	ID          uuid.UUID       `json:"id"`
-	Active      string          `json:"active"`
-	Title       string          `json:"title"`
-	Category    string          `json:"category"`
-	ProductType string          `json:"product_type"`
-	Vendor      string          `json:"vendor"`
-	Images      []ProductImages `json:"product_images"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID          uuid.UUID       `json:"id" db:"id"`
+	ProductCode string          `json:"product_code" db:"product_code"`
+	Active      string          `json:"active" db:"active"`
+	Title       string          `json:"title" db:"title"`
+	Category    string          `json:"category" db:"category"`
+	ProductType string          `json:"product_type" db:"product_type"`
+	Vendor      string          `json:"vendor" db:"vendor"`
+	Images      []ProductImages `json:"product_images" db:"-"`
+	UpdatedAt   time.Time       `json:"updated_at" db:"updated_at"`
 }
 type Product struct {
 	ID             uuid.UUID        `json:"id"`
@@ -775,84 +827,80 @@ type Params struct {
 
 // Product Feed: Shopify
 
+type ShopifyProductOptions struct {
+	ID        int64    `json:"id"`
+	ProductID int64    `json:"product_id"`
+	Name      string   `json:"name"`
+	Position  int      `json:"position"`
+	Values    []string `json:"values"`
+}
+
+type ShopifyProductImage struct {
+	ID                int64     `json:"id"`
+	Alt               any       `json:"alt"`
+	Position          int       `json:"position"`
+	ProductID         int64     `json:"product_id"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+	AdminGraphqlAPIID string    `json:"admin_graphql_api_id"`
+	Width             int       `json:"width"`
+	Height            int       `json:"height"`
+	Src               string    `json:"src"`
+	VariantIds        []any     `json:"variant_ids"`
+}
+
+type ShopifyProductVariant struct {
+	ID                   int64     `json:"id"`
+	ProductID            int64     `json:"product_id"`
+	Title                string    `json:"title"`
+	Price                string    `json:"price"`
+	Sku                  string    `json:"sku"`
+	Position             int       `json:"position"`
+	InventoryPolicy      string    `json:"inventory_policy"`
+	CompareAtPrice       string    `json:"compare_at_price"`
+	FulfillmentService   string    `json:"fulfillment_service"`
+	InventoryManagement  string    `json:"inventory_management"`
+	Option1              string    `json:"option1"`
+	Option2              string    `json:"option2"`
+	Option3              string    `json:"option3"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+	Taxable              bool      `json:"taxable"`
+	Barcode              string    `json:"barcode"`
+	Grams                int       `json:"grams"`
+	ImageID              any       `json:"image_id"`
+	Weight               float64   `json:"weight"`
+	WeightUnit           string    `json:"weight_unit"`
+	InventoryItemID      int64     `json:"inventory_item_id"`
+	InventoryQuantity    int       `json:"inventory_quantity"`
+	OldInventoryQuantity int       `json:"old_inventory_quantity"`
+	RequiresShipping     bool      `json:"requires_shipping"`
+	AdminGraphqlAPIID    string    `json:"admin_graphql_api_id"`
+}
+
+type ShopifySingleProduct struct {
+	ID                int64                   `json:"id"`
+	Title             string                  `json:"title"`
+	BodyHTML          string                  `json:"body_html"`
+	Vendor            string                  `json:"vendor"`
+	ProductType       string                  `json:"product_type"`
+	CreatedAt         time.Time               `json:"created_at"`
+	Handle            string                  `json:"handle"`
+	UpdatedAt         time.Time               `json:"updated_at"`
+	PublishedAt       time.Time               `json:"published_at"`
+	TemplateSuffix    any                     `json:"template_suffix"`
+	PublishedScope    string                  `json:"published_scope"`
+	Tags              string                  `json:"tags"`
+	Status            string                  `json:"status"`
+	AdminGraphqlAPIID string                  `json:"admin_graphql_api_id"`
+	Variants          []ShopifyProductVariant `json:"variants"`
+	Options           []ShopifyProductOptions `json:"options"`
+	Images            []ShopifyProductImage   `json:"images"`
+	Image             ShopifyProductImage     `json:"image"`
+}
+
 type ShopifyProducts struct {
-	Products []struct {
-		ID                int64     `json:"id"`
-		Title             string    `json:"title"`
-		BodyHTML          string    `json:"body_html"`
-		Vendor            string    `json:"vendor"`
-		ProductType       string    `json:"product_type"`
-		CreatedAt         time.Time `json:"created_at"`
-		Handle            string    `json:"handle"`
-		UpdatedAt         time.Time `json:"updated_at"`
-		PublishedAt       time.Time `json:"published_at"`
-		TemplateSuffix    any       `json:"template_suffix"`
-		PublishedScope    string    `json:"published_scope"`
-		Tags              string    `json:"tags"`
-		Status            string    `json:"status"`
-		AdminGraphqlAPIID string    `json:"admin_graphql_api_id"`
-		Variants          []struct {
-			ID                   int64     `json:"id"`
-			ProductID            int64     `json:"product_id"`
-			Title                string    `json:"title"`
-			Price                string    `json:"price"`
-			Sku                  string    `json:"sku"`
-			Position             int       `json:"position"`
-			InventoryPolicy      string    `json:"inventory_policy"`
-			CompareAtPrice       string    `json:"compare_at_price"`
-			FulfillmentService   string    `json:"fulfillment_service"`
-			InventoryManagement  string    `json:"inventory_management"`
-			Option1              string    `json:"option1"`
-			Option2              string    `json:"option2"`
-			Option3              string    `json:"option3"`
-			CreatedAt            time.Time `json:"created_at"`
-			UpdatedAt            time.Time `json:"updated_at"`
-			Taxable              bool      `json:"taxable"`
-			Barcode              string    `json:"barcode"`
-			Grams                int       `json:"grams"`
-			ImageID              any       `json:"image_id"`
-			Weight               float64   `json:"weight"`
-			WeightUnit           string    `json:"weight_unit"`
-			InventoryItemID      int64     `json:"inventory_item_id"`
-			InventoryQuantity    int       `json:"inventory_quantity"`
-			OldInventoryQuantity int       `json:"old_inventory_quantity"`
-			RequiresShipping     bool      `json:"requires_shipping"`
-			AdminGraphqlAPIID    string    `json:"admin_graphql_api_id"`
-		} `json:"variants"`
-		Options []struct {
-			ID        int64    `json:"id"`
-			ProductID int64    `json:"product_id"`
-			Name      string   `json:"name"`
-			Position  int      `json:"position"`
-			Values    []string `json:"values"`
-		} `json:"options"`
-		Images []struct {
-			ID                int64     `json:"id"`
-			Alt               any       `json:"alt"`
-			Position          int       `json:"position"`
-			ProductID         int64     `json:"product_id"`
-			CreatedAt         time.Time `json:"created_at"`
-			UpdatedAt         time.Time `json:"updated_at"`
-			AdminGraphqlAPIID string    `json:"admin_graphql_api_id"`
-			Width             int       `json:"width"`
-			Height            int       `json:"height"`
-			Src               string    `json:"src"`
-			VariantIds        []any     `json:"variant_ids"`
-		} `json:"images"`
-		Image struct {
-			ID                int64     `json:"id"`
-			Alt               any       `json:"alt"`
-			Position          int       `json:"position"`
-			ProductID         int64     `json:"product_id"`
-			CreatedAt         time.Time `json:"created_at"`
-			UpdatedAt         time.Time `json:"updated_at"`
-			AdminGraphqlAPIID string    `json:"admin_graphql_api_id"`
-			Width             int       `json:"width"`
-			Height            int       `json:"height"`
-			Src               string    `json:"src"`
-			VariantIds        []any     `json:"variant_ids"`
-		} `json:"image"`
-	} `json:"products"`
+	Products []ShopifySingleProduct `json:"products"`
 }
 
 type ShopifyProduct struct {
