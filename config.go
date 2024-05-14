@@ -44,7 +44,7 @@ func InitConnectionString(useLocalhost, mock bool) string {
 	}
 	log.Println("USR: " + utils.LoadEnv("db_user"))
 	log.Println("PSS: " + utils.LoadEnv("db_psw"))
-	return connection_string + host + utils.LoadEnv("db_name")
+	return connection_string + host + utils.LoadEnv("db_name") + "?sslmode=disable"
 }
 
 // Stores the database connection inside a config struct
