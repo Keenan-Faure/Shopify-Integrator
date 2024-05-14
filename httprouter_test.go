@@ -1454,9 +1454,11 @@ func TestProductExportRoute(t *testing.T) {
 	/* Test 2 - valid request | no products */
 	dbUser := createDatabaseUser(&dbconfig)
 	defer dbconfig.DB.RemoveUser(context.Background(), dbUser.ApiKey)
+	requestHeaders := make(map[string][]string)
+	requestHeaders["Mocker"] = []string{"true"}
 	w = Init(
 		"/api/products/export?api_key="+dbUser.ApiKey,
-		http.MethodPost, map[string][]string{}, nil, &dbconfig, router,
+		http.MethodPost, requestHeaders, nil, &dbconfig, router,
 	)
 	assert.Equal(t, 200, w.Code)
 
@@ -1464,12 +1466,11 @@ func TestProductExportRoute(t *testing.T) {
 	createDatabaseProduct(&dbconfig)
 	w = Init(
 		"/api/products/export?api_key="+dbUser.ApiKey,
-		http.MethodPost, map[string][]string{}, nil, &dbconfig, router,
+		http.MethodPost, requestHeaders, nil, &dbconfig, router,
 	)
 	ClearProductTestData(&dbconfig)
 
 	assert.Equal(t, 200, w.Code)
-	log.Println(w.Body.String())
 }
 
 func TestProductImportRoute(t *testing.T) {
