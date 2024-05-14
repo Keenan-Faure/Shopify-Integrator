@@ -21,17 +21,22 @@ function create_env() {
     fi
 }
 
+function is_development() {
+    export DOCKER_FILE="Dockerfile.github"
+}
+
 function install_app_gh() {
     source .env
+    is_development
     docker-compose rm -f
     if ! docker compose up -d --force-recreate --no-deps postgres server; then
         exit
     else
         until
             docker exec $DB_NAME pg_isready
-        do 
+        do
             sleep 3;
-        done    
+        done
         docker exec $SERVER_CONTAINER_NAME bash -c "/keenan/scripts/migrations.sh 'production' 'up'"
         docker restart $SERVER_CONTAINER_NAME
     fi
