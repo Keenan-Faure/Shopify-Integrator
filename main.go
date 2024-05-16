@@ -64,10 +64,11 @@ func main() {
 
 func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	r := gin.Default()
+	r.Use(CORSMiddleware())
 
 	// authentication methods
 	// hover for more details
-	// Middleware runs in the format specficied
+	// Middleware runs in the format specified
 	// query_params -> api_keys inside header -> Basic authentication
 
 	r.ForwardedByClientIP = true
