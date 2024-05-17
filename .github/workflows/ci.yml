@@ -27,11 +27,10 @@ jobs:
             - name: 🔎 Run unit tests
               run: go test ./... -cover
 
-            - name: Install go security
-              run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-
-            - name: 🔎 Security check
-              run: gosec -exclude-generated ./...
+            - name: 🔎 Run Gosec Security Scanner
+              uses: securego/gosec@master
+              with:
+                args: -exclude-generated ./...
 
     build:
         name: build docker image
