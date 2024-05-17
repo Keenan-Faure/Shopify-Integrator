@@ -84,6 +84,9 @@ function build_go() {
 }
 
 function install_app() {
+    # set server to production
+    export GIN_MODE=release
+
     # removes stopped service containers 
     docker-compose rm -f
 
