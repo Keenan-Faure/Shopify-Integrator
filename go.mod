@@ -1,6 +1,6 @@
 module integrator
 
-go 1.22.3
+go 1.22
 
 require (
 	github.com/gin-gonic/gin v1.9.1
