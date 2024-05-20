@@ -22,7 +22,6 @@ function create_env() {
 }
 
 function is_development() {
-    export GIN_MODE=debug
     export DOCKER_FILE="Dockerfile.github"
 }
 
