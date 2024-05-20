@@ -396,6 +396,28 @@ type ShopifyLocations struct {
 	} `json:"locations"`
 }
 
+type ShopifyLocation struct {
+	Location struct {
+		ID                int    `json:"id"`
+		Name              string `json:"name"`
+		Address1          any    `json:"address1"`
+		Address2          any    `json:"address2"`
+		City              any    `json:"city"`
+		Zip               any    `json:"zip"`
+		Province          any    `json:"province"`
+		Country           string `json:"country"`
+		Phone             any    `json:"phone"`
+		CreatedAt         string `json:"created_at"`
+		UpdatedAt         string `json:"updated_at"`
+		CountryCode       string `json:"country_code"`
+		CountryName       string `json:"country_name"`
+		ProvinceCode      any    `json:"province_code"`
+		Legacy            bool   `json:"legacy"`
+		Active            bool   `json:"active"`
+		AdminGraphqlAPIID string `json:"admin_graphql_api_id"`
+	} `json:"location"`
+}
+
 type ShopifyProductCount struct {
 	Count int `json:"count"`
 }

@@ -171,6 +171,22 @@ func TestGetShopifyLocations(t *testing.T) {
 	assert.Equal(t, len(response.Locations), 5)
 }
 
+func TestGetShopifyLocation(t *testing.T) {
+	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
+
+	httpmock.Activate()
+	InitMockShopifyAPI()
+	defer httpmock.DeactivateAndReset()
+
+	// Test Case 1 - valid request
+	response, err := shopifyConfig.GetShopifyLocationByID(fmt.Sprint(MOCK_SHOPIFY_LOCATION_ID))
+	if err != nil {
+		t.Errorf("expected 'nil' but found: :" + err.Error())
+	}
+	assert.Equal(t, response.Location.ID, 655441491)
+	assert.Equal(t, response.Location.Name, "50 Rideau Street")
+}
+
 func TestGetShopifyInventoryLevel(t *testing.T) {
 	shopifyConfig := InitConfigShopify(MOCK_SHOPIFY_API_URL)
 
@@ -703,9 +719,19 @@ func InitMockShopifyAPI() {
 		},
 	)
 
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/locations/"+fmt.Sprint(MOCK_SHOPIFY_LOCATION_ID)+".json",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyLocationResponse("test-case-valid-location.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
 	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/locations.json",
 		func(req *http.Request) (*http.Response, error) {
-			resp, err := httpmock.NewJsonResponse(200, CreateShopifyLocationResponse("test-case-valid-locations.json"))
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyLocationsResponse("test-case-valid-locations.json"))
 			if err != nil {
 				return httpmock.NewStringResponse(500, ""), nil
 			}
@@ -897,7 +923,7 @@ func CreateShopifyInventoryLevelsResponse(fileName string) objects.GetShopifyInv
 }
 
 /* Returns a test shopify location response struct */
-func CreateShopifyLocationResponse(fileName string) objects.ShopifyLocations {
+func CreateShopifyLocationsResponse(fileName string) objects.ShopifyLocations {
 	fileBytes := payload("./test_payloads/" + fileName)
 	shopifyLocations := objects.ShopifyLocations{}
 	err := json.Unmarshal(fileBytes, &shopifyLocations)
@@ -905,6 +931,17 @@ func CreateShopifyLocationResponse(fileName string) objects.ShopifyLocations {
 		log.Println(err)
 	}
 	return shopifyLocations
+}
+
+/* Returns a test shopify location response struct */
+func CreateShopifyLocationResponse(fileName string) objects.ShopifyLocation {
+	fileBytes := payload("./test_payloads/" + fileName)
+	shopifyLocation := objects.ShopifyLocation{}
+	err := json.Unmarshal(fileBytes, &shopifyLocation)
+	if err != nil {
+		log.Println(err)
+	}
+	return shopifyLocation
 }
 
 /* Returns a test shopify product count struct */

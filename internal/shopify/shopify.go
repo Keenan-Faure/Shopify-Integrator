@@ -190,6 +190,36 @@ func (configShopify *ConfigShopify) GetShopifyProductCount() (objects.ShopifyPro
 	return response, nil
 }
 
+// Retrieves a location details from Shopify using it's ID
+// https://shopify.dev/docs/api/admin-rest/2024-04/resources/location#get-locations-location-id
+func (configShopify *ConfigShopify) GetShopifyLocationByID(location_id string) (objects.ShopifyLocation, error) {
+	if location_id == "" {
+		return objects.ShopifyLocation{}, errors.New("invalid location id not allowed")
+	}
+	res, err := configShopify.FetchHelper(
+		"locations/"+location_id+".json",
+		http.MethodGet,
+		nil,
+	)
+	if err != nil {
+		return objects.ShopifyLocation{}, err
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return objects.ShopifyLocation{}, err
+	}
+	if res.StatusCode != 200 {
+		return objects.ShopifyLocation{}, errors.New(string(respBody))
+	}
+	response := objects.ShopifyLocation{}
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return objects.ShopifyLocation{}, err
+	}
+	return response, nil
+}
+
 // Retrieves a list of locations
 // https://shopify.dev/docs/api/admin-rest/2023-04/resources/location#get-locations
 func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocations, error) {
