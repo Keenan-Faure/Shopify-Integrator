@@ -12,6 +12,19 @@ import (
 	"github.com/google/uuid"
 )
 
+const countShopifyLocation = `-- name: CountShopifyLocation :one
+SELECT 
+    CAST(COUNT(*) AS INTEGER) AS "count"
+FROM shopify_location
+`
+
+func (q *Queries) CountShopifyLocation(ctx context.Context) (int32, error) {
+	row := q.db.QueryRowContext(ctx, countShopifyLocation)
+	var count int32
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createShopifyLocation = `-- name: CreateShopifyLocation :one
 INSERT INTO shopify_location(
     ID,
