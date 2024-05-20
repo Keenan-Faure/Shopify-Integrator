@@ -52,3 +52,8 @@ WHERE warehouse_name = $1;
 -- name: RemoveShopifyLocationMapByLocationID :exec
 DELETE FROM shopify_location
 WHERE shopify_location_id = $1;
+
+-- name: CountShopifyLocation :one
+SELECT 
+    CAST(COUNT(*) AS INTEGER) AS "count"
+FROM shopify_location;
