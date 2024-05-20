@@ -1,0 +1,33 @@
+name: ci
+
+on:
+    pull_request:
+        branches: [main]
+
+jobs:
+    style:
+        name: style
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.22"
+
+            - name: Check out code
+              uses: actions/checkout@v3
+
+            - name: 🔎 Run Gosec Security Scanner
+              uses: securego/gosec@master
+              with:
+                args: -exclude-generated ./...
+
+            - name: 🔎Check code formatting
+              run: test -z $(go fmt ./...)
+
+            - name: Install static check
+              run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+            - name: 🔎Static check
+              run: staticcheck ./...

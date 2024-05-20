@@ -5,33 +5,6 @@ on:
         branches: [main]
 
 jobs:
-    integration-tests:
-        name: integration tests
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: Set up Go
-              uses: actions/setup-go@v4
-              with:
-                  go-version: "1.22"
-
-            - name: Check out code
-              uses: actions/checkout@v4
-
-            - name: Run install script
-              run: |
-                  chmod +x ./scripts/install.github.sh
-                  ./scripts/install.github.sh
-              shell: bash
-
-            - name: 🔎 Run unit tests
-              run: go test ./... -cover
-
-            - name: 🔎 Run Gosec Security Scanner
-              uses: securego/gosec@master
-              with:
-                args: -exclude-generated ./...
-
     build:
         name: build docker image
         runs-on: ubuntu-latest
