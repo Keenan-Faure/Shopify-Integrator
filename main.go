@@ -142,8 +142,8 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	auth.POST("/inventory/warehouse", dbconfig.AddInventoryWarehouseHandle())
 	auth.DELETE("/inventory/warehouse/:id", dbconfig.DeleteInventoryWarehouse())
 
-	/* Fetch Worker */
-	auth.GET("/worker/fetch", dbconfig.WorkerFetchProductsHandle())
+	/* Fetch Workers */
+	auth.GET("/shopify/fetch", dbconfig.WorkerFetchProductsHandle())
 
 	/* Restrictions */
 	auth.GET("/fetch/restriction", dbconfig.GetFetchRestrictionHandle())
