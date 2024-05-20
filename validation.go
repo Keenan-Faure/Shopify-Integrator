@@ -59,8 +59,8 @@ func DecodeRestriction(dbconfig *DbConfig, r *http.Request) ([]objects.Restricti
 }
 
 // Validate: InsertGlobalWarehouse
-func GlobalWarehouseValidation(warehouse objects.RequestGlobalWarehouse) error {
-	if warehouse.Name == "" {
+func GlobalWarehouseValidation(warehouse string) error {
+	if warehouse == "" {
 		return errors.New("invalid warehouse name")
 	}
 	return nil

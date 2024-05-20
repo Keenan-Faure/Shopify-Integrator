@@ -78,12 +78,12 @@ func TestDecodeRestriction(t *testing.T) {
 func TestGlobalWarehouseValidation(t *testing.T) {
 	// Test Case 1 - invalid push restrictions
 	payload := WarehousePayload("test-case-invalid-warehouse.json")
-	valid := GlobalWarehouseValidation(payload)
+	valid := GlobalWarehouseValidation(payload.Name)
 	assert.NotEqual(t, nil, valid)
 
 	// Test Case 2 - valid push restrictions
 	payload = WarehousePayload("test-case-valid-warehouse.json")
-	valid = GlobalWarehouseValidation(payload)
+	valid = GlobalWarehouseValidation(payload.Name)
 	assert.Equal(t, nil, valid)
 }
 
