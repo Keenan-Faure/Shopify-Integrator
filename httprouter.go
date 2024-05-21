@@ -378,7 +378,7 @@ Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
-Possible HTTP Codes: 200, 400, 401, 404, 500
+Possible HTTP Codes: 200, 400, 401, 404, 409, 500
 */
 func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -388,7 +388,7 @@ func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		err = GlobalWarehouseValidation(warehouse)
+		err = GlobalWarehouseValidation(warehouse.Name)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
@@ -402,6 +402,7 @@ func (dbconfig *DbConfig) AddInventoryWarehouseHandle() gin.HandlerFunc {
 		}
 		if err != nil {
 			RespondWithError(c, httpStatus, err.Error())
+			return
 		}
 		RespondWithJSON(c, httpStatus, objects.ResponseString{
 			Message: "success",
@@ -652,6 +653,8 @@ Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
+		// Add an extra validation to see if the warehouse entered by the user exists
 		location_map, err := DecodeInventoryMap(c.Request)
 		if err != nil {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
@@ -661,7 +664,18 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		result, err := AddWarehouseLocation(dbconfig, location_map)
+		err = GlobalWarehouseValidation(location_map.WarehouseName)
+		if err != nil {
+			RespondWithError(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		shopifyConfig := shopify.InitConfigShopify("http://localhost:4711")
+		if mockRequest != "true" {
+
+			// TODO find better way to reference
+			shopifyConfig = shopify.InitConfigShopify("")
+		}
+		result, err := AddWarehouseLocation(dbconfig, shopifyConfig, location_map)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return

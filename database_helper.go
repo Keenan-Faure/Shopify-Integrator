@@ -10,6 +10,7 @@ import (
 	"integrator/internal/database"
 	"net/http"
 	"objects"
+	"shopify"
 	"strings"
 	"time"
 	"utils"
@@ -29,6 +30,18 @@ func UpdateAppSettings(
 	appSettings []objects.RequestSettings,
 ) error {
 	for _, setting := range appSettings {
+		for _, app_setting := range appSettings {
+			if app_setting.Key == "app_enable_shopify_fetch" && app_setting.Value == "true" {
+				// check if the database has valid rows for the location-map
+				count, err := dbconfig.DB.CountShopifyLocation(context.Background())
+				if err != nil {
+					return err
+				}
+				if count == 0 {
+					return errors.New("warehouse-location map not configured")
+				}
+			}
+		}
 		err := dbconfig.DB.UpdateAppSetting(context.Background(), database.UpdateAppSettingParams{
 			Value:     setting.Value,
 			UpdatedAt: time.Now().UTC(),
@@ -131,13 +144,30 @@ func AddFetchStat(
 /* Add a warehouse-location map */
 func AddWarehouseLocation(
 	dbconfig *DbConfig,
+	shopifyConfig shopify.ConfigShopify,
 	requestBody objects.RequestWarehouseLocation,
 ) (database.ShopifyLocation, error) {
+	// Checks if the warehouse exists internally
+	warehouses_db, err := dbconfig.DB.GetWarehouseByName(context.Background(), requestBody.WarehouseName)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return database.ShopifyLocation{}, errors.New("warehouse with name '" + requestBody.WarehouseName + "' does not exist")
+		}
+		return database.ShopifyLocation{}, err
+	}
+	// Checks if the Shopify Location exists on Shopify
+	// see if there is a method that can be used to retrieve a single warehouse
+	if shopifyConfig.APIKey != "" || shopifyConfig.APIPassword != "" {
+		_, err = shopifyConfig.GetShopifyLocationByID(requestBody.LocationID)
+		if err != nil {
+			return database.ShopifyLocation{}, err
+		}
+	}
 	dbLocationWarehouse, err := dbconfig.DB.CreateShopifyLocation(context.Background(), database.CreateShopifyLocationParams{
 		ID:                   uuid.New(),
 		ShopifyWarehouseName: requestBody.ShopifyWarehouseName,
 		ShopifyLocationID:    requestBody.LocationID,
-		WarehouseName:        requestBody.WarehouseName,
+		WarehouseName:        warehouses_db.Name,
 		CreatedAt:            time.Now().UTC(),
 		UpdatedAt:            time.Now().UTC(),
 	})
@@ -892,17 +922,14 @@ func AddGlobalWarehouse(dbconfig *DbConfig, ctx context.Context, warehouse_name 
 		variants = append(variants, variants_ids...)
 	}
 	// check if a warehouse already exists
-	warehouses_db, err := dbconfig.DB.GetWarehouses(ctx, database.GetWarehousesParams{
-		Limit:  100, // TODO might need to properly configure this
-		Offset: 0,
-	})
+	warehouses_db, err := dbconfig.DB.GetWarehouseByName(context.Background(), warehouse_name)
 	if err != nil {
-		return 500, err
-	}
-	for _, warehouse_db := range warehouses_db {
-		if warehouse_db.Name == warehouse_name {
-			return 400, errors.New("warehouse already exists")
+		if err.Error() != "sql: no rows in result set" {
+			return 500, err
 		}
+	}
+	if warehouses_db.Name == warehouse_name {
+		return 409, errors.New("warehouse already exists")
 	}
 	if !reindex {
 		// create global warehouse

@@ -1,0 +1,23 @@
+{
+    "location": {
+        "id": 655441491,
+        "name": "50 Rideau Street",
+        "address1": "50 Rideau Street",
+        "address2": null,
+        "city": "Ottawa",
+        "zip": "K1N 9J7",
+        "province": "Ontario",
+        "country": "CA",
+        "phone": null,
+        "created_at": "2024-04-01T13:32:53-04:00",
+        "updated_at": "2024-04-01T13:32:53-04:00",
+        "country_code": "CA",
+        "country_name": "Canada",
+        "province_code": "ON",
+        "legacy": false,
+        "active": true,
+        "admin_graphql_api_id": "gid://shopify/Location/655441491",
+        "localized_country_name": "Canada",
+        "localized_province_name": "Ontario"
+    }
+}
