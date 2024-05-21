@@ -690,6 +690,7 @@ func TestAddWarehouseLocationMap(t *testing.T) {
 	assert.Equal(t, "empty location id not allowed", response.Message)
 
 	/* Test Case 4 - valid request */
+	createDatabaseGlobalWarehouse(&dbconfig)
 	warehouseLocation = WarehouseLocationPayload("test-case-valid-warehouse-location.json")
 	w = Init(
 		"/api/inventory/map?api_key="+dbUser.ApiKey,
@@ -740,6 +741,7 @@ func TestLocationWarehouseHandle(t *testing.T) {
 	assert.Equal(t, 0, len(responseLocationWarehouse))
 
 	/* Test 4 - valid request | with results */
+	createDatabaseGlobalWarehouse(&dbconfig)
 	createDatabaseLocationWarehouse(&dbconfig)
 	w = Init(
 		"/api/inventory/map?page=1&api_key="+dbUser.ApiKey,
