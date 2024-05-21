@@ -653,6 +653,7 @@ Possible HTTP Codes: 201, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		mockRequest := c.Request.Header.Get("Mocker")
 		// Add an extra validation to see if the warehouse entered by the user exists
 		location_map, err := DecodeInventoryMap(c.Request)
 		if err != nil {
@@ -668,7 +669,13 @@ func (dbconfig *DbConfig) AddWarehouseLocationMap() gin.HandlerFunc {
 			RespondWithError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		result, err := AddWarehouseLocation(dbconfig, location_map)
+		shopifyConfig := shopify.InitConfigShopify("http://localhost:4711")
+		if mockRequest != "true" {
+
+			// TODO find better way to reference
+			shopifyConfig = shopify.InitConfigShopify("")
+		}
+		result, err := AddWarehouseLocation(dbconfig, shopifyConfig, location_map)
 		if err != nil {
 			RespondWithError(c, http.StatusInternalServerError, err.Error())
 			return

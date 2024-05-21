@@ -144,6 +144,7 @@ func AddFetchStat(
 /* Add a warehouse-location map */
 func AddWarehouseLocation(
 	dbconfig *DbConfig,
+	shopifyConfig shopify.ConfigShopify,
 	requestBody objects.RequestWarehouseLocation,
 ) (database.ShopifyLocation, error) {
 	// Checks if the warehouse exists internally
@@ -154,13 +155,13 @@ func AddWarehouseLocation(
 		}
 		return database.ShopifyLocation{}, err
 	}
-
 	// Checks if the Shopify Location exists on Shopify
 	// see if there is a method that can be used to retrieve a single warehouse
-	shopifyConfig := shopify.InitConfigShopify("")
-	_, err = shopifyConfig.GetShopifyLocationByID(requestBody.LocationID)
-	if err != nil {
-		return database.ShopifyLocation{}, err
+	if shopifyConfig.APIKey != "" || shopifyConfig.APIPassword != "" {
+		_, err = shopifyConfig.GetShopifyLocationByID(requestBody.LocationID)
+		if err != nil {
+			return database.ShopifyLocation{}, err
+		}
 	}
 	dbLocationWarehouse, err := dbconfig.DB.CreateShopifyLocation(context.Background(), database.CreateShopifyLocationParams{
 		ID:                   uuid.New(),

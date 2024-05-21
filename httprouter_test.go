@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"objects"
 	"os"
+	"shopify"
 	"testing"
 	"utils"
 
@@ -690,11 +691,13 @@ func TestAddWarehouseLocationMap(t *testing.T) {
 	assert.Equal(t, "empty location id not allowed", response.Message)
 
 	/* Test Case 4 - valid request */
+	requestHeaders := make(map[string][]string)
+	requestHeaders["Mocker"] = []string{"true"}
 	createDatabaseGlobalWarehouse(&dbconfig)
 	warehouseLocation = WarehouseLocationPayload("test-case-valid-warehouse-location.json")
 	w = Init(
 		"/api/inventory/map?api_key="+dbUser.ApiKey,
-		http.MethodPost, map[string][]string{}, warehouseLocation, &dbconfig, router,
+		http.MethodPost, requestHeaders, warehouseLocation, &dbconfig, router,
 	)
 	ClearWarehouseLocationData(&dbconfig)
 	assert.Equal(t, 201, w.Code)
@@ -2547,8 +2550,9 @@ func createDatabaseLocationWarehouse(dbconfig *DbConfig) uuid.UUID {
 		}
 	}
 	if warehouseLocation.WarehouseName == "" {
+		shopifyConfig := shopify.InitConfigShopify(MOCK_SHOPIFY_API_URL)
 		warehouseLocation := WarehouseLocationPayload("test-case-valid-warehouse-location.json")
-		dbLocationWarehouse, err := AddWarehouseLocation(dbconfig, warehouseLocation)
+		dbLocationWarehouse, err := AddWarehouseLocation(dbconfig, shopifyConfig, warehouseLocation)
 		if err != nil {
 			log.Println(err)
 			return uuid.Nil

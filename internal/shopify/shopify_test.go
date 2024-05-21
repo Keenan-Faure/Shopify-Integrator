@@ -648,6 +648,16 @@ func InitMockShopifyAPI() {
 		},
 	)
 
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/webhooks.json?topic=orders/updated",
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyWebhookResponse("test-case-valid-webhooks.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
 	httpmock.RegisterResponder(http.MethodDelete, MOCK_SHOPIFY_API_URL+"/webhooks/"+MOCK_SHOPIFY_WEBHOOK_ID+".json",
 		func(req *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(200, "")
@@ -956,9 +966,9 @@ func CreateShopifyProductCountResponse(fileName string) objects.ShopifyProductCo
 }
 
 /* Returns a test shopify webhook response struct */
-func CreateShopifyWebhookResponse(fileName string) objects.ShopifyWebhookRequest {
+func CreateShopifyWebhookResponse(fileName string) objects.ShopifyWebhookResponse {
 	fileBytes := payload("./test_payloads/" + fileName)
-	shopifyWebhookResponse := objects.ShopifyWebhookRequest{}
+	shopifyWebhookResponse := objects.ShopifyWebhookResponse{}
 	err := json.Unmarshal(fileBytes, &shopifyWebhookResponse)
 	if err != nil {
 		log.Println(err)
