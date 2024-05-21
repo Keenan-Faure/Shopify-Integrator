@@ -1,4 +1,4 @@
-# Shopify-Integrator  • [![ci](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml/badge.svg)](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/ci.yml)
+# Shopify-Integrator  • ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Keenan-Faure/Shopify-Integrator/tests.yml) [![tests](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/tests.yml/badge.svg)](https://github.com/Keenan-Faure/Shopify-Integrator/actions/workflows/build.yml) ![GitHub Release](https://img.shields.io/github/v/release/Keenan-Faure/Shopify-Integrator) ![Docker Image Version](https://img.shields.io/docker/v/keenansame/shopify-integrator) ![GitHub License](https://img.shields.io/github/license/Keenan-Faure/Shopify-Integrator)
 
 Integration application for Shopify that makes use of it's powerful [API](https://shopify.dev/docs/api/admin-rest) to perform CRUD operations.
 
@@ -8,7 +8,7 @@ Web based application that pulls product data from Shopify at a predefined inter
 
 The application has it's own RESTful API that allows communication between the application and one or more software components. An example is that it allows the syncing of orders from Shopify into the application through the use of a webhook and a predefined endpoint.
 
-For a entire list of available features, please see [List of Features](https://google.com).
+For a entire list of available features, please see [List of Features](#list-of-available-features).
 
 ## Goals of this project
 
@@ -34,7 +34,7 @@ After completing the [prerequisites](#prerequisites) below simply run in the (cl
 ./scripts/install.sh
 ```
 
-This will download all necessary files for you and start on the `APP_PORT` on your localhost which by default is `3000`.
+This will download all necessary docker images for you and start on the `APP_PORT` on your localhost which by default is `3000`.
 
 ## Prerequisites
 
@@ -42,7 +42,7 @@ This will download all necessary files for you and start on the `APP_PORT` on yo
 
 The environment variable file contains variables that are used by the application. Of course, if removed, the application will not function correctly.
 
-The default `.example.env` file contains the default values that needs to be changed. Ensure that a copy is made and renamed to `.env`. Thereafter, the values may be updated for personal use
+The default `.example.env` file contains the default values that needs to be changed. Ensure that a copy is made and renamed to `.env`. Thereafter, the values may be updated for personal use (future version will automate this)
 
 #### PostgresSQL
 
@@ -80,7 +80,7 @@ To properly use the ngrok container, an account needs to be created on their [we
 After successfully creating an account, an `authtoken` needs to be retrieved and saved into the ngrok config file located in
 
 ```bash
-${pwd}/ngrok/ngrok.yml
+${project_directory}/ngrok/ngrok.yml
 ```
 
 Note that the `ngrok.example.yml` file needs to be **renamed** to `ngrok.yml` in order to be recongized by the application.
@@ -96,6 +96,8 @@ The `install.sh` script installs ngrok for you, however, to create the webhook u
 you can just retrieve it in the settings page of the application on the front-end or over the API.
 
 Please see the small guide below on how to setup the webhook URL on Shopify.
+
+(Note that an endpoint has been implemented to automate this step, but it has not been implemented inside `/app`, future versions will include this)
 
 _note that this assumes that you have a shopify store with a valid ngrok authToken_
 
@@ -183,38 +185,11 @@ Essentially anything can be copied, but note that it will only place them inside
 
 Lastly, note that the volumes created will not be deleted upon running the `reset.sh` script. You may manually delete the volume should you feel the need to.
 
-## 🤝 Contributing
-
-### Clone the repo
-
-```bash
-git clone https://github.com/Keenan-Faure/Shopify-Integrator
-cd Shopify-Integrator
-```
-
-Then complete prerequisites the project
-
-### Run the project
-
-```bash
-./scripts/install.sh
-```
-
-### Run the tests
-
-```bash
-go test ./...
-```
-
-Ensure that the docker container is running.
-
-### Submit a pull request
-
-If you'd like to contribute, please fork the repository and open a pull request to the `main` branch. Feel free to let me know what you think can be done to make it awesome.
-
 ## What is next
 
-1. Updating code base of application to make use of the [Gin Web Framework](https://gin-gonic.com/docs/introduction/)
+1. Minor changes to application
+   1. Automate creation of required files using shell scripting
+   2. Add automatic creation of webhooks on front-end.
 2. Adding additional features that support the use of a 3rd Party ERP system with features that
    1. Pull Product, Order & customer information
    2. Push Product, Order information back into the ERP
@@ -235,7 +210,7 @@ A friendly list of features currently supported and available:
 - Workers that automatically fetch products from Shopify at a set interval to keep constant syncronization of product data.
 - Adjustable settings via the API or on the app front-end.
 - Neat and easy to follow front-end design using Popular HTML Framework React.
-- Dockerized for portibility - _If it works on your PC, then we'll ship your PC_.
+- Dockerized for portability - _If it works on your PC, then we'll ship your PC_.
 - Additional features, like restrictions & global warehousing, to make pushing and fetching shopify data easier and more controllable
 - Automatic Ngrok integration with your Shopify Webhook.
-- Queue feature
+- Queue feature to view product and order updates flowing to Shopify from the application.
