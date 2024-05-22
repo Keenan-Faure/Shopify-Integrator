@@ -86,6 +86,11 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	nauth.POST("/register", dbconfig.RegisterHandle())
 	nauth.POST("/login", dbconfig.LoginHandle())
 
+	/* OAuth2.0 */
+	nauth.GET("/google/login", dbconfig.OAuthGoogleLogin())
+	nauth.GET("/google/callback", dbconfig.OAuthGoogleCallback())
+	nauth.GET("/google/oauth2/login", dbconfig.OAuthGoogleOAuth())
+
 	/* --------- Auth routes --------- */
 	auth := r.Group("/api")
 
@@ -172,11 +177,6 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	auth.POST("/queue", dbconfig.QueuePush())
 	auth.DELETE("/queue", dbconfig.ClearQueueByFilter())
 	auth.DELETE("/queue/:id", dbconfig.ClearQueueByID())
-
-	/* OAuth2.0 */
-	auth.GET("/google/login", dbconfig.OAuthGoogleLogin())
-	auth.GET("/google/callback", dbconfig.OAuthGoogleCallback())
-	auth.GET("/google/oauth2/login", dbconfig.OAuthGoogleOAuth())
 
 	/* setup file server */
 	r.StaticFS("/static", gin.Dir("./app/export", true))
