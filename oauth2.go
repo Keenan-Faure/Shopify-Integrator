@@ -39,9 +39,9 @@ const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_
 var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAvlGYpmv")
 
 var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  "http://localhost:8080/api/google/callback",
-	ClientID:     utils.LoadEnv("OAUTH_CLIENT_ID"),
-	ClientSecret: utils.LoadEnv("OAUTH_SECRET"),
+	RedirectURL:  utils.LoadEnv("API_SERVER_HOST") + "/api/google/callback",
+	ClientID:     utils.LoadEnv("OAUTH_GOOGLE_CLIENT_ID"),
+	ClientSecret: utils.LoadEnv("OAUTH_GOOGLE_SECRET"),
 	// scopes on which to retrieve the userinfo from google api
 	Scopes: []string{
 		"https://www.googleapis.com/auth/userinfo.email",
@@ -101,7 +101,7 @@ func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
 			if encoded, err := s.Encode(cookie_name, value); err == nil {
 				c.SetCookie(cookie_name, encoded, 0, "/", "", false, false)
 			}
-			c.Redirect(http.StatusSeeOther, "http://localhost:3000/")
+			c.Redirect(http.StatusSeeOther, utils.LoadEnv("APP_HOST"))
 			return
 		}
 		// user validation
@@ -150,7 +150,7 @@ func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
 		}
 		// redirect back to the application login screen where the user logins in automatically
 		// using the new credentials
-		c.Redirect(http.StatusSeeOther, "http://localhost:3000/")
+		c.Redirect(http.StatusSeeOther, utils.LoadEnv("APP_HOST"))
 	}
 }
 
