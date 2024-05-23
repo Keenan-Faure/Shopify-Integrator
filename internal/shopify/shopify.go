@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -71,7 +72,7 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 		return objects.ShopifyWebhookRequest{}, err
 	}
 	res, err := configShopify.FetchHelper(
-		"webhooks.json",
+		"webhooks/"+fmt.Sprint(int_webhook_id)+".json",
 		http.MethodPut,
 		&buffer,
 	)
@@ -754,6 +755,7 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 	httpClient := http.Client{
 		Timeout: time.Second * 20,
 	}
+	fmt.Println(shopifyConfig.Url + "/" + endpoint)
 	req, err := http.NewRequest(method, shopifyConfig.Url+"/"+endpoint, body)
 	if err != nil {
 		return &http.Response{}, err
