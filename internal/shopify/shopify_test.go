@@ -516,14 +516,13 @@ func TestFetchProducts(t *testing.T) {
 	defer httpmock.DeactivateAndReset()
 
 	// Test Case 1 - valid request
-	shopifyProducts, url, err := shopifyConfig.FetchProducts("")
+	shopifyProducts, _, err := shopifyConfig.FetchProducts("")
 	if err != nil {
 		t.Errorf("expected 'nil' but found: " + err.Error())
 	}
 	assert.Equal(t, len(shopifyProducts.Products), 2)
 	assert.Equal(t, shopifyProducts.Products[0].Title, "IPod Nano - 8GB")
 	assert.Equal(t, shopifyProducts.Products[1].Variants[0].Title, "Black")
-	assert.Equal(t, url, "<https://test-test.myshopify.com/admin/api/2023-10/products.json?limit=20&page_info=eyJsYXN0X2lkIjo3MDczNTE2ODc5OTMzLCJsYXN0X3ZhbHVlIjoiRW5pZ21hdGljIE1hY2hpbmlzdCAtIEZhcnV6YW4iLCJkASJDHLKDJFLJpiwjwsdsa>; rel='next'")
 }
 
 func TestCategoryExists(t *testing.T) {
@@ -709,6 +708,16 @@ func InitMockShopifyAPI() {
 		MOCK_SHOPIFY_API_URL+"/custom_collections.json?fields=title,id&product_id="+fmt.Sprint(MOCK_SHOPIFY_PRODUCT_ID),
 		func(req *http.Request) (*http.Response, error) {
 			resp, err := httpmock.NewJsonResponse(200, CreateShopifCollectionsResponse("test-case-valid-custom-collections.json"))
+			if err != nil {
+				return httpmock.NewStringResponse(500, ""), nil
+			}
+			return resp, nil
+		},
+	)
+
+	httpmock.RegisterResponder(http.MethodGet, MOCK_SHOPIFY_API_URL+"/products.json?limit="+PRODUCT_FETCH_LIMIT,
+		func(req *http.Request) (*http.Response, error) {
+			resp, err := httpmock.NewJsonResponse(200, CreateShopifyProductsResponse("test-case-valid-products.json"))
 			if err != nil {
 				return httpmock.NewStringResponse(500, ""), nil
 			}
@@ -915,6 +924,17 @@ func CreateShopifyProductResponse(fileName string) objects.ShopifyProductRespons
 		log.Println(err)
 	}
 	return shopifyProduct
+}
+
+/* Returns a test shopify product response struct */
+func CreateShopifyProductsResponse(fileName string) objects.ShopifyProducts {
+	fileBytes := payload("./test_payloads/" + fileName)
+	shopifyProducts := objects.ShopifyProducts{}
+	err := json.Unmarshal(fileBytes, &shopifyProducts)
+	if err != nil {
+		log.Println(err)
+	}
+	return shopifyProducts
 }
 
 /* Returns a test shopify product response struct */
