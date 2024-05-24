@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 	"github.com/shurcooL/graphql"
 )
 
-const PRODUCT_FETCH_LIMIT = "20" // limit on products to fetch
+const PRODUCT_FETCH_LIMIT = "10" // limit on products to fetch
 
 type ConfigShopify struct {
 	APIKey      string
@@ -71,7 +72,7 @@ func (configShopify *ConfigShopify) UpdateShopifyWebhook(
 		return objects.ShopifyWebhookRequest{}, err
 	}
 	res, err := configShopify.FetchHelper(
-		"webhooks.json",
+		"webhooks/"+fmt.Sprint(int_webhook_id)+".json",
 		http.MethodPut,
 		&buffer,
 	)
@@ -252,11 +253,8 @@ func (configShopify *ConfigShopify) GetShopifyLocations() (objects.ShopifyLocati
 func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevels, error) {
-	if location_id == "" {
-		return objects.GetShopifyInventoryLevels{}, errors.New("invalid location id not allowed")
-	}
-	if inventory_item_id == "" {
-		return objects.GetShopifyInventoryLevels{}, errors.New("invalid inventory item id not allowed")
+	if location_id == "" && inventory_item_id == "" {
+		return objects.GetShopifyInventoryLevels{}, errors.New("invalid item not allowed")
 	}
 	res, err := configShopify.FetchHelper(
 		"inventory_levels.json?location_ids="+location_id+"&inventory_item_ids="+inventory_item_id,
@@ -287,11 +285,8 @@ func (configShopify *ConfigShopify) GetShopifyInventoryLevel(
 func (configShopify *ConfigShopify) GetShopifyInventoryLevels(
 	location_id,
 	inventory_item_id string) (objects.GetShopifyInventoryLevelsList, error) {
-	if location_id == "" {
-		return objects.GetShopifyInventoryLevelsList{}, errors.New("invalid location id not allowed")
-	}
-	if inventory_item_id == "" {
-		return objects.GetShopifyInventoryLevelsList{}, errors.New("invalid inventory item id not allowed")
+	if location_id == "" && inventory_item_id == "" {
+		return objects.GetShopifyInventoryLevelsList{}, errors.New("invalid item not allowed")
 	}
 	res, err := configShopify.FetchHelper(
 		"inventory_levels.json?location_ids="+location_id+"&inventory_item_ids="+inventory_item_id,
@@ -326,11 +321,8 @@ func (configShopify *ConfigShopify) AddLocationQtyShopify(
 		InventoryItemID:     inventory_item_id,
 		AvailableAdjustment: qty,
 	}
-	if location_id == 0 {
-		return objects.ResponseAddInventoryItem{}, errors.New("invalid location id not allowed")
-	}
-	if inventory_item_id == 0 {
-		return objects.ResponseAddInventoryItem{}, errors.New("invalid inventory item id not allowed")
+	if location_id == 0 && inventory_item_id == 0 {
+		return objects.ResponseAddInventoryItem{}, errors.New("invalid item not allowed")
 	}
 	var buffer bytes.Buffer
 	err := json.NewEncoder(&buffer).Encode(inventory_adjustment)
@@ -763,6 +755,7 @@ func (shopifyConfig *ConfigShopify) FetchHelper(endpoint, method string, body io
 	httpClient := http.Client{
 		Timeout: time.Second * 20,
 	}
+	fmt.Println(shopifyConfig.Url + "/" + endpoint)
 	req, err := http.NewRequest(method, shopifyConfig.Url+"/"+endpoint, body)
 	if err != nil {
 		return &http.Response{}, err
