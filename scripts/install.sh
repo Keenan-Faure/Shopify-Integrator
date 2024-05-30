@@ -4,6 +4,11 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/install.sh
 
+function install_hosts() {
+    chmod +x ./scripts/hosts.sh
+    ./scripts/hosts.sh
+}
+
 function check_prerequisites() {
     if [ ! -f '.env' ]
     then
