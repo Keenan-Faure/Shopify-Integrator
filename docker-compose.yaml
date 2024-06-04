@@ -4,8 +4,8 @@ services:
     app:
         image: mrkkyle/shopify-integrator-app:latest
         container_name: ${APP_CONTAINER_NAME}
-        # environment:
-        #     - VIRTUAL_HOST=app.si
+        environment:
+            - VIRTUAL_HOST=${APP_HOST}
         expose:
             - ${APP_PORT}
         ports:
@@ -20,8 +20,8 @@ services:
             context: ./
             dockerfile: ./setup/server/${DOCKER_FILE}
         container_name: ${SERVER_CONTAINER_NAME}
-        # environment:
-        #     - VIRTUAL_HOST=api.si
+        environment:
+            - VIRTUAL_HOST=${API_SERVER_HOST}
         expose:
             - ${PORT}
         env_file:
@@ -40,8 +40,8 @@ services:
         ports:
             - "${DOCS_PORT}:${DOCS_PORT}"
         container_name: ${DOCS_CONTAINER_NAME}
-        # environment:
-        #     - VIRTUAL_HOST=docs.si
+        environment:
+            - VIRTUAL_HOST=${DOCS_HOST}
         expose:
             - ${DOCS_PORT}
         volumes:
