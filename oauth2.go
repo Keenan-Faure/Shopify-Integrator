@@ -39,7 +39,7 @@ const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_
 var hashKey = []byte("nSTDTVzvNdflcOlclhuaSFJfrkzKdBJjKTeRAhTVVFyiHqrUcNgvmhfXAvlGYpmv")
 
 var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  utils.LoadEnv("API_SERVER_HOST") + "/api/google/callback",
+	RedirectURL:  "http://" + utils.LoadEnv("API_SERVER_HOST") + "/api/google/callback",
 	ClientID:     utils.LoadEnv("OAUTH_GOOGLE_CLIENT_ID"),
 	ClientSecret: utils.LoadEnv("OAUTH_GOOGLE_SECRET"),
 	// scopes on which to retrieve the userinfo from google api
@@ -49,6 +49,27 @@ var googleOauthConfig = &oauth2.Config{
 		"openid",
 	},
 	Endpoint: google.Endpoint,
+}
+
+// test endpoint
+func (dbconfig *DbConfig) Tester() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Println("cookie domain: " + utils.LoadEnv("DOMAIN_HOST"))
+		value := map[string]string{
+			"foo": "bar",
+		}
+		fmt.Println(s.Encode("cookie-namep", value))
+		if encoded, err := s.Encode("cookie-namep", value); err == nil {
+			cookie := &http.Cookie{
+				Name:   "cookie-namep",
+				Value:  encoded,
+				Path:   "/",
+				Domain: utils.LoadEnv("DOMAIN_HOST"),
+			}
+			http.SetCookie(c.Writer, cookie)
+		}
+		RespondWithJSON(c, http.StatusOK, "OK")
+	}
 }
 
 /*
@@ -64,8 +85,10 @@ Possible HTTP Codes: 200, 303, 307, 400, 404
 */
 func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		log.Println("call back reached: http://" + utils.LoadEnv("API_SERVER_HOST") + "/api/google/callback")
 		// Read oauthState from Cookie
 		oauthState, _ := c.Cookie("oauthstate")
+		log.Println("oauthstate: " + oauthState)
 		if c.Request.FormValue("state") != oauthState {
 			log.Println("invalid oauth google state")
 			c.Redirect(http.StatusTemporaryRedirect, "/")
@@ -173,7 +196,9 @@ func (dbconfig *DbConfig) OAuthGoogleLogin() gin.HandlerFunc {
 			AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
 			validate that it matches the the state query parameter on your redirect callback.
 		*/
+		log.Println(oauthState)
 		u := googleOauthConfig.AuthCodeURL(oauthState)
+		log.Println(u)
 		c.Redirect(http.StatusTemporaryRedirect, u)
 	}
 }
@@ -182,8 +207,6 @@ func (dbconfig *DbConfig) OAuthGoogleLogin() gin.HandlerFunc {
 Initiates the OAuth2 login authorization with google
 
 Route: /api/google/oauth2/login
-
-Authorization: Basic, QueryParams, Headers
 
 Response-Type: application/json
 
@@ -232,9 +255,15 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 		log.Println(err.Error())
 	}
 	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
+	cookie := http.Cookie{
+		Name:    "oauthstate",
+		Value:   state,
+		Path:    "/",
+		Expires: expiration,
+		Domain:  utils.LoadEnv("DOMAIN_HOST"),
+	}
+	log.Println(cookie)
 	http.SetCookie(w, &cookie)
-
 	return state
 }
 

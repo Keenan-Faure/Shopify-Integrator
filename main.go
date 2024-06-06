@@ -87,6 +87,7 @@ func setUpAPI(dbconfig *DbConfig) *gin.Engine {
 	nauth.POST("/login", dbconfig.LoginHandle())
 
 	/* OAuth2.0 */
+	nauth.GET("/test", dbconfig.Tester())
 	nauth.GET("/google/login", dbconfig.OAuthGoogleLogin())
 	nauth.GET("/google/callback", dbconfig.OAuthGoogleCallback())
 	nauth.GET("/google/oauth2/login", dbconfig.OAuthGoogleOAuth())
