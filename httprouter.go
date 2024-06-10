@@ -1607,20 +1607,10 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) LogoutHandle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("Inside logout endpoint")
-		if cookie, err := c.Request.Cookie(cookie_name); err == nil {
-			log.Println("Cookie beneath me")
-			log.Println(cookie.Value)
+		if cookie, err := c.Cookie(cookie_name); err == nil {
 			value := make(map[string]string)
-			fmt.Println("error when decoding cookie: " + s.Decode(cookie_name, cookie.Value, &value).Error())
-			if err = s.Decode(cookie_name, cookie.Value, &value); err == nil {
-				cookie := &http.Cookie{
-					Name:   cookie_name,
-					Value:  "",
-					Path:   "/",
-					MaxAge: -1,
-				}
-				http.SetCookie(c.Writer, cookie)
+			if err = s.Decode(cookie_name, cookie, &value); err == nil {
+				c.SetCookie(cookie_name, "", -1, "/", utils.LoadEnv("DOMAIN"), false, false)
 			}
 		}
 		RespondWithJSON(c, http.StatusOK, objects.ResponseString{
