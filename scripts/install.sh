@@ -124,3 +124,9 @@ check_docker
 #check_go
 #build_go
 install_app
+
+echo "+-------------------------------------+"
+echo "|If you wish to install hosts         |"
+echo "|run 'sudo ./scripts/hosts.sh'        |"
+echo "|[password prompt will appear]        |"
+echo "+-------------------------------------+"
