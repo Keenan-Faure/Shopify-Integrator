@@ -122,15 +122,15 @@ To use this feature `OAUTH_GOOGLE_CLIENT_ID` AND `OAUTH_GOOGLE_SECRET` needs to 
 ### To reset the application
 
 ```bash
-./scripts/reset.sh
+./scripts/stop.sh
 ```
 
-Note that there exists an additional `rmi` argument that can be added to the `reset.sh` script.
+Note that there exists an additional `rmi` argument that can be added to the `stop.sh` script.
 
 ### To stop, remove containers and remove any images downloaded
 
 ```bash
-./scripts/reset.sh rmi
+./scripts/stop.sh rmi
 ```
 
 ### To update the current database to the latest migration
@@ -183,7 +183,7 @@ This copies the respective files and places them inside the app directory on the
 
 Essentially anything can be copied, but note that it will only place them inside the app directory and attempt to run `npm install`
 
-Lastly, note that the volumes created will not be deleted upon running the `reset.sh` script. You may manually delete the volume should you feel the need to.
+Lastly, note that the volumes created will not be deleted upon running the `stop.sh` script. You may manually delete the volume should you feel the need to.
 
 ## What is next
 
