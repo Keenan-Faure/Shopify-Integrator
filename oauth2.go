@@ -26,10 +26,10 @@ General name of the cookie of the application for google accounts.
 If the user logs in with another account the cookie should be the same name,
 just updated and overwritten
 */
-const cookie_name = "si_googleauth"
-const state_form_value = "state"
-const state_form_code_value = "code"
-const cookie_name_oauth_state = "_oauthstate"
+const COOKIE_NAME = "si_googleauth"
+const STATE_FORM_VALUE = "state"
+const STATE_FORM_CODE_VALUE = "code"
+const COOKIE_NAME_OAUTH_STATE = "_oauthstate"
 
 // Block keys should be 16 bytes (AES-128) or 32 bytes (AES-256) long.
 // Shorter keys may weaken the encryption used.
@@ -68,18 +68,16 @@ Possible HTTP Codes: 200, 303, 307, 400, 404
 func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Read oauthState from Cookie
-		oauthState, _ := c.Cookie(cookie_name_oauth_state)
-		log.Println("oauthstate: " + oauthState)
-		log.Println("form value: " + c.Request.FormValue(state_form_value))
-		if c.Request.FormValue(state_form_value) != oauthState {
-			log.Println("invalid oauth google state")
-			c.Redirect(http.StatusTemporaryRedirect, "/")
+		oauthState, _ := c.Cookie(COOKIE_NAME_OAUTH_STATE)
+		if c.Request.FormValue(STATE_FORM_VALUE) != oauthState {
+			log.Fatal("invalid oauth google state")
+			c.Redirect(http.StatusTemporaryRedirect, "http://"+utils.LoadEnv("APP_HOST"))
 			return
 		}
-		data, err := getUserDataFromGoogle(c.Request.FormValue(state_form_code_value))
+		data, err := getUserDataFromGoogle(c.Request.FormValue(STATE_FORM_CODE_VALUE))
 		if err != nil {
-			log.Println(err.Error())
-			c.Redirect(http.StatusTemporaryRedirect, "/")
+			log.Fatal(err.Error())
+			c.Redirect(http.StatusTemporaryRedirect, "http://"+utils.LoadEnv("APP_HOST"))
 			return
 		}
 		// convert to struct
@@ -101,10 +99,10 @@ func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
 			// If the user already registers, we create a new cookie
 			// and then redirect to the dashboard
 			value := map[string]string{
-				cookie_name: db_oauth_record.CookieSecret,
+				COOKIE_NAME: db_oauth_record.CookieSecret,
 			}
-			if encoded, err := s.Encode(cookie_name, value); err == nil {
-				c.SetCookie(cookie_name, encoded, 0, "/", utils.LoadEnv("DOMAIN"), false, false)
+			if encoded, err := s.Encode(COOKIE_NAME, value); err == nil {
+				c.SetCookie(COOKIE_NAME, encoded, 0, "/", utils.LoadEnv("DOMAIN"), false, false)
 			}
 			c.Redirect(http.StatusSeeOther, "http://"+utils.LoadEnv("APP_HOST"))
 			return
@@ -148,10 +146,10 @@ func (dbconfig *DbConfig) OAuthGoogleCallback() gin.HandlerFunc {
 		}
 		// create cookie containing the cookie_secret
 		value := map[string]string{
-			cookie_name: oauth_record.CookieSecret,
+			COOKIE_NAME: oauth_record.CookieSecret,
 		}
-		if encoded, err := s.Encode(cookie_name, value); err == nil {
-			c.SetCookie(cookie_name, encoded, 0, "/", utils.LoadEnv("DOMAIN"), false, false)
+		if encoded, err := s.Encode(COOKIE_NAME, value); err == nil {
+			c.SetCookie(COOKIE_NAME, encoded, 0, "/", utils.LoadEnv("DOMAIN"), false, false)
 		}
 		// redirect back to the application login screen where the user logins in automatically
 		// using the new credentials
@@ -173,7 +171,6 @@ Possible HTTP Codes: 200, 307, 400, 404
 func (dbconfig *DbConfig) OAuthGoogleLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Create oauthState cookie
-		log.Println("http://" + utils.LoadEnv("API_SERVER_HOST") + "/api/google/callback")
 		oauthState := generateStateOauthCookie(c)
 		/*
 			AuthCodeURL receive state that is a token to protect the user from CSRF attacks. You must always provide a non-empty string and
@@ -195,10 +192,10 @@ Possible HTTP Codes: 200, 400, 401, 404, 500
 */
 func (dbconfig *DbConfig) OAuthGoogleOAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if cookie, err := c.Cookie(cookie_name); err == nil {
+		if cookie, err := c.Cookie(COOKIE_NAME); err == nil {
 			value := make(map[string]string)
-			if err = s.Decode(cookie_name, cookie, &value); err == nil {
-				cookie_secret := value[cookie_name]
+			if err = s.Decode(COOKIE_NAME, cookie, &value); err == nil {
+				cookie_secret := value[COOKIE_NAME]
 				user, err := dbconfig.DB.GetApiKeyByCookieSecret(c.Request.Context(), cookie_secret)
 				if err != nil {
 					if err.Error() != "sql: no rows in result set" {
@@ -231,10 +228,10 @@ func generateStateOauthCookie(c *gin.Context) string {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
-		log.Println(err.Error())
+		log.Fatal(err.Error())
 	}
 	state := base64.URLEncoding.EncodeToString(b)
-	c.SetCookie(cookie_name_oauth_state, state, 3600, "/", utils.LoadEnv("DOMAIN"), false, false)
+	c.SetCookie(COOKIE_NAME_OAUTH_STATE, state, 3600, "/", utils.LoadEnv("DOMAIN"), false, false)
 	return state
 }
 
