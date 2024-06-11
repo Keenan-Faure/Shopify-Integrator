@@ -4,6 +4,11 @@
 # If you are unable to run this file then run
 # chmod +x ./scripts/install.sh
 
+function install_hosts() {
+    chmod +x ./scripts/hosts.sh
+    ./scripts/hosts.sh
+}
+
 function check_prerequisites() {
     if [ ! -f '.env' ]
     then
@@ -119,3 +124,9 @@ check_docker
 #check_go
 #build_go
 install_app
+
+echo "+-------------------------------------+"
+echo "|If you wish to install hosts         |"
+echo "|run 'sudo ./scripts/hosts.sh'        |"
+echo "|[password prompt will appear]        |"
+echo "+-------------------------------------+"
